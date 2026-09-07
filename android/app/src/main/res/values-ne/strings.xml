@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">बोर्डरसिल्ड अफिसर</string>
+
+    <string name="nav_dashboard">ड्यासबोर्ड</string>
+    <string name="nav_queue">पालो</string>
+    <string name="nav_history">इतिहास</string>
+    <string name="nav_alerts">अलर्ट</string>
+    <string name="nav_more">थप</string>
+
+    <string name="common_next">अर्को</string>
+    <string name="common_back">पछाडि</string>
+    <string name="common_skip_tour">टुर छोड्नुहोस्</string>
+    <string name="common_finish">समाप्त गर्नुहोस्</string>
+    <string name="common_sign_in">साइन इन गर्नुहोस्</string>
+    <string name="common_clear">क्लियर गर्नुहोस्</string>
+    <string name="common_flag_review">झण्डा लगाउनुहोस् / थप समीक्षा</string>
+    <string name="common_log_out">लगआउट गर्नुहोस्</string>
+    <string name="common_cancel">रद्द गर्नुहोस्</string>
+
+    <string name="system_operational">प्रणाली सुचारू रूपमा चलिरहेको छ</string>
+
+    <string name="risk_low">कम जोखिम</string>
+    <string name="risk_medium">मध्यम जोखिम</string>
+    <string name="risk_high">उच्च जोखिम</string>
+    <string name="risk_pending">विचाराधीन</string>
+
+    <string name="match_exact">सटीक</string>
+    <string name="match_fuzzy">अस्पष्ट</string>
+
+    <string name="verification_detected">पत्ता लाग्यो</string>
+    <string name="verification_verified">प्रमाणित</string>
+
+    <string name="settings_title">सेटिङहरू</string>
+    <string name="settings_language_section">भाषा</string>
+    <string name="settings_language_label">अधिकारी कन्सोलको भाषा</string>
+
+    <string name="language_english">अंग्रेजी (English)</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_nepali">नेपाली</string>
+    <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
+    <string name="language_unverified_notice">अप्रमाणित अनुवाद</string>
+
+    <string name="login_title">बोर्डरसिल्ड एआई</string>
+    <string name="login_subtitle">अधिकारी कन्सोल — %1$s</string>
+    <string name="login_officer_id">अधिकारी आईडी / इमेल</string>
+    <string name="login_password">पासवर्ड</string>
+    <string name="login_footer">केवल अधिकृत कर्मचारीका लागि मात्र। सबै पहुँच प्रयासहरू लग गरिन्छ।</string>
+
+    <string name="step_document">कागजात</string>
+    <string name="step_extraction">निकासी</string>
+    <string name="step_verification">प्रमाणीकरण</string>
+    <string name="step_screening">स्क्रिनिङ</string>
+    <string name="step_risk_assessment">जोखिम मूल्याङ्कन</string>
+    <string name="step_review">समीक्षा</string>
+    <string name="step_complete">सम्पन्न</string>
+</resources>

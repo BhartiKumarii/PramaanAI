@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">BorderShield Officer</string>
+
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_queue">Queue</string>
+    <string name="nav_history">History</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="nav_more">More</string>
+
+    <string name="common_next">Next</string>
+    <string name="common_back">Back</string>
+    <string name="common_skip_tour">Skip tour</string>
+    <string name="common_finish">Finish</string>
+    <string name="common_sign_in">Sign in</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_flag_review">Flag / Further review</string>
+    <string name="common_log_out">Log out</string>
+    <string name="common_cancel">Cancel</string>
+
+    <string name="system_operational">System Operational</string>
+
+    <string name="risk_low">LOW RISK</string>
+    <string name="risk_medium">MEDIUM RISK</string>
+    <string name="risk_high">HIGH RISK</string>
+    <string name="risk_pending">PENDING</string>
+
+    <string name="match_exact">EXACT</string>
+    <string name="match_fuzzy">FUZZY</string>
+
+    <string name="verification_detected">Detected</string>
+    <string name="verification_verified">Verified</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_language_section">Language</string>
+    <string name="settings_language_label">Officer console language</string>
+
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_nepali">नेपाली (Nepali)</string>
+    <string name="language_bengali">বাংলা (Bengali)</string>
+    <string name="language_punjabi">ਪੰਜਾਬੀ (Punjabi)</string>
+    <string name="language_assamese">অসমীয়া (Assamese)</string>
+    <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
+    <string name="language_unverified_notice">unverified translation</string>
+
+    <string name="login_title">BorderShield AI</string>
+    <string name="login_subtitle">Officer Console — %1$s</string>
+    <string name="login_officer_id">Officer ID / Email</string>
+    <string name="login_password">Password</string>
+    <string name="login_footer">Authorized personnel only. All access attempts are logged.</string>
+
+    <string name="step_document">Document</string>
+    <string name="step_extraction">Extraction</string>
+    <string name="step_verification">Verification</string>
+    <string name="step_screening">Screening</string>
+    <string name="step_risk_assessment">Risk Assessment</string>
+    <string name="step_review">Review</string>
+    <string name="step_complete">Complete</string>
+</resources>

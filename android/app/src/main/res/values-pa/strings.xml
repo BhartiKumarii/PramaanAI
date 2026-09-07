@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">ਬਾਰਡਰਸ਼ੀਲਡ ਅਫ਼ਸਰ</string>
+
+    <string name="nav_dashboard">ਡੈਸ਼ਬੋਰਡ</string>
+    <string name="nav_queue">ਕਤਾਰ</string>
+    <string name="nav_history">ਇਤਿਹਾਸ</string>
+    <string name="nav_alerts">ਚੇਤਾਵਨੀਆਂ</string>
+    <string name="nav_more">ਹੋਰ</string>
+
+    <string name="common_next">ਅਗਲਾ</string>
+    <string name="common_back">ਪਿੱਛੇ</string>
+    <string name="common_skip_tour">ਟੂਰ ਛੱਡੋ</string>
+    <string name="common_finish">ਪੂਰਾ ਕਰੋ</string>
+    <string name="common_sign_in">ਸਾਈਨ ਇਨ ਕਰੋ</string>
+    <string name="common_clear">ਕਲੀਅਰ ਕਰੋ</string>
+    <string name="common_flag_review">ਫਲੈਗ ਕਰੋ / ਹੋਰ ਸਮੀਖਿਆ</string>
+    <string name="common_log_out">ਲਾਗ ਆਊਟ</string>
+    <string name="common_cancel">ਰੱਦ ਕਰੋ</string>
+
+    <string name="system_operational">ਸਿਸਟਮ ਠੀਕ ਢੰਗ ਨਾਲ ਚੱਲ ਰਿਹਾ ਹੈ</string>
+
+    <string name="risk_low">ਘੱਟ ਜੋਖਮ</string>
+    <string name="risk_medium">ਦਰਮਿਆਨਾ ਜੋਖਮ</string>
+    <string name="risk_high">ਵੱਧ ਜੋਖਮ</string>
+    <string name="risk_pending">ਬਕਾਇਆ</string>
+
+    <string name="match_exact">ਸਟੀਕ</string>
+    <string name="match_fuzzy">ਅਸਪਸ਼ਟ</string>
+
+    <string name="verification_detected">ਪਛਾਣਿਆ ਗਿਆ</string>
+    <string name="verification_verified">ਪ੍ਰਮਾਣਿਤ</string>
+
+    <string name="settings_title">ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_language_section">ਭਾਸ਼ਾ</string>
+    <string name="settings_language_label">ਅਫ਼ਸਰ ਕੰਸੋਲ ਦੀ ਭਾਸ਼ਾ</string>
+
+    <string name="language_english">English (ਅੰਗਰੇਜ਼ੀ)</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_nepali">नेपाली (Nepali)</string>
+    <string name="language_bengali">বাংলা (Bengali)</string>
+    <string name="language_punjabi">ਪੰਜਾਬੀ</string>
+    <string name="language_assamese">অসমীয়া (Assamese)</string>
+    <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
+    <string name="language_unverified_notice">ਅਣ-ਪੁਸ਼ਟ ਅਨੁਵਾਦ</string>
+
+    <string name="login_title">ਬਾਰਡਰਸ਼ੀਲਡ ਏਆਈ</string>
+    <string name="login_subtitle">ਅਫ਼ਸਰ ਕੰਸੋਲ — %1$s</string>
+    <string name="login_officer_id">ਅਫ਼ਸਰ ਆਈਡੀ / ਈਮੇਲ</string>
+    <string name="login_password">ਪਾਸਵਰਡ</string>
+    <string name="login_footer">ਸਿਰਫ਼ ਅਧਿਕਾਰਤ ਵਿਅਕਤੀਆਂ ਲਈ। ਸਾਰੀਆਂ ਪਹੁੰਚ ਕੋਸ਼ਿਸ਼ਾਂ ਲਾਗ ਕੀਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।</string>
+
+    <string name="step_document">ਦਸਤਾਵੇਜ਼</string>
+    <string name="step_extraction">ਕੱਢਣਾ</string>
+    <string name="step_verification">ਤਸਦੀਕ</string>
+    <string name="step_screening">ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="step_risk_assessment">ਜੋਖਮ ਮੁਲਾਂਕਣ</string>
+    <string name="step_review">ਸਮੀਖਿਆ</string>
+    <string name="step_complete">ਮੁਕੰਮਲ</string>
+</resources>

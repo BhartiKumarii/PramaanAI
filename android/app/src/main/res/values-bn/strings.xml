@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">বর্ডারশিল্ড অফিসার</string>
+
+    <string name="nav_dashboard">ড্যাশবোর্ড</string>
+    <string name="nav_queue">সারি</string>
+    <string name="nav_history">ইতিহাস</string>
+    <string name="nav_alerts">সতর্কতা</string>
+    <string name="nav_more">আরও</string>
+
+    <string name="common_next">পরবর্তী</string>
+    <string name="common_back">পেছনে</string>
+    <string name="common_skip_tour">ট্যুর এড়িয়ে যান</string>
+    <string name="common_finish">সম্পন্ন করুন</string>
+    <string name="common_sign_in">সাইন ইন করুন</string>
+    <string name="common_clear">ক্লিয়ার করুন</string>
+    <string name="common_flag_review">ফ্ল্যাগ করুন / আরও পর্যালোচনা</string>
+    <string name="common_log_out">লগ আউট</string>
+    <string name="common_cancel">বাতিল করুন</string>
+
+    <string name="system_operational">সিস্টেম স্বাভাবিকভাবে চলছে</string>
+
+    <string name="risk_low">কম ঝুঁকি</string>
+    <string name="risk_medium">মাঝারি ঝুঁকি</string>
+    <string name="risk_high">উচ্চ ঝুঁকি</string>
+    <string name="risk_pending">মুলতুবি</string>
+
+    <string name="match_exact">সঠিক</string>
+    <string name="match_fuzzy">অস্পষ্ট</string>
+
+    <string name="verification_detected">শনাক্ত হয়েছে</string>
+    <string name="verification_verified">যাচাই করা হয়েছে</string>
+
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_language_section">ভাষা</string>
+    <string name="settings_language_label">অফিসার কনসোলের ভাষা</string>
+
+    <string name="language_english">English (ইংরেজি)</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_nepali">नेपाली (Nepali)</string>
+    <string name="language_bengali">বাংলা</string>
+    <string name="language_punjabi">ਪੰਜਾਬੀ (Punjabi)</string>
+    <string name="language_assamese">অসমীয়া (Assamese)</string>
+    <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
+    <string name="language_unverified_notice">অযাচাইকৃত অনুবাদ</string>
+
+    <string name="login_title">বর্ডারশিল্ড এআই</string>
+    <string name="login_subtitle">অফিসার কনসোল — %1$s</string>
+    <string name="login_officer_id">অফিসার আইডি / ইমেইল</string>
+    <string name="login_password">পাসওয়ার্ড</string>
+    <string name="login_footer">শুধুমাত্র অনুমোদিত ব্যক্তিদের জন্য। সমস্ত প্রবেশ প্রচেষ্টা লগ করা হয়।</string>
+
+    <string name="step_document">নথি</string>
+    <string name="step_extraction">নিষ্কাশন</string>
+    <string name="step_verification">যাচাইকরণ</string>
+    <string name="step_screening">স্ক্রিনিং</string>
+    <string name="step_risk_assessment">ঝুঁকি মূল্যায়ন</string>
+    <string name="step_review">পর্যালোচনা</string>
+    <string name="step_complete">সম্পন্ন</string>
+</resources>

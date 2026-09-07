@@ -1,0 +1,29 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.30,<0.31
+pydantic>=2.7,<3
+pydantic-settings>=2.3,<3
+sqlalchemy>=2.0,<2.1
+alembic>=1.13,<2
+psycopg2-binary>=2.9,<3
+argon2-cffi>=23.1,<24
+pyjwt>=2.8,<3
+cryptography>=42,<43
+python-multipart>=0.0.9,<0.1
+pytesseract>=0.3.10,<0.4
+pillow>=10.3,<11
+numpy>=1.26,<3
+networkx>=3.2,<4
+
+# Module 1 (OCR) uses Tesseract via pytesseract, not PaddleOCR — see
+# app/services/ocr/tesseract_provider.py for rationale (PaddlePaddle's
+# footprint was a poor fit for this build's network conditions). The
+# tesseract-ocr system binary is installed separately (see Dockerfile /
+# README) since it's not a pip package.
+
+# Module 3 (tampering) is pure Pillow (ELA) — no opencv/torch needed.
+# Module 4 (face) is a classical HOG-over-Sobel-gradients embedding, also
+# pure Pillow + numpy — see app/services/face/embedding.py and
+# app/services/face/classical_provider.py for rationale (dlib/face_recognition
+# needs cmake, unavailable here with no passwordless sudo; EasyOCR/mediapipe-
+# adjacent stacks repeat the same multi-hundred-MB dependency problem that
+# already ruled out PaddleOCR for OCR).

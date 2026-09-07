@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">বৰ্ডাৰশ্বীল্ড অফিচাৰ</string>
+
+    <string name="nav_dashboard">ডেশ্ববৰ্ড</string>
+    <string name="nav_queue">শাৰী</string>
+    <string name="nav_history">ইতিহাস</string>
+    <string name="nav_alerts">সতৰ্কবাণী</string>
+    <string name="nav_more">অধিক</string>
+
+    <string name="common_next">পৰৱৰ্তী</string>
+    <string name="common_back">পিছলৈ</string>
+    <string name="common_skip_tour">ভ্ৰমণ এৰি যাওক</string>
+    <string name="common_finish">সম্পূৰ্ণ কৰক</string>
+    <string name="common_sign_in">ছাইন ইন কৰক</string>
+    <string name="common_clear">ক্লিয়াৰ কৰক</string>
+    <string name="common_flag_review">ফ্লেগ কৰক / অধিক পৰ্যালোচনা</string>
+    <string name="common_log_out">লগ আউট</string>
+    <string name="common_cancel">বাতিল কৰক</string>
+
+    <string name="system_operational">চিষ্টেম স্বাভাৱিকভাৱে চলি আছে</string>
+
+    <string name="risk_low">কম বিপদ</string>
+    <string name="risk_medium">মধ্যম বিপদ</string>
+    <string name="risk_high">উচ্চ বিপদ</string>
+    <string name="risk_pending">বিচাৰাধীন</string>
+
+    <string name="match_exact">সঠিক</string>
+    <string name="match_fuzzy">অস্পষ্ট</string>
+
+    <string name="verification_detected">চিনাক্ত কৰা হৈছে</string>
+    <string name="verification_verified">সত্যাপিত</string>
+
+    <string name="settings_title">ছেটিংছ</string>
+    <string name="settings_language_section">ভাষা</string>
+    <string name="settings_language_label">অফিচাৰ কনচ\'লৰ ভাষা</string>
+
+    <string name="language_english">English (ইংৰাজী)</string>
+    <string name="language_hindi">हिन्दी (Hindi)</string>
+    <string name="language_nepali">नेपाली (Nepali)</string>
+    <string name="language_bengali">বাংলা (Bengali)</string>
+    <string name="language_punjabi">ਪੰਜਾਬੀ (Punjabi)</string>
+    <string name="language_assamese">অসমীয়া</string>
+    <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
+    <string name="language_unverified_notice">অসত্যাপিত অনুবাদ</string>
+
+    <string name="login_title">বৰ্ডাৰশ্বীল্ড এআই</string>
+    <string name="login_subtitle">অফিচাৰ কনচ\'ল — %1$s</string>
+    <string name="login_officer_id">অফিচাৰ আইডি / ইমেইল</string>
+    <string name="login_password">পাছৱৰ্ড</string>
+    <string name="login_footer">কেৱল অনুমোদিত ব্যক্তিৰ বাবে। সকলো প্ৰৱেশৰ চেষ্টা লগ কৰা হয়।</string>
+
+    <string name="step_document">নথি-পত্ৰ</string>
+    <string name="step_extraction">নিষ্কাশন</string>
+    <string name="step_verification">সত্যাপন</string>
+    <string name="step_screening">স্ক্ৰীনিং</string>
+    <string name="step_risk_assessment">বিপদ মূল্যায়ন</string>
+    <string name="step_review">পৰ্যালোচনা</string>
+    <string name="step_complete">সম্পূৰ্ণ</string>
+</resources>
