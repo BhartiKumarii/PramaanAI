@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 /** Holds the officer's bearer token in memory for the life of the process.
  * Phase 3 simplification: the app auto-logs-in with a fixed dev officer
@@ -56,10 +57,22 @@ object RetrofitClient {
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create()
 
+    // OkHttp's default is 10s connect/read/write, which is far too short for
+    // this backend: Render's free tier can take 30-50s to wake from a cold
+    // start, and the screening pipeline itself (OCR + forensics + face +
+    // liveness) can take 20-30s on the free tier's shared CPU even once
+    // warm. Generous timeouts here trade a longer worst-case wait for not
+    // aborting a request that was actually going to succeed.
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
+        .writeTimeout(90, TimeUnit.SECONDS)
+        .build()
+
     val apiService: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(OkHttpClient.Builder().build())
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(ApiService::class.java)
