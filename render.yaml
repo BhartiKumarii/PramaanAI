@@ -11,6 +11,16 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
+    # Without this, ANY push to main redeploys the backend, even an
+    # Android-only commit — a few minutes of container churn/flapping for a
+    # change that never touched the running service. Only redeploy when
+    # something that actually affects the backend image changes.
+    buildFilter:
+      ignoredPaths:
+        - android/**
+        - README.md
+        - .idea/**
+        - .gitignore
     envVars:
       - key: ENV
         value: production
