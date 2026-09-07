@@ -6,6 +6,7 @@ from app.api.deps import get_face_provider
 from app.core.security import get_current_user
 from app.models.user import User
 from app.services.face.base import FaceMatchResult, FaceProvider
+from app.utils.image import downscale_image_bytes
 
 router = APIRouter(prefix="/face", tags=["face"])
 
@@ -25,4 +26,6 @@ async def verify_face(
     presented_bytes = await presented_face.read()
     if not document_bytes or not presented_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    document_bytes = downscale_image_bytes(document_bytes)
+    presented_bytes = downscale_image_bytes(presented_bytes)
     return face_provider.verify(document_bytes, presented_bytes)
