@@ -44,6 +44,7 @@ from app.services.risk.base import RiskEngine
 from app.services.tampering.base import TamperingProvider, TamperingResult
 from app.services.validation.base import ValidationEngine, ValidationResult
 from app.services.validation.mrz import MRZFormatError, extract_mrz_lines, parse_td3
+from app.utils.image import downscale_image_bytes
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -62,6 +63,7 @@ async def ocr_document(
     image_bytes = await file.read()
     if not image_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    image_bytes = downscale_image_bytes(image_bytes)
     return ocr_provider.extract(image_bytes, document_type.value)
 
 
@@ -94,6 +96,7 @@ async def validate_document(
         back_bytes = await back_image.read()
         if not back_bytes:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty back_image upload")
+        back_bytes = downscale_image_bytes(back_bytes)
         raw_text = extract_mrz_text(back_bytes)
         lines = extract_mrz_lines(raw_text)
         if lines is None:
@@ -127,6 +130,7 @@ async def analyze_tampering(
     image_bytes = await file.read()
     if not image_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    image_bytes = downscale_image_bytes(image_bytes)
     return tampering_provider.analyze(image_bytes)
 
 
@@ -143,6 +147,7 @@ async def deepfake_check(
     image_bytes = await file.read()
     if not image_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    image_bytes = downscale_image_bytes(image_bytes)
     return deepfake_provider.analyze(image_bytes)
 
 
@@ -173,6 +178,7 @@ async def screen_document(
     front_bytes = await front_image.read()
     if not front_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty front_image upload")
+    front_bytes = downscale_image_bytes(front_bytes)
 
     ocr_result = ocr_provider.extract(front_bytes, document_type.value)
 
@@ -180,6 +186,7 @@ async def screen_document(
     if back_image is not None:
         back_bytes = await back_image.read()
         if back_bytes:
+            back_bytes = downscale_image_bytes(back_bytes)
             try:
                 lines = extract_mrz_lines(extract_mrz_text(back_bytes))
                 if lines is not None:
@@ -206,6 +213,7 @@ async def screen_document(
     if live_capture is not None:
         live_bytes = await live_capture.read()
         if live_bytes:
+            live_bytes = downscale_image_bytes(live_bytes)
             face_result = face_provider.verify(front_bytes, live_bytes)
             embedding = extract_embedding(live_bytes)
             record = insert_embedding(
