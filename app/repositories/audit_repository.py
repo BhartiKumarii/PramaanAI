@@ -9,13 +9,18 @@ from app.models.user import User
 
 def log_event(
     db: Session,
-    verification_id: uuid.UUID,
+    verification_id: uuid.UUID | None,
     event_type: str,
     actor_user_id: uuid.UUID,
     reason: str | None = None,
+    case_id: uuid.UUID | None = None,
 ) -> AuditEvent:
     event = AuditEvent(
-        verification_id=verification_id, event_type=event_type, actor_user_id=actor_user_id, reason=reason
+        verification_id=verification_id,
+        case_id=case_id,
+        event_type=event_type,
+        actor_user_id=actor_user_id,
+        reason=reason,
     )
     db.add(event)
     db.commit()
@@ -41,6 +46,19 @@ def list_events_with_actor(db: Session, verification_id: uuid.UUID) -> list[tupl
         select(AuditEvent, User.username)
         .join(User, User.id == AuditEvent.actor_user_id, isouter=True)
         .where(AuditEvent.verification_id == verification_id)
+        .order_by(AuditEvent.created_at)
+    ).all()
+    return [(row[0], row[1]) for row in rows]
+
+
+def list_case_events_with_actor(db: Session, case_id: uuid.UUID) -> list[tuple[AuditEvent, str | None]]:
+    """Same as list_events_with_actor, filtered by case_id instead —
+    covers case-lifecycle events (SENT, DECISION_*) logged without a
+    verification_id."""
+    rows = db.execute(
+        select(AuditEvent, User.username)
+        .join(User, User.id == AuditEvent.actor_user_id, isouter=True)
+        .where(AuditEvent.case_id == case_id)
         .order_by(AuditEvent.created_at)
     ).all()
     return [(row[0], row[1]) for row in rows]

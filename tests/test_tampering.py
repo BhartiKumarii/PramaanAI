@@ -76,7 +76,7 @@ def test_tampering_endpoint_rejects_empty_file(client, db_session):
     from app.core.security import hash_password
     from app.models.user import User, UserRole
 
-    user = User(username="tamperingtester", hashed_password=hash_password("Str0ngPass!"), role=UserRole.OFFICER)
+    user = User(username="tamperingtester", hashed_password=hash_password("Str0ngPass!"), role=UserRole.FIELD_OFFICER)
     db_session.add(user)
     db_session.commit()
     token = client.post(

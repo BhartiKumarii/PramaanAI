@@ -18,8 +18,15 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    verification_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("verifications.id"), nullable=False, index=True
+    verification_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("verifications.id"), nullable=True, index=True
+    )
+    # Cases are the officer-facing unit (see app/models/case.py) — most new
+    # events (SENT, DECISION_CLEAR, NOTE_ADDED, ...) log against a case_id.
+    # verification_id stays for the original pipeline-level CREATED event
+    # and older rows.
+    case_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("cases.id"), nullable=True, index=True
     )
     event_type: Mapped[str] = mapped_column(String(32), nullable=False)
     actor_user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)

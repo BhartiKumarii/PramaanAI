@@ -8,7 +8,7 @@ def _login(client, db_session, username="identitytester"):
     from app.core.security import hash_password
     from app.models.user import User, UserRole
 
-    user = User(username=username, hashed_password=hash_password("Str0ngPass!"), role=UserRole.OFFICER)
+    user = User(username=username, hashed_password=hash_password("Str0ngPass!"), role=UserRole.FIELD_OFFICER)
     db_session.add(user)
     db_session.commit()
     response = client.post("/auth/login", json={"username": username, "password": "Str0ngPass!"})

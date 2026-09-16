@@ -23,8 +23,10 @@ from app.api.deps import (
 )
 from app.core.security import get_current_user
 from app.db.session import get_db
+from app.models.case import CasePriority, CaseStatus
 from app.models.user import User
 from app.repositories.audit_repository import log_event
+from app.repositories.case_repository import create_case
 from app.repositories.identity_embedding_repository import insert_embedding, list_all
 from app.repositories.verification_repository import create_verification
 from app.schemas.document import DocumentType
@@ -256,7 +258,27 @@ async def screen_document(
         identity_graph_result=identity_graph_result,
         liveness_result=liveness_result,
     )
-    log_event(db, verification_record.id, "CREATED", _user.id)
+
+    if _user.checkpoint_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your account has no assigned checkpoint — ask IT/Admin to assign one before screening.",
+        )
+    case = create_case(
+        db,
+        checkpoint_id=_user.checkpoint_id,
+        field_officer_id=_user.id,
+        verification_id=verification_record.id,
+        document_type=document_type.value,
+        nationality=nationality,
+        traveler_name=name_for_lookup,
+        initial_status=CaseStatus.REVIEW_REQUIRED if risk_result.decision == "MANUAL_REVIEW" else CaseStatus.PENDING,
+        priority={"HIGH_RISK": CasePriority.HIGH, "MEDIUM_RISK": CasePriority.MEDIUM}.get(
+            risk_result.level, CasePriority.LOW
+        ),
+    )
+
+    log_event(db, verification_record.id, "CREATED", _user.id, case_id=case.id)
     blockchain_service.create_verification_record(
         verification_id=str(verification_record.id),
         document_hash=hashlib.sha256(front_bytes).hexdigest(),
@@ -266,6 +288,9 @@ async def screen_document(
 
     return ScreeningResponse(
         verification_id=str(verification_record.id),
+        case_id=str(case.id),
+        case_number=case.case_number,
+        case_status=case.status.value,
         risk=risk_result,
         ocr=ocr_result,
         validation=validation_result,

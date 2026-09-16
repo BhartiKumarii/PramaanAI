@@ -45,7 +45,7 @@ _DEFAULT_SEED_ENTRIES = [
 )
 def seed_registry(
     payload: RegistrySeedRequest | None = None,
-    _user: User = Depends(require_role(UserRole.ADMIN)),
+    _user: User = Depends(require_role(UserRole.IT_ADMIN)),
     db: Session = Depends(get_db),
 ) -> RegistrySeedResponse:
     entries = (
