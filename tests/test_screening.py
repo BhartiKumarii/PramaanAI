@@ -15,9 +15,20 @@ pytestmark = pytest.mark.skipif(not TESSERACT_AVAILABLE, reason="tesseract binar
 
 def _login(client, db_session, username="screeningtester"):
     from app.core.security import hash_password
+    from app.models.checkpoint import Checkpoint
     from app.models.user import User, UserRole
 
-    user = User(username=username, hashed_password=hash_password("Str0ngPass!"), role=UserRole.OFFICER)
+    checkpoint = db_session.query(Checkpoint).filter_by(code="TST").first()
+    if checkpoint is None:
+        checkpoint = Checkpoint(code="TST", name="Test Checkpoint")
+        db_session.add(checkpoint)
+        db_session.commit()
+    user = User(
+        username=username,
+        hashed_password=hash_password("Str0ngPass!"),
+        role=UserRole.FIELD_OFFICER,
+        checkpoint_id=checkpoint.id,
+    )
     db_session.add(user)
     db_session.commit()
     response = client.post("/auth/login", json={"username": username, "password": "Str0ngPass!"})

@@ -19,7 +19,7 @@ def seed_admin(username: str, password: str) -> None:
         if existing:
             print(f"User '{username}' already exists (role={existing.role.value}); skipping.")
             return
-        user = User(username=username, hashed_password=hash_password(password), role=UserRole.ADMIN)
+        user = User(username=username, hashed_password=hash_password(password), role=UserRole.IT_ADMIN)
         db.add(user)
         db.commit()
         print(f"Created ADMIN user '{username}'.")

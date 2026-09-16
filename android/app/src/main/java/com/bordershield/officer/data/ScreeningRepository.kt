@@ -26,7 +26,9 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 /** Local-cache-backed repository, plus the boundary to the real FastAPI
  * backend. The four Phase-2 mock queue items keep working locally
@@ -213,6 +215,27 @@ class ScreeningRepository(
         AuthSession.clear()
     }
 
+    /** The Render free-tier backend sleeps after ~15 min idle; a request
+     * that arrives while it's still waking up gets a fast 503 from Render's
+     * own edge proxy (not a hang — no client timeout would help). Retries
+     * with backoff give the ~10-30s wake-up window time to finish rather
+     * than surfacing that as a submission failure. Any other error (4xx,
+     * a real 5xx from the app itself, no network) is not retried and is
+     * thrown straight through — a real failure stays a real failure. */
+    private suspend fun <T> callScreeningWithRetry(call: suspend () -> T): T {
+        val delaysMs = listOf(8_000L, 20_000L)
+        delaysMs.forEachIndexed { attempt, delayMs ->
+            try {
+                return call()
+            } catch (e: HttpException) {
+                if (e.code() != 503) throw e
+                if (attempt == delaysMs.lastIndex) throw e
+                delay(delayMs)
+            }
+        }
+        return call()
+    }
+
     /** Real call to POST /documents/screen. Throws on failure — the caller
      * surfaces the real error rather than fabricating a result, per the
      * project's no-faked-signal rule. */
@@ -229,13 +252,15 @@ class ScreeningRepository(
         val livePart = liveImageFile?.let {
             MultipartBody.Part.createFormData("live_capture", it.name, it.asRequestBody("image/jpeg".toMediaType()))
         }
-        val response = api.screenDocument(
-            authorization = AuthSession.bearerHeader(),
-            documentType = documentType.toRequestBody("text/plain".toMediaType()),
-            nationality = nationality.toRequestBody("text/plain".toMediaType()),
-            frontImage = frontPart,
-            liveCapture = livePart,
-        )
+        val response = callScreeningWithRetry {
+            api.screenDocument(
+                authorization = AuthSession.bearerHeader(),
+                documentType = documentType.toRequestBody("text/plain".toMediaType()),
+                nationality = nationality.toRequestBody("text/plain".toMediaType()),
+                frontImage = frontPart,
+                liveCapture = livePart,
+            )
+        }
         val persistedImagePath = withContext(Dispatchers.IO) {
             val dest = File(imagesDir, "${response.verificationId}.jpg")
             frontImageFile.copyTo(dest, overwrite = true)

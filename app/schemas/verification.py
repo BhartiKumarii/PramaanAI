@@ -13,6 +13,12 @@ from app.services.validation.base import ValidationResult
 
 class ScreeningResponse(BaseModel):
     verification_id: str
+    # The Case this screening created (see app/models/case.py) — the
+    # Android "Send to Immigration" button calls POST
+    # /cases/{case_id}/submit with this id.
+    case_id: str
+    case_number: str
+    case_status: str
     risk: RiskResult
     ocr: OCRResult | None = None
     validation: ValidationResult | None = None

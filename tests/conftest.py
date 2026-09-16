@@ -20,7 +20,7 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models.user import User  # noqa: F401 — registers table metadata
+import app.models as _app_models  # noqa: F401 — registers every table's metadata
 
 _engine = create_engine(
     "sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool
