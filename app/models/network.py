@@ -40,8 +40,12 @@ class PersonEntity(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    # Masked at write time (e.g. "P**** 4821") — never the full number.
+    # Masked at write time (e.g. "P***4567") — never the full number.
     masked_document_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # SHA-256 of the normalized raw number — lets us detect "this same
+    # document number was used before" without ever storing or exposing
+    # the plaintext number itself (see app/utils/masking.py).
+    document_number_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     nationality: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
