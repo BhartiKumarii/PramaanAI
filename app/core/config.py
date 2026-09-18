@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -23,6 +24,16 @@ class Settings(BaseSettings):
     # Deliberately separate from jwt_secret_key/encryption_key — no cross-purpose
     # key reuse. No default — must be set explicitly per environment.
     hmac_secret_key: str
+
+    # CORS - comma-separated origins
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
 
 @lru_cache
