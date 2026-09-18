@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     hmac_secret_key: str
 
     # CORS - comma-separated origins
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,https://pramaanai-703j.onrender.com"
+    cors_origins: str | list[str] = "http://localhost:5173,http://127.0.0.1:5173,https://pramaanai-703j.onrender.com"
 
     @field_validator("cors_origins", mode="before")
     @classmethod
