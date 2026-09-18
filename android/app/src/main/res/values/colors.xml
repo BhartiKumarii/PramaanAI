@@ -1,3 +1,6 @@
 <resources>
-    <color name="launcher_background">#1B4332</color>
+    <!-- Matches the shipped logo asset's own backdrop exactly, so there's
+         no visible seam between the adaptive-icon background layer and
+         the logo's edge. -->
+    <color name="launcher_background">#0E100D</color>
 </resources>

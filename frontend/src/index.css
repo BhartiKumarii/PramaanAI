@@ -1,0 +1,252 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Design system ported verbatim from two reference repos the user
+   supplied (colors kept exact, per instruction — not adapted):
+   - /home/bharti/sales-ops-dashboard (dark dashboard, green accent)
+     is the app-wide default (:root) — console, login, everything
+     except the public landing page.
+   - /home/bharti/nexus-saa-s-ai-platform (forced-dark marketing
+     theme, teal/green accent) is scoped under `.theme-landing`,
+     wrapping just the public LandingPage route.
+   Both templates use the same custom-property names for the shared
+   token set (--background, --primary, --chart-1..5, etc.), so a
+   single `@theme inline` alias layer serves both — only the *values*
+   differ per scope, exactly like the templates' own :root/.dark
+   split, just repurposed as :root/.theme-landing here. */
+
+:root {
+  --background: oklch(0.09 0.005 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.12 0.005 260);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.12 0.005 260);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.95 0 0);
+  --primary-foreground: oklch(0.09 0.005 260);
+  --secondary: oklch(0.18 0.005 260);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.18 0.005 260);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.7 0.18 145);
+  --accent-foreground: oklch(0.09 0.005 260);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.95 0 0);
+  --border: oklch(0.22 0.005 260);
+  --input: oklch(0.18 0.005 260);
+  --ring: oklch(0.7 0.18 145);
+  --chart-1: oklch(0.7 0.18 220);
+  --chart-2: oklch(0.7 0.18 145);
+  --chart-3: oklch(0.75 0.18 55);
+  --chart-4: oklch(0.65 0.2 25);
+  --chart-5: oklch(0.7 0.15 300);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.11 0.005 260);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.7 0.18 145);
+  --sidebar-primary-foreground: oklch(0.09 0.005 260);
+  --sidebar-accent: oklch(0.18 0.005 260);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.22 0.005 260);
+  --sidebar-ring: oklch(0.7 0.18 145);
+  --success: oklch(0.7 0.18 145);
+  --warning: oklch(0.75 0.18 55);
+
+  /* App-specific semantic aliases used throughout the existing pages
+     (status colors, analytical) — re-pointed at the palette above
+     instead of renamed at every call site. */
+  --status-clear: var(--success);
+  --status-clear-bg: oklch(0.7 0.18 145 / 0.12);
+  --status-review: var(--warning);
+  --status-review-bg: oklch(0.75 0.18 55 / 0.12);
+  --status-high: var(--destructive);
+  --status-high-bg: oklch(0.65 0.2 25 / 0.12);
+  --analytical: var(--chart-5);
+  --analytical-bg: oklch(0.7 0.15 300 / 0.12);
+
+  --app-font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --app-font-heading: var(--app-font-sans);
+}
+
+/* Landing-page-only scope: nexus-saas-ai-platform's exact forced-dark
+   tokens (that template always renders `.dark`, never a real light
+   mode — see its app/layout.tsx forcing `<html class="dark">`). */
+.theme-landing {
+  --background: oklch(0.08 0.015 260);
+  --foreground: oklch(0.95 0.01 240);
+  --card: oklch(0.12 0.02 260);
+  --card-foreground: oklch(0.95 0.01 240);
+  --popover: oklch(0.12 0.02 260);
+  --popover-foreground: oklch(0.95 0.01 240);
+  --primary: oklch(0.7 0.18 170);
+  --primary-foreground: oklch(0.08 0.015 260);
+  --secondary: oklch(0.18 0.02 260);
+  --secondary-foreground: oklch(0.95 0.01 240);
+  --muted: oklch(0.2 0.02 260);
+  --muted-foreground: oklch(0.6 0.03 240);
+  --accent: oklch(0.65 0.15 150);
+  --accent-foreground: oklch(0.95 0.01 240);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.25 0.02 260);
+  --input: oklch(0.2 0.02 260);
+  --ring: oklch(0.7 0.18 170);
+  --chart-1: oklch(0.7 0.18 170);
+  --chart-2: oklch(0.65 0.15 150);
+  --chart-3: oklch(0.6 0.1 200);
+  --chart-4: oklch(0.7 0.12 180);
+  --chart-5: oklch(0.75 0.08 160);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.12 0.02 260);
+  --sidebar-foreground: oklch(0.95 0.01 240);
+  --sidebar-primary: oklch(0.7 0.18 170);
+  --sidebar-primary-foreground: oklch(0.95 0.01 240);
+  --sidebar-accent: oklch(0.18 0.02 260);
+  --sidebar-accent-foreground: oklch(0.95 0.01 240);
+  --sidebar-border: oklch(0.25 0.02 260);
+  --sidebar-ring: oklch(0.7 0.18 170);
+  --success: oklch(0.65 0.15 150);
+  --warning: oklch(0.75 0.18 55);
+
+  --status-clear: var(--success);
+  --status-clear-bg: oklch(0.65 0.15 150 / 0.12);
+  --status-review: var(--warning);
+  --status-review-bg: oklch(0.75 0.18 55 / 0.12);
+  --status-high: var(--destructive);
+  --status-high-bg: oklch(0.396 0.141 25.723 / 0.16);
+  --analytical: var(--chart-3);
+  --analytical-bg: oklch(0.6 0.1 200 / 0.12);
+
+  --app-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --app-font-heading: 'Space Grotesk', var(--app-font-sans);
+
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@theme inline {
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+  --font-heading: var(--app-font-heading);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-status-clear: var(--status-clear);
+  --color-status-clear-bg: var(--status-clear-bg);
+  --color-status-review: var(--status-review);
+  --color-status-review-bg: var(--status-review-bg);
+  --color-status-high: var(--status-high);
+  --color-status-high-bg: var(--status-high-bg);
+  --color-analytical: var(--analytical);
+  --color-analytical-bg: var(--analytical-bg);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  html {
+    scroll-behavior: smooth;
+    /* Dark form controls and scrollbars — without this the browser draws
+       bright white scrollbar tracks (very visible on the sidebar). */
+    color-scheme: dark;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+@layer utilities {
+  /* Landing-page decorative utilities, ported verbatim from
+     nexus-saa-s-ai-platform/app/globals.css. */
+  .theme-landing h1,
+  .theme-landing h2,
+  .theme-landing h3 {
+    font-family: var(--font-heading);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, oklch(0.7 0.18 170) 0%, oklch(0.65 0.15 150) 50%, oklch(0.6 0.12 200) 100%);
+  }
+
+  .glow {
+    box-shadow:
+      0 0 20px oklch(0.7 0.18 170 / 0.3),
+      0 0 40px oklch(0.7 0.18 170 / 0.2),
+      0 0 60px oklch(0.7 0.18 170 / 0.1);
+  }
+
+  .glow-subtle {
+    box-shadow:
+      0 0 15px oklch(0.7 0.18 170 / 0.15),
+      0 0 30px oklch(0.7 0.18 170 / 0.08);
+  }
+
+  .card-shadow {
+    box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px, rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.04) 0px 6px 6px -3px, rgba(14, 63, 126, 0.04) 0px 12px 12px -6px, rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
+  }
+
+  .noise-bg {
+    position: relative;
+  }
+
+  .noise-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(oklch(0.7 0.18 170 / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.7 0.18 170 / 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+}

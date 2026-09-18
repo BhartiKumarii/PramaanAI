@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BorderShieldOfficer"
+rootProject.name = "PramaanAiOfficer"
 include(":app")

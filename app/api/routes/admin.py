@@ -1,5 +1,4 @@
-"""IT/Admin user and device management. Every route here is IT_ADMIN-only,
-enforced server-side (require_role), never just hidden in the frontend."""
+"""Admin user and device management. All authenticated officers have full access."""
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,13 +8,16 @@ from app.core.security import require_role
 from app.db.session import get_db
 from app.models.checkpoint import Checkpoint
 from app.models.user import User, UserRole
-from app.repositories.device_repository import list_devices, set_device_disabled
+from app.repositories.audit_repository import log_event
+from app.repositories.device_repository import list_devices, reactivate_device, revoke_device, set_device_disabled
 from app.repositories.device_repository import get_device as get_device_row
-from app.repositories.user_repository import create_user, get_user, list_users, update_user
+from app.repositories.user_repository import create_user, get_user, list_users, officer_roster, update_user
 from app.schemas.admin import (
     CheckpointResponse,
     DeviceResponse,
+    DeviceRevokeRequest,
     DeviceUpdateRequest,
+    OfficerResponse,
     UserCreateRequest,
     UserResponse,
     UserUpdateRequest,
@@ -39,6 +41,8 @@ def _device_response(db: Session, device) -> DeviceResponse:
         id=str(device.id), device_identifier=device.device_identifier,
         officer_username=officer.username if officer else None,
         app_version=device.app_version, is_disabled=device.is_disabled,
+        revoked_at=device.revoked_at.isoformat() if device.revoked_at else None,
+        revoked_reason=device.revoked_reason,
         last_active_at=device.last_active_at.isoformat() if device.last_active_at else None,
         registered_at=device.registered_at.isoformat(),
     )
@@ -46,7 +50,7 @@ def _device_response(db: Session, device) -> DeviceResponse:
 
 @router.get("/users", response_model=list[UserResponse], summary="List all system accounts")
 def list_users_route(
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)), db: Session = Depends(get_db)
+    _user: User = Depends(require_role()), db: Session = Depends(get_db)
 ) -> list[UserResponse]:
     return [_user_response(db, u) for u in list_users(db)]
 
@@ -54,39 +58,45 @@ def list_users_route(
 @router.post("/users", response_model=UserResponse, summary="Create a new account")
 def create_user_route(
     payload: UserCreateRequest,
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)),
+    _user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> UserResponse:
     checkpoint_id = uuid.UUID(payload.checkpoint_id) if payload.checkpoint_id else None
     try:
-        user = create_user(db, payload.username, payload.password, UserRole(payload.role), checkpoint_id)
+        user = create_user(db, payload.username, payload.password, UserRole.OFFICER, checkpoint_id)
     except Exception as exc:  # unique-username violation, etc.
         db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"could not create user: {exc}") from exc
     return _user_response(db, user)
 
 
-@router.patch("/users/{user_id}", response_model=UserResponse, summary="Change role/checkpoint/active state, or reset password")
+@router.patch("/users/{user_id}", response_model=UserResponse, summary="Change checkpoint/active state, or reset password")
 def update_user_route(
     user_id: uuid.UUID,
     payload: UserUpdateRequest,
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)),
+    _user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> UserResponse:
     user = get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
     checkpoint_id = uuid.UUID(payload.checkpoint_id) if payload.checkpoint_id else None
-    role = UserRole(payload.role) if payload.role else None
     user = update_user(
-        db, user, role=role, checkpoint_id=checkpoint_id, is_active=payload.is_active, new_password=payload.new_password
+        db, user, role=None, checkpoint_id=checkpoint_id, is_active=payload.is_active, new_password=payload.new_password
     )
     return _user_response(db, user)
 
 
+@router.get("/officers", response_model=list[OfficerResponse], summary="Officer roster with real case counts")
+def list_officers_route(
+    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+) -> list[OfficerResponse]:
+    return [OfficerResponse(**row) for row in officer_roster(db)]
+
+
 @router.get("/devices", response_model=list[DeviceResponse], summary="List all registered field devices")
 def list_devices_route(
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)), db: Session = Depends(get_db)
+    _user: User = Depends(require_role()), db: Session = Depends(get_db)
 ) -> list[DeviceResponse]:
     return [_device_response(db, d) for d in list_devices(db)]
 
@@ -95,7 +105,7 @@ def list_devices_route(
 def update_device_route(
     device_id: uuid.UUID,
     payload: DeviceUpdateRequest,
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)),
+    _user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> DeviceResponse:
     device = get_device_row(db, device_id)
@@ -105,9 +115,46 @@ def update_device_route(
     return _device_response(db, device)
 
 
-@router.get("/checkpoints", response_model=list[CheckpointResponse], summary="List all checkpoints (for user/device assignment dropdowns)")
+@router.post(
+    "/devices/{device_id}/revoke",
+    response_model=DeviceResponse,
+    summary="Revoke a device (select device, confirm, give a reason) — a harder, reasoned state than disable",
+)
+def revoke_device_route(
+    device_id: uuid.UUID,
+    payload: DeviceRevokeRequest,
+    user: User = Depends(require_role()),
+    db: Session = Depends(get_db),
+) -> DeviceResponse:
+    device = get_device_row(db, device_id)
+    if device is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="device not found")
+    device = revoke_device(db, device, payload.reason)
+    log_event(db, None, "DEVICE_REVOKED", user.id, reason=payload.reason)
+    return _device_response(db, device)
+
+
+@router.post(
+    "/devices/{device_id}/reactivate",
+    response_model=DeviceResponse,
+    summary="Reactivate a previously revoked device",
+)
+def reactivate_device_route(
+    device_id: uuid.UUID,
+    user: User = Depends(require_role()),
+    db: Session = Depends(get_db),
+) -> DeviceResponse:
+    device = get_device_row(db, device_id)
+    if device is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="device not found")
+    device = reactivate_device(db, device)
+    log_event(db, None, "DEVICE_REACTIVATED", user.id)
+    return _device_response(db, device)
+
+
+@router.get("/checkpoints", response_model=list[CheckpointResponse], summary="List all checkpoints")
 def list_checkpoints_route(
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)), db: Session = Depends(get_db)
+    _user: User = Depends(require_role()), db: Session = Depends(get_db)
 ) -> list[CheckpointResponse]:
     checkpoints = list(db.query(Checkpoint).order_by(Checkpoint.code).all())
     return [

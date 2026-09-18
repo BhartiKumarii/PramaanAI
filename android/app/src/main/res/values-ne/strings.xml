@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">बोर्डरसिल्ड अफिसर</string>
+    <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ड्यासबोर्ड</string>
     <string name="nav_queue">पालो</string>
@@ -40,7 +40,7 @@
     <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
     <string name="language_unverified_notice">अप्रमाणित अनुवाद</string>
 
-    <string name="login_title">बोर्डरसिल्ड एआई</string>
+    <string name="login_title">PramaanAI</string>
     <string name="login_subtitle">अधिकारी कन्सोल — %1$s</string>
     <string name="login_officer_id">अधिकारी आईडी / इमेल</string>
     <string name="login_password">पासवर्ड</string>
@@ -53,4 +53,24 @@
     <string name="step_risk_assessment">जोखिम मूल्याङ्कन</string>
     <string name="step_review">समीक्षा</string>
     <string name="step_complete">सम्पन्न</string>
+
+    <!-- New Screening Screen -->
+    <string name="new_screening_title">नयाँ स्क्रिनिङ</string>
+    <string name="new_screening_subtitle">कागजात प्रमाणीकरणका लागि यात्री विवरण प्रविष्ट गर्नुहोस्</string>
+    <string name="checkpoint_label">चेकपोइन्ट</string>
+    <string name="traveler_name">यात्रीको नाम</string>
+    <string name="document_type_label">कागजात प्रकार</string>
+    <string name="document_number_label">कागजात नम्बर</string>
+    <string name="dob_label">जन्म मिति (DD/MM/YYYY)</string>
+    <string name="expiry_label">समाप्ति मिति (DD/MM/YYYY)</string>
+    <string name="nationality_label">राष्ट्रियता</string>
+    <string name="continue_to_capture">क्याप्चरका लागि अगाडि बढ्नुहोस्</string>
+    <string name="required_fields_note">* आवश्यक फिल्डहरू चेकपोइन्टअनुसार भिन्न हुन्छ</string>
+
+    <!-- Error messages -->
+    <string name="error_traveler_name_required">यात्रीको नाम आवश्यक छ</string>
+    <string name="error_document_number_required">यो चेकपोइन्टका लागि कागजात नम्बर आवश्यक छ</string>
+    <string name="error_dob_required">यो चेकपोइन्टका लागि जन्म मिति आवश्यक छ</string>
+    <string name="error_expiry_required">यो चेकपोइन्टका लागि समाप्ति मिति आवश्यक छ</string>
+    <string name="error_nationality_required">राष्ट्रियता आवश्यक छ</string>
 </resources>

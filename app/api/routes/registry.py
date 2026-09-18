@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user, require_role
 from app.db.session import get_db
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.repositories.registry_repository import insert_entries
 from app.schemas.registry import RegistryLookupRequest, RegistrySeedRequest, RegistrySeedResponse
 from app.services.registry.base import RegistryLookupResult
@@ -45,7 +45,7 @@ _DEFAULT_SEED_ENTRIES = [
 )
 def seed_registry(
     payload: RegistrySeedRequest | None = None,
-    _user: User = Depends(require_role(UserRole.IT_ADMIN)),
+    _user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> RegistrySeedResponse:
     entries = (

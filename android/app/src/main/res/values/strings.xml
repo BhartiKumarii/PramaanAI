@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BorderShield Officer</string>
+    <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_queue">Queue</string>
@@ -43,7 +43,7 @@
     <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
     <string name="language_unverified_notice">unverified translation</string>
 
-    <string name="login_title">BorderShield AI</string>
+    <string name="login_title">PramaanAI</string>
     <string name="login_subtitle">Officer Console — %1$s</string>
     <string name="login_officer_id">Officer ID / Email</string>
     <string name="login_password">Password</string>
@@ -56,4 +56,24 @@
     <string name="step_risk_assessment">Risk Assessment</string>
     <string name="step_review">Review</string>
     <string name="step_complete">Complete</string>
+
+    <!-- New Screening Screen -->
+    <string name="new_screening_title">New Screening</string>
+    <string name="new_screening_subtitle">Enter traveler details for document verification</string>
+    <string name="checkpoint_label">Checkpoint</string>
+    <string name="traveler_name">Traveler Name</string>
+    <string name="document_type_label">Document Type</string>
+    <string name="document_number_label">Document Number</string>
+    <string name="dob_label">Date of Birth (DD/MM/YYYY)</string>
+    <string name="expiry_label">Date of Expiry (DD/MM/YYYY)</string>
+    <string name="nationality_label">Nationality</string>
+    <string name="continue_to_capture">Continue to Capture</string>
+    <string name="required_fields_note">* Required fields vary by checkpoint</string>
+
+    <!-- Error messages -->
+    <string name="error_traveler_name_required">Traveler name is required</string>
+    <string name="error_document_number_required">Document number is required for this checkpoint</string>
+    <string name="error_dob_required">Date of birth is required for this checkpoint</string>
+    <string name="error_expiry_required">Date of expiry is required for this checkpoint</string>
+    <string name="error_nationality_required">Nationality is required</string>
 </resources>

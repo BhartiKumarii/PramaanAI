@@ -163,3 +163,53 @@ def test_severe_cross_check_mismatch_hard_overrides_to_high_risk():
     assert result.level == "HIGH_RISK"
     assert result.decision == "MANUAL_REVIEW"
     assert "cross_check" in result.top_reason or "mismatch" in result.top_reason
+
+
+def test_no_face_detected_floors_an_otherwise_clean_case_to_medium_review():
+    from app.services.face.base import FaceDetectionResult
+
+    result = _ENGINE.score(
+        validation_result=_CLEAN_VALIDATION,
+        registry_result=_NO_HIT_REGISTRY,
+        face_detection_result=FaceDetectionResult(status="NO_FACE", faces=[], reason="no face detected in the image"),
+    )
+    assert result.level == "MEDIUM_RISK"
+    assert result.decision == "MANUAL_REVIEW"
+    assert result.top_reason.startswith("face_detection:")
+
+
+def test_single_clean_face_does_not_trigger_the_floor():
+    from app.services.face.base import DetectedFace, FaceDetectionResult
+
+    result = _ENGINE.score(
+        validation_result=_CLEAN_VALIDATION,
+        registry_result=_NO_HIT_REGISTRY,
+        face_detection_result=FaceDetectionResult(
+            status="SINGLE_FACE",
+            faces=[DetectedFace(location={"x": 10, "y": 10, "width": 80, "height": 80}, confidence=0.99, touches_edge=False)],
+            reason="one face",
+        ),
+    )
+    assert result.level == "LOW_RISK"
+
+
+def test_expired_document_alone_is_high_risk_not_averaged_away():
+    expired = ValidationResult(
+        status="FAIL",
+        findings=[ValidationFinding(check="expiry", status="FAIL", severity="HIGH", reason="document expired")],
+    )
+    result = _ENGINE.score(validation_result=expired, registry_result=_NO_HIT_REGISTRY)
+    assert result.level == "HIGH_RISK"
+    assert result.decision == "MANUAL_REVIEW"
+    assert "validity check" in result.top_reason
+
+
+def test_below_threshold_face_match_is_floored_to_medium_review_never_hard_high():
+    unclear = _ENGINE.score(validation_result=_CLEAN_VALIDATION, face_result=_face(0.67))
+    assert unclear.level == "MEDIUM_RISK" and unclear.decision == "MANUAL_REVIEW"
+    assert unclear.top_reason.startswith("face_match:")
+
+    # Even a very low similarity is a review case, not an automatic HIGH —
+    # the HOG embedding is not reliable enough to justify a hard override.
+    very_low = FaceMatchResult(match=False, similarity=0.3, confidence=0.3, reason="cosine 0.30", location=None)
+    assert _ENGINE.score(validation_result=_CLEAN_VALIDATION, face_result=very_low).level == "MEDIUM_RISK"

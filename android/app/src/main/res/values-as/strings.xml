@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">বৰ্ডাৰশ্বীল্ড অফিচাৰ</string>
+    <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ডেশ্ববৰ্ড</string>
     <string name="nav_queue">শাৰী</string>
@@ -43,7 +43,7 @@
     <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
     <string name="language_unverified_notice">অসত্যাপিত অনুবাদ</string>
 
-    <string name="login_title">বৰ্ডাৰশ্বীল্ড এআই</string>
+    <string name="login_title">PramaanAI</string>
     <string name="login_subtitle">অফিচাৰ কনচ\'ল — %1$s</string>
     <string name="login_officer_id">অফিচাৰ আইডি / ইমেইল</string>
     <string name="login_password">পাছৱৰ্ড</string>
@@ -56,4 +56,24 @@
     <string name="step_risk_assessment">বিপদ মূল্যায়ন</string>
     <string name="step_review">পৰ্যালোচনা</string>
     <string name="step_complete">সম্পূৰ্ণ</string>
+
+    <!-- New Screening Screen -->
+    <string name="new_screening_title">নতুন ス크িনিং</string>
+    <string name="new_screening_subtitle">নথি সত্যাপন বাবে যাত্ৰীৰ বিবৰণ লিখক</string>
+    <string name="checkpoint_label">চেকপয়েন্ট</string>
+    <string name="traveler_name">যাত্ৰীৰ নাম</string>
+    <string name="document_type_label">নথিৰ ধৰণ</string>
+    <string name="document_number_label">নথি নম্বৰ</string>
+    <string name="dob_label">জন্ম তারিখ (DD/MM/YYYY)</string>
+    <string name="expiry_label">মিযদ সমাপ্তিৰ তারিখ (DD/MM/YYYY)</string>
+    <string name="nationality_label">জাতীয়তা</string>
+    <string name="continue_to_capture">ক্যাপচাৰ বাবে অগ্ৰসৰ কৰক</string>
+    <string name="required_fields_note">* প্ৰয়োজনীয় ফিল্ড চেকপয়েন্ট অনুযায়ী পৰিবৰ্তন কৰে</string>
+
+    <!-- Error messages -->
+    <string name="error_traveler_name_required">যাত্ৰীৰ নাম প্ৰয়োজন</string>
+    <string name="error_document_number_required">ইয়াল চেকপয়েন্ট বাবে নথি নম্বৰ প্ৰয়োজন</string>
+    <string name="error_dob_required">ইয়াল চেকপয়েন্ট বাবে জন্ম তারিখ প্ৰয়োজন</string>
+    <string name="error_expiry_required">ইয়াল চেকপয়েন্ট বাবে মিযদ সমাপ্তিৰ তারিখ প্ৰয়োজন</string>
+    <string name="error_nationality_required">জাতীয়তা প্ৰয়োজন</string>
 </resources>

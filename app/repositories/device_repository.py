@@ -47,3 +47,21 @@ def touch_last_active(db: Session, device: Device) -> Device:
     db.commit()
     db.refresh(device)
     return device
+
+
+def revoke_device(db: Session, device: Device, reason: str) -> Device:
+    device.revoked_at = datetime.now(timezone.utc)
+    device.revoked_reason = reason
+    device.is_disabled = True  # a revoked device is always also disabled
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+def reactivate_device(db: Session, device: Device) -> Device:
+    device.revoked_at = None
+    device.revoked_reason = None
+    device.is_disabled = False
+    db.commit()
+    db.refresh(device)
+    return device

@@ -59,3 +59,11 @@ class CaseAssignRequest(BaseModel):
 
 class CaseNoteRequest(BaseModel):
     note: str = Field(..., min_length=1)
+
+
+class CaseTimelineEvent(BaseModel):
+    event_type: str
+    action: str  # human-readable label
+    actor_username: str | None = None
+    detail: str | None = None
+    created_at: str

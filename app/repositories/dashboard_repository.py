@@ -13,6 +13,7 @@ from app.models.case import Case, CaseStatus, SyncQueueItem
 from app.models.checkpoint import Checkpoint
 from app.models.device import Device
 from app.models.user import User, UserRole
+from app.models.verification import VerificationRecord
 
 
 def immigration_dashboard(db: Session, checkpoint_id: uuid.UUID | None) -> dict:
@@ -32,7 +33,7 @@ def immigration_dashboard(db: Session, checkpoint_id: uuid.UUID | None) -> dict:
 def supervisor_dashboard(db: Session) -> dict:
     cases = list(db.execute(select(Case)).scalars())
     active_officers = db.execute(
-        select(func.count()).select_from(User).where(User.role == UserRole.FIELD_OFFICER, User.is_active.is_(True))
+        select(func.count()).select_from(User).where(User.role == UserRole.OFFICER, User.is_active.is_(True))
     ).scalar_one()
     sync_queue_pending = db.execute(
         select(func.count()).select_from(SyncQueueItem).where(SyncQueueItem.status == "PENDING")
@@ -59,11 +60,47 @@ def supervisor_dashboard(db: Session) -> dict:
         "total_scans": len(cases),
         "pending_cases": sum(1 for c in cases if c.status in (CaseStatus.PENDING, CaseStatus.PENDING_SYNC, CaseStatus.SENT)),
         "review_required": sum(1 for c in cases if c.status in (CaseStatus.REVIEW_REQUIRED, CaseStatus.SECONDARY_REVIEW, CaseStatus.HOLD_REFER)),
-        "high_priority": sum(1 for c in cases if c.priority.value == "HIGH"),
+        "high_priority_supervisor": sum(1 for c in cases if c.priority.value == "HIGH"),
         "active_officers": active_officers,
         "avg_processing_time_seconds": avg_processing_seconds,
         "offline_sync_queue": sync_queue_pending,
         "checkpoint_breakdown": list(by_checkpoint.values()),
+    }
+
+
+def analytics_dashboard(db: Session, days: int = 14) -> dict:
+    """Real aggregates over every persisted VerificationRecord — backs
+    both "Document Intelligence" (document-type/validation-flavored) and
+    "Reports & Analytics" (decision/volume-flavored) pages, since both
+    are genuinely the same underlying screening history, just grouped
+    differently. Every count here is a real GROUP BY; nothing estimated
+    or hardcoded (see this module's docstring)."""
+    records = list(db.execute(select(VerificationRecord)).scalars())
+
+    by_document_type: dict[str, int] = {}
+    by_decision: dict[str, int] = {}
+    by_level: dict[str, int] = {}
+    for r in records:
+        by_document_type[r.document_type] = by_document_type.get(r.document_type, 0) + 1
+        by_decision[r.decision] = by_decision.get(r.decision, 0) + 1
+        by_level[r.level] = by_level.get(r.level, 0) + 1
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days - 1)
+    cutoff_date = cutoff.date()
+    by_day: dict[str, int] = {}
+    for r in records:
+        record_date = r.created_at.date()
+        if record_date < cutoff_date:
+            continue
+        key = record_date.isoformat()
+        by_day[key] = by_day.get(key, 0) + 1
+
+    return {
+        "total_screenings": len(records),
+        "by_document_type": [{"key": k, "count": v} for k, v in sorted(by_document_type.items())],
+        "by_decision": [{"key": k, "count": v} for k, v in sorted(by_decision.items())],
+        "by_risk_level": [{"key": k, "count": v} for k, v in sorted(by_level.items())],
+        "by_day": [{"key": k, "count": v} for k, v in sorted(by_day.items())],
     }
 
 
