@@ -42,6 +42,9 @@ def create_verification(
     face_result: BaseModel | None = None,
     identity_graph_result: BaseModel | None = None,
     liveness_result: BaseModel | None = None,
+    duplicate_document_result: BaseModel | None = None,
+    face_detection_result: BaseModel | None = None,
+    citizen_registry_result: BaseModel | None = None,
 ) -> VerificationRecord:
     record_id = uuid.uuid4()
     payload = _canonical_payload(record_id, document_type, nationality, risk_result)
@@ -64,6 +67,9 @@ def create_verification(
         face_json=_dump(face_result),
         identity_graph_json=_dump(identity_graph_result),
         liveness_json=_dump(liveness_result),
+        duplicate_document_json=_dump(duplicate_document_result),
+        face_detection_json=_dump(face_detection_result),
+        citizen_registry_json=_dump(citizen_registry_result),
     )
     db.add(record)
     db.commit()

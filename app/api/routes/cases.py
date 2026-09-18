@@ -1,12 +1,9 @@
-"""The Case workflow: Field Officer scans -> Case created (inside
+"""The Case workflow: Officer scans -> Case created (inside
 /documents/screen, see app/api/routes/documents.py) -> submitted to
-Immigration -> reviewed -> decided. Every state change is logged via
+review -> decided. Every state change is logged via
 AuditEvent (case_id) so nothing is ever silently cleared.
 
-Visibility (see case_repository.list_cases / _ensure_case_visible) is
-enforced here in the backend, not left to the frontend to hide buttons
-for — a Field Officer cannot fetch another officer's case by guessing
-its id, an Immigration Officer cannot see another checkpoint's queue."""
+With single OFFICER role, all authenticated users have full access to all cases."""
 import json
 import uuid
 
@@ -17,7 +14,7 @@ from app.core.security import get_current_user, require_role
 from app.db.session import get_db
 from app.models.case import Case, CasePriority, CaseStatus
 from app.models.checkpoint import Checkpoint
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.repositories.audit_repository import list_case_events_with_actor, log_event
 from app.repositories.case_repository import (
     add_note,
@@ -29,6 +26,7 @@ from app.repositories.case_repository import (
     record_decision,
     submit_case,
 )
+from app.repositories.identity_embedding_repository import get_by_case_id, get_embedding, list_all
 from app.repositories.verification_repository import get_verification, verify_signature
 from app.schemas.audit import AuditEventResponse
 from app.schemas.case import (
@@ -40,10 +38,16 @@ from app.schemas.case import (
     CaseNoteRequest,
     CaseNoteResponse,
     CaseSubmitRequest,
+    CaseTimelineEvent,
 )
+from app.schemas.network import IdentityHistoryRecord
 from app.schemas.verification import VerificationRecordResponse
+from app.services.identity_graph.graph import build_graph, find_multi_identity_cluster
+from app.utils.masking import mask_document_number
+from app.services.citizen_registry.base import CitizenRegistryResult
 from app.services.deepfake.base import DeepfakeResult
-from app.services.face.base import FaceMatchResult
+from app.services.duplicate.base import DuplicateDocumentResult
+from app.services.face.base import FaceDetectionResult, FaceMatchResult
 from app.services.identity_graph.base import IdentityGraphResult
 from app.services.liveness.base import LivenessResult
 from app.services.ocr.base import OCRResult
@@ -55,21 +59,10 @@ from app.services.validation.base import ValidationResult
 router = APIRouter(prefix="/cases", tags=["cases"])
 
 
-def _ensure_case_visible(user: User, case: Case) -> None:
-    if user.role == UserRole.IT_ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin accounts have no case-queue access")
-    if user.role == UserRole.FIELD_OFFICER and case.field_officer_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="case not found")
-    if user.role == UserRole.IMMIGRATION_OFFICER and case.checkpoint_id != user.checkpoint_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="case not found")
-    # SUPERVISOR: unrestricted.
-
-
 def _get_case_or_404(db: Session, case_id: uuid.UUID, user: User) -> Case:
     case = get_case(db, case_id)
     if case is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="case not found")
-    _ensure_case_visible(user, case)
     return case
 
 
@@ -122,6 +115,9 @@ def _verification_response(record) -> VerificationRecordResponse:
         registry=_load(RegistryLookupResult, record.registry_json), face=_load(FaceMatchResult, record.face_json),
         identity_graph=_load(IdentityGraphResult, record.identity_graph_json),
         liveness=_load(LivenessResult, record.liveness_json),
+        duplicate_document=_load(DuplicateDocumentResult, record.duplicate_document_json),
+        face_detection=_load(FaceDetectionResult, record.face_detection_json),
+        citizen_registry=_load(CitizenRegistryResult, record.citizen_registry_json),
     )
 
 
@@ -182,10 +178,10 @@ def get_case_route(case_id: uuid.UUID, user: User = Depends(get_current_user), d
     )
 
 
-@router.post("/{case_id}/submit", response_model=CaseListItemResponse, summary="Field Officer forwards a case to the Immigration Officer queue")
+@router.post("/{case_id}/submit", response_model=CaseListItemResponse, summary="Officer forwards a case for review")
 def submit_case_route(
     case_id: uuid.UUID, payload: CaseSubmitRequest,
-    user: User = Depends(require_role(UserRole.FIELD_OFFICER)),
+    user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> CaseListItemResponse:
     case = _get_case_or_404(db, case_id, user)
@@ -199,10 +195,10 @@ def submit_case_route(
     return summary
 
 
-@router.patch("/{case_id}", response_model=CaseListItemResponse, summary="Assign an Immigration Officer and/or set priority")
+@router.patch("/{case_id}", response_model=CaseListItemResponse, summary="Assign an officer and/or set priority")
 def assign_case_route(
     case_id: uuid.UUID, payload: CaseAssignRequest,
-    user: User = Depends(require_role(UserRole.IMMIGRATION_OFFICER, UserRole.SUPERVISOR)),
+    user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> CaseListItemResponse:
     case = _get_case_or_404(db, case_id, user)
@@ -216,7 +212,7 @@ def assign_case_route(
 @router.post("/{case_id}/decision", response_model=CaseDetailResponse, summary="Record the authorised final decision: Clear, Secondary Review, or Hold/Refer")
 def decide_case_route(
     case_id: uuid.UUID, payload: CaseDecisionRequest,
-    user: User = Depends(require_role(UserRole.IMMIGRATION_OFFICER, UserRole.SUPERVISOR)),
+    user: User = Depends(require_role()),
     db: Session = Depends(get_db),
 ) -> CaseDetailResponse:
     case = _get_case_or_404(db, case_id, user)
@@ -251,3 +247,100 @@ def get_case_audit_route(case_id: uuid.UUID, user: User = Depends(get_current_us
         )
         for e, username in events
     ]
+
+
+@router.get(
+    "/{case_id}/identity-history",
+    response_model=list[IdentityHistoryRecord],
+    summary="Other cases whose live-capture face matches this case's, via the same real cluster detection used during screening",
+)
+def get_case_identity_history_route(
+    case_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> list[IdentityHistoryRecord]:
+    case = _get_case_or_404(db, case_id, user)
+    embedding = get_by_case_id(db, case_id)
+    if embedding is None:
+        # No live capture was taken during this case's screening, so
+        # there's nothing to compare — an honest empty result, not a
+        # fabricated "no history" claim.
+        return []
+
+    graph = build_graph(list_all(db))
+    cluster = find_multi_identity_cluster(graph, str(embedding.id))
+
+    records: list[IdentityHistoryRecord] = []
+    for member in cluster.members:
+        if member.record_id == str(embedding.id):
+            continue
+        similarity = None
+        if graph.has_edge(str(embedding.id), member.record_id):
+            similarity = graph.edges[str(embedding.id), member.record_id]["similarity"]
+
+        member_embedding = get_embedding(db, uuid.UUID(member.record_id))
+        related_case = (
+            get_case(db, member_embedding.case_id)
+            if member_embedding is not None and member_embedding.case_id is not None
+            else None
+        )
+        checkpoint = db.get(Checkpoint, related_case.checkpoint_id) if related_case is not None else None
+
+        records.append(
+            IdentityHistoryRecord(
+                record_id=member.record_id,
+                case_id=str(related_case.id) if related_case else None,
+                case_number=related_case.case_number if related_case else None,
+                checkpoint_code=checkpoint.code if checkpoint else None,
+                declared_name=member.reference_name,
+                masked_document_number=mask_document_number(member.document_number) if member.document_number else None,
+                occurred_at=related_case.created_at.isoformat() if related_case else None,
+                similarity=similarity,
+                review_status=related_case.status.value if related_case else None,
+            )
+        )
+    return records
+
+
+_EVENT_ACTION_LABELS = {
+    "CREATED": "Document scanned — OCR, validation, forensics, and (where a live capture was taken) "
+    "face matching, liveness, and identity-graph analysis all completed",
+    "VIEWED": "Case opened for review",
+    "SENT": "Case forwarded to Immigration Officer",
+    "DECISION_CLEAR": "Officer decision: Clear",
+    "DECISION_SECONDARY_REVIEW": "Officer decision: Secondary Review",
+    "DECISION_HOLD_REFER": "Officer decision: Hold/Refer",
+    "NOTE_ADDED": "Note added",
+}
+
+
+@router.get(
+    "/{case_id}/timeline",
+    response_model=list[CaseTimelineEvent],
+    summary="Chronological case history — every real logged event, oldest first",
+)
+def get_case_timeline_route(
+    case_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> list[CaseTimelineEvent]:
+    case = _get_case_or_404(db, case_id, user)
+
+    events = [
+        CaseTimelineEvent(
+            event_type=e.event_type,
+            action=_EVENT_ACTION_LABELS.get(e.event_type, e.event_type),
+            actor_username=username,
+            detail=e.reason,
+            created_at=e.created_at.isoformat(),
+        )
+        for e, username in list_case_events_with_actor(db, case.id)
+    ]
+    events.extend(
+        CaseTimelineEvent(
+            event_type="NOTE_ADDED",
+            action=_EVENT_ACTION_LABELS["NOTE_ADDED"],
+            actor_username=username,
+            detail=note.note,
+            created_at=note.created_at.isoformat(),
+        )
+        for note, username in list_notes(db, case.id)
+    )
+    events.sort(key=lambda e: e.created_at)
+    return events

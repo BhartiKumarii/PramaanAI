@@ -21,6 +21,24 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
         return ImageFont.load_default()
 
 
+def stack_images_vertically(*image_byte_sets: bytes) -> bytes:
+    """Actually combine multiple PNG byte strings into one real, openable
+    PNG (stacked top to bottom) — plain byte concatenation of two PNG
+    files does not produce a valid image at all, it produces garbage
+    neither a viewer nor PIL can open."""
+    images = [Image.open(io.BytesIO(data)) for data in image_byte_sets]
+    width = max(img.width for img in images)
+    height = sum(img.height for img in images)
+    canvas = Image.new("RGB", (width, height), color="white")
+    y = 0
+    for img in images:
+        canvas.paste(img, (0, y))
+        y += img.height
+    buffer = io.BytesIO()
+    canvas.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
 def _render(title: str, lines: list[str], height: int = 800) -> bytes:
     width = 1200
     image = Image.new("RGB", (width, height), color="white")

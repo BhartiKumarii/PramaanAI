@@ -2,6 +2,22 @@
 analysis: if the same face (embedding similarity above threshold) shows
 up under two different declared names/document numbers, that's a
 multi-identity cluster — a real fraud signal, not a hardcoded flag.
+
+Reports only the queried record's *direct* matches (1-hop neighbors in
+the similarity graph), not the full transitively-connected component,
+and this matters in practice, not just in theory: real testing against
+the AT&T/Olivetti Faces dataset (40 people, 10 photos each — see
+scripts/seed_identity_embeddings.py) found that at threshold 0.75, only
+31 of 78000 impostor (different-person) pairs false-matched — but
+connected-component transitivity turned that into single "clusters"
+merging over a dozen unrelated people, because a false edge between A-B
+and a separate one between B-C used to silently imply A and C were
+clustered too. Direct-neighbor reporting doesn't have that failure
+mode: a spurious edge stays local to the two records it actually
+connects, instead of chaining unrelated identities together. See
+_MATCH_THRESHOLD's docstring in app/services/face/classical_provider.py
+for the full genuine/impostor tradeoff numbers behind the shared
+threshold value.
 """
 import json
 
@@ -39,7 +55,12 @@ def find_multi_identity_cluster(graph: nx.Graph, node_id: str) -> IdentityGraphR
             status="NO_CLUSTER", cluster_size=0, members=[], reason=f"record {node_id} not found in graph"
         )
 
-    component = nx.node_connected_component(graph, node_id)
+    # Direct neighbors only — not nx.node_connected_component's full
+    # transitive closure. See this module's docstring for why: a rare
+    # false-positive edge would otherwise silently chain unrelated
+    # people into one reported "cluster" instead of staying local to the
+    # two records it actually connects.
+    component = set(graph.neighbors(node_id)) | {node_id}
     members = [
         IdentityClusterMember(
             record_id=n,
@@ -58,8 +79,8 @@ def find_multi_identity_cluster(graph: nx.Graph, node_id: str) -> IdentityGraphR
             cluster_size=len(component),
             members=members,
             reason=(
-                f"{len(component)} face embeddings connected by similarity >= "
-                f"{DEFAULT_MATCH_THRESHOLD} form one cluster spanning {len(distinct_names)} "
+                f"{len(component)} face embeddings directly matched (similarity >= "
+                f"{DEFAULT_MATCH_THRESHOLD}) spanning {len(distinct_names)} "
                 f"distinct declared name(s) and {len(distinct_docs)} distinct document number(s)"
             ),
         )

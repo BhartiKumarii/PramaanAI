@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    namespace = "com.bordershield.officer"
+    namespace = "com.pramaanai.officer"
     compileSdk = 37
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "com.bordershield.officer"
+        applicationId = "com.pramaanai.officer"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -29,6 +29,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,6 +58,7 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
+    implementation("androidx.camera:camera-mlkit-vision:$cameraxVersion")
 
     // Local cache of recent screenings: a Gson+file-backed store, not Room —
     // see LocalScreeningStore.kt for why (AGP 9.x's built-in-Kotlin + KSP2
@@ -68,6 +70,26 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // On-device OCR (document fields + MRZ zone text) — real Google Play
+    // Services text recognizer, runs entirely on-device, no network call,
+    // no server ever sees the image (see app/schemas/verification.py's
+    // ScreeningSubmission on the backend: only extracted text/vectors
+    // cross the wire).
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // On-device face detection (presence/count/position over the live
+    // selfie capture) — real Google Play Services detector, same
+    // on-device/no-network posture as text-recognition above; only the
+    // structured FaceDetectionResult crosses the wire, never the image
+    // (see FaceDetectionAnalyzer.kt and the backend's
+    // app/services/face/base.py FaceDetectionResult).
+    implementation("com.google.mlkit:face-detection:16.1.7")
+
+    // Offline submission queue. Plain WorkManager (no Room integration)
+    // needs no annotation processor, so it doesn't hit the same AGP
+    // 9.x + KSP2 bug that ruled out Room for LocalScreeningStore.
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

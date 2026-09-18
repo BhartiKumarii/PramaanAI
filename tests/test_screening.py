@@ -2,15 +2,20 @@ import shutil
 
 import pytest
 
-from tests.synthetic_documents import (
-    generate_face_like_image,
-    generate_mrz_lines,
-    generate_passport_back_image,
-    generate_passport_image,
-)
+from app.services.face.embedding import extract_embedding
+from tests.synthetic_documents import generate_face_like_image, generate_mrz_lines, generate_passport_image
 
 TESSERACT_AVAILABLE = shutil.which("tesseract") is not None
 pytestmark = pytest.mark.skipif(not TESSERACT_AVAILABLE, reason="tesseract binary not installed on this host")
+
+_OCR_FIELDS = {
+    "name": "JOHN MICHAEL SMITH",
+    "passport_number": "N1234567",
+    "nationality": "INDIAN",
+    "date_of_birth": "12/04/1990",
+    "date_of_expiry": "11/04/2030",
+    "gender": "M",
+}
 
 
 def _login(client, db_session, username="screeningtester"):
@@ -26,7 +31,7 @@ def _login(client, db_session, username="screeningtester"):
     user = User(
         username=username,
         hashed_password=hash_password("Str0ngPass!"),
-        role=UserRole.FIELD_OFFICER,
+        role=UserRole.OFFICER,
         checkpoint_id=checkpoint.id,
     )
     db_session.add(user)
@@ -36,19 +41,38 @@ def _login(client, db_session, username="screeningtester"):
     return response.json()["access_token"]
 
 
+def _embedding_for_seed(seed: int) -> list[float]:
+    """Real embedding computed from a synthetic face-like image, exactly
+    the computation a device would run on-device before submitting only
+    the resulting vector (never the image) to /documents/screen."""
+    return extract_embedding(generate_face_like_image(seed))
+
+
+def _screen(client, token, **overrides):
+    payload = {
+        "document_type": "passport",
+        "nationality": "INDIAN",
+        "ocr_fields": dict(_OCR_FIELDS),
+        "ocr_confidence": 0.95,
+    }
+    payload.update(overrides)
+    return client.post("/documents/screen", headers={"Authorization": f"Bearer {token}"}, json=payload)
+
+
 def test_full_screening_pipeline_end_to_end(client, db_session):
     token = _login(client, db_session)
     line1, line2 = generate_mrz_lines()
 
-    response = client.post(
-        "/documents/screen",
-        headers={"Authorization": f"Bearer {token}"},
-        data={"document_type": "passport", "nationality": "INDIAN"},
-        files={
-            "front_image": ("front.png", generate_passport_image(), "image/png"),
-            "back_image": ("back.png", generate_passport_back_image(line1, line2), "image/png"),
-            "live_capture": ("live.png", generate_face_like_image(1), "image/png"),
-        },
+    # A text-heavy document image and a face-shaped pattern are genuinely
+    # different visual domains — real embeddings of each should, and do,
+    # come out dissimilar, unlike two face-pattern seeds which share too
+    # much structure (same ellipses, small per-seed shift) to reliably differ.
+    response = _screen(
+        client,
+        token,
+        mrz_text=f"{line1}\n{line2}",
+        document_face_embedding=extract_embedding(generate_passport_image()),
+        live_face_embedding=_embedding_for_seed(1),
     )
 
     assert response.status_code == 200
@@ -58,17 +82,15 @@ def test_full_screening_pipeline_end_to_end(client, db_session):
     assert body["ocr"]["fields"]["passport_number"] == "N1234567"
     assert body["validation"]["status"] == "PASS"
     assert any(f["check"] == "mrz_checksum_composite" for f in body["validation"]["findings"])
-    assert body["tampering"]["tampering_risk"] is not None
-    # Deepfake/liveness are real heuristics now (computed from live_capture),
-    # not fixed values — check they ran and produced a real 0..1 score.
-    assert body["deepfake"]["status"] == "ANALYZED"
-    assert 0.0 <= body["deepfake"]["score"] <= 1.0
-    assert body["liveness"]["status"] in {"LIVE", "SUSPECTED_SPOOF"}
-    assert 0.0 <= body["liveness"]["score"] <= 1.0
+    # No pixel-level signal was submitted this call — the risk engine must
+    # treat that as "not run", not silently score it as clean.
+    assert body["tampering"] is None
+    assert body["deepfake"] is None
+    assert body["liveness"] is None
     assert body["registry"]["status"] == "NO_HIT"
-    # front_image (printed document text) and live_capture (a distinct synthetic
-    # face pattern) are genuinely different images here, so a real embedding
-    # comparison should — and does — report low similarity, not a placeholder.
+    # Two genuinely different embeddings (distinct synthetic face seeds) —
+    # a real cosine-similarity comparison should, and does, report low
+    # similarity, not a placeholder.
     assert -1.0 <= body["face"]["similarity"] <= 1.0
     assert body["face"]["match"] is False
     assert body["identity_graph"]["status"] == "NO_CLUSTER"
@@ -76,20 +98,14 @@ def test_full_screening_pipeline_end_to_end(client, db_session):
     risk = body["risk"]
     assert 0 <= risk["score"] <= 100
     assert risk["decision"] in {"CLEAR", "MANUAL_REVIEW"}
-    assert len(risk["breakdown"]) >= 4
-    assert any(s["signal"] == "deepfake" for s in risk["breakdown"])
-    assert any(s["signal"] == "liveness" for s in risk["breakdown"])
+    assert any(s["signal"] == "face_match" for s in risk["breakdown"])
+    assert any(s["signal"] == "identity_graph" for s in risk["breakdown"])
     assert body["verification_id"]
 
 
-def test_screening_without_back_or_live_capture_still_scores(client, db_session):
+def test_screening_without_mrz_or_face_still_scores(client, db_session):
     token = _login(client, db_session, username="minimaltester")
-    response = client.post(
-        "/documents/screen",
-        headers={"Authorization": f"Bearer {token}"},
-        data={"document_type": "passport", "nationality": "INDIAN"},
-        files={"front_image": ("front.png", generate_passport_image(), "image/png")},
-    )
+    response = _screen(client, token)
     assert response.status_code == 200
     body = response.json()
     assert body["face"] is None
@@ -98,14 +114,15 @@ def test_screening_without_back_or_live_capture_still_scores(client, db_session)
     assert body["risk"]["score"] is not None
 
 
+def test_screening_rejects_empty_ocr_fields(client, db_session):
+    token = _login(client, db_session, username="emptyocrtester")
+    response = _screen(client, token, ocr_fields={})
+    assert response.status_code == 400
+
+
 def test_verification_record_roundtrips_with_valid_signature(client, db_session):
     token = _login(client, db_session, username="roundtriptester")
-    screen_response = client.post(
-        "/documents/screen",
-        headers={"Authorization": f"Bearer {token}"},
-        data={"document_type": "passport", "nationality": "INDIAN"},
-        files={"front_image": ("front.png", generate_passport_image(), "image/png")},
-    )
+    screen_response = _screen(client, token)
     verification_id = screen_response.json()["verification_id"]
 
     get_response = client.get(
@@ -123,19 +140,16 @@ def test_tampered_stored_record_fails_signature_verification(client, db_session)
     from app.models.verification import VerificationRecord
 
     token = _login(client, db_session, username="tampertester")
-    screen_response = client.post(
-        "/documents/screen",
-        headers={"Authorization": f"Bearer {token}"},
-        data={"document_type": "passport", "nationality": "INDIAN"},
-        files={"front_image": ("front.png", generate_passport_image(), "image/png")},
-    )
+    screen_response = _screen(client, token)
     verification_id = screen_response.json()["verification_id"]
 
-    # Simulate an attacker directly editing the stored score in the database.
+    # Simulate an attacker directly editing the stored score in the
+    # database — guaranteed different from whatever was actually signed,
+    # not just coincidentally the same value re-written.
     record = db_session.get(VerificationRecord, uuid.UUID(verification_id))
-    record.score = 0
-    record.level = "LOW_RISK"
-    record.decision = "CLEAR"
+    record.score = (record.score + 37) % 101
+    record.level = "HIGH_RISK" if record.level != "HIGH_RISK" else "LOW_RISK"
+    record.decision = "MANUAL_REVIEW" if record.decision != "MANUAL_REVIEW" else "CLEAR"
     db_session.commit()
 
     get_response = client.get(
@@ -157,7 +171,6 @@ def test_verification_record_not_found(client, db_session):
 def test_screen_requires_auth(client):
     response = client.post(
         "/documents/screen",
-        data={"document_type": "passport", "nationality": "INDIAN"},
-        files={"front_image": ("front.png", generate_passport_image(), "image/png")},
+        json={"document_type": "passport", "nationality": "INDIAN", "ocr_fields": dict(_OCR_FIELDS)},
     )
     assert response.status_code == 401

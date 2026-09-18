@@ -8,8 +8,9 @@ from app.services.blockchain.base import BlockchainService
 from app.services.blockchain.local_hash_chain import LocalHashChainBlockchainService
 from app.services.deepfake.base import DeepfakeProvider
 from app.services.deepfake.heuristic_provider import HeuristicDeepfakeProvider
-from app.services.face.base import FaceProvider
+from app.services.face.base import FaceDetector, FaceProvider
 from app.services.face.classical_provider import ClassicalFaceProvider
+from app.services.face.yunet_detector import YuNetFaceDetector
 from app.services.liveness.base import LivenessProvider
 from app.services.liveness.heuristic_provider import HeuristicLivenessProvider
 from app.services.ocr.base import OCRProvider
@@ -40,6 +41,11 @@ def get_tampering_provider() -> TamperingProvider:
 @lru_cache
 def get_face_provider() -> FaceProvider:
     return ClassicalFaceProvider()
+
+
+@lru_cache
+def get_face_detector() -> FaceDetector:
+    return YuNetFaceDetector()
 
 
 @lru_cache

@@ -5,7 +5,7 @@ def _login(client, db_session):
     from app.core.security import hash_password
     from app.models.user import User, UserRole
 
-    user = User(username="facetester", hashed_password=hash_password("Str0ngPass!"), role=UserRole.FIELD_OFFICER)
+    user = User(username="facetester", hashed_password=hash_password("Str0ngPass!"), role=UserRole.OFFICER)
     db_session.add(user)
     db_session.commit()
 

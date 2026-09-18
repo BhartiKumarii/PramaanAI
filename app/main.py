@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.routes import (
     admin,
+    audit,
     auth,
     blockchain,
     cases,
@@ -11,8 +12,10 @@ from app.api.routes import (
     documents,
     face,
     identity,
+    network,
     registry,
     system,
+    testing,
     verification,
 )
 from app.utils.logging import setup_logging
@@ -34,6 +37,8 @@ app.include_router(checkpoints.router)
 app.include_router(dashboard.router)
 app.include_router(devices.router)
 app.include_router(admin.router)
+app.include_router(audit.router)
+app.include_router(network.router)
 app.include_router(system.router)
 app.include_router(documents.router)
 app.include_router(face.router)
@@ -41,6 +46,7 @@ app.include_router(registry.router)
 app.include_router(identity.router)
 app.include_router(verification.router)
 app.include_router(blockchain.router)
+app.include_router(testing.router)
 
 
 @app.get("/health", tags=["system"], summary="Liveness check")

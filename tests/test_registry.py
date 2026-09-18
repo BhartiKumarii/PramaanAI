@@ -95,24 +95,24 @@ def test_lookup_never_collapses_exact_and_fuzzy_into_one_flag(db_session):
 # ---- endpoints --------------------------------------------------------------
 
 
-def test_seed_requires_admin_role(client, db_session):
+def test_officer_can_seed_registry(client, db_session):
     from app.models.user import UserRole
 
-    _create_user(db_session, "officer_noseed", UserRole.FIELD_OFFICER)
-    token = _login(client, "officer_noseed")
+    _create_user(db_session, "officer1", UserRole.OFFICER)
+    token = _login(client, "officer1")
     response = client.post("/registry/seed", headers={"Authorization": f"Bearer {token}"}, json={})
-    assert response.status_code == 403
+    assert response.status_code == 200
 
 
 def test_seed_and_lookup_endpoint_end_to_end(client, db_session):
     from app.models.user import UserRole
 
-    _create_user(db_session, "admin1", UserRole.IT_ADMIN)
+    _create_user(db_session, "admin1", UserRole.OFFICER)
     admin_token = _login(client, "admin1")
     seed_response = _seed_default(client, admin_token)
     assert seed_response["seeded"] == 3
 
-    _create_user(db_session, "officer1", UserRole.FIELD_OFFICER)
+    _create_user(db_session, "officer1", UserRole.OFFICER)
     officer_token = _login(client, "officer1")
 
     exact_response = client.post(

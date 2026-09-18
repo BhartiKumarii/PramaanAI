@@ -4,7 +4,6 @@ import pytest
 
 from app.repositories.blockchain_repository import append_block, find_block_by_verification_id
 from app.services.blockchain.local_hash_chain import LocalHashChainBlockchainService
-from tests.synthetic_documents import generate_passport_image
 
 TESSERACT_AVAILABLE = shutil.which("tesseract") is not None
 pytestmark = pytest.mark.skipif(not TESSERACT_AVAILABLE, reason="tesseract binary not installed on this host")
@@ -23,7 +22,7 @@ def _login(client, db_session, username="audittester"):
     user = User(
         username=username,
         hashed_password=hash_password("Str0ngPass!"),
-        role=UserRole.FIELD_OFFICER,
+        role=UserRole.OFFICER,
         checkpoint_id=checkpoint.id,
     )
     db_session.add(user)
@@ -37,8 +36,12 @@ def _screen(client, token):
     response = client.post(
         "/documents/screen",
         headers={"Authorization": f"Bearer {token}"},
-        data={"document_type": "passport", "nationality": "INDIAN"},
-        files={"front_image": ("front.png", generate_passport_image(), "image/png")},
+        json={
+            "document_type": "passport",
+            "nationality": "INDIAN",
+            "ocr_fields": {"name": "JOHN MICHAEL SMITH", "passport_number": "N1234567"},
+            "ocr_confidence": 0.95,
+        },
     )
     assert response.status_code == 200
     return response.json()["verification_id"]

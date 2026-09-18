@@ -16,8 +16,10 @@ from app.repositories.audit_repository import list_events_with_actor, log_event
 from app.repositories.verification_repository import get_verification, list_verifications, verify_signature
 from app.schemas.audit import AuditEventResponse, DisputeRequest
 from app.schemas.verification import VerificationListItemResponse, VerificationRecordResponse
+from app.services.citizen_registry.base import CitizenRegistryResult
 from app.services.deepfake.base import DeepfakeResult
-from app.services.face.base import FaceMatchResult
+from app.services.duplicate.base import DuplicateDocumentResult
+from app.services.face.base import FaceDetectionResult, FaceMatchResult
 from app.services.identity_graph.base import IdentityGraphResult
 from app.services.liveness.base import LivenessResult
 from app.services.ocr.base import OCRResult
@@ -79,6 +81,9 @@ def get_verification_record(
         face=_load(FaceMatchResult, record.face_json),
         identity_graph=_load(IdentityGraphResult, record.identity_graph_json),
         liveness=_load(LivenessResult, record.liveness_json),
+        duplicate_document=_load(DuplicateDocumentResult, record.duplicate_document_json),
+        face_detection=_load(FaceDetectionResult, record.face_detection_json),
+        citizen_registry=_load(CitizenRegistryResult, record.citizen_registry_json),
     )
 
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ਬਾਰਡਰਸ਼ੀਲਡ ਅਫ਼ਸਰ</string>
+    <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ਡੈਸ਼ਬੋਰਡ</string>
     <string name="nav_queue">ਕਤਾਰ</string>
@@ -43,7 +43,7 @@
     <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
     <string name="language_unverified_notice">ਅਣ-ਪੁਸ਼ਟ ਅਨੁਵਾਦ</string>
 
-    <string name="login_title">ਬਾਰਡਰਸ਼ੀਲਡ ਏਆਈ</string>
+    <string name="login_title">PramaanAI</string>
     <string name="login_subtitle">ਅਫ਼ਸਰ ਕੰਸੋਲ — %1$s</string>
     <string name="login_officer_id">ਅਫ਼ਸਰ ਆਈਡੀ / ਈਮੇਲ</string>
     <string name="login_password">ਪਾਸਵਰਡ</string>
@@ -56,4 +56,24 @@
     <string name="step_risk_assessment">ਜੋਖਮ ਮੁਲਾਂਕਣ</string>
     <string name="step_review">ਸਮੀਖਿਆ</string>
     <string name="step_complete">ਮੁਕੰਮਲ</string>
+
+    <!-- New Screening Screen -->
+    <string name="new_screening_title">ਨਵੀਂ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="new_screening_subtitle">ਦਸਤਾਵੇਜ਼ ਪੜਤਾਲ ਲਈ ਯਾਤਰੀ ਵੇਰਵਾ ਦਰਜ ਕਰੋ</string>
+    <string name="checkpoint_label">ਚੈਕਪੁਆਇੰਟ</string>
+    <string name="traveler_name">ਯਾਤਰੀ ਦਾ ਨਾਮ</string>
+    <string name="document_type_label">ਦਸਤਾਵੇਜ਼ ਦਾ ਕਿਸਮ</string>
+    <string name="document_number_label">ਦਸਤਾਵੇਜ਼ ਨੰਬਰ</string>
+    <string name="dob_label">ਜਨਮ ਤਾਰੀਖ (DD/MM/YYYY)</string>
+    <string name="expiry_label">ਮਿਆਦ ਖਤਮ ਹੋਣ ਦੀ ਤਾਰੀਖ (DD/MM/YYYY)</string>
+    <string name="nationality_label">ਰਾਸ਼ਟਰੀਤਾ</string>
+    <string name="continue_to_capture">ਕੈਪਚਰ ਲਈ ਜਾਰੀ ਰੱਖੋ</string>
+    <string name="required_fields_note">* ਲੋੜੀਂਦੇ ਫਿਲਡ ਚੈਕਪੁਆਇੰਟ ਮੁਤਾਬਕ ਬਦਲਦੇ ਹਨ</string>
+
+    <!-- Error messages -->
+    <string name="error_traveler_name_required">ਯਾਤਰੀ ਦਾ ਨਾਮ ਲੋੜੀਂਦਾ ਹੈ</string>
+    <string name="error_document_number_required">ਇਸ ਚੈਕਪੁਆਇੰਟ ਲਈ ਦਸਤਾਵੇਜ਼ ਨੰਬਰ ਲੋੜੀਂਦਾ ਹੈ</string>
+    <string name="error_dob_required">ਇਸ ਚੈਕਪੁਆਇੰਟ ਲਈ ਜਨਮ ਤਾਰੀਖ ਲੋੜੀਂਦੀ ਹੈ</string>
+    <string name="error_expiry_required">ਇਸ ਚੈਕਪੁਆਇੰਟ ਲਈ ਮਿਆਦ ਖਤਮ ਹੋਣ ਦੀ ਤਾਰੀਖ ਲੋੜੀਂਦੀ ਹੈ</string>
+    <string name="error_nationality_required">ਰਾਸ਼ਟਰੀਤਾ ਲੋੜੀਂਦੀ ਹੈ</string>
 </resources>

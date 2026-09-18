@@ -74,30 +74,8 @@ def list_cases(
     limit: int = 50,
     offset: int = 0,
 ) -> list[Case]:
-    """Role scoping is enforced here, not left to the caller:
-    - FIELD_OFFICER: only cases they personally created.
-    - IMMIGRATION_OFFICER: cases at their own checkpoint that have been
-      sent (or further along) — never another checkpoint's queue, never
-      an officer's still-local PENDING draft.
-    - SUPERVISOR: every case, any checkpoint.
-    - IT_ADMIN: none — admin has no case-queue view (system-only), so an
-      empty list here, enforced again at the route with a 403.
-    """
+    """All authenticated officers have full access to all cases."""
     stmt = select(Case)
-
-    if requester.role == UserRole.FIELD_OFFICER:
-        stmt = stmt.where(Case.field_officer_id == requester.id)
-    elif requester.role == UserRole.IMMIGRATION_OFFICER:
-        stmt = stmt.where(
-            Case.checkpoint_id == requester.checkpoint_id,
-            Case.status.in_(
-                [CaseStatus.SENT, CaseStatus.REVIEW_REQUIRED, CaseStatus.CLEAR,
-                 CaseStatus.SECONDARY_REVIEW, CaseStatus.HOLD_REFER]
-            ),
-        )
-    elif requester.role == UserRole.IT_ADMIN:
-        return []
-    # SUPERVISOR: unrestricted.
 
     if status_filter is not None:
         stmt = stmt.where(Case.status == status_filter)

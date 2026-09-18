@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.audit import AuditEvent
+from app.models.case import Case
 from app.models.user import User
 
 
@@ -62,3 +63,21 @@ def list_case_events_with_actor(db: Session, case_id: uuid.UUID) -> list[tuple[A
         .order_by(AuditEvent.created_at)
     ).all()
     return [(row[0], row[1]) for row in rows]
+
+
+def list_all_events(
+    db: Session, *, limit: int = 100, offset: int = 0
+) -> list[tuple[AuditEvent, str | None, str | None, str | None]]:
+    """System-wide audit log (Admin/IT only — see /audit-logs). Each row
+    pairs the real event with the real acting officer's username+role and
+    the real case number it belongs to, if any — never a placeholder for
+    a field that isn't actually resolvable."""
+    rows = db.execute(
+        select(AuditEvent, User.username, User.role, Case.case_number)
+        .join(User, User.id == AuditEvent.actor_user_id, isouter=True)
+        .join(Case, Case.id == AuditEvent.case_id, isouter=True)
+        .order_by(AuditEvent.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return [(row[0], row[1], row[2].value if row[2] else None, row[3]) for row in rows]

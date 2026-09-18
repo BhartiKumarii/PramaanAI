@@ -1,18 +1,26 @@
-"""Weighted risk fusion (Module 6). Weights: checksum 0.18, forensics
-0.18, deepfake 0.12, blacklist 0.18, face match 0.14, identity graph 0.08,
-liveness 0.12.
+"""Weighted risk fusion (Module 6). Weights: checksum 0.16, forensics
+0.16, deepfake 0.10, blacklist 0.16, face match 0.12, identity graph 0.08,
+liveness 0.10, duplicate_document 0.12, face_detection 0.10,
+citizen_registry 0.14.
 
 If a signal wasn't supplied (e.g. liveness/deepfake when no live capture
 was taken, or either provider reporting NOT_IMPLEMENTED), its weight is
 dropped and the remaining weights are renormalized to sum to 1, rather
 than silently treating a missing signal as "zero risk" or shrinking the
 maximum possible score. Hard overrides (a HIGH-severity EXACT blacklist
-hit, a multi-identity cluster, or a HIGH-severity front/back cross-check
-failure) force HIGH_RISK/MANUAL_REVIEW regardless of the weighted score —
-these are the cases a checkpoint cannot afford to average away.
+hit, a multi-identity cluster, a HIGH-severity front/back cross-check
+failure, the same document number reused under a different declared
+name, or a document number on file for a different citizen-registry
+identity) force HIGH_RISK/MANUAL_REVIEW regardless of the weighted score —
+these are the cases a checkpoint cannot afford to average away. An
+ordinary repeat crossing on the same document under the *same* name is
+explicitly NOT penalized — SSB's checkpoints are open, treaty-based
+borders where that is routine, not fraud (see CLAUDE.md).
 """
+from app.services.citizen_registry.base import CitizenRegistryResult
 from app.services.deepfake.base import DeepfakeResult
-from app.services.face.base import FaceMatchResult
+from app.services.duplicate.base import DuplicateDocumentResult
+from app.services.face.base import FaceDetectionResult, FaceMatchResult
 from app.services.identity_graph.base import IdentityGraphResult
 from app.services.liveness.base import LivenessResult
 from app.services.registry.base import RegistryLookupResult
@@ -21,17 +29,33 @@ from app.services.tampering.base import TamperingResult
 from app.services.validation.base import ValidationResult
 
 _WEIGHTS = {
-    "checksum": 0.18,
-    "forensics": 0.18,
-    "deepfake": 0.12,
-    "blacklist": 0.18,
-    "face_match": 0.14,
+    "checksum": 0.16,
+    "forensics": 0.16,
+    "deepfake": 0.10,
+    "blacklist": 0.16,
+    "face_match": 0.12,
     "identity_graph": 0.08,
-    "liveness": 0.12,
+    "liveness": 0.10,
+    "duplicate_document": 0.12,
+    "face_detection": 0.10,
+    "citizen_registry": 0.14,
 }
 _FUZZY_CONFIDENCE_MULTIPLIER = 0.5
 _LOW_RISK_CEILING = 30
 _MEDIUM_RISK_CEILING = 70
+
+
+def active_risk_config() -> dict:
+    """Read-only view of the actual constants above — for the Admin
+    Settings page. There's no persistence layer for these yet (they're
+    still hardcoded here), so this is honestly a *display* of the real
+    active configuration, not an editable settings store — see this
+    module's docstring for why each weight is what it is."""
+    return {
+        "weights": dict(_WEIGHTS),
+        "low_risk_ceiling": _LOW_RISK_CEILING,
+        "medium_risk_ceiling": _MEDIUM_RISK_CEILING,
+    }
 
 
 def _severity_risk(severity: str) -> float:
@@ -82,6 +106,37 @@ def _liveness_risk(result: LivenessResult) -> tuple[float, str, dict | None]:
     return result.score or 0.0, result.reason, None
 
 
+def _face_detection_risk(result: FaceDetectionResult) -> tuple[float, str, dict | None]:
+    if result.status == "NO_FACE":
+        return 0.9, result.reason, None
+    if result.status == "MULTIPLE_FACES":
+        return 0.8, result.reason, result.faces[0].location if result.faces else None
+    face = result.faces[0]
+    if face.touches_edge:
+        return 0.4, result.reason, face.location
+    return 0.0, result.reason, None
+
+
+def _citizen_registry_risk(result: CitizenRegistryResult) -> tuple[float, str, dict | None]:
+    if result.status == "MISMATCH":
+        return 1.0, result.reason, None
+    if result.status == "REVOKED_MATCH":
+        return 0.8, result.reason, None
+    # MATCH and NO_RECORD are both zero risk — a positive match is clean,
+    # and an unseeded document in a small demo dataset is not evidence of
+    # anything (see the module docstring on CitizenRegistryResult).
+    return 0.0, result.reason, None
+
+
+def _duplicate_document_risk(result: DuplicateDocumentResult) -> tuple[float, str, dict | None]:
+    if result.status == "DIFFERENT_IDENTITY_REUSE":
+        return 1.0, result.reason, None
+    # NO_MATCH and SAME_IDENTITY_REUSE (a routine repeat crossing) are
+    # both zero risk — only a different declared identity on the same
+    # document number is a real signal here.
+    return 0.0, result.reason, None
+
+
 class DefaultRiskEngine(RiskEngine):
     def score(
         self,
@@ -92,6 +147,9 @@ class DefaultRiskEngine(RiskEngine):
         face_result: FaceMatchResult | None = None,
         identity_graph_result: IdentityGraphResult | None = None,
         liveness_result: LivenessResult | None = None,
+        duplicate_document_result: DuplicateDocumentResult | None = None,
+        face_detection_result: FaceDetectionResult | None = None,
+        citizen_registry_result: CitizenRegistryResult | None = None,
     ) -> RiskResult:
         components: dict[str, tuple[float, str, dict | None]] = {}
 
@@ -109,6 +167,12 @@ class DefaultRiskEngine(RiskEngine):
             components["identity_graph"] = _identity_graph_risk(identity_graph_result)
         if liveness_result is not None and liveness_result.status != "NOT_IMPLEMENTED":
             components["liveness"] = _liveness_risk(liveness_result)
+        if duplicate_document_result is not None:
+            components["duplicate_document"] = _duplicate_document_risk(duplicate_document_result)
+        if face_detection_result is not None:
+            components["face_detection"] = _face_detection_risk(face_detection_result)
+        if citizen_registry_result is not None:
+            components["citizen_registry"] = _citizen_registry_risk(citizen_registry_result)
 
         if not components:
             return RiskResult(
@@ -136,7 +200,8 @@ class DefaultRiskEngine(RiskEngine):
         score = round(weighted_sum * 100)
 
         override_level, override_decision, override_reason = self._hard_overrides(
-            registry_result, identity_graph_result, validation_result
+            registry_result, identity_graph_result, validation_result,
+            duplicate_document_result, citizen_registry_result,
         )
         if override_level is not None:
             return RiskResult(
@@ -148,8 +213,28 @@ class DefaultRiskEngine(RiskEngine):
             )
 
         level = self._level_for_score(score)
-        decision = "CLEAR" if level == "LOW_RISK" else "MANUAL_REVIEW"
         top = breakdown[0]
+        # Face mismatch is a headline condition, but at its normal weight it
+        # is averaged away by a run of clean signals — so a below-threshold
+        # match is floored to review. It is deliberately NOT escalated to a
+        # hard HIGH: the face embedding is a HOG descriptor, and the same
+        # person photographed on-device against a small document photo can
+        # score well below a threshold that different people also miss, so a
+        # "strong mismatch" verdict would not be honest. The officer sees the
+        # exact similarity value and decides.
+        if face_result is not None and not face_result.match and level == "LOW_RISK":
+            level = "MEDIUM_RISK"
+            score = max(score, _LOW_RISK_CEILING)
+            top = next(b for b in breakdown if b.signal == "face_match")
+        if (
+            level == "LOW_RISK"
+            and face_detection_result is not None
+            and face_detection_result.status in ("NO_FACE", "MULTIPLE_FACES")
+        ):
+            level = "MEDIUM_RISK"
+            score = max(score, _LOW_RISK_CEILING)
+            top = next(b for b in breakdown if b.signal == "face_detection")
+        decision = "CLEAR" if level == "LOW_RISK" else "MANUAL_REVIEW"
         return RiskResult(
             score=score, level=level, decision=decision, top_reason=f"{top.signal}: {top.reason}", breakdown=breakdown
         )
@@ -166,7 +251,21 @@ class DefaultRiskEngine(RiskEngine):
         registry_result: RegistryLookupResult | None,
         identity_graph_result: IdentityGraphResult | None,
         validation_result: ValidationResult | None,
+        duplicate_document_result: DuplicateDocumentResult | None = None,
+        citizen_registry_result: CitizenRegistryResult | None = None,
     ) -> tuple[str | None, str | None, str | None]:
+        if citizen_registry_result is not None and citizen_registry_result.status == "MISMATCH":
+            return (
+                "HIGH_RISK",
+                "MANUAL_REVIEW",
+                f"hard override: {citizen_registry_result.reason}",
+            )
+        if duplicate_document_result is not None and duplicate_document_result.status == "DIFFERENT_IDENTITY_REUSE":
+            return (
+                "HIGH_RISK",
+                "MANUAL_REVIEW",
+                f"hard override: {duplicate_document_result.reason}",
+            )
         if registry_result is not None:
             for hit in registry_result.hits:
                 if hit.match_type == "EXACT" and hit.severity == "HIGH":
@@ -183,10 +282,16 @@ class DefaultRiskEngine(RiskEngine):
             )
         if validation_result is not None:
             for finding in validation_result.findings:
-                if finding.status == "FAIL" and finding.severity == "HIGH" and finding.check.startswith("cross_check"):
-                    return (
-                        "HIGH_RISK",
-                        "MANUAL_REVIEW",
-                        f"hard override: severe front/back mismatch — {finding.reason}",
+                if finding.status == "FAIL" and finding.severity == "HIGH":
+                    # Front/back disagreement vs. the document failing its own
+                    # validity rules (expired, invalid document number,
+                    # check-digit failure) — a single such failure is enough
+                    # for officer review; averaging it against clean signals
+                    # would bury it.
+                    what = (
+                        "severe front/back mismatch"
+                        if finding.check.startswith("cross_check")
+                        else "document failed a validity check"
                     )
+                    return "HIGH_RISK", "MANUAL_REVIEW", f"hard override: {what} — {finding.reason}"
         return None, None, None

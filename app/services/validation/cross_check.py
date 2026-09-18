@@ -131,6 +131,25 @@ def cross_validate(front_fields: dict[str, str], mrz: MRZResult) -> list[Validat
                 )
             )
 
+    ocr_gender = front_fields.get("gender")
+    if ocr_gender:
+        # MRZ sex is a single ICAO character (M/F/<); the front OCR field
+        # is free text ("M", "Male", "F", "Female", ...) — normalize both
+        # to that single character before comparing.
+        normalized = ocr_gender.strip().upper()[:1]
+        matched = normalized == mrz.sex
+        findings.append(
+            ValidationFinding(
+                check="cross_check_gender",
+                status="PASS" if matched else "FAIL",
+                severity="LOW" if matched else "MEDIUM",
+                reason=(
+                    f"front OCR gender {ocr_gender!r} (normalized {normalized!r}) vs MRZ sex "
+                    f"{mrz.sex!r}: " + ("match" if matched else "mismatch")
+                ),
+            )
+        )
+
     ocr_doe = front_fields.get("date_of_expiry")
     if ocr_doe:
         converted = _ocr_date_to_yymmdd(ocr_doe)

@@ -16,3 +16,9 @@ class SyncStatusResponse(BaseModel):
     synced: int
     failed: int
     last_successful_sync_at: str | None = None
+
+
+class RiskConfigResponse(BaseModel):
+    weights: dict[str, float]
+    low_risk_ceiling: int
+    medium_risk_ceiling: int

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">বর্ডারশিল্ড অফিসার</string>
+    <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ড্যাশবোর্ড</string>
     <string name="nav_queue">সারি</string>
@@ -43,7 +43,7 @@
     <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
     <string name="language_unverified_notice">অযাচাইকৃত অনুবাদ</string>
 
-    <string name="login_title">বর্ডারশিল্ড এআই</string>
+    <string name="login_title">PramaanAI</string>
     <string name="login_subtitle">অফিসার কনসোল — %1$s</string>
     <string name="login_officer_id">অফিসার আইডি / ইমেইল</string>
     <string name="login_password">পাসওয়ার্ড</string>
@@ -56,4 +56,24 @@
     <string name="step_risk_assessment">ঝুঁকি মূল্যায়ন</string>
     <string name="step_review">পর্যালোচনা</string>
     <string name="step_complete">সম্পন্ন</string>
+
+    <!-- New Screening Screen -->
+    <string name="new_screening_title">নতুন স্ক্রিনিং</string>
+    <string name="new_screening_subtitle">নথি যাচাইকরণের জন্য যাত্রীর বিবরণ লিখুন</string>
+    <string name="checkpoint_label">চেকপয়েন্ট</string>
+    <string name="traveler_name">যাত্রীর নাম</string>
+    <string name="document_type_label">নথির ধরন</string>
+    <string name="document_number_label">নথি নম্বর</string>
+    <string name="dob_label">জন্ম তারিখ (DD/MM/YYYY)</string>
+    <string name="expiry_label">সমাপ্তির তারিখ (DD/MM/YYYY)</string>
+    <string name="nationality_label">জাতীয়তা</string>
+    <string name="continue_to_capture">ক্যাপচারের জন্য চালিয়ে যান</string>
+    <string name="required_fields_note">* প্রয়োজনীয় ফিল্ড চেকপয়েন্ট অনুযায়ী পরিবর্তিত হয়</string>
+
+    <!-- Error messages -->
+    <string name="error_traveler_name_required">যাত্রীর নাম প্রয়োজন</string>
+    <string name="error_document_number_required">এই চেকপয়েন্টের জন্য নথি নম্বর প্রয়োজন</string>
+    <string name="error_dob_required">এই চেকপয়েন্টের জন্য জন্ম তারিখ প্রয়োজন</string>
+    <string name="error_expiry_required">এই চেকপয়েন্টের জন্য সমাপ্তির তারিখ প্রয়োজন</string>
+    <string name="error_nationality_required">জাতীয়তা প্রয়োজন</string>
 </resources>

@@ -1,4 +1,4 @@
-"""Idempotent demo seeder — checkpoints + one demo account per role, so the
+"""Idempotent demo seeder — checkpoints + demo officer accounts, so the
 Android app and web console both have something real to log into. Safe to
 run on every container start (local docker-compose and the Render deploy
 both do this): skips any checkpoint/username that already exists rather
@@ -24,14 +24,12 @@ DEMO_CHECKPOINTS = [
     ("RAX", "Raxaul", "Bihar, India / Nepal border"),
 ]
 
-# (username, role, checkpoint_code | None)
+# (username, checkpoint_code | None)
 DEMO_ACCOUNTS = [
-    ("attari_officer", UserRole.FIELD_OFFICER, "ATW"),
-    ("immigration1", UserRole.IMMIGRATION_OFFICER, "ATW"),
-    ("supervisor1", UserRole.SUPERVISOR, "ATW"),
-    # Kept for backward compatibility with earlier installs that logged in
-    # as officer1 — role changed from the old ADMIN to IT_ADMIN.
-    ("officer1", UserRole.IT_ADMIN, None),
+    ("attari_officer", "ATW"),
+    ("petrapole_officer", "PET"),
+    ("raxaul_officer", "RAX"),
+    ("officer1", None),  # backward compatibility
 ]
 
 
@@ -52,7 +50,7 @@ def seed_demo_users() -> None:
             checkpoints_by_code[code] = checkpoint
             print(f"Created checkpoint '{code}' ({name}).")
 
-        for username, role, checkpoint_code in DEMO_ACCOUNTS:
+        for username, checkpoint_code in DEMO_ACCOUNTS:
             checkpoint_id = checkpoints_by_code[checkpoint_code].id if checkpoint_code else None
             existing = db.query(User).filter(User.username == username).first()
             if existing:
@@ -69,12 +67,12 @@ def seed_demo_users() -> None:
             user = User(
                 username=username,
                 hashed_password=hash_password(password),
-                role=role,
+                role=UserRole.OFFICER,
                 checkpoint_id=checkpoint_id,
             )
             db.add(user)
             db.commit()
-            print(f"Created {role.value} user '{username}'.")
+            print(f"Created OFFICER user '{username}'.")
     finally:
         db.close()
 
