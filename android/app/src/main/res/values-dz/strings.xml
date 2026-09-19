@@ -24,9 +24,17 @@
     <string name="common_finish">Finish</string>
     <string name="common_sign_in">Sign in</string>
     <string name="common_clear">Clear</string>
+    <string name="common_secondary_review">Secondary Review</string>
+    <string name="common_hold_refer">Hold/Refer</string>
     <string name="common_flag_review">Flag / Further review</string>
     <string name="common_log_out">Log out</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_checkpoint">Checkpoint</string>
+    <string name="common_loading_checkpoints">Loading checkpoints…</string>
+    <string name="common_select_checkpoint">Select checkpoint</string>
+    <string name="common_show_password">Show password</string>
+    <string name="common_hide_password">Hide password</string>
+    <string name="auth_failed_message">Authentication failed — check officer ID and password, and that the backend is reachable.</string>
 
     <string name="system_operational">System Operational</string>
 

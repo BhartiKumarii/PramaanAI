@@ -30,8 +30,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     return TokenResponse(
-        access_token=create_access_token(str(user.id), user.role.value),
-        refresh_token=create_refresh_token(str(user.id), user.role.value),
+        access_token=create_access_token(user.id, user.role.value),
+        refresh_token=create_refresh_token(user.id, user.role.value),
         role=user.role.value,
     )
 
@@ -46,17 +46,19 @@ def refresh(payload: RefreshRequest, db: Session = Depends(get_db)) -> TokenResp
     if claims.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
     try:
-        user_id = uuid.UUID(claims["sub"])
+        user_id = claims["sub"]  # Keep as string since our model now uses String type
+        # Validate it's a proper UUID format
+        uuid.UUID(user_id)  # This validates the format but we keep it as string
     except (KeyError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject") from exc
 
-    user = db.get(User, user_id)
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
 
     return TokenResponse(
-        access_token=create_access_token(str(user.id), user.role.value),
-        refresh_token=create_refresh_token(str(user.id), user.role.value),
+        access_token=create_access_token(user.id, user.role.value),
+        refresh_token=create_refresh_token(user.id, user.role.value),
         role=user.role.value,
     )
 
@@ -69,12 +71,12 @@ def refresh(payload: RefreshRequest, db: Session = Depends(get_db)) -> TokenResp
 def get_current_user_info(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> CurrentUserResponse:
-    checkpoint = db.get(Checkpoint, user.checkpoint_id) if user.checkpoint_id else None
+    checkpoint = db.query(Checkpoint).filter(Checkpoint.id == user.checkpoint_id).first() if user.checkpoint_id else None
     return CurrentUserResponse(
-        id=str(user.id),
+        id=user.id,  # Already a string now
         username=user.username,
         role=user.role.value,
-        checkpoint_id=str(checkpoint.id) if checkpoint else None,
+        checkpoint_id=checkpoint.id if checkpoint else None,  # Already a string now
         checkpoint_code=checkpoint.code if checkpoint else None,
         checkpoint_name=checkpoint.name if checkpoint else None,
     )

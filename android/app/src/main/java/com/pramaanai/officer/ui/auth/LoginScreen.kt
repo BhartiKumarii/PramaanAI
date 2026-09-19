@@ -68,6 +68,7 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
     var selectedCheckpoint by remember { mutableStateOf<CheckpointResponse?>(null) }
     var checkpointMenuExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val authFailedMessage = stringResource(R.string.auth_failed_message)
 
     LaunchedEffect(Unit) {
         try {
@@ -92,7 +93,7 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
                 errorMessage = e.message
             } catch (e: Exception) {
                 loading = false
-                errorMessage = "Authentication failed — check officer ID and password, and that the backend is reachable."
+                errorMessage = authFailedMessage
             }
         }
     }
@@ -144,8 +145,8 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
                     value = selectedCheckpoint?.let { "${it.name} (${it.code})" } ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Checkpoint") },
-                    placeholder = { Text(if (checkpoints.isEmpty()) "Loading checkpoints…" else "Select checkpoint") },
+                    label = { Text(stringResource(R.string.common_checkpoint)) },
+                    placeholder = { Text(if (checkpoints.isEmpty()) stringResource(R.string.common_loading_checkpoints) else stringResource(R.string.common_select_checkpoint)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = checkpointMenuExpanded)
                     },
@@ -188,7 +189,7 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
                     IconButton(onClick = { showPassword = !showPassword }) {
                         Icon(
                             if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = if (showPassword) "Hide password" else "Show password",
+                            contentDescription = if (showPassword) stringResource(R.string.common_hide_password) else stringResource(R.string.common_show_password),
                         )
                     }
                 },
