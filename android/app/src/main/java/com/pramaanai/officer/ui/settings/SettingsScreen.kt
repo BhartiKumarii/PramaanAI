@@ -61,13 +61,14 @@ fun SettingsScreen(repository: ScreeningRepository, onBack: () -> Unit) {
                     Spacer(Modifier.height(10.dp))
                     val unverifiedCaption = stringResource(R.string.language_unverified_notice)
                     val languageOptions = listOf(
+                        Triple("system", stringResource(R.string.language_system), false),
                         Triple("en", stringResource(R.string.language_english), false),
                         Triple("hi", stringResource(R.string.language_hindi), false),
                         Triple("ne", stringResource(R.string.language_nepali), false),
                         Triple("bn", stringResource(R.string.language_bengali), false),
                         Triple("pa", stringResource(R.string.language_punjabi), false),
                         Triple("as", stringResource(R.string.language_assamese), false),
-                        Triple("dz", stringResource(R.string.language_dzongkha), true),
+                        Triple("dz", stringResource(R.string.language_dzongkha), false),
                     )
                     languageOptions.forEach { (tag, label, unverified) ->
                         LanguageOptionRow(

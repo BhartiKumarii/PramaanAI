@@ -90,4 +90,41 @@
     <string name="graph_legend_document">कागजात</string>
     <string name="graph_legend_vehicle">सवारी साधन</string>
     <string name="graph_legend_travel_event">यात्रा घटना</string>
+
+    <!-- Language Selection -->
+    <string name="language_system">प्रणाली पूर्वनिर्धारित</string>
+
+    <!-- Screen Titles -->
+    <string name="title_capture">क्याप्चर</string>
+    <string name="title_officer_profile">अधिकारी प्रोफाइल</string>
+    <string name="title_analytics">विश्लेषण</string>
+
+    <!-- Camera and Permissions -->
+    <string name="camera_permission_required">कागजात र लाइभ सेल्फी क्याप्चर गर्न क्यामेरा अनुमति चाहिन्छ।</string>
+    <string name="grant_camera_permission">क्यामेरा अनुमति दिनुहोस्</string>
+
+    <!-- Capture Process -->
+    <string name="ocr_processing">यन्त्रमा कागजात पढ्दै (OCR + MRZ + अनुहार हस्ताक्षर)…</string>
+    <string name="review_step_title">चरण 3 — पढिएको समीक्षा गर्नुहोस्</string>
+    <string name="button_rescan">फेरि स्क्यान गर्नुहोस्</string>
+    <string name="button_verify_registry">रजिस्ट्रीसँग प्रमाणित गर्नुहोस्</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_no_connection_queued">कनेक्शन छैन — पङ्क्तिमा राखिएको, स्वचालित रूपमा सिङ्क हुनेछ</string>
+    <string name="toast_using_label">प्रयोग: %s</string>
+    <string name="toast_upload_failed">अपलोड असफल: %s</string>
+
+    <!-- Profile Screen -->
+    <string name="no_activity_recorded">अहिलेसम्म कुनै गतिविधि रेकर्ड गरिएको छैन।</string>
+    <string name="button_log_out">लगआउट गर्नुहोस्</string>
+
+    <!-- Traveler Profile -->
+    <string name="no_risk_assessment">फाइलमा कुनै जोखिम मूल्याङ्कन छैन।</string>
+    <string name="no_officer_notes">कुनै अधिकारी नोटहरू रेकर्ड गरिएको छैन।</string>
+    <string name="screening_history_title">स्क्रिनिङ इतिहास</string>
+
+    <!-- Session Timeout -->
+    <string name="session_expiring_title">सत्र समाप्त हुँदै</string>
+    <string name="session_timeout_message">तपाईं निष्क्रिय हुनुभएको छ। सुरक्षाका लागि, यो सत्र स्वचालित रूपमा समाप्त हुनेछ।</string>
+    <string name="signing_out_countdown">%d सेकेन्डमा साइन आउट हुँदै</string>
 </resources>

@@ -585,7 +585,7 @@ fun CaptureScreen(
                 )
                 if (item.status == ScreeningStatus.OFFLINE_QUEUED) {
                     PendingSubmissionWorker.enqueue(context)
-                    Toast.makeText(context, "No connection — queued, will sync automatically", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.toast_no_connection_queued), Toast.LENGTH_LONG).show()
                 }
                 onSubmitted(item.id)
             } catch (e: Exception) {
@@ -596,7 +596,7 @@ fun CaptureScreen(
     }
 
     fun onImageReady(outputFile: File, label: String) {
-        Toast.makeText(context, "Using: $label", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.toast_using_label, label), Toast.LENGTH_SHORT).show()
         when (step) {
             CaptureStep.DOCUMENT_FRONT -> {
                 documentFrontFile = outputFile
@@ -633,11 +633,11 @@ fun CaptureScreen(
             }
             onImageReady(outputFile, "uploaded photo")
         } catch (e: Exception) {
-            Toast.makeText(context, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.toast_upload_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
         }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Capture") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.title_capture)) }) }) { padding ->
         GridPatternBackground(modifier = Modifier.padding(padding)) {
             Column(
                 modifier = Modifier
@@ -656,10 +656,10 @@ fun CaptureScreen(
                 Spacer(Modifier.height(12.dp))
             }
             if (!hasCameraPermission) {
-                Text("Camera permission is required to capture documents and a live selfie.")
+                Text(stringResource(R.string.camera_permission_required))
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                    Text("Grant camera permission")
+                    Text(stringResource(R.string.grant_camera_permission))
                 }
                 return@Column
             }
@@ -736,7 +736,7 @@ fun CaptureScreen(
                             step = CaptureStep.DOCUMENT_FRONT
                         },
                         modifier = Modifier.weight(1f).height(52.dp),
-                    ) { Text("Rescan") }
+                    ) { Text(stringResource(R.string.button_rescan)) }
                     Button(
                         onClick = { submit() },
                         modifier = Modifier.weight(1.6f).height(52.dp),
@@ -744,7 +744,7 @@ fun CaptureScreen(
                             containerColor = AccentGreen,
                             contentColor = BackgroundDark,
                         ),
-                    ) { Text("Verify against registry", fontWeight = FontWeight.SemiBold) }
+                    ) { Text(stringResource(R.string.button_verify_registry), fontWeight = FontWeight.SemiBold) }
                 }
                 Spacer(Modifier.height(16.dp))
                 return@Column
