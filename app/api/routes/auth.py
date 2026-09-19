@@ -1,6 +1,8 @@
+import traceback
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.security import (
@@ -24,16 +26,21 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     response_model=TokenResponse,
     summary="Authenticate an officer/supervisor/admin and obtain JWTs",
 )
-def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
-    user = get_user_by_username(db, payload.username)
-    if user is None or not user.is_active or not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+def login(payload: LoginRequest, db: Session = Depends(get_db)):
+    try:
+        user = get_user_by_username(db, payload.username)
+        if user is None or not user.is_active or not verify_password(payload.password, user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    return TokenResponse(
-        access_token=create_access_token(user.id, user.role.value),
-        refresh_token=create_refresh_token(user.id, user.role.value),
-        role=user.role.value,
-    )
+        return TokenResponse(
+            access_token=create_access_token(user.id, user.role.value),
+            refresh_token=create_refresh_token(user.id, user.role.value),
+            role=user.role.value,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"detail": str(exc), "trace": traceback.format_exc()})
 
 
 @router.post(
