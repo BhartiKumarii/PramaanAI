@@ -2,6 +2,7 @@ package com.pramaanai.officer.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,13 +35,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.graphics.Paint
 import android.graphics.Typeface
+import com.pramaanai.officer.R
 import com.pramaanai.officer.data.model.IdentityClusterMember
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.ChartBlue
@@ -59,6 +63,7 @@ import kotlin.math.sin
 /** Real graph rendering of the identity-graph result — ReactFlow-inspired
  * force-directed layout with entity types (PERSON, CHECKPOINT, VEHICLE,
  * TRAVEL_EVENT, DOCUMENT) rendered as badged nodes with connecting edges.
+ * Enhanced for mobile with touch interactions, better readability and adaptive sizing.
  * Node positions and labels come directly from [members]; nothing here is
  * illustrative-only. */
 @Composable
@@ -68,14 +73,22 @@ fun IdentityClusterGraph(
 ) {
     if (members.size < 2) return
 
+    var selectedNode by remember { mutableStateOf<String?>(null) }
     val nodes = remember(members) {
         layoutNodes(members)
+    }
+
+    // Dynamic height based on number of members - more space for larger graphs
+    val graphHeight = when {
+        members.size <= 3 -> 240.dp
+        members.size <= 6 -> 320.dp
+        else -> 400.dp
     }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(graphHeight)
             .padding(8.dp),
         colors = CardDefaults.cardColors(containerColor = BackgroundDark),
         shape = RoundedCornerShape(12.dp),
@@ -91,13 +104,13 @@ fun IdentityClusterGraph(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Identity Network",
+                    stringResource(R.string.identity_network_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = Ink900,
                 )
                 Text(
-                    "${members.size} entities",
+                    stringResource(R.string.identity_network_entities, members.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = Gray600,
                 )
@@ -110,20 +123,43 @@ fun IdentityClusterGraph(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                LegendItem("Person", 0xFF45BA50.toInt(), Icons.Filled.Person)
-                LegendItem("Checkpoint", 0xFF00B5EB.toInt(), Icons.Filled.LocationOn)
-                LegendItem("Document", 0xFFAD87ED.toInt(), Icons.Filled.Description)
-                LegendItem("Vehicle", 0xFFFF8918.toInt(), Icons.Filled.DirectionsCar)
-                LegendItem("Travel Event", 0xFFF14D4C.toInt(), Icons.Filled.FlightTakeoff)
+                LegendItem(stringResource(R.string.graph_legend_person), 0xFF45BA50.toInt(), Icons.Filled.Person)
+                LegendItem(stringResource(R.string.graph_legend_checkpoint), 0xFF00B5EB.toInt(), Icons.Filled.LocationOn)
+                LegendItem(stringResource(R.string.graph_legend_document), 0xFFAD87ED.toInt(), Icons.Filled.Description)
+                LegendItem(stringResource(R.string.graph_legend_vehicle), 0xFFFF8918.toInt(), Icons.Filled.DirectionsCar)
+                LegendItem(stringResource(R.string.graph_legend_travel_event), 0xFFF14D4C.toInt(), Icons.Filled.FlightTakeoff)
             }
 
-            // Graph Canvas
+            // Graph Canvas with touch interaction
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
             ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(nodes) {
+                            detectTapGestures { offset ->
+                                val centerX = size.width / 2f
+                                val centerY = size.height / 2f
+
+                                // Find tapped node
+                                val tappedNode = nodes.firstOrNull { node ->
+                                    val nodeX = centerX + node.x
+                                    val nodeY = centerY + node.y
+                                    val nodeRadius = if (node.isCenter) 28f else 22f
+                                    val distance = kotlin.math.sqrt(
+                                        (offset.x - nodeX) * (offset.x - nodeX) +
+                                        (offset.y - nodeY) * (offset.y - nodeY)
+                                    )
+                                    distance <= nodeRadius + 10f // Add some tap tolerance
+                                }
+
+                                selectedNode = if (selectedNode == tappedNode?.id) null else tappedNode?.id
+                            }
+                        }
+                ) {
                     val centerX = size.width / 2f
                     val centerY = size.height / 2f
                     val edges = edgesFromMembers(members)
@@ -163,25 +199,45 @@ fun IdentityClusterGraph(
                         }
                     }
 
-                    // Draw nodes
+                    // Draw nodes with improved mobile visibility
                     nodes.forEach { node ->
                         val nodeX = centerX + node.x
                         val nodeY = centerY + node.y
-                        val nodeRadius = if (node.isCenter) 24f else 20f
-                        val badgeRadius = if (node.isCenter) 10f else 8f
+                        val isSelected = selectedNode == node.id
+                        // Larger nodes for better mobile interaction
+                        val nodeRadius = when {
+                            node.isCenter -> 28f
+                            isSelected -> 24f
+                            else -> 22f
+                        }
+                        val badgeRadius = when {
+                            node.isCenter -> 12f
+                            isSelected -> 10f
+                            else -> 9f
+                        }
                         val nodeColor = Color(node.type.color)
 
-                        // Node background circle
+                        // Selection ring for selected node
+                        if (isSelected) {
+                            drawCircle(
+                                color = SuccessGreen.copy(alpha = 0.4f),
+                                radius = nodeRadius + 6f,
+                                center = Offset(nodeX, nodeY),
+                                style = Stroke(width = 3f),
+                            )
+                        }
+
+                        // Node background circle with better contrast
                         drawCircle(
                             color = nodeColor,
                             radius = nodeRadius,
                             center = Offset(nodeX, nodeY),
                         )
 
-                        // Inner white circle for badge
+                        // Inner white circle for badge with higher contrast
                         drawCircle(
                             color = Color.White,
-                            radius = nodeRadius - 2f,
+                            radius = nodeRadius - 3f,
                             center = Offset(nodeX, nodeY),
                         )
 
@@ -192,12 +248,12 @@ fun IdentityClusterGraph(
                             center = Offset(nodeX, nodeY),
                         )
 
-                        // Badge letter — same raw-Canvas approach as the edge
-                        // labels above; androidx.compose.ui.text.drawText
-                        // needs a TextMeasurer and doesn't take raw x/y/color,
-                        // so plain Paint.drawText is what's actually callable
-                        // from inside a DrawScope without one.
-                        val badgeFontSize = if (node.isCenter) 28f else 22f
+                        // Badge letter with improved mobile readability
+                        val badgeFontSize = when {
+                            node.isCenter -> 32f
+                            isSelected -> 28f
+                            else -> 24f
+                        }
                         drawContext.canvas.nativeCanvas.drawText(
                             node.type.badge,
                             nodeX,
@@ -207,21 +263,48 @@ fun IdentityClusterGraph(
                                 textSize = badgeFontSize
                                 textAlign = android.graphics.Paint.Align.CENTER
                                 typeface = Typeface.DEFAULT_BOLD
+                                isAntiAlias = true
                             },
                         )
 
-                        // Node label below
-                        val displayLabel = if (node.label.length > 12) node.label.substring(0, 12) + "…" else node.label
-                        val labelFontSize = if (node.isCenter) 24f else 20f
+                        // Node label with better mobile formatting
+                        val displayLabel = when {
+                            node.label.length > 10 -> node.label.substring(0, 10) + "…"
+                            else -> node.label
+                        }
+                        val labelFontSize = when {
+                            node.isCenter -> 26f
+                            isSelected -> 24f
+                            else -> 22f
+                        }
+
+                        // Draw label background for better readability
+                        val labelWidth = android.graphics.Paint().apply {
+                            textSize = labelFontSize
+                        }.measureText(displayLabel)
+
+                        // Semi-transparent background for label
+                        drawRoundRect(
+                            color = BackgroundDark.copy(alpha = 0.8f),
+                            topLeft = Offset(nodeX - labelWidth/2 - 4f, nodeY + nodeRadius + 8f),
+                            size = androidx.compose.ui.geometry.Size(labelWidth + 8f, labelFontSize + 8f),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f)
+                        )
+
                         drawContext.canvas.nativeCanvas.drawText(
                             displayLabel,
                             nodeX,
-                            nodeY + nodeRadius + 20f,
+                            nodeY + nodeRadius + 24f,
                             android.graphics.Paint().apply {
-                                color = if (node.isCenter) android.graphics.Color.WHITE else android.graphics.Color.DKGRAY
+                                color = when {
+                                    node.isCenter -> android.graphics.Color.WHITE
+                                    isSelected -> android.graphics.Color.WHITE
+                                    else -> android.graphics.Color.LTGRAY
+                                }
                                 textSize = labelFontSize
                                 textAlign = android.graphics.Paint.Align.CENTER
-                                typeface = if (node.isCenter) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                                typeface = if (node.isCenter || isSelected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                                isAntiAlias = true
                             },
                         )
 
@@ -262,8 +345,6 @@ private enum class NodeType(val badge: String, val color: Int, val icon: android
 
 private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
     val center = members.firstOrNull() ?: return emptyList()
-    val neighbors = members.drop(1).take(6)
-    val outer = members.drop(7)
 
     val result = mutableListOf<GraphNode>()
     val centerX = 0f
@@ -279,35 +360,72 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
         isCenter = true,
     ))
 
-    // Inner ring - direct connections (neighbors)
-    if (neighbors.isNotEmpty()) {
-        val innerRadius = 140f
-        neighbors.forEachIndexed { index, member ->
-            val angle = (2 * PI * index.toDouble()) / max(neighbors.size, 1).toDouble()
-            val nodeType = inferNodeType(member)
-            result.add(GraphNode(
-                id = member.recordId,
-                label = member.referenceName,
-                type = nodeType,
-                x = centerX + innerRadius * cos(angle).toFloat(),
-                y = centerY + innerRadius * sin(angle).toFloat(),
-            ))
-        }
-    }
+    // For mobile optimization, use adaptive radii based on screen space
+    val others = members.drop(1)
+    val nodeCount = others.size
 
-    // Outer ring - indirect connections
-    if (outer.isNotEmpty()) {
-        val outerRadius = 240f
-        outer.forEachIndexed { index, member ->
-            val angle = (2 * PI * index.toDouble()) / max(outer.size, 1).toDouble()
-            val nodeType = inferNodeType(member)
-            result.add(GraphNode(
-                id = member.recordId,
-                label = member.referenceName,
-                type = nodeType,
-                x = centerX + outerRadius * cos(angle).toFloat(),
-                y = centerY + outerRadius * sin(angle).toFloat(),
-            ))
+    when {
+        nodeCount <= 2 -> {
+            // Simple horizontal layout for small graphs
+            others.forEachIndexed { index, member ->
+                val nodeType = inferNodeType(member)
+                val xOffset = if (index == 0) -120f else 120f
+                result.add(GraphNode(
+                    id = member.recordId,
+                    label = member.referenceName,
+                    type = nodeType,
+                    x = centerX + xOffset,
+                    y = centerY,
+                ))
+            }
+        }
+        nodeCount <= 4 -> {
+            // Square/diamond pattern for 3-4 nodes
+            val positions = listOf(
+                Offset(-100f, -100f), // Top-left
+                Offset(100f, -100f),  // Top-right
+                Offset(-100f, 100f),  // Bottom-left
+                Offset(100f, 100f)    // Bottom-right
+            )
+            others.forEachIndexed { index, member ->
+                val pos = positions[index]
+                val nodeType = inferNodeType(member)
+                result.add(GraphNode(
+                    id = member.recordId,
+                    label = member.referenceName,
+                    type = nodeType,
+                    x = centerX + pos.x,
+                    y = centerY + pos.y,
+                ))
+            }
+        }
+        else -> {
+            // Circular layout for larger graphs with better mobile spacing
+            val baseRadius = 90f // Smaller base radius for mobile
+            val radiusStep = 80f  // Distance between rings
+            var currentRadius = baseRadius
+            var nodesInCurrentRing = 0
+            var maxNodesInRing = 4 // Start with fewer nodes per ring
+
+            others.forEachIndexed { index, member ->
+                if (nodesInCurrentRing >= maxNodesInRing) {
+                    // Move to next ring
+                    currentRadius += radiusStep
+                    nodesInCurrentRing = 0
+                    maxNodesInRing = max(6, maxNodesInRing + 2) // Increase capacity for outer rings
+                }
+
+                val angle = (2 * PI * nodesInCurrentRing.toDouble()) / maxNodesInRing.toDouble()
+                val nodeType = inferNodeType(member)
+                result.add(GraphNode(
+                    id = member.recordId,
+                    label = member.referenceName,
+                    type = nodeType,
+                    x = centerX + currentRadius * cos(angle).toFloat(),
+                    y = centerY + currentRadius * sin(angle).toFloat(),
+                ))
+                nodesInCurrentRing++
+            }
         }
     }
 
