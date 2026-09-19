@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # CORS - comma-separated origins
     cors_origins: str | list[str] = "http://localhost:5173,http://127.0.0.1:5173,https://pramaanai-703j.onrender.com"
 
+    # Directory to store uploaded images for web dashboard review
+    images_dir: str = "images"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list[str]) -> list[str]:

@@ -58,6 +58,13 @@ interface ApiService {
         @Path("id") verificationId: String,
     )
 
+    @POST("cases/{id}/decision")
+    suspend fun decideCase(
+        @Header("Authorization") authorization: String,
+        @Path("id") caseId: String,
+        @Body request: CaseDecisionRequest,
+    ): CaseDetailResponse
+
     @GET("verification")
     suspend fun listVerifications(
         @Header("Authorization") authorization: String,
@@ -231,4 +238,42 @@ data class CurrentUserResponse(
     val checkpointId: String?,
     val checkpointCode: String?,
     val checkpointName: String?,
+)
+
+data class CaseDecisionRequest(
+    val decision: String, // "CLEAR", "SECONDARY_REVIEW", "HOLD_REFER"
+    val reason: String? = null,
+)
+
+data class CaseDetailResponse(
+    val id: String,
+    val caseNumber: String,
+    val status: String,
+    val priority: String,
+    val checkpointCode: String,
+    val fieldOfficerUsername: String,
+    val assignedOfficerUsername: String?,
+    val documentType: String,
+    val nationality: String,
+    val travelerName: String?,
+    val createdAt: String,
+    val sentAt: String?,
+    val decidedAt: String?,
+    val verification: VerificationRecordResponse?,
+    val notes: List<CaseNoteResponse>,
+    val decisions: List<CaseDecisionSummary>,
+)
+
+data class CaseNoteResponse(
+    val id: String,
+    val authorUsername: String,
+    val note: String,
+    val createdAt: String,
+)
+
+data class CaseDecisionSummary(
+    val decision: String,
+    val officerUsername: String?,
+    val reason: String?,
+    val createdAt: String,
 )

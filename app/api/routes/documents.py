@@ -9,6 +9,9 @@ import json
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+import json
+import shutil
+from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.api.deps import (
@@ -23,6 +26,7 @@ from app.api.deps import (
     get_validation_engine,
 )
 from app.core.security import get_current_user
+from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.case import CasePriority, CaseStatus
 from app.models.network import EntityType
@@ -398,3 +402,76 @@ def screen_document(
         face_detection=face_detection_result,
         citizen_registry=citizen_registry_result,
     )
+
+
+@router.post(
+    "/screen-with-images",
+    response_model=ScreeningResponse,
+    summary="Full screening pipeline with image uploads for web dashboard review",
+)
+async def screen_document_with_images(
+    screening_data: str = Form(..., description="JSON-encoded ScreeningSubmission data"),
+    document_front: UploadFile = File(..., description="Front side of document"),
+    document_back: UploadFile = File(None, description="Back side of document (optional)"),
+    selfie: UploadFile = File(..., description="Live selfie capture"),
+    _user: User = Depends(get_current_user),
+    validation_engine: ValidationEngine = Depends(get_validation_engine),
+    risk_engine: RiskEngine = Depends(get_risk_engine),
+    blockchain_service: BlockchainService = Depends(get_blockchain_service),
+    db: Session = Depends(get_db),
+) -> ScreeningResponse:
+    # Parse the screening data from form field
+    try:
+        payload_data = json.loads(screening_data)
+        payload = ScreeningSubmission(**payload_data)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid screening data JSON: {e}"
+        )
+
+    # Process the screening data (same logic as the original screen endpoint)
+    if not payload.ocr_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ocr_fields is empty — on-device OCR must run before a screening is submitted",
+        )
+
+    # Run the same screening logic as the original endpoint
+    # (I'll abbreviate this for space, but it would include all the same logic)
+    ocr_result = OCRResult(
+        document_type=payload.document_type.value, fields=payload.ocr_fields, ocr_confidence=payload.ocr_confidence
+    )
+
+    # ... (same validation, registry, face matching, etc. logic as above)
+    # For brevity, I'll call the original screen function and then save images
+
+    # First run the standard screening without images
+    screen_response = screen_document(payload, _user, validation_engine, risk_engine, blockchain_service, db)
+
+    # Now save the uploaded images
+    settings = get_settings()
+    images_dir = Path(getattr(settings, 'images_dir', 'images'))
+    images_dir.mkdir(exist_ok=True)
+
+    verification_id = screen_response.verification_id
+
+    # Save document front image
+    if document_front:
+        front_path = images_dir / f"{verification_id}.jpg"
+        with open(front_path, "wb") as buffer:
+            shutil.copyfileobj(document_front.file, buffer)
+
+    # Save document back image if provided
+    if document_back:
+        back_path = images_dir / f"{verification_id}_back.jpg"
+        with open(back_path, "wb") as buffer:
+            shutil.copyfileobj(document_back.file, buffer)
+
+    # Save selfie image
+    if selfie:
+        selfie_path = images_dir / f"{verification_id}_selfie.jpg"
+        with open(selfie_path, "wb") as buffer:
+            shutil.copyfileobj(selfie.file, buffer)
+
+    return screen_response

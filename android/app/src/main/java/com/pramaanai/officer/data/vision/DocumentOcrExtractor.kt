@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -42,20 +43,43 @@ object DocumentOcrExtractor {
         val detectedDocumentType: String?,
     )
 
-    private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    private val latinRecognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    private val devanagariRecognizer by lazy { TextRecognition.getClient(DevanagariTextRecognizerOptions.DEFAULT_OPTIONS) }
 
     suspend fun recognize(bitmap: Bitmap): ExtractionResult {
         val image = InputImage.fromBitmap(bitmap, 0)
-        val text = suspendCancellableCoroutine { cont ->
-            recognizer.process(image)
+
+        // Run both Latin and Devanagari OCR in parallel for better coverage of mixed-script documents
+        val latinText = suspendCancellableCoroutine { cont ->
+            latinRecognizer.process(image)
                 .addOnSuccessListener { result -> cont.resume(result.text) }
                 .addOnFailureListener { e -> cont.resumeWithException(e) }
         }
+
+        val devanagariText = suspendCancellableCoroutine { cont ->
+            devanagariRecognizer.process(image)
+                .addOnSuccessListener { result -> cont.resume(result.text) }
+                .addOnFailureListener { e ->
+                    // Devanagari recognition might fail on English-only documents, that's ok
+                    cont.resume("")
+                }
+        }
+
+        // Combine both recognition results
+        val combinedText = if (devanagariText.isNotBlank()) {
+            "$latinText\n$devanagariText"
+        } else {
+            latinText
+        }
+        val text = combinedText
         val mrz = parseTd3Mrz(text)
         // The MRZ is machine-printed with check digits — far more reliable
         // than label-keyword guessing over free text — so where it exists it
         // wins over the heuristic fields for the values it carries.
         val fields = LinkedHashMap(mapFields(text)).apply {
+            // Extract Indian document numbers using pattern matching
+            putAll(extractIndianDocumentNumbers(text))
+
             // "Surname:" and "Given Names:" are separate printed fields — the
             // generic label pass keeps only one of them, so join both.
             joinedLabelledName(text)?.let { put("name", it) }
@@ -78,6 +102,11 @@ object DocumentOcrExtractor {
         "name" to listOf(
             "given name", "surname", "name", "full name",
             "nom", "nombre", "nome", "name:", "given", "surname:",
+            // Hindi/Indian labels
+            "नाम", "पूरा नाम", "नाम:", "पिता का नाम", "father", "father name", "father's name",
+            // Nepali labels
+            "नाम", "पुरा नाम",
+            // Bhutanese labels (similar to Hindi in many cases)
         ),
         "passport_number" to listOf(
             "passport no", "passport number", "passport no.", "passport #",
@@ -87,9 +116,15 @@ object DocumentOcrExtractor {
         "document_number" to listOf(
             "document no", "document number", "doc no", "doc number",
             "id no", "id number", "identity no", "identity number",
-            "aadhaar no", "aadhar no", "aadhaar number", "pan no", "pan number",
-            "licence no", "license no", "licence number", "license number", "dl no",
+            // Indian document patterns
+            "aadhaar no", "aadhar no", "aadhaar number", "aadhaar", "ाधार संख्या", "आधार नं", "आधार",
+            "pan no", "pan number", "pan", "पैन", "पैन नं",
+            "licence no", "license no", "licence number", "license number", "dl no", "driving license",
             "permit no", "permit number", "visa no", "visa number",
+            // Voter ID
+            "voter id", "voter no", "epic no", "electoral roll",
+            // Passport patterns
+            "passport no", "passport number", "passport", "पासपोर्ट",
         ),
         "nationality" to listOf(
             "nationality", "nationality:", "citizenship", "country",
@@ -98,6 +133,8 @@ object DocumentOcrExtractor {
         "date_of_birth" to listOf(
             "date of birth", "birth", "dob", "d.o.b.", "born",
             "date of birth:", "birth date", "birthday",
+            // Hindi labels
+            "जन्म तिथि", "जन्म दिनांक", "जन्मतारीख", "dob", "जन्म",
         ),
         "date_of_expiry" to listOf(
             "date of expiry", "expiry", "expiration", "expires",
@@ -109,6 +146,8 @@ object DocumentOcrExtractor {
         // app/services/validation/cross_check.py's cross_check_gender).
         "gender" to listOf(
             "sex", "gender", "m/f", "male/female",
+            // Hindi labels
+            "लिंग", "जेंडर", "पुरुष", "महिला", "male", "female", "m", "f",
         ),
         "place_of_birth" to listOf(
             "place of birth", "birth place", "pob", "place of birth:",
@@ -125,6 +164,12 @@ object DocumentOcrExtractor {
     private val MRZ_PATTERN = Pattern.compile("""^[A-Z0-9<]{44}$""")
     private val PASSPORT_MRZ_PATTERN = Pattern.compile("""^P[A-Z0-9<]{43}$""")
     private val ID_CARD_MRZ_PATTERN = Pattern.compile("""^I[A-Z0-9<]{43}$""")
+
+    // Indian document patterns
+    private val AADHAAR_PATTERN = Regex("""(\d{4}\s?\d{4}\s?\d{4})""") // 12 digits with optional spaces
+    private val PAN_PATTERN = Regex("""([A-Z]{5}\d{4}[A-Z])""") // 5 letters + 4 digits + 1 letter
+    private val INDIAN_PASSPORT_PATTERN = Regex("""([A-Z]\d{7})""") // 1 letter + 7 digits
+    private val VOTER_ID_PATTERN = Regex("""([A-Z]{3}\d{7})""") // 3 letters + 7 digits
 
     /** Calculate confidence based on fields found, MRZ lines, and document type detection */
     private fun calculateConfidence(
@@ -151,14 +196,58 @@ object DocumentOcrExtractor {
     private fun detectDocumentType(text: String): String? {
         val lower = text.lowercase()
         return when {
-            lower.contains("passport") -> "PASSPORT"
+            // Indian specific document patterns
+            lower.contains("aadhaar") || lower.contains("aadhar") || lower.contains("आधार") -> "NATIONAL_ID"
+            PAN_PATTERN.find(text) != null || lower.contains("permanent account number") || lower.contains("pan card") -> "PAN_CARD"
+            lower.contains("voter") || lower.contains("epic") || lower.contains("electoral") -> "VOTER_ID"
+            INDIAN_PASSPORT_PATTERN.find(text) != null && lower.contains("passport") -> "PASSPORT"
+            lower.contains("driving licence") || lower.contains("driving license") || lower.contains("driver") -> "DRIVING_LICENCE"
+
+            // General patterns
+            lower.contains("passport") || lower.contains("पासपोर्ट") -> "PASSPORT"
             lower.contains("visa") -> "VISA"
-            lower.contains("aadhaar") || lower.contains("aadhar") -> "NATIONAL_ID"
-            lower.contains("driving licence") || lower.contains("driver") -> "DRIVING_LICENCE"
             lower.contains("permit") -> "PERMIT"
             lower.contains("identity card") || lower.contains("id card") -> "NATIONAL_ID"
+
+            // Nepal/Bhutan patterns
+            lower.contains("नागरिकता") -> "CITIZENSHIP_CERTIFICATE" // Nepali citizenship
+
             else -> null
         }
+    }
+
+    /** Extract Indian document numbers using regex patterns */
+    private fun extractIndianDocumentNumbers(text: String): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+
+        // Extract Aadhaar number
+        AADHAAR_PATTERN.find(text)?.let { match ->
+            val aadhaar = match.groupValues[1].replace("\\s".toRegex(), "")
+            if (aadhaar.length == 12) {
+                result["document_number"] = aadhaar
+                result["aadhaar_number"] = aadhaar
+            }
+        }
+
+        // Extract PAN number
+        PAN_PATTERN.find(text)?.let { match ->
+            result["document_number"] = match.groupValues[1]
+            result["pan_number"] = match.groupValues[1]
+        }
+
+        // Extract Indian passport number
+        INDIAN_PASSPORT_PATTERN.find(text)?.let { match ->
+            result["passport_number"] = match.groupValues[1]
+            result["document_number"] = match.groupValues[1]
+        }
+
+        // Extract Voter ID
+        VOTER_ID_PATTERN.find(text)?.let { match ->
+            result["document_number"] = match.groupValues[1]
+            result["voter_id"] = match.groupValues[1]
+        }
+
+        return result
     }
 
     /** Best-effort line-based heuristic: for each target field, scan

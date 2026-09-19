@@ -99,7 +99,9 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
     val scope = rememberCoroutineScope()
     var item by remember { mutableStateOf<ScreeningQueueItem?>(null) }
     var step by remember { mutableStateOf(2) }
-    var showFlagDialog by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
+    var showSecondaryDialog by remember { mutableStateOf(false) }
+    var showHoldDialog by remember { mutableStateOf(false) }
     var showSendDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(screeningId) { item = repository.getById(screeningId) }
@@ -140,15 +142,19 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                             modifier = Modifier.weight(1f),
                         ) { Text("Next") }
                         6 -> {
-                            OutlinedButton(
-                                onClick = { showFlagDialog = true },
-                                modifier = Modifier.weight(1f),
-                            ) { Text("Flag", maxLines = 1) }
                             Button(
-                                onClick = { showSendDialog = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
-                                modifier = Modifier.weight(2f),
-                            ) { Text("Send to Immigration", maxLines = 1) }
+                                onClick = { showClearDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = BackgroundDark),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Clear", maxLines = 1) }
+                            OutlinedButton(
+                                onClick = { showSecondaryDialog = true },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Secondary", maxLines = 1) }
+                            OutlinedButton(
+                                onClick = { showHoldDialog = true },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Hold/Refer", maxLines = 1) }
                         }
                         7 -> Button(
                             onClick = onComplete,
@@ -163,23 +169,79 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
 
     val reasons = item?.let { flaggedReasons(it) }.orEmpty()
 
-    if (showFlagDialog) {
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Clear this screening") },
+            text = { Text("This traveler is cleared to proceed. This decision will be logged and cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                repository.decideCaseOnBackend(screeningId, "CLEAR", null)
+                                item = repository.getById(screeningId)
+                                showClearDialog = false
+                                step = 7
+                            } catch (e: Exception) {
+                                showClearDialog = false
+                                Toast.makeText(context, friendlyActionError("clear this screening", e), Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = BackgroundDark)
+                ) {
+                    Text("Clear")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showSecondaryDialog) {
         ReasonDialog(
-            title = "Flag for secondary inspection",
-            intro = "These reasons were recorded automatically from the checks on this screening. Nothing needs to be typed.",
+            title = "Secondary Review Required",
+            intro = "This case requires additional review. The reasons below will be attached.",
             reasons = reasons,
-            confirmLabel = "Flag for secondary inspection",
-            onDismiss = { showFlagDialog = false },
+            confirmLabel = "Send for Secondary Review",
+            onDismiss = { showSecondaryDialog = false },
             onConfirm = {
                 scope.launch {
                     try {
-                        repository.disputeOnBackend(screeningId, reasons.joinToString("; "))
+                        repository.decideCaseOnBackend(screeningId, "SECONDARY_REVIEW", reasons.joinToString("; "))
                         item = repository.getById(screeningId)
-                        showFlagDialog = false
+                        showSecondaryDialog = false
                         step = 7
                     } catch (e: Exception) {
-                        showFlagDialog = false
-                        Toast.makeText(context, friendlyActionError("flag this screening", e), Toast.LENGTH_LONG).show()
+                        showSecondaryDialog = false
+                        Toast.makeText(context, friendlyActionError("send for secondary review", e), Toast.LENGTH_LONG).show()
+                    }
+                }
+            },
+        )
+    }
+
+    if (showHoldDialog) {
+        ReasonDialog(
+            title = "Hold / Refer",
+            intro = "This traveler should be held for further investigation or referred. The reasons below will be attached.",
+            reasons = reasons,
+            confirmLabel = "Hold / Refer",
+            onDismiss = { showHoldDialog = false },
+            onConfirm = {
+                scope.launch {
+                    try {
+                        repository.decideCaseOnBackend(screeningId, "HOLD_REFER", reasons.joinToString("; "))
+                        item = repository.getById(screeningId)
+                        showHoldDialog = false
+                        step = 7
+                    } catch (e: Exception) {
+                        showHoldDialog = false
+                        Toast.makeText(context, friendlyActionError("hold/refer this case", e), Toast.LENGTH_LONG).show()
                     }
                 }
             },
@@ -728,13 +790,24 @@ fun ReviewStep(item: ScreeningQueueItem) {
 
 @Composable
 fun CompleteStep(item: ScreeningQueueItem) {
+    val (statusColor, statusIcon, statusText) = when (item.status) {
+        ScreeningStatus.CLEARED -> Triple(SuccessGreen, Icons.Filled.CheckCircle, "Cleared")
+        ScreeningStatus.DISPUTED -> Triple(WarningAmber, Icons.Filled.WarningAmber, "Flagged for Review")
+        ScreeningStatus.SENT -> Triple(AccentGreen, Icons.Filled.CheckCircle, "Sent to Immigration")
+        else -> Triple(Gray600, Icons.Filled.CheckCircle, item.status.name)
+    }
+
     StepCard("") {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(48.dp))
+            Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(48.dp))
             Spacer(Modifier.height(12.dp))
             Text("Screening complete", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
-            Text("Decision recorded: ${item.status.name}", style = MaterialTheme.typography.bodyMedium, color = Gray600)
+            Text("Decision recorded: $statusText", style = MaterialTheme.typography.bodyMedium, color = Gray600)
+            if (!item.officerNotes.isNullOrBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text("Notes: ${item.officerNotes}", style = MaterialTheme.typography.bodySmall, color = Gray500)
+            }
         }
     }
 }

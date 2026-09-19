@@ -16,6 +16,7 @@ fun screeningResponseToQueueItem(
     nationality: String,
     checkpoint: String,
     documentImagePath: String? = null,
+    documentBackImagePath: String? = null,
     selfieImagePath: String? = null,
     mrzText: String? = null,
 ): ScreeningQueueItem = ScreeningQueueItem(
@@ -31,6 +32,7 @@ fun screeningResponseToQueueItem(
     risk = response.risk,
     registryHits = response.registry?.hits ?: emptyList(),
     documentImagePath = documentImagePath,
+    documentBackImagePath = documentBackImagePath,
     selfieImagePath = selfieImagePath,
     deepfakeStatus = response.deepfake?.status,
     deepfakeReason = response.deepfake?.reason,

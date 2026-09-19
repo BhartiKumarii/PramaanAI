@@ -13,6 +13,7 @@ from app.api.routes import (
     documents,
     face,
     identity,
+    images,
     network,
     registry,
     system,
@@ -56,6 +57,7 @@ app.include_router(documents.router)
 app.include_router(face.router)
 app.include_router(registry.router)
 app.include_router(identity.router)
+app.include_router(images.router)
 app.include_router(verification.router)
 app.include_router(blockchain.router)
 app.include_router(testing.router)
