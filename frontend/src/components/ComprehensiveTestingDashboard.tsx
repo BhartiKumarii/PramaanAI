@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { CheckCircle2, AlertTriangle, XCircle, FileText, Users, Shield } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { CheckCircle2, AlertTriangle, XCircle, FileText, Shield } from 'lucide-react'
 import { StatTile } from './StatTile'
 
 interface TestingStats {
@@ -288,27 +288,23 @@ export function ComprehensiveTestingDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatTile
           icon={FileText}
-          title="Total Documents"
+          label="Total Documents"
           value={stats.totalDocuments.toLocaleString()}
-          subtitle="Real documents tested"
         />
         <StatTile
           icon={Shield}
-          title="Test Cases"
+          label="Test Cases"
           value={stats.totalTestCases.toLocaleString()}
-          subtitle="Verification scenarios"
         />
         <StatTile
           icon={CheckCircle2}
-          title="Passed Tests"
+          label="Passed Tests"
           value={stats.passedTests.toLocaleString()}
-          subtitle={`${passRate}% success rate`}
         />
         <StatTile
           icon={AlertTriangle}
-          title="Issues Found"
+          label="Issues Found"
           value={(stats.failedTests + stats.warningTests).toLocaleString()}
-          subtitle="Failed & warnings"
         />
       </div>
 

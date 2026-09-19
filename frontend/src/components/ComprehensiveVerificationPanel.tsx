@@ -1,4 +1,3 @@
-import React from 'react'
 
 interface VerificationCondition {
   conditionType: string
@@ -136,7 +135,7 @@ export function ComprehensiveVerificationPanel({ result, documentType, nationali
   }
 
   const getDocumentTypeFlag = (nationality: string) => {
-    const flags = {
+    const flags: Record<string, string> = {
       'India': '🇮🇳',
       'Nepal': '🇳🇵',
       'Bhutan': '🇧🇹',
