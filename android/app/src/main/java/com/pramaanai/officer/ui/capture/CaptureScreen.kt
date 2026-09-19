@@ -227,8 +227,11 @@ fun analyzeFrame(
         return null
     }
 
-    val mediaImage = imageProxy.image ?: return null
-    val bitmap = mediaImageToBitmap(mediaImage, imageProxy.imageInfo.rotationDegrees)
+    val mediaImage = imageProxy.image ?: run { imageProxy.close(); return null }
+    val rotation = imageProxy.imageInfo.rotationDegrees
+    Log.d("FrameAnalysis", "Frame: ${mediaImage.width}x${mediaImage.height}, format=${mediaImage.format}, rotation=$rotation")
+    val bitmap = mediaImageToBitmap(mediaImage, rotation)
+    Log.d("FrameAnalysis", "Bitmap: ${bitmap.width}x${bitmap.height}, config=${bitmap.config}")
 
     try {
         val result = OpenCVManager.detectDocument(bitmap)
@@ -243,7 +246,12 @@ fun analyzeFrame(
         )
 
         if (isAligned && result.correctedBitmap != null) {
-            onAutoCapture(result.correctedBitmap!!)
+            // Copy the corrected bitmap before recycling the source —
+            // Bitmap.createBitmap(src, x, y, w, h) may share pixel data
+            // with the source on some Android versions.
+            val safeCopy = result.correctedBitmap!!.copy(Bitmap.Config.ARGB_8888, false)
+            result.correctedBitmap!!.recycle()
+            onAutoCapture(safeCopy)
         }
         return newState
     } catch (e: Exception) {
@@ -256,25 +264,77 @@ fun analyzeFrame(
 }
 
 fun mediaImageToBitmap(mediaImage: android.media.Image, rotationDegrees: Int): Bitmap {
-    val planes = mediaImage.planes
-    val yBuffer = planes[0].buffer
-    val uBuffer = planes[1].buffer
-    val vBuffer = planes[2].buffer
+    val width = mediaImage.width
+    val height = mediaImage.height
+    val yPlane = mediaImage.planes[0]
+    val uPlane = mediaImage.planes[1]
+    val vPlane = mediaImage.planes[2]
 
-    val ySize = yBuffer.remaining()
-    val uSize = uBuffer.remaining()
-    val vSize = vBuffer.remaining()
+    val yRowStride = yPlane.rowStride
+    val uvRowStride = uPlane.rowStride
+    val uvPixelStride = uPlane.pixelStride
 
-    val nv21 = ByteArray(ySize + uSize + vSize)
-    yBuffer.get(nv21, 0, ySize)
-    vBuffer.get(nv21, ySize, vSize)
-    uBuffer.get(nv21, ySize + vSize, uSize)
+    val nv21 = ByteArray(width * height * 3 / 2)
 
-    val yuvImage = android.graphics.YuvImage(nv21, android.graphics.ImageFormat.NV21, mediaImage.width, mediaImage.height, null)
+    // Copy Y plane row by row, respecting rowStride
+    val yBuf = yPlane.buffer
+    for (row in 0 until height) {
+        yBuf.position(row * yRowStride)
+        yBuf.get(nv21, row * width, width)
+    }
+
+    // Copy interleaved VU for NV21
+    val vBuf = vPlane.buffer
+    val uBuf = uPlane.buffer
+    val uvHeight = height / 2
+    val uvWidth = width / 2
+    var offset = width * height
+
+    if (uvPixelStride == 2) {
+        // U and V are already interleaved in memory (common on most devices).
+        // V plane's buffer contains V,U,V,U,... — copy row by row.
+        val rowBytes = kotlin.math.min(uvWidth * 2, vBuf.remaining().coerceAtLeast(0))
+        for (row in 0 until uvHeight) {
+            val rowStart = row * uvRowStride
+            val remaining = vBuf.capacity() - rowStart
+            val bytesToCopy = kotlin.math.min(uvWidth * 2, remaining)
+            if (bytesToCopy <= 0) break
+            vBuf.position(rowStart)
+            vBuf.get(nv21, offset, bytesToCopy)
+            // If last row had one fewer byte, fill the trailing byte
+            if (bytesToCopy < uvWidth * 2) {
+                nv21[offset + bytesToCopy] = nv21[offset + bytesToCopy - 2]
+            }
+            offset += uvWidth * 2
+        }
+    } else {
+        for (row in 0 until uvHeight) {
+            for (col in 0 until uvWidth) {
+                val vIdx = row * uvRowStride + col * uvPixelStride
+                val uIdx = row * uvRowStride + col * uvPixelStride
+                nv21[offset++] = vBuf.get(vIdx)
+                nv21[offset++] = uBuf.get(uIdx)
+            }
+        }
+    }
+
+    val yuvImage = android.graphics.YuvImage(nv21, android.graphics.ImageFormat.NV21, width, height, null)
     val out = java.io.ByteArrayOutputStream()
-    yuvImage.compressToJpeg(android.graphics.Rect(0, 0, mediaImage.width, mediaImage.height), 90, out)
-    val imageBytes = out.toByteArray()
-    return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 90, out)
+    val jpegBytes = out.toByteArray()
+    val bitmap = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+        ?: throw IllegalStateException("Failed to decode JPEG from YUV conversion")
+
+    // Apply rotation if needed
+    return if (rotationDegrees != 0) {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(rotationDegrees.toFloat())
+        val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        if (rotated !== bitmap) bitmap.recycle()
+        rotated
+    } else {
+        bitmap
+    }
 }
 
 fun saveBitmapToFile(bitmap: Bitmap, file: File) {
@@ -504,9 +564,16 @@ fun CaptureScreen(
         scope.launch {
             try {
                 val bundle = withContext(Dispatchers.Default) {
-                    val docFrontBitmap = correctedDocumentFrontBitmap ?: BitmapFactory.decodeFile(docFront.path)
-                    val docBackBitmap = docBack?.let { correctedDocumentBackBitmap ?: BitmapFactory.decodeFile(it.path) }
+                    val docFrontBitmap = BitmapFactory.decodeFile(docFront.path)
+                        ?: correctedDocumentFrontBitmap
+                        ?: throw IllegalStateException("Could not decode document front image")
+                    Log.d("CaptureScreen", "OCR input: file=${docFront.path}, size=${docFront.length()}, bitmap=${docFrontBitmap.width}x${docFrontBitmap.height}")
+                    val docBackBitmap = docBack?.let {
+                        BitmapFactory.decodeFile(it.path)
+                            ?: correctedDocumentBackBitmap
+                    }
                     val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
+                        ?: throw IllegalStateException("Could not decode selfie image")
 
                     // OCR on front side (main document data)
                     val ocr = DocumentOcrExtractor.recognize(docFrontBitmap)
