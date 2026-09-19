@@ -8,6 +8,7 @@ from app.api.routes import (
     blockchain,
     cases,
     checkpoints,
+    comprehensive_verification,
     dashboard,
     devices,
     documents,
@@ -47,6 +48,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(cases.router)
 app.include_router(checkpoints.router)
+app.include_router(comprehensive_verification.router)
 app.include_router(dashboard.router)
 app.include_router(devices.router)
 app.include_router(admin.router)
