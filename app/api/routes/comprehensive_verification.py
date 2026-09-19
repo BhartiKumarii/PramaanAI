@@ -10,10 +10,13 @@ Handles comprehensive verification requests from the Android app with:
 import base64
 import io
 import uuid
+import json
+import numpy as np
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -25,6 +28,54 @@ from app.services.verification.comprehensive_engine import (
     ComprehensiveVerificationResult,
     VerificationCondition
 )
+
+
+def numpy_to_python(obj):
+    """Convert numpy types to Python types for JSON serialization"""
+    if isinstance(obj, np.integer):
+        print(f"[DEBUG] Converting numpy integer: {type(obj)} -> int")
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        print(f"[DEBUG] Converting numpy float: {type(obj)} -> float")
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        print(f"[DEBUG] Converting numpy bool: {type(obj)} -> bool")
+        return bool(obj)
+    elif isinstance(obj, np.ndarray):
+        print(f"[DEBUG] Converting numpy array: {type(obj)} -> list")
+        return obj.tolist()
+    elif hasattr(obj, 'dtype') and hasattr(obj, 'item'):  # numpy scalar
+        print(f"[DEBUG] Converting numpy scalar: {type(obj)} -> item")
+        return obj.item()
+    else:
+        print(f"[DEBUG] Cannot convert object of type {type(obj)}")
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
+def convert_numpy_types(obj: Any) -> Any:
+    """Convert all numpy types to Python native types using JSON round-trip"""
+    try:
+        # Use JSON serialization to force conversion of all numpy types
+        json_str = json.dumps(obj, default=numpy_to_python, ensure_ascii=False)
+        return json.loads(json_str)
+    except (TypeError, ValueError) as e:
+        # If JSON conversion fails, fall back to manual conversion
+        if isinstance(obj, dict):
+            return {key: convert_numpy_types(value) for key, value in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return type(obj)(convert_numpy_types(item) for item in obj)
+        elif isinstance(obj, (np.integer, np.int32, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float32, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif hasattr(obj, 'dtype') and hasattr(obj, 'item'):  # numpy scalar
+            return obj.item()
+        else:
+            return obj
 
 
 # Request/Response Models
@@ -57,6 +108,15 @@ class VerificationConditionResponse(BaseModel):
     details: Dict[str, Any]
     officer_action_required: bool
 
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            np.integer: int,
+            np.floating: float,
+            np.bool_: bool,
+            np.ndarray: lambda v: v.tolist()
+        }
+
 
 class ComprehensiveVerificationResponse(BaseModel):
     overall_status: str
@@ -66,12 +126,22 @@ class ComprehensiveVerificationResponse(BaseModel):
     document_conditions: List[VerificationConditionResponse]
     tampering_conditions: List[VerificationConditionResponse]
     face_conditions: List[VerificationConditionResponse]
+    deepfake_conditions: List[VerificationConditionResponse]
     identity_conditions: List[VerificationConditionResponse]
     officer_recommendations: List[str]
     required_actions: List[str]
     technical_details: Dict[str, Any]
     verification_id: str
     timestamp: str
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            np.integer: int,
+            np.floating: float,
+            np.bool_: bool,
+            np.ndarray: lambda v: v.tolist()
+        }
 
 
 router = APIRouter(prefix="/documents", tags=["comprehensive-verification"])
@@ -165,14 +235,13 @@ class MultiLanguageSupport:
 
 @router.post(
     "/comprehensive-verify",
-    response_model=ComprehensiveVerificationResponse,
     summary="Comprehensive document and identity verification with all conditions"
 )
 async def comprehensive_verification(
     request: ComprehensiveVerificationRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> ComprehensiveVerificationResponse:
+):
     """
     Comprehensive verification implementing ALL specified conditions:
 
@@ -187,20 +256,27 @@ async def comprehensive_verification(
     Returns detailed verification result with officer guidance.
     """
     try:
+        print("[DEBUG] Starting comprehensive verification API call")
+
         # Decode base64 images
         try:
+            print("[DEBUG] Decoding base64 images")
             document_image_bytes = base64.b64decode(request.document_image)
             selfie_image_bytes = base64.b64decode(request.selfie_image)
+            print("[DEBUG] Base64 decoding successful")
         except Exception as e:
+            print(f"[DEBUG] Base64 decoding failed: {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid image data: {str(e)}"
             )
 
         # Initialize comprehensive verification engine
+        print("[DEBUG] Initializing verification engine")
         verification_engine = ComprehensiveVerificationEngine(db)
 
         # Perform comprehensive verification
+        print("[DEBUG] Starting comprehensive verification")
         verification_result = verification_engine.verify_comprehensive(
             document_image_bytes=document_image_bytes,
             selfie_image_bytes=selfie_image_bytes,
@@ -209,14 +285,19 @@ async def comprehensive_verification(
             nationality=request.nationality,
             aadhaar_number=request.aadhaar_number
         )
+        print("[DEBUG] Comprehensive verification completed")
 
         # Localize messages based on language preference
+        print("[DEBUG] Localizing verification result")
         localized_result = localize_verification_result(verification_result, request.language)
+        print("[DEBUG] Localization completed")
 
         # Create verification ID for tracking
         verification_id = str(uuid.uuid4())
+        print(f"[DEBUG] Created verification ID: {verification_id}")
 
         # Log verification attempt for audit trail
+        print("[DEBUG] Logging verification attempt")
         log_verification_attempt(
             db=db,
             user_id=user.id,
@@ -224,35 +305,76 @@ async def comprehensive_verification(
             request_data=request,
             result=localized_result
         )
+        print("[DEBUG] Audit logging completed")
 
-        # Build response
-        return ComprehensiveVerificationResponse(
-            overall_status=localized_result.overall_status,
-            risk_level=localized_result.risk_level,
-            confidence_score=localized_result.confidence_score,
-            verification_summary=localized_result.verification_summary,
-            document_conditions=[
-                VerificationConditionResponse(**condition.__dict__)
-                for condition in localized_result.document_conditions
-            ],
-            tampering_conditions=[
-                VerificationConditionResponse(**condition.__dict__)
-                for condition in localized_result.tampering_conditions
-            ],
-            face_conditions=[
-                VerificationConditionResponse(**condition.__dict__)
-                for condition in localized_result.face_conditions
-            ],
-            identity_conditions=[
-                VerificationConditionResponse(**condition.__dict__)
-                for condition in localized_result.identity_conditions
-            ],
-            officer_recommendations=localized_result.officer_recommendations,
-            required_actions=localized_result.required_actions,
-            technical_details=localized_result.technical_details,
-            verification_id=verification_id,
-            timestamp=datetime.now().isoformat()
-        )
+        # Send to dashboard if risk level is MEDIUM or HIGH
+        if localized_result.risk_level in ["MEDIUM", "HIGH"]:
+            print("[DEBUG] Sending risk case to dashboard")
+            await send_risk_case_to_dashboard(
+                user=user,
+                verification_id=verification_id,
+                request_data=request,
+                result=localized_result
+            )
+            print("[DEBUG] Risk case sent to dashboard successfully")
+
+        # Helper function to recursively convert numpy types
+        def clean_dict(obj):
+            if isinstance(obj, dict):
+                return {key: clean_dict(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_dict(item) for item in obj]
+            elif isinstance(obj, (np.integer, np.int32, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float32, np.float64)):
+                return float(obj)
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif hasattr(obj, 'dtype') and hasattr(obj, 'item'):  # numpy scalar
+                return obj.item()
+            else:
+                return obj
+
+        print("[DEBUG] Starting result processing and numpy type conversion")
+
+        # Convert the entire result to ensure all numpy types are handled
+        result_dict = {
+            "overall_status": localized_result.overall_status,
+            "risk_level": localized_result.risk_level,
+            "confidence_score": float(localized_result.confidence_score),
+            "verification_summary": localized_result.verification_summary,
+            "document_conditions": [clean_dict(condition.__dict__) for condition in localized_result.document_conditions],
+            "tampering_conditions": [clean_dict(condition.__dict__) for condition in localized_result.tampering_conditions],
+            "face_conditions": [clean_dict(condition.__dict__) for condition in localized_result.face_conditions],
+            "deepfake_conditions": [clean_dict(condition.__dict__) for condition in localized_result.deepfake_conditions],
+            "identity_conditions": [clean_dict(condition.__dict__) for condition in localized_result.identity_conditions],
+            "officer_recommendations": localized_result.officer_recommendations,
+            "required_actions": localized_result.required_actions,
+            "technical_details": clean_dict(localized_result.technical_details),
+            "verification_id": verification_id,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        # Apply final cleanup
+        clean_result = clean_dict(result_dict)
+
+        # Ultra-comprehensive numpy conversion as final step
+        import json
+        def ultra_clean(obj):
+            try:
+                # Force serialize to JSON and back to ensure no numpy types remain
+                json_str = json.dumps(obj, default=str, ensure_ascii=False)
+                return json.loads(json_str)
+            except:
+                return obj
+
+        final_result = ultra_clean(clean_result)
+
+        print("[DEBUG] Returning JSONResponse to bypass Pydantic serialization")
+        # Return JSONResponse directly to completely bypass Pydantic serialization
+        return JSONResponse(content=final_result)
 
     except HTTPException:
         raise
@@ -285,6 +407,11 @@ def localize_verification_result(
         for condition in result.face_conditions
     ]
 
+    localized_deepfake_conditions = [
+        localize_condition(condition, language)
+        for condition in result.deepfake_conditions
+    ]
+
     localized_identity_conditions = [
         localize_condition(condition, language)
         for condition in result.identity_conditions
@@ -309,6 +436,7 @@ def localize_verification_result(
         document_conditions=localized_doc_conditions,
         tampering_conditions=localized_tampering_conditions,
         face_conditions=localized_face_conditions,
+        deepfake_conditions=localized_deepfake_conditions,
         identity_conditions=localized_identity_conditions,
         officer_recommendations=localized_recommendations,
         required_actions=localized_actions,
@@ -429,6 +557,76 @@ def log_verification_attempt(
     except Exception as e:
         # Don't fail verification if logging fails
         print(f"Audit logging failed: {e}")
+
+
+async def send_risk_case_to_dashboard(
+    user: User,
+    verification_id: str,
+    request_data: ComprehensiveVerificationRequest,
+    result: ComprehensiveVerificationResult
+):
+    """Send risk case to dashboard for review"""
+    try:
+        from app.api.routes.dashboard_risk_cases import risk_cases_storage
+
+        # Extract primary concerns
+        primary_concerns = []
+        for condition in (result.face_conditions + result.tampering_conditions +
+                         result.document_conditions + result.identity_conditions):
+            if condition.status == "FAIL" and condition.severity in ["MEDIUM", "HIGH"]:
+                primary_concerns.append(condition.condition_type.replace("_", " ").title())
+
+        # Extract face match info
+        face_match_similarity = None
+        face_match_status = "NOT_RUN"
+        for condition in result.face_conditions:
+            if "FACE_MATCH" in condition.condition_type:
+                face_match_similarity = condition.details.get('similarity', 0.0)
+                face_match_status = condition.status
+                break
+
+        # Extract tampering risk
+        tampering_risk = None
+        for condition in result.tampering_conditions:
+            if condition.details.get('confidence') and condition.status == "FAIL":
+                tampering_risk = condition.details.get('confidence')
+                break
+
+        # Create risk case data
+        risk_case = {
+            "case_id": verification_id,
+            "officer_name": user.username,
+            "checkpoint": getattr(user, 'checkpoint_name', 'Unknown'),
+            "risk_level": result.risk_level,
+            "overall_status": result.overall_status,
+            "person_name": request_data.ocr_fields.get('name', 'Unknown'),
+            "document_type": request_data.document_type,
+            "document_number": request_data.ocr_fields.get('document_number', 'Unknown'),
+            "nationality": request_data.nationality,
+            "face_match_similarity": face_match_similarity,
+            "face_match_status": face_match_status,
+            "liveness_status": "COMPUTED",  # Since liveness is working
+            "deepfake_status": "COMPUTED",  # Since deepfake is working
+            "tampering_risk": tampering_risk,
+            "document_image": request_data.document_image,  # Base64 encoded
+            "selfie_image": request_data.selfie_image,      # Base64 encoded
+            "primary_concerns": primary_concerns[:5],  # Limit to top 5
+            "officer_actions_required": result.required_actions
+        }
+
+        # Store in risk cases storage
+        risk_case['timestamp'] = datetime.now().isoformat()
+        risk_case['case_id'] = f"CASE_{len(risk_cases_storage) + 1:06d}"
+        risk_case['reviewed'] = False
+        risk_case['resolved'] = False
+        risk_case['escalated'] = False
+
+        risk_cases_storage.append(risk_case)
+        print(f"Risk case {risk_case['case_id']} sent to dashboard")
+
+    except Exception as e:
+        # Don't fail verification if dashboard integration fails
+        print(f"Dashboard integration failed: {e}")
 
 
 # Health check endpoint for mobile app

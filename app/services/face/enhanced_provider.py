@@ -53,63 +53,123 @@ class EnhancedFaceDetector(FaceDetector):
         self.confidence_threshold = 0.5
 
     def _load_face_detector(self):
-        """Load OpenCV DNN face detection model"""
+        """Load face detection model - using alternative methods for OpenCV 5.0+"""
         try:
-            # Try to load OpenCV's DNN face detector
-            # In production, you'd use a pre-trained model file
-            # For now, we'll use a fallback Haar cascade
-            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            return face_cascade
-        except Exception:
-            # Fallback to basic detection
-            return None
+            # Try multiple approaches for face detection
+
+            # Method 1: Try traditional CascadeClassifier (older OpenCV)
+            if hasattr(cv2, 'CascadeClassifier'):
+                face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                if not face_cascade.empty():
+                    return face_cascade
+
+            # Method 2: Use a simple contour-based face detector as fallback
+            print("Using fallback contour-based face detector")
+            return "contour_based"
+
+        except Exception as e:
+            print(f"Face detector loading failed: {e}")
+            # Return fallback detector
+            return "contour_based"
 
     def detect(self, image_bytes: bytes) -> FaceDetectionResult:
         """Detect faces with comprehensive quality and spoof assessment"""
         try:
+            print(f"[DEBUG] Face detection starting...")
             # Convert bytes to PIL Image
             pil_image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
             img_array = np.array(pil_image)
+            print(f"[DEBUG] Image loaded: {img_array.shape} (H, W, C)")
 
             # Convert to OpenCV format
             gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
             height, width = gray.shape
+            print(f"[DEBUG] Grayscale image: {width}x{height}")
 
             detected_faces = []
 
             if self.net is not None:
-                # Use Haar cascade for face detection (fallback method)
-                faces = self.net.detectMultiScale(
-                    gray,
-                    scaleFactor=1.1,
-                    minNeighbors=5,
-                    minSize=(50, 50)
+                print(f"[DEBUG] Face detector type: {type(self.net)} - {self.net}")
+                if self.net == "contour_based":
+                    # Use contour-based face detection for document images
+                    print(f"[DEBUG] Using contour-based face detection...")
+                    faces = self._detect_faces_contour_based(gray)
+                    print(f"[DEBUG] Contour-based detected {len(faces)} faces")
+                else:
+                    # Use Haar cascade for face detection
+                    print(f"[DEBUG] Using Haar cascade face detection...")
+                    # Try multiple parameter sets for better detection on document photos
+                    faces = []
+
+                    # Try different parameter combinations optimized for document photos
+                    param_sets = [
+                        # (scaleFactor, minNeighbors, minSize, maxSize)
+                        (1.1, 3, (80, 80), (400, 400)),  # Document photo size
+                        (1.05, 3, (60, 60), (500, 500)), # Slightly smaller
+                        (1.3, 4, (100, 100), (350, 350)),# Larger faces only
+                        (1.1, 4, (50, 50), (300, 300)),  # Fallback
+                        (1.05, 2, (40, 40), (600, 600)), # Very permissive fallback
+                    ]
+
+                    for i, (scale, neighbors, min_size, max_size) in enumerate(param_sets):
+                        print(f"[DEBUG] Trying parameter set {i+1}: scale={scale}, neighbors={neighbors}, minSize={min_size}")
+                        if max_size:
+                            detected = self.net.detectMultiScale(
+                                gray, scaleFactor=scale, minNeighbors=neighbors,
+                                minSize=min_size, maxSize=max_size
+                            )
+                        else:
+                            detected = self.net.detectMultiScale(
+                                gray, scaleFactor=scale, minNeighbors=neighbors,
+                                minSize=min_size
+                            )
+
+                        print(f"[DEBUG] Parameter set {i+1} detected {len(detected)} faces")
+                        if len(detected) > 0:
+                            faces = detected
+                            print(f"[DEBUG] Using faces from parameter set {i+1}")
+                            break
+
+                    print(f"[DEBUG] Haar cascade final result: {len(faces)} faces")
+            else:
+                print(f"[DEBUG] No face detector available!")
+                faces = []
+
+            # Process detected faces (regardless of detection method)
+            print(f"[DEBUG] Processing {len(faces)} detected faces...")
+            for i, face_rect in enumerate(faces):
+                x, y, w, h = map(int, face_rect)
+                print(f"[DEBUG] Face {i}: ({x}, {y}) {w}x{h}")
+                # Check if face touches image edges
+                touches_edge = (
+                    x <= 5 or y <= 5 or
+                    (x + w) >= (width - 5) or
+                    (y + h) >= (height - 5)
                 )
 
-                for (x, y, w, h) in faces:
-                    # Check if face touches image edges
-                    touches_edge = (
-                        x <= 5 or y <= 5 or
-                        (x + w) >= (width - 5) or
-                        (y + h) >= (height - 5)
-                    )
+                # Calculate confidence based on face size and position
+                face_area = w * h
+                image_area = width * height
+                size_ratio = face_area / image_area
 
-                    # Calculate confidence based on face size and position
-                    face_area = w * h
-                    image_area = width * height
-                    size_ratio = face_area / image_area
+                print(f"[DEBUG] Face {i}: area={face_area}, ratio={size_ratio:.4f}, touches_edge={touches_edge}")
 
-                    # Confidence based on size (faces should be reasonable size)
-                    if 0.01 <= size_ratio <= 0.8:  # 1% to 80% of image
-                        confidence = min(0.95, 0.5 + size_ratio * 2)
-                    else:
-                        confidence = 0.3  # Too small or too large
+                # Confidence based on size (faces should be reasonable size)
+                # Adjusted thresholds for document photos where faces can be smaller
+                if 0.002 <= size_ratio <= 0.8:  # 0.2% to 80% of image (more permissive for documents)
+                    confidence = min(0.95, 0.5 + size_ratio * 20)  # Adjusted scaling for smaller faces
+                    print(f"[DEBUG] Face {i}: size ratio OK, confidence={confidence:.3f}")
+                else:
+                    confidence = 0.3  # Too small or too large
+                    print(f"[DEBUG] Face {i}: size ratio BAD ({size_ratio:.4f}), confidence={confidence:.3f}")
 
-                    detected_faces.append(DetectedFace(
-                        location={"x": int(x), "y": int(y), "width": int(w), "height": int(h)},
-                        confidence=confidence,
-                        touches_edge=touches_edge
-                    ))
+                detected_faces.append(DetectedFace(
+                    location={"x": int(x), "y": int(y), "width": int(w), "height": int(h)},
+                    confidence=confidence,
+                    touches_edge=touches_edge
+                ))
+
+            print(f"[DEBUG] Final detected_faces count: {len(detected_faces)}")
 
             # Determine status and reason
             if len(detected_faces) == 0:
@@ -291,6 +351,107 @@ class EnhancedFaceDetector(FaceDetector):
                 overall_spoof_probability=0.0
             )
 
+    def _detect_faces_contour_based(self, gray: np.ndarray) -> List[Tuple[int, int, int, int]]:
+        """Contour-based face detection for document images"""
+        try:
+            # This method looks for rectangular regions that might contain faces in documents
+            height, width = gray.shape
+
+            # Apply CLAHE for better contrast
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            enhanced = clahe.apply(gray)
+
+            # Find edges
+            edges = cv2.Canny(enhanced, 50, 150)
+
+            # Find contours
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            faces = []
+            for contour in contours:
+                # Get bounding rectangle
+                x, y, w, h = map(int, cv2.boundingRect(contour))
+
+                # More restrictive filters for passport/ID photos
+                if (60 < w < 250 and 70 < h < 300 and  # Stricter size limits
+                    0.8 < w/h < 1.3 and  # More restrictive aspect ratio
+                    w * h > 4000 and  # Higher minimum area
+                    w * h < 50000):  # Maximum area to avoid full document detection
+
+                    # Additional quality checks
+                    region = gray[y:y+h, x:x+w]
+                    variance = np.var(region)
+
+                    # Face regions should have moderate variance (not blank, not too noisy)
+                    if 300 < variance < 3000:
+                        faces.append((x, y, w, h))
+
+            # Limit to maximum 3 faces to prevent false positives
+            faces = faces[:3]
+
+            # If no contour-based faces found, try region-based approach
+            if len(faces) == 0:
+                faces = self._detect_faces_region_based(enhanced)
+
+            return faces
+
+        except Exception as e:
+            print(f"Contour-based detection failed: {e}")
+            return []
+
+    def _detect_faces_region_based(self, gray: np.ndarray) -> List[Tuple[int, int, int, int]]:
+        """Region-based face detection - looks for typical document photo locations"""
+        try:
+            height, width = gray.shape
+
+            # Aadhaar cards typically have photos in specific regions
+            # Try common locations where photos appear on ID documents
+
+            potential_regions = []
+
+            # Left side photo (common in many ID cards)
+            left_region = (10, height//6, width//3, height*2//3)
+            potential_regions.append(left_region)
+
+            # Right side photo
+            right_region = (width*2//3, height//6, width//3, height*2//3)
+            potential_regions.append(right_region)
+
+            # Top left corner
+            top_left_region = (10, 10, width//2, height//2)
+            potential_regions.append(top_left_region)
+
+            faces = []
+            for x, y, w, h in potential_regions:
+                # Extract region
+                if x + w <= width and y + h <= height:
+                    region = gray[y:y+h, x:x+w]
+
+                    # Check if this region likely contains a face
+                    # by analyzing variance and edge density
+                    variance = np.var(region)
+                    edges = cv2.Canny(region, 30, 100)
+                    edge_density = np.sum(edges) / (w * h * 255)
+
+                    # Heuristic: faces have moderate variance and edge density
+                    if (variance > 200 and variance < 2000 and  # Not too uniform, not too noisy
+                        0.1 < edge_density < 0.4):  # Moderate edge density
+
+                        # Add some padding and constraints
+                        face_x = max(0, x + 10)
+                        face_y = max(0, y + 10)
+                        face_w = min(w - 20, width - face_x)
+                        face_h = min(h - 20, height - face_y)
+
+                        if face_w > 80 and face_h > 100:  # Minimum size
+                            faces.append((face_x, face_y, face_w, face_h))
+
+            return faces
+
+        except Exception as e:
+            print(f"Region-based detection failed: {e}")
+            return []
+
 
 class EnhancedFaceProvider(FaceProvider):
     """Enhanced face verification with comprehensive checks"""
@@ -305,9 +466,25 @@ class EnhancedFaceProvider(FaceProvider):
     def verify(self, document_face: bytes, presented_face: bytes) -> FaceMatchResult:
         """Enhanced face verification with quality and spoof checking"""
 
+        print(f"[DEBUG] Face verification started")
+        print(f"[DEBUG] Document image size: {len(document_face)} bytes")
+        print(f"[DEBUG] Live image size: {len(presented_face)} bytes")
+
         # Step 1: Detect faces in both images
         doc_detection = self.detector.detect(document_face)
         live_detection = self.detector.detect(presented_face)
+
+        print(f"[DEBUG] Document face detection: {doc_detection.status}")
+        if doc_detection.faces:
+            print(f"[DEBUG] Document faces found: {len(doc_detection.faces)}")
+            for i, face in enumerate(doc_detection.faces):
+                print(f"[DEBUG] Document face {i}: location {face.location}, confidence {face.confidence:.3f}")
+
+        print(f"[DEBUG] Live face detection: {live_detection.status}")
+        if live_detection.faces:
+            print(f"[DEBUG] Live faces found: {len(live_detection.faces)}")
+            for i, face in enumerate(live_detection.faces):
+                print(f"[DEBUG] Live face {i}: location {face.location}, confidence {face.confidence:.3f}")
 
         # Check face detection results
         if doc_detection.status == "NO_FACE":
@@ -328,27 +505,47 @@ class EnhancedFaceProvider(FaceProvider):
                 location=None
             )
 
+        # Handle multiple faces by selecting the best one (for document photos this is common)
         if doc_detection.status == "MULTIPLE_FACES":
+            print(f"[DEBUG] Multiple document faces detected, selecting best one...")
+            # Sort by confidence and select the best face
+            doc_face = max(doc_detection.faces, key=lambda f: f.confidence)
+            print(f"[DEBUG] Selected document face: confidence {doc_face.confidence:.3f}")
+        elif doc_detection.status == "SINGLE_FACE":
+            doc_face = doc_detection.faces[0]
+        else:
             return FaceMatchResult(
                 match=False,
                 similarity=0.0,
                 confidence=0.0,
-                reason=f"Multiple faces detected in document ({len(doc_detection.faces)} faces). Document should contain only one person.",
-                location=doc_detection.faces[0].location if doc_detection.faces else None
+                reason="No face detected in document image. Please ensure document contains a clear facial photograph.",
+                location=None
             )
 
         if live_detection.status == "MULTIPLE_FACES":
+            print(f"[DEBUG] Multiple live faces detected, selecting best one...")
+            # For live capture, multiple faces might indicate group photo - be more cautious
+            if len(live_detection.faces) > 2:
+                return FaceMatchResult(
+                    match=False,
+                    similarity=0.0,
+                    confidence=0.0,
+                    reason=f"Too many faces detected in live capture ({len(live_detection.faces)} faces). Please ensure only your face is visible.",
+                    location=live_detection.faces[0].location
+                )
+            # Select the best face
+            live_face = max(live_detection.faces, key=lambda f: f.confidence)
+            print(f"[DEBUG] Selected live face: confidence {live_face.confidence:.3f}")
+        elif live_detection.status == "SINGLE_FACE":
+            live_face = live_detection.faces[0]
+        else:
             return FaceMatchResult(
                 match=False,
                 similarity=0.0,
                 confidence=0.0,
-                reason=f"Multiple faces detected in live capture ({len(live_detection.faces)} faces). Please ensure only your face is visible.",
-                location=live_detection.faces[0].location if live_detection.faces else None
+                reason="No face detected in live capture. Please ensure camera captures your face clearly.",
+                location=None
             )
-
-        # Get the primary face from each image
-        doc_face = doc_detection.faces[0]
-        live_face = live_detection.faces[0]
 
         # Step 2: Quality assessment
         doc_quality = self.detector.assess_face_quality(document_face, doc_face.location)
@@ -391,18 +588,30 @@ class EnhancedFaceProvider(FaceProvider):
         # Step 4: Face embedding and matching
         try:
             # Extract embeddings from the detected face regions
-            doc_embedding = extract_embedding(document_face,
-                                            box=(doc_face.location['x'], doc_face.location['y'],
-                                                doc_face.location['x'] + doc_face.location['width'],
-                                                doc_face.location['y'] + doc_face.location['height']))
+            doc_box = (doc_face.location['x'], doc_face.location['y'],
+                      doc_face.location['x'] + doc_face.location['width'],
+                      doc_face.location['y'] + doc_face.location['height'])
+            live_box = (live_face.location['x'], live_face.location['y'],
+                       live_face.location['x'] + live_face.location['width'],
+                       live_face.location['y'] + live_face.location['height'])
 
-            live_embedding = extract_embedding(presented_face,
-                                             box=(live_face.location['x'], live_face.location['y'],
-                                                 live_face.location['x'] + live_face.location['width'],
-                                                 live_face.location['y'] + live_face.location['height']))
+            print(f"[DEBUG] Document face box: {doc_box}")
+            print(f"[DEBUG] Live face box: {live_box}")
+
+            print(f"[DEBUG] Extracting document face embedding...")
+            doc_embedding = extract_embedding(document_face, box=doc_box)
+            print(f"[DEBUG] Document embedding length: {len(doc_embedding) if doc_embedding else 0}")
+
+            print(f"[DEBUG] Extracting live face embedding...")
+            live_embedding = extract_embedding(presented_face, box=live_box)
+            print(f"[DEBUG] Live embedding length: {len(live_embedding) if live_embedding else 0}")
 
             # Calculate similarity
+            print(f"[DEBUG] Calculating cosine similarity...")
             similarity = cosine_similarity(doc_embedding, live_embedding)
+            print(f"[DEBUG] Raw similarity: {similarity:.6f}")
+            print(f"[DEBUG] Threshold: {self.match_threshold:.6f}")
+            print(f"[DEBUG] Match: {similarity >= self.match_threshold}")
 
             # Determine match based on threshold
             match = similarity >= self.match_threshold

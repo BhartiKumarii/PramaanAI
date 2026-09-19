@@ -10,6 +10,7 @@ from app.api.routes import (
     checkpoints,
     comprehensive_verification,
     dashboard,
+    dashboard_risk_cases,
     devices,
     documents,
     face,
@@ -50,6 +51,7 @@ app.include_router(cases.router)
 app.include_router(checkpoints.router)
 app.include_router(comprehensive_verification.router)
 app.include_router(dashboard.router)
+app.include_router(dashboard_risk_cases.router)
 app.include_router(devices.router)
 app.include_router(admin.router)
 app.include_router(audit.router)

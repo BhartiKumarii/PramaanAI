@@ -56,6 +56,7 @@ import re
 from sqlalchemy.orm import Session
 from app.services.face.enhanced_provider import EnhancedFaceProvider, EnhancedFaceDetector
 from app.services.liveness.advanced_provider import AdvancedLivenessProvider
+from app.services.liveness.heuristic_provider import HeuristicLivenessProvider
 from app.services.tampering.forensics_provider import ComprehensiveForensicsProvider
 from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
 
@@ -94,6 +95,7 @@ class ComprehensiveVerificationResult:
     document_conditions: List[VerificationCondition]
     tampering_conditions: List[VerificationCondition]
     face_conditions: List[VerificationCondition]
+    deepfake_conditions: List[VerificationCondition]
     identity_conditions: List[VerificationCondition]
 
     # Officer guidance
@@ -115,6 +117,7 @@ class ComprehensiveVerificationEngine:
         self.face_provider = EnhancedFaceProvider()
         self.face_detector = EnhancedFaceDetector()
         self.liveness_provider = AdvancedLivenessProvider()
+        self.liveness_fallback = HeuristicLivenessProvider()
         self.tampering_provider = ComprehensiveForensicsProvider()
         self.deepfake_provider = AdvancedDeepfakeProvider()
 
@@ -154,21 +157,25 @@ class ComprehensiveVerificationEngine:
         )
         all_conditions.extend(face_conditions)
 
-        # 4. MULTIPLE IDENTITY DETECTION CONDITIONS
+        # 4. DEEPFAKE DETECTION CONDITIONS
+        deepfake_conditions = self._verify_deepfake_conditions(selfie_image_bytes)
+        all_conditions.extend(deepfake_conditions)
+
+        # 5. MULTIPLE IDENTITY DETECTION CONDITIONS
         identity_conditions = self._verify_identity_conditions(
             ocr_fields, selfie_image_bytes, document_type, nationality
         )
         all_conditions.extend(identity_conditions)
 
-        # 5. CALCULATE RISK SCORE AND DETERMINE OVERALL STATUS
+        # 6. CALCULATE RISK SCORE AND DETERMINE OVERALL STATUS
         risk_level, overall_status, confidence_score = self._calculate_risk_assessment(all_conditions)
 
-        # 6. GENERATE OFFICER RECOMMENDATIONS
+        # 7. GENERATE OFFICER RECOMMENDATIONS
         officer_recommendations, required_actions = self._generate_officer_guidance(
             all_conditions, risk_level, overall_status
         )
 
-        # 7. CREATE COMPREHENSIVE RESULT
+        # 8. CREATE COMPREHENSIVE RESULT
         verification_summary = self._generate_verification_summary(
             all_conditions, risk_level, overall_status
         )
@@ -180,6 +187,7 @@ class ComprehensiveVerificationEngine:
             document_conditions=[c for c in all_conditions if c.condition_type.startswith('DOCUMENT_')],
             tampering_conditions=[c for c in all_conditions if c.condition_type.startswith('TAMPERING_')],
             face_conditions=[c for c in all_conditions if c.condition_type.startswith('FACE_')],
+            deepfake_conditions=[c for c in all_conditions if c.condition_type.startswith('DEEPFAKE_')],
             identity_conditions=[c for c in all_conditions if c.condition_type.startswith('IDENTITY_')],
             officer_recommendations=officer_recommendations,
             required_actions=required_actions,
@@ -231,8 +239,26 @@ class ComprehensiveVerificationEngine:
         """Verify all tampering detection conditions"""
         conditions = []
 
-        # Run comprehensive forensics analysis
-        tampering_result = self.tampering_provider.analyze(document_image_bytes)
+        try:
+            print(f"[DEBUG] Starting document forensics analysis...")
+            # Run comprehensive forensics analysis
+            tampering_result = self.tampering_provider.analyze(document_image_bytes)
+            print(f"[DEBUG] Forensics analysis completed. Risk: {tampering_result.tampering_risk}, Findings: {len(tampering_result.findings)}")
+
+            if tampering_result.findings:
+                for finding in tampering_result.findings:
+                    print(f"[DEBUG] Finding: {finding.type} (confidence: {finding.confidence:.3f}) - {finding.reason}")
+        except Exception as e:
+            print(f"[DEBUG] Document forensics analysis failed: {str(e)}")
+            conditions.append(VerificationCondition(
+                condition_type="TAMPERING_ANALYSIS_ERROR",
+                status="WARNING",
+                severity="MEDIUM",
+                message=f"Document forensics analysis failed: {str(e)}",
+                details={'error': str(e)},
+                officer_action_required=True
+            ))
+            return conditions
 
         # Map forensics findings to specific tampering conditions
         tampering_types = {
@@ -274,6 +300,21 @@ class ComprehensiveVerificationEngine:
                     'finding_type': finding.type
                 },
                 officer_action_required=officer_action
+            ))
+
+        # If no specific findings but analysis was successful, add a general condition
+        if not tampering_result.findings or len(conditions) == 0:
+            conditions.append(VerificationCondition(
+                condition_type="TAMPERING_ANALYSIS_COMPLETE",
+                status="PASS",
+                severity="LOW",
+                message=f"Document forensics analysis completed. Overall tampering risk: {tampering_result.tampering_risk:.3f}",
+                details={
+                    'tampering_risk': tampering_result.tampering_risk,
+                    'findings_count': len(tampering_result.findings),
+                    'analysis_completed': True
+                },
+                officer_action_required=False
             ))
 
         # Ensure all tampering conditions are covered
@@ -346,6 +387,11 @@ class ComprehensiveVerificationEngine:
 
         # 2. Live/captured face matches document photo
         if doc_detection.status == "SINGLE_FACE":
+            # Run calibration test first
+            print(f"[DEBUG] Running calibration test with live image...")
+            self._test_face_matching_calibration(selfie_image_bytes)
+
+            print(f"[DEBUG] Running actual face matching...")
             face_match = self.face_provider.verify(document_image_bytes, selfie_image_bytes)
 
             if face_match.match:
@@ -413,7 +459,7 @@ class ComprehensiveVerificationEngine:
                 ))
 
         # 5. Spoof/photo-on-screen detection
-        liveness_result = self.liveness_provider.analyze(selfie_image_bytes)
+        liveness_result = self._analyze_liveness_with_fallback(selfie_image_bytes)
 
         if liveness_result.status == "SUSPECTED_SPOOF":
             conditions.append(VerificationCondition(
@@ -424,13 +470,23 @@ class ComprehensiveVerificationEngine:
                 details={'spoof_score': liveness_result.score, 'liveness_analysis': liveness_result.reason},
                 officer_action_required=True
             ))
-        else:
+        elif liveness_result.status == "LIVE":
             conditions.append(VerificationCondition(
                 condition_type="FACE_LIVENESS_VERIFIED",
                 status="PASS",
                 severity="LOW",
-                message="Live face capture verified. No spoof indicators detected.",
-                details={'spoof_score': liveness_result.score or 0.0},
+                message=f"Live face capture verified. {liveness_result.reason}",
+                details={'spoof_score': liveness_result.score or 0.0, 'liveness_analysis': liveness_result.reason},
+                officer_action_required=False
+            ))
+        else:
+            # NOT_IMPLEMENTED or other status
+            conditions.append(VerificationCondition(
+                condition_type="FACE_LIVENESS_NOT_COMPUTED",
+                status="WARNING",
+                severity="LOW",
+                message=f"Liveness analysis unavailable: {liveness_result.reason}",
+                details={'status': liveness_result.status, 'reason': liveness_result.reason},
                 officer_action_required=False
             ))
 
@@ -494,6 +550,73 @@ class ComprehensiveVerificationEngine:
                 message="No multiple identity conflicts detected. Identity appears unique.",
                 details={'checks_performed': ['same_face_different_docs', 'same_doc_different_faces', 'duplicate_records']},
                 officer_action_required=False
+            ))
+
+        return conditions
+
+    def _verify_deepfake_conditions(self, selfie_image_bytes: bytes) -> List[VerificationCondition]:
+        """Verify deepfake detection conditions"""
+        conditions = []
+
+        try:
+            # Run deepfake analysis
+            deepfake_result = self.deepfake_provider.analyze(selfie_image_bytes)
+
+            if deepfake_result.status == "DEEPFAKE_DETECTED":
+                conditions.append(VerificationCondition(
+                    condition_type="DEEPFAKE_DETECTED",
+                    status="FAIL",
+                    severity="HIGH",
+                    message=f"Deepfake detected in live capture. {deepfake_result.reason}",
+                    details={'deepfake_score': deepfake_result.score, 'analysis_reason': deepfake_result.reason},
+                    officer_action_required=True
+                ))
+            elif deepfake_result.status == "SUSPICIOUS":
+                conditions.append(VerificationCondition(
+                    condition_type="DEEPFAKE_SUSPICIOUS",
+                    status="WARNING",
+                    severity="MEDIUM",
+                    message=f"Possible deepfake indicators detected. {deepfake_result.reason}",
+                    details={'deepfake_score': deepfake_result.score, 'analysis_reason': deepfake_result.reason},
+                    officer_action_required=True
+                ))
+            elif deepfake_result.status == "LIKELY_REAL":
+                conditions.append(VerificationCondition(
+                    condition_type="DEEPFAKE_NOT_DETECTED",
+                    status="PASS",
+                    severity="LOW",
+                    message=f"Live capture appears authentic. {deepfake_result.reason}",
+                    details={'deepfake_score': deepfake_result.score or 0.0, 'analysis_reason': deepfake_result.reason},
+                    officer_action_required=False
+                ))
+            elif deepfake_result.status == "ERROR":
+                conditions.append(VerificationCondition(
+                    condition_type="DEEPFAKE_ANALYSIS_ERROR",
+                    status="WARNING",
+                    severity="MEDIUM",
+                    message=f"Deepfake analysis failed: {deepfake_result.reason}",
+                    details={'error': deepfake_result.reason},
+                    officer_action_required=True
+                ))
+            else:
+                # Handle NOT_IMPLEMENTED or other statuses
+                conditions.append(VerificationCondition(
+                    condition_type="DEEPFAKE_NOT_IMPLEMENTED",
+                    status="WARNING",
+                    severity="LOW",
+                    message=f"Deepfake analysis not available: {deepfake_result.reason}",
+                    details={'status': deepfake_result.status, 'reason': deepfake_result.reason},
+                    officer_action_required=False
+                ))
+
+        except Exception as e:
+            conditions.append(VerificationCondition(
+                condition_type="DEEPFAKE_ANALYSIS_ERROR",
+                status="WARNING",
+                severity="MEDIUM",
+                message=f"Deepfake analysis failed: {str(e)}",
+                details={'error': str(e)},
+                officer_action_required=True
             ))
 
         return conditions
@@ -1041,6 +1164,7 @@ class ComprehensiveVerificationEngine:
                 'document': len([c for c in conditions if c.condition_type.startswith('DOCUMENT_')]),
                 'tampering': len([c for c in conditions if c.condition_type.startswith('TAMPERING_')]),
                 'face': len([c for c in conditions if c.condition_type.startswith('FACE_')]),
+                'deepfake': len([c for c in conditions if c.condition_type.startswith('DEEPFAKE_')]),
                 'identity': len([c for c in conditions if c.condition_type.startswith('IDENTITY_')])
             },
             'conditions_by_status': {
@@ -1067,3 +1191,55 @@ class ComprehensiveVerificationEngine:
     def _is_valid_date_format(self, date_str: str) -> bool:
         """Check if date string is in a valid format"""
         return self._parse_date(date_str) is not None
+
+    def _test_face_matching_calibration(self, image_bytes: bytes) -> float:
+        """Test face matching with the same image to calibrate system"""
+        try:
+            print(f"[DEBUG] Running face matching calibration test...")
+            result = self.face_provider.verify(image_bytes, image_bytes)
+            print(f"[DEBUG] Same-image similarity: {result.similarity:.6f} (should be close to 1.0)")
+            print(f"[DEBUG] Same-image match: {result.match} (should be True)")
+            return result.similarity
+        except Exception as e:
+            print(f"[DEBUG] Face matching calibration failed: {str(e)}")
+            return 0.0
+
+    def _analyze_liveness_with_fallback(self, image_bytes: bytes):
+        """Analyze liveness with advanced provider and fallback to heuristic"""
+        try:
+            # First try the advanced liveness provider
+            print(f"[DEBUG] Attempting advanced liveness analysis...")
+            result = self.liveness_provider.analyze(image_bytes)
+
+            if result.status not in ["NOT_IMPLEMENTED", "ERROR"]:
+                print(f"[DEBUG] Advanced liveness analysis successful: {result.status}")
+                return result
+            else:
+                print(f"[DEBUG] Advanced liveness failed ({result.status}), trying fallback: {result.reason}")
+
+        except Exception as e:
+            print(f"[DEBUG] Advanced liveness analysis exception: {str(e)}, trying fallback")
+
+        # Fall back to heuristic liveness provider
+        try:
+            print(f"[DEBUG] Attempting heuristic liveness analysis...")
+            result = self.liveness_fallback.analyze(image_bytes)
+            print(f"[DEBUG] Heuristic liveness analysis completed: {result.status}")
+
+            # Enhance the reason to indicate fallback was used
+            enhanced_reason = f"[Heuristic fallback] {result.reason}"
+            from app.services.liveness.base import LivenessResult
+            return LivenessResult(
+                status=result.status,
+                score=result.score,
+                reason=enhanced_reason
+            )
+
+        except Exception as e:
+            print(f"[DEBUG] Heuristic liveness analysis also failed: {str(e)}")
+            from app.services.liveness.base import LivenessResult
+            return LivenessResult(
+                status="NOT_IMPLEMENTED",
+                score=None,
+                reason=f"Both advanced and heuristic liveness analysis failed: {str(e)}"
+            )

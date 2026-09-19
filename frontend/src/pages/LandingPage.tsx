@@ -1,86 +1,119 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Eye, FileText, FileWarning, MapPinOff, ShieldCheck, Share2, BarChart3, MapPin, Activity, Users } from 'lucide-react'
-import { AsciiWave } from '../components/decor/AsciiWave'
+import { ArrowRight, Eye, FileText, FileWarning, Shield, ShieldCheck, Share2, BarChart3, MapPin, Activity, Users, Fingerprint, Search, UserCheck } from 'lucide-react'
 import { PublicNavbar } from '../components/PublicNavbar'
 import { Footer } from '../components/Footer'
 
-const PROBLEM_POINTS: { icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; title: string; body: string }[] = [
-  {
-    icon: FileWarning,
-    title: 'Fake documents & impersonation',
-    body: 'at open, treaty-based borders',
-  },
-  {
-    icon: MapPinOff,
-    title: 'No server or infrastructure',
-    body: 'at most checkpoints',
-  },
-  {
-    icon: Eye,
-    title: 'Visual judgement alone',
-    body: 'no digital cross-check available',
-  },
+const VERIFICATION_SIGNALS = [
   {
     icon: FileText,
-    title: 'Minimal documentation',
-    body: 'carried under the 1950 Indo-Nepal Treaty',
-  },
-]
-
-const FEATURES = [
-  {
-    icon: ShieldCheck,
-    title: 'Single Officer Role',
-    body: 'One unified role with full access — scan, review, manage, and administer from one app',
-  },
-  {
-    icon: FileText,
-    title: 'On-Device OCR + MRZ',
-    body: 'Extracts passport/visa fields and validates MRZ checksums entirely on the Android device',
-  },
-  {
-    icon: Eye,
-    title: 'Face Matching & Liveness',
-    body: 'Classical HOG embedding + liveness prompts — no ML models, no cloud, no privacy leaks',
+    title: 'DOCUMENT INTELLIGENCE',
+    body: 'Extract and validate relevant information from identity and travel documents using OCR and document-aware processing.',
   },
   {
     icon: FileWarning,
-    title: 'Tampering Detection (ELA)',
-    body: 'Error Level Analysis spots spliced photos, altered text, and digital manipulation artifacts',
+    title: 'TAMPERING DETECTION',
+    body: 'Identify potential alterations such as modified photographs, dates of birth, document numbers, stamps, text, or other visual inconsistencies.',
+  },
+  {
+    icon: UserCheck,
+    title: 'IDENTITY VERIFICATION',
+    body: 'Compare extracted identity information against available verification sources and identify inconsistencies.',
+  },
+  {
+    icon: Eye,
+    title: 'FACE–DOCUMENT VERIFICATION',
+    body: 'Compare the person presented at the checkpoint with the photograph associated with the document.',
   },
   {
     icon: Share2,
-    title: 'Identity Graph',
-    body: 'Real-time clustering detects same face under multiple names, reused documents, duplicate identities',
+    title: 'MULTIPLE IDENTITY DETECTION',
+    body: 'Identify conflicting identity records or the association of different documents with the same person for further officer review.',
   },
   {
     icon: BarChart3,
-    title: 'Explainable Risk Scoring',
-    body: 'LOW / MEDIUM / HIGH with per-signal breakdown — officers see exactly why, not just a number',
-  },
-  {
-    icon: Activity,
-    title: 'Offline-First, Sync Later',
-    body: 'Screenings queue locally when offline, auto-sync when connectivity returns — no lost checks',
-  },
-  {
-    icon: Users,
-    title: 'Officer & Device Monitoring',
-    body: 'Real-time dashboard shows active officers, device health, battery, sync status, flagged/revoked devices',
-  },
-  {
-    icon: MapPin,
-    title: 'Multi-Checkpoint Support',
-    body: 'Attari-Wagah, Petrapole, Raxaul — each with its own queue, officers, and checkpoint-specific analytics',
+    title: 'RISK-BASED ASSESSMENT',
+    body: 'Convert verification signals into an understandable result with supporting reasons.',
   },
 ]
 
-const FACT_GRID = [
-  { value: '1,751 km', label: 'India–Nepal open border' },
-  { value: '699 km', label: 'India–Bhutan open border' },
-  { value: '1', label: 'Unified officer role with full access' },
-  { value: '0', label: 'Raw images ever sent to the server' },
+const WORKFLOW_STEPS = [
+  {
+    step: '01',
+    title: 'CAPTURE',
+    body: 'The officer captures the identity or travel document through the mobile application.',
+  },
+  {
+    step: '02',
+    title: 'ON-DEVICE PROCESSING',
+    body: 'Initial image processing and required preprocessing take place on the officer\'s device before transmission.',
+  },
+  {
+    step: '03',
+    title: 'SECURE VERIFICATION',
+    body: 'Required information is securely transmitted to the central verification system when connectivity is available.',
+  },
+  {
+    step: '04',
+    title: 'MULTI-LEVEL ANALYSIS',
+    body: 'PramaanAI performs document validation, tampering analysis, identity matching, face comparison, and other configured checks.',
+  },
+  {
+    step: '05',
+    title: 'EXPLAINABLE RESULT',
+    body: 'The system presents a clear verification status together with the signals that contributed to it.',
+  },
+  {
+    step: '06',
+    title: 'HUMAN DECISION',
+    body: 'The officer remains responsible for the final action. PramaanAI supports the decision; it does not replace the officer.',
+  },
+]
+
+const RISK_LEVELS = [
+  {
+    level: 'LOW',
+    description: 'No significant verification issue detected.',
+    color: 'text-green-400',
+  },
+  {
+    level: 'MEDIUM — NEEDS REVIEW',
+    description: 'A mismatch, uncertainty, or potential anomaly requires additional officer attention.',
+    color: 'text-yellow-400',
+  },
+  {
+    level: 'HIGH — FLAGGED',
+    description: 'Significant verification concerns or strong conflicting signals have been detected.',
+    color: 'text-red-400',
+  },
+  {
+    level: 'UNABLE TO VERIFY',
+    description: 'Verification could not be completed because of factors such as unavailable verification sources, unreadable information, unsupported documents, or connectivity limitations.',
+    color: 'text-gray-400',
+  },
+]
+
+const CONNECTIVITY_MODES = [
+  {
+    title: 'CONNECTED',
+    description: 'Full verification workflow through the central server.',
+    icon: Activity,
+  },
+  {
+    title: 'WEAK CONNECTIVITY',
+    description: 'Essential information can be processed locally while communication is optimized for available connectivity.',
+    icon: Activity,
+  },
+  {
+    title: 'OFFLINE',
+    description: 'Verification-related information can be securely queued on the device and synchronized when connectivity is restored.',
+    icon: Activity,
+  },
+  {
+    title: 'FREQUENT TRAVELLERS',
+    description: 'Secure local caching can reduce unnecessary repeated verification for eligible repeat cases while maintaining controlled access and data protection.',
+    icon: Users,
+  },
 ]
 
 function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {

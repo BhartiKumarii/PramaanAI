@@ -432,14 +432,15 @@ private fun signalCheck(risk: RiskResult?, signal: String, label: String, notRun
 
 private fun prettyCheck(check: String) = check.replace("_", " ").replaceFirstChar { it.uppercase() }
 
+@Composable
 private fun documentChecks(item: ScreeningQueueItem): List<CheckItem> = buildList {
     val readable = item.ocr != null && item.ocr.fields.values.any { it.isNotBlank() }
     add(
         CheckItem(
-            "Document read",
+            stringResource(R.string.check_document_read),
             if (readable) CheckState.PASS else CheckState.REVIEW,
-            if (readable) "${item.ocr!!.fields.values.count { it.isNotBlank() }} field(s) read from the document"
-            else "No fields could be read — rescan the document in better light",
+            if (readable) stringResource(R.string.check_fields_read, item.ocr!!.fields.values.count { it.isNotBlank() })
+            else stringResource(R.string.check_rescan_document),
         ),
     )
     val findings = item.validation?.findings
@@ -464,6 +465,7 @@ private fun documentChecks(item: ScreeningQueueItem): List<CheckItem> = buildLis
     add(signalCheck(item.risk, "duplicate_document", "Duplicate / reused document", "Not evaluated for this screening"))
 }
 
+@Composable
 private fun screeningChecks(item: ScreeningQueueItem): List<CheckItem> = buildList {
     add(
         CheckItem(
@@ -476,33 +478,33 @@ private fun screeningChecks(item: ScreeningQueueItem): List<CheckItem> = buildLi
     add(signalCheck(item.risk, "face_detection", "Face in live capture", "Not run on this device"))
     val face = item.face
     add(
-        if (face == null) CheckItem("Face match", CheckState.NOT_RUN, "Needs both a document photo and a live capture")
-        else CheckItem("Face match", if (face.match) CheckState.PASS else CheckState.REVIEW, face.reason),
+        if (face == null) CheckItem(stringResource(R.string.check_face_match), CheckState.NOT_RUN, stringResource(R.string.check_needs_both))
+        else CheckItem(stringResource(R.string.check_face_match), if (face.match) CheckState.PASS else CheckState.REVIEW, face.reason),
     )
     val liveness = item.livenessStatus
     add(
-        if (liveness == null) CheckItem("Liveness / spoof check", CheckState.NOT_RUN, "Not computed on this device")
-        else CheckItem("Liveness / spoof check", if (liveness == "LIVE") CheckState.PASS else CheckState.REVIEW, item.livenessReason),
+        if (liveness == null) CheckItem(stringResource(R.string.check_liveness), CheckState.NOT_RUN, stringResource(R.string.check_not_computed))
+        else CheckItem(stringResource(R.string.check_liveness), if (liveness == "LIVE") CheckState.PASS else CheckState.REVIEW, item.livenessReason),
     )
     val tampering = item.tampering
     add(
-        if (tampering == null) CheckItem("Document forensics (ELA)", CheckState.NOT_RUN, "Not computed on this device")
+        if (tampering == null) CheckItem(stringResource(R.string.check_forensics), CheckState.NOT_RUN, stringResource(R.string.check_not_computed))
         else CheckItem(
-            "Document forensics (ELA)",
+            stringResource(R.string.check_forensics),
             if (tampering.tamperingRisk < 0.5) CheckState.PASS else CheckState.REVIEW,
-            tampering.findings.firstOrNull()?.reason ?: "Tampering risk ${(tampering.tamperingRisk * 100).toInt()}%",
+            tampering.findings.firstOrNull()?.reason ?: stringResource(R.string.check_tampering_risk, (tampering.tamperingRisk * 100).toInt()),
         ),
     )
     val deepfake = item.deepfakeStatus
     add(
-        if (deepfake == null || deepfake == "NOT_IMPLEMENTED") CheckItem("Deepfake heuristic", CheckState.NOT_RUN, "Not computed on this device")
-        else CheckItem("Deepfake heuristic", CheckState.PASS, item.deepfakeReason),
+        if (deepfake == null || deepfake == "NOT_IMPLEMENTED") CheckItem(stringResource(R.string.check_deepfake), CheckState.NOT_RUN, stringResource(R.string.check_not_computed))
+        else CheckItem(stringResource(R.string.check_deepfake), CheckState.PASS, item.deepfakeReason),
     )
     val graph = item.identityGraph
     add(
-        if (graph == null) CheckItem("Identity graph", CheckState.NOT_RUN, "Needs a live capture to compare against earlier records")
+        if (graph == null) CheckItem(stringResource(R.string.check_identity_graph), CheckState.NOT_RUN, stringResource(R.string.check_needs_live))
         else CheckItem(
-            "Identity graph",
+            stringResource(R.string.check_identity_graph),
             if (graph.status == "CLUSTER_FOUND") CheckState.ALERT else CheckState.PASS,
             graph.reason,
         ),

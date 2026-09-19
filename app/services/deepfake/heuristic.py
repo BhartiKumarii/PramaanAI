@@ -55,7 +55,7 @@ def _frequency_spikiness(gray: np.ndarray) -> float:
     spectrum = np.abs(np.fft.fftshift(np.fft.fft2(gray)))
     cy, cx = h // 2, w // 2
     y, x = np.ogrid[:h, :w]
-    radius = np.sqrt((y - cy) ** 2 + (x - cx) ** 2).astype(np.int32)
+    radius = np.sqrt((y - cy) ** 2 + (x - cx) ** 2).astype(int)
     max_radius = min(cy, cx)
     if max_radius < 8:
         return 0.0

@@ -257,7 +257,7 @@ class ComprehensiveForensicsAnalyzer:
 
             text_regions = []
             for contour in contours:
-                x, y, w, h = cv2.boundingRect(contour)
+                x, y, w, h = map(int, cv2.boundingRect(contour))
                 # Filter for text-like regions (appropriate aspect ratio and size)
                 if 20 < w < 300 and 15 < h < 50 and 2 < w/h < 15:
                     text_regions.append((x, y, w, h))
@@ -338,7 +338,7 @@ class ComprehensiveForensicsAnalyzer:
             if circles is not None:
                 circles = np.uint16(np.around(circles))
                 for circle in circles[0, :]:
-                    cx, cy, radius = circle
+                    cx, cy, radius = map(int, circle)
                     # Analyze circular stamp region
                     stamp_indicators = self._analyze_stamp_region(
                         img_array, cx - radius, cy - radius, 2 * radius, 2 * radius
@@ -353,7 +353,7 @@ class ComprehensiveForensicsAnalyzer:
             )
 
             for contour in contours:
-                x, y, w, h = cv2.boundingRect(contour)
+                x, y, w, h = map(int, cv2.boundingRect(contour))
                 # Look for stamp-sized rectangular regions
                 if 50 < w < 200 and 30 < h < 100:
                     stamp_indicators = self._analyze_stamp_region(img_array, x, y, w, h)
@@ -450,7 +450,7 @@ class ComprehensiveForensicsAnalyzer:
                     type="missing_hologram",
                     severity="HIGH",
                     confidence=hologram_score,
-                    location={"x0": 0, "y0": 0, "x1": img_array.shape[1], "y1": img_array.shape[0]},
+                    location={"x0": 0, "y0": 0, "x1": int(img_array.shape[1]), "y1": int(img_array.shape[0])},
                     description="Security hologram appears missing or altered",
                     evidence={"hologram_analysis_score": hologram_score}
                 ))
@@ -462,7 +462,7 @@ class ComprehensiveForensicsAnalyzer:
                     type="watermark_tampering",
                     severity="MEDIUM",
                     confidence=watermark_score,
-                    location={"x0": 0, "y0": 0, "x1": img_array.shape[1], "y1": img_array.shape[0]},
+                    location={"x0": 0, "y0": 0, "x1": int(img_array.shape[1]), "y1": int(img_array.shape[0])},
                     description="Document watermark appears compromised",
                     evidence={"watermark_analysis_score": watermark_score}
                 ))
@@ -488,7 +488,7 @@ class ComprehensiveForensicsAnalyzer:
             )
 
             for contour in contours:
-                x, y, w, h = cv2.boundingRect(contour)
+                x, y, w, h = map(int, cv2.boundingRect(contour))
                 # Look for square-ish regions that might be QR codes
                 if 50 < w < 200 and 50 < h < 200 and 0.7 < w/h < 1.3:
                     qr_region = img_array[y:y+h, x:x+w]
@@ -537,7 +537,7 @@ class ComprehensiveForensicsAnalyzer:
                         type="font_inconsistency",
                         severity="MEDIUM",
                         confidence=consistency_score,
-                        location={"x0": 0, "y0": 0, "x1": img_array.shape[1], "y1": img_array.shape[0]},
+                        location={"x0": 0, "y0": 0, "x1": int(img_array.shape[1]), "y1": int(img_array.shape[0])},
                         description="Inconsistent fonts detected across document regions",
                         evidence={"font_consistency_score": consistency_score}
                     ))
@@ -707,7 +707,7 @@ class ComprehensiveForensicsAnalyzer:
 
         text_regions = []
         for contour in contours:
-            x, y, w, h = cv2.boundingRect(contour)
+            x, y, w, h = map(int, cv2.boundingRect(contour))
             if 20 < w < 300 and 10 < h < 50:  # Text-like dimensions
                 text_regions.append((x, y, w, h))
 
@@ -718,7 +718,7 @@ class ComprehensiveForensicsAnalyzer:
         # Simplified font feature extraction
         return {
             "stroke_width": np.std(region),
-            "character_height": region.shape[0],
+            "character_height": int(region.shape[0]),
             "density": np.sum(region < 128) / region.size
         }
 
