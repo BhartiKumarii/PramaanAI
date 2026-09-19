@@ -115,6 +115,9 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
             "en" -> context.getString(R.string.language_english)
             "hi" -> context.getString(R.string.language_hindi)
             "ne" -> context.getString(R.string.language_nepali)
+            "bn" -> context.getString(R.string.language_bengali)
+            "pa" -> context.getString(R.string.language_punjabi)
+            "as" -> context.getString(R.string.language_assamese)
             "dz" -> context.getString(R.string.language_dzongkha)
             else -> tag
         }
