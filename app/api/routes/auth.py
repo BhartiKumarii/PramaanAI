@@ -73,10 +73,10 @@ def get_current_user_info(
 ) -> CurrentUserResponse:
     checkpoint = db.query(Checkpoint).filter(Checkpoint.id == user.checkpoint_id).first() if user.checkpoint_id else None
     return CurrentUserResponse(
-        id=user.id,  # Already a string now
+        id=str(user.id),
         username=user.username,
         role=user.role.value,
-        checkpoint_id=checkpoint.id if checkpoint else None,  # Already a string now
+        checkpoint_id=str(checkpoint.id) if checkpoint else None,
         checkpoint_code=checkpoint.code if checkpoint else None,
         checkpoint_name=checkpoint.name if checkpoint else None,
     )
