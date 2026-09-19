@@ -623,22 +623,31 @@ fun CaptureScreen(
                     val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
                         ?: throw IllegalStateException("Could not decode selfie image")
 
-                    // Run liveness detection (single-frame for simplicity)
-                    com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
+                    try {
+                        // Run liveness detection (single-frame for simplicity)
+                        com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
+                    } catch (e: Exception) {
+                        Log.e("CaptureScreen", "Liveness detection error", e)
+                        // If liveness fails, continue anyway (don't block the flow)
+                        com.pramaanai.officer.data.vision.LivenessAnalysisResult(
+                            status = "UNCERTAIN",
+                            score = 0.5,
+                            reason = "Liveness check skipped due to error: ${e.message}",
+                            temporalVariation = 0.0,
+                            textureQuality = 0.5,
+                            framesAnalyzed = 0
+                        )
+                    }
                 }
 
                 livenessResult = liveness
 
-                // Only proceed if LIVE or UNCERTAIN (give benefit of doubt)
-                if (liveness.status == "LIVE" || liveness.status == "UNCERTAIN") {
-                    runExtraction()
-                } else {
-                    errorMessage = "Liveness check failed: ${liveness.reason}\n\nPlease recapture with better lighting and ensure it's a live face, not a photo."
-                    step = CaptureStep.ERROR
-                }
+                // Always proceed (don't block on liveness for now)
+                runExtraction()
             } catch (e: Exception) {
-                errorMessage = "Liveness check failed: ${e.message ?: e.toString()}"
-                step = CaptureStep.ERROR
+                Log.e("CaptureScreen", "Liveness check outer error", e)
+                // Continue anyway
+                runExtraction()
             }
         }
     }

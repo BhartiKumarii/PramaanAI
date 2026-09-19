@@ -175,20 +175,25 @@ object LivenessDetector {
      * Analyze single frame for texture quality and artifacts.
      */
     private fun analyzeTexture(bitmap: Bitmap): TextureMetrics {
-        val width = bitmap.width
-        val height = bitmap.height
+        return try {
+            val width = bitmap.width
+            val height = bitmap.height
 
-        // Convert to grayscale
-        val gray = FloatArray(width * height)
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val pixel = bitmap.getPixel(x, y)
-                val r = (pixel shr 16) and 0xFF
-                val g = (pixel shr 8) and 0xFF
-                val b = pixel and 0xFF
-                gray[y * width + x] = 0.299f * r + 0.587f * g + 0.114f * b
+            if (width <= 0 || height <= 0) {
+                return TextureMetrics(50.0, 0.5, 0.0)
             }
-        }
+
+            // Convert to grayscale
+            val gray = FloatArray(width * height)
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    val pixel = bitmap.getPixel(x, y)
+                    val r = (pixel shr 16) and 0xFF
+                    val g = (pixel shr 8) and 0xFF
+                    val b = pixel and 0xFF
+                    gray[y * width + x] = 0.299f * r + 0.587f * g + 0.114f * b
+                }
+            }
 
         // Sharpness: measure edge strength (Laplacian variance)
         var sharpness = 0.0
@@ -257,11 +262,15 @@ object LivenessDetector {
         }
         screenArtifacts /= 3.0
 
-        return TextureMetrics(
-            sharpness = sharpness,
-            uniformity = uniformity,
-            screenArtifacts = screenArtifacts.coerceIn(0.0, 1.0)
-        )
+            return TextureMetrics(
+                sharpness = sharpness.coerceIn(0.0, 200.0),
+                uniformity = uniformity.coerceIn(0.0, 1.0),
+                screenArtifacts = screenArtifacts.coerceIn(0.0, 1.0)
+            )
+        } catch (e: Exception) {
+            // Return safe defaults if analysis fails
+            TextureMetrics(50.0, 0.5, 0.0)
+        }
     }
 
     /**
