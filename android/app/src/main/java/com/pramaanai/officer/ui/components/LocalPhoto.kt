@@ -46,13 +46,21 @@ fun LocalPhoto(path: String?, modifier: Modifier = Modifier, contentScale: Conte
 
 private fun decodeUpright(path: String, maxSide: Int): Bitmap? {
     val file = File(path)
-    if (!file.exists()) return null
+    if (!file.exists()) {
+        android.util.Log.w("LocalPhoto", "Image file does not exist: $path")
+        return null
+    }
+    android.util.Log.d("LocalPhoto", "Loading image from: $path, size: ${file.length()}")
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeFile(path, bounds)
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
     var sample = 1
     while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxSide) sample *= 2
-    val decoded = BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+    val decoded = BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
+    if (decoded == null) {
+        android.util.Log.e("LocalPhoto", "Failed to decode image file: $path")
+        return null
+    }
     val degrees = try {
         when (ExifInterface(path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
             ExifInterface.ORIENTATION_ROTATE_90 -> 90f

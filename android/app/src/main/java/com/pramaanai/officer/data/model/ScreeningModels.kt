@@ -131,6 +131,9 @@ data class ScreeningQueueItem(
     // bounding boxes on the real image. Null for the Phase-2 mock queue
     // items, which were never backed by an actual captured photo.
     val documentImagePath: String? = null,
+    // Absolute path to the back-document JPEG if captured. May be null
+    // if only front side was captured or for older records.
+    val documentBackImagePath: String? = null,
     // The live selfie captured for this screening — kept on-device for the
     // officer's own side-by-side reference, never uploaded.
     val selfieImagePath: String? = null,

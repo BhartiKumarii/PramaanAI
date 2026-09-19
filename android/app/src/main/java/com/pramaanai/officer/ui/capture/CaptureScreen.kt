@@ -222,7 +222,7 @@ fun analyzeFrame(
     step: CaptureStep,
     onAutoCapture: (Bitmap) -> Unit,
 ): DocumentPreviewState? {
-    if (step != CaptureStep.DOCUMENT) {
+    if (step != CaptureStep.DOCUMENT_FRONT && step != CaptureStep.DOCUMENT_BACK) {
         imageProxy.close()
         return null
     }
@@ -277,7 +277,21 @@ fun mediaImageToBitmap(mediaImage: android.media.Image, rotationDegrees: Int): B
     return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 }
 
-fun saveBitmapAndProceed(bitmap: Bitmap, fileName: String) {
+fun saveBitmapToFile(bitmap: Bitmap, file: File) {
+    try {
+        // Ensure the parent directory exists
+        file.parentFile?.mkdirs()
+
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        }
+
+        // Log file creation for debugging
+        android.util.Log.d("CaptureScreen", "Saved image to: ${file.absolutePath}, exists: ${file.exists()}, size: ${file.length()}")
+    } catch (e: Exception) {
+        android.util.Log.e("CaptureScreen", "Failed to save bitmap to ${file.absolutePath}", e)
+        throw e
+    }
 }
 
 fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDocumentOverlay(
@@ -370,7 +384,7 @@ private val LIVENESS_PROMPTS = listOf(
     "Look directly at the camera and hold still",
 )
 
-enum class CaptureStep { DOCUMENT, SELFIE, EXTRACTING, REVIEW_FIELDS, SUBMITTING, ERROR }
+enum class CaptureStep { DOCUMENT_FRONT, DOCUMENT_BACK, SELFIE, EXTRACTING, REVIEW_FIELDS, SUBMITTING, ERROR }
 
 // One "document number" field regardless of document type — the backend's
 // cross-check only ever reads the "passport_number" OCR key (see
@@ -424,13 +438,15 @@ fun CaptureScreen(
         OpenCVManager.init(context)
     }
 
-    var step by remember { mutableStateOf(CaptureStep.DOCUMENT) }
+    var step by remember { mutableStateOf(CaptureStep.DOCUMENT_FRONT) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
     var imageAnalysis by remember { mutableStateOf<ImageAnalysis?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var documentFile by remember { mutableStateOf<File?>(null) }
+    var documentFrontFile by remember { mutableStateOf<File?>(null) }
+    var documentBackFile by remember { mutableStateOf<File?>(null) }
     var selfieFile by remember { mutableStateOf<File?>(null) }
-    var correctedDocumentBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var correctedDocumentFrontBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var correctedDocumentBackBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val livenessPrompt = remember(step) { LIVENESS_PROMPTS[Random.nextInt(LIVENESS_PROMPTS.size)] }
 
     val previewState = remember { mutableStateOf(DocumentPreviewState()) }
@@ -473,7 +489,7 @@ fun CaptureScreen(
     var faceDetectionResult by remember { mutableStateOf<com.pramaanai.officer.data.model.FaceDetectionResult?>(null) }
     var fields by remember { mutableStateOf(ExtractedFields()) }
     LaunchedEffect(step) {
-        if (step == CaptureStep.DOCUMENT || step == CaptureStep.SELFIE) {
+        if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK || step == CaptureStep.SELFIE) {
             scanLineAnimator.start()
         } else {
             scanLineAnimator.stop()
@@ -481,17 +497,24 @@ fun CaptureScreen(
     }
 
     fun runExtraction() {
-        val doc = documentFile ?: return
+        val docFront = documentFrontFile ?: return
+        val docBack = documentBackFile // Optional - may be null for some document types
         val selfie = selfieFile ?: return
         step = CaptureStep.EXTRACTING
         scope.launch {
             try {
                 val bundle = withContext(Dispatchers.Default) {
-                    val docBitmap = correctedDocumentBitmap ?: BitmapFactory.decodeFile(doc.path)
+                    val docFrontBitmap = correctedDocumentFrontBitmap ?: BitmapFactory.decodeFile(docFront.path)
+                    val docBackBitmap = docBack?.let { correctedDocumentBackBitmap ?: BitmapFactory.decodeFile(it.path) }
                     val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
-                    val ocr = DocumentOcrExtractor.recognize(docBitmap)
-                    val de = FaceEmbedding.extractEmbedding(docBitmap)
+
+                    // OCR on front side (main document data)
+                    val ocr = DocumentOcrExtractor.recognize(docFrontBitmap)
+
+                    // Face embedding from front side photo
+                    val de = FaceEmbedding.extractEmbedding(docFrontBitmap)
                     val le = FaceEmbedding.extractEmbedding(selfieBitmap)
+
                     // Real face presence/count/position over the live
                     // selfie — the actual "multiple faces" / "no face"
                     // fraud/quality signal, distinct from the embedding
@@ -534,7 +557,7 @@ fun CaptureScreen(
     // (e.g. "no date_of_birth field was extracted from the document")
     // rather than pretending a forced manual entry was ever real OCR.
     fun submit() {
-        val front = documentFile ?: return
+        val front = documentFrontFile ?: return
         step = CaptureStep.SUBMITTING
         scope.launch {
             try {
@@ -556,6 +579,7 @@ fun CaptureScreen(
                     documentFaceEmbedding = documentEmbedding,
                     liveFaceEmbedding = liveEmbedding,
                     documentImageFile = front,
+                    documentBackImageFile = documentBackFile,
                     selfieImageFile = selfieFile,
                     faceDetectionResult = faceDetectionResult,
                 )
@@ -573,12 +597,22 @@ fun CaptureScreen(
 
     fun onImageReady(outputFile: File, label: String) {
         Toast.makeText(context, "Using: $label", Toast.LENGTH_SHORT).show()
-        if (step == CaptureStep.DOCUMENT) {
-            documentFile = outputFile
-            step = CaptureStep.SELFIE
-        } else {
-            selfieFile = outputFile
-            runExtraction()
+        when (step) {
+            CaptureStep.DOCUMENT_FRONT -> {
+                documentFrontFile = outputFile
+                step = CaptureStep.DOCUMENT_BACK
+            }
+            CaptureStep.DOCUMENT_BACK -> {
+                documentBackFile = outputFile
+                step = CaptureStep.SELFIE
+            }
+            CaptureStep.SELFIE -> {
+                selfieFile = outputFile
+                runExtraction()
+            }
+            else -> {
+                // Should not happen
+            }
         }
     }
 
@@ -586,7 +620,12 @@ fun CaptureScreen(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
-        val fileName = if (step == CaptureStep.DOCUMENT) "document_photo.jpg" else "live_selfie.jpg"
+        val fileName = when (step) {
+            CaptureStep.DOCUMENT_FRONT -> "document_front_photo.jpg"
+            CaptureStep.DOCUMENT_BACK -> "document_back_photo.jpg"
+            CaptureStep.SELFIE -> "live_selfie.jpg"
+            else -> "unknown.jpg"
+        }
         val outputFile = File(context.cacheDir, fileName)
         try {
             context.contentResolver.openInputStream(uri)?.use { input ->
@@ -607,7 +646,7 @@ fun CaptureScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
             val stepperStep = when (step) {
-                CaptureStep.DOCUMENT, CaptureStep.SELFIE -> 1
+                CaptureStep.DOCUMENT_FRONT, CaptureStep.DOCUMENT_BACK, CaptureStep.SELFIE -> 1
                 CaptureStep.EXTRACTING -> 2
                 CaptureStep.REVIEW_FIELDS -> 3
                 else -> 4
@@ -648,8 +687,10 @@ fun CaptureScreen(
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        PhotoTile("Document photo", documentFile?.path, Modifier.weight(1f), wholeImage = true)
+                    // Document photos
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        PhotoTile("Document front", documentFrontFile?.path, Modifier.weight(1f), wholeImage = true)
+                        PhotoTile("Document back", documentBackFile?.path, Modifier.weight(1f), wholeImage = true)
                         PhotoTile("Live capture", selfieFile?.path, Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(12.dp))
@@ -686,10 +727,13 @@ fun CaptureScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = {
-                            documentFile = null
+                            documentFrontFile = null
+                            documentBackFile = null
                             selfieFile = null
+                            correctedDocumentFrontBitmap = null
+                            correctedDocumentBackBitmap = null
                             fields = ExtractedFields()
-                            step = CaptureStep.DOCUMENT
+                            step = CaptureStep.DOCUMENT_FRONT
                         },
                         modifier = Modifier.weight(1f).height(52.dp),
                     ) { Text("Rescan") }
@@ -722,15 +766,33 @@ fun CaptureScreen(
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { submit() }) { Text("Retry") }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = { step = CaptureStep.DOCUMENT }) { Text("Start over") }
+                OutlinedButton(onClick = {
+                    documentFrontFile = null
+                    documentBackFile = null
+                    selfieFile = null
+                    correctedDocumentFrontBitmap = null
+                    correctedDocumentBackBitmap = null
+                    fields = ExtractedFields()
+                    step = CaptureStep.DOCUMENT_FRONT
+                }) { Text("Start over") }
                 return@Column
             }
 
             when (step) {
-                CaptureStep.DOCUMENT -> {
-                    Text("Step 1 of 2 — Document photo", style = MaterialTheme.typography.titleMedium)
+                CaptureStep.DOCUMENT_FRONT -> {
+                    Text("Step 1 of 3 — Document front", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Align document within the green frame. Auto-captures when aligned.",
+                        "Align the front of your document within the frame. Auto-captures when aligned.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (previewState.value.qualityMetrics != null) {
+                        QualityIndicatorsRow(metrics = previewState.value.qualityMetrics!!)
+                    }
+                }
+                CaptureStep.DOCUMENT_BACK -> {
+                    Text("Step 2 of 3 — Document back", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Now capture the back of your document. Auto-captures when aligned.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     if (previewState.value.qualityMetrics != null) {
@@ -738,7 +800,7 @@ fun CaptureScreen(
                     }
                 }
                 CaptureStep.SELFIE -> {
-                    Text("Step 2 of 2 — Live selfie", style = MaterialTheme.typography.titleMedium)
+                    Text("Step 3 of 3 — Live selfie", style = MaterialTheme.typography.titleMedium)
                     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                         Text(
                             text = livenessPrompt,
@@ -763,15 +825,29 @@ fun CaptureScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                lensFacing = if (step == CaptureStep.DOCUMENT) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT,
+                lensFacing = if (step == CaptureStep.SELFIE) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK,
                 onImageCaptureReady = { imageCapture = it },
                 onAnalysisReady = { imageAnalysis = it },
                 step = step,
                 previewState = previewState,
                 scanLineProgress = scanLineProgress,
                 onAutoCapture = { bitmap ->
-                    if (step == CaptureStep.DOCUMENT) {
-                        saveBitmapAndProceed(bitmap, "document_photo.jpg")
+                    when (step) {
+                        CaptureStep.DOCUMENT_FRONT -> {
+                            correctedDocumentFrontBitmap = bitmap
+                            val outputFile = File(context.cacheDir, "document_front_photo.jpg")
+                            saveBitmapToFile(bitmap, outputFile)
+                            onImageReady(outputFile, "Auto-captured document front")
+                        }
+                        CaptureStep.DOCUMENT_BACK -> {
+                            correctedDocumentBackBitmap = bitmap
+                            val outputFile = File(context.cacheDir, "document_back_photo.jpg")
+                            saveBitmapToFile(bitmap, outputFile)
+                            onImageReady(outputFile, "Auto-captured document back")
+                        }
+                        else -> {
+                            // Selfies don't auto-capture
+                        }
                     }
                 },
             )
@@ -781,7 +857,12 @@ fun CaptureScreen(
             Button(
                 onClick = {
                     val capture = imageCapture ?: return@Button
-                    val fileName = if (step == CaptureStep.DOCUMENT) "document_photo.jpg" else "live_selfie.jpg"
+                    val fileName = when (step) {
+                        CaptureStep.DOCUMENT_FRONT -> "document_front_photo.jpg"
+                        CaptureStep.DOCUMENT_BACK -> "document_back_photo.jpg"
+                        CaptureStep.SELFIE -> "live_selfie.jpg"
+                        else -> "unknown.jpg"
+                    }
                     val outputFile = File(context.cacheDir, fileName)
                     val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
                     capture.takePicture(
@@ -802,22 +883,22 @@ fun CaptureScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (previewState.value.isAligned && step == CaptureStep.DOCUMENT)
+                    containerColor = if (previewState.value.isAligned && (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK))
                         MaterialTheme.colorScheme.primary
-                    else if (step == CaptureStep.DOCUMENT)
+                    else if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK)
                         AccentGreen.copy(alpha = 0.8f)
                     else
                         MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = if (previewState.value.isAligned && step == CaptureStep.DOCUMENT)
+                    contentColor = if (previewState.value.isAligned && (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK))
                         MaterialTheme.colorScheme.onPrimary
-                    else if (step == CaptureStep.DOCUMENT)
+                    else if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK)
                         BackgroundDark
                     else
                         MaterialTheme.colorScheme.onSurface,
                 ),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
             ) {
-                if (step == CaptureStep.DOCUMENT && previewState.value.isAligned) {
+                if ((step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK) && previewState.value.isAligned) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
@@ -837,11 +918,16 @@ fun CaptureScreen(
                             Icons.Filled.FlashOn,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = if (step == CaptureStep.DOCUMENT) BackgroundDark else MaterialTheme.colorScheme.onSurface,
+                            tint = if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK) BackgroundDark else MaterialTheme.colorScheme.onSurface,
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (step == CaptureStep.DOCUMENT) "Capture document photo" else "Capture selfie",
+                            when (step) {
+                                CaptureStep.DOCUMENT_FRONT -> "Capture document front"
+                                CaptureStep.DOCUMENT_BACK -> "Capture document back"
+                                CaptureStep.SELFIE -> "Capture selfie"
+                                else -> "Capture"
+                            },
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -866,7 +952,12 @@ fun CaptureScreen(
                     .height(48.dp),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
             ) {
-                Text(if (step == CaptureStep.DOCUMENT) "Upload document photo instead" else "Upload selfie photo instead")
+                Text(when (step) {
+                    CaptureStep.DOCUMENT_FRONT -> "Upload document front instead"
+                    CaptureStep.DOCUMENT_BACK -> "Upload document back instead"
+                    CaptureStep.SELFIE -> "Upload selfie photo instead"
+                    else -> "Upload photo instead"
+                })
             }
             Spacer(Modifier.height(16.dp))
         }

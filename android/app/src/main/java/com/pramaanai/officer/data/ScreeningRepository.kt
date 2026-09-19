@@ -16,6 +16,7 @@ import com.pramaanai.officer.data.remote.RefreshRequest
 import com.pramaanai.officer.data.remote.SessionEvents
 import com.pramaanai.officer.data.remote.BlockchainVerifyRequest
 import com.pramaanai.officer.data.remote.BlockchainVerifyResponse
+import com.pramaanai.officer.data.remote.CaseDecisionRequest
 import com.pramaanai.officer.data.remote.CaseSubmitRequest
 import com.pramaanai.officer.data.remote.DisputeRequest
 import com.pramaanai.officer.data.remote.LoginRequest
@@ -316,6 +317,7 @@ class ScreeningRepository(
         documentFaceEmbedding: List<Float>?,
         liveFaceEmbedding: List<Float>?,
         documentImageFile: File? = null,
+        documentBackImageFile: File? = null,
         selfieImageFile: File? = null,
         faceDetectionResult: com.pramaanai.officer.data.model.FaceDetectionResult? = null,
     ): ScreeningQueueItem {
@@ -359,6 +361,13 @@ class ScreeningRepository(
                 dest.absolutePath
             }
         }
+        val persistedBackImagePath = documentBackImageFile?.let { file ->
+            withContext(Dispatchers.IO) {
+                val dest = File(imagesDir, "${response.verificationId}_back.jpg")
+                file.copyTo(dest, overwrite = true)
+                dest.absolutePath
+            }
+        }
         val persistedSelfiePath = selfieImageFile?.let { file ->
             withContext(Dispatchers.IO) {
                 val dest = File(imagesDir, "${response.verificationId}_selfie.jpg")
@@ -367,7 +376,7 @@ class ScreeningRepository(
             }
         }
         val item = screeningResponseToQueueItem(
-            response, travelerName, documentType, nationality, effectiveCheckpoint, persistedImagePath, persistedSelfiePath, mrzText,
+            response, travelerName, documentType, nationality, effectiveCheckpoint, persistedImagePath, persistedBackImagePath, persistedSelfiePath, mrzText,
         )
         store.upsert(item)
         logAudit(action = "Document scanned", record = item.id, result = "on-device OCR + MRZ + embedding extraction, server-side validation + risk assessment completed")
@@ -423,6 +432,48 @@ class ScreeningRepository(
             )
         }
         logAudit(action = "Decision submitted: CLEAR", record = id, result = notes?.let { "notes=\"$it\"" } ?: "no notes")
+    }
+
+    /** Make a formal case decision (Clear/Secondary Review/Hold Refer) through the case API.
+     * This is the preferred method over the older verification-level clear/dispute. */
+    suspend fun decideCaseOnBackend(id: String, decision: String, reason: String?) {
+        val queueItem = store.getById(id) ?: error("Unknown screening: $id")
+        val caseId = queueItem.caseId ?: error("This screening has no backend case to decide (mock/offline item).")
+
+        api.decideCase(
+            AuthSession.bearerHeader(),
+            caseId,
+            CaseDecisionRequest(decision = decision, reason = reason)
+        )
+
+        val newStatus = when (decision) {
+            "CLEAR" -> ScreeningStatus.CLEARED
+            "SECONDARY_REVIEW" -> ScreeningStatus.DISPUTED
+            "HOLD_REFER" -> ScreeningStatus.DISPUTED
+            else -> queueItem.status
+        }
+
+        store.upsert(
+            queueItem.copy(
+                status = newStatus,
+                officerNotes = reason ?: queueItem.officerNotes,
+                decisionAt = System.currentTimeMillis(),
+                decidingOfficer = AuthSession.username,
+            )
+        )
+
+        val actionDescription = when (decision) {
+            "CLEAR" -> "Decision submitted: CLEAR"
+            "SECONDARY_REVIEW" -> "Decision submitted: SECONDARY REVIEW"
+            "HOLD_REFER" -> "Decision submitted: HOLD/REFER"
+            else -> "Decision submitted: $decision"
+        }
+
+        logAudit(
+            action = actionDescription,
+            record = id,
+            result = reason?.let { "reason=\"$it\"" } ?: "no reason"
+        )
     }
 
     suspend fun logTourCompleted() {

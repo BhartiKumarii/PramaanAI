@@ -136,10 +136,62 @@ export function CaseReview() {
 
           {tab === 'evidence' && (
             <Card>
-              <p className="mb-3 rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground">
-                Document images are not retained after processing — only the derived signals below are
-                stored, per data-minimization policy.
-              </p>
+              {/* Display document and selfie images if available */}
+              {v && (
+                <div className="mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-foreground">Document Front</h4>
+                      <img
+                        src={`/api/images/${v.id}/document`}
+                        alt="Document front"
+                        className="w-full h-32 object-cover rounded border"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling!.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="hidden h-32 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
+                        Image not available
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-foreground">Document Back</h4>
+                      <img
+                        src={`/api/images/${v.id}/document-back`}
+                        alt="Document back"
+                        className="w-full h-32 object-cover rounded border"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling!.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="hidden h-32 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
+                        Image not available
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-foreground">Selfie</h4>
+                      <img
+                        src={`/api/images/${v.id}/selfie`}
+                        alt="Live selfie"
+                        className="w-full h-32 object-cover rounded border"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling!.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="hidden h-32 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
+                        Image not available
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-b border-border mb-4"></div>
+                </div>
+              )}
               {!v && <p className="text-sm text-muted-foreground">No verification evidence attached to this case.</p>}
               {v && (
                 <>
