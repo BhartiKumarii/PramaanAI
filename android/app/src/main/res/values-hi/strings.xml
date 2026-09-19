@@ -86,6 +86,9 @@
     <string name="identity_network_title">पहचान नेटवर्क</string>
     <string name="identity_network_entities">%d संस्थाएं</string>
     <string name="graph_legend_person">व्यक्ति</string>
+    <string name="graph_legend_person_new">नया चेहरा</string>
+    <string name="graph_legend_person_verified">सत्यापित मिलान</string>
+    <string name="graph_legend_person_partial">आंशिक मिलान</string>
     <string name="graph_legend_checkpoint">चेकपॉइंट</string>
     <string name="graph_legend_document">दस्तावेज़</string>
     <string name="graph_legend_vehicle">वाहन</string>
