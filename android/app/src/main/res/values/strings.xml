@@ -93,4 +93,41 @@
     <string name="graph_legend_document">Document</string>
     <string name="graph_legend_vehicle">Vehicle</string>
     <string name="graph_legend_travel_event">Travel Event</string>
+
+    <!-- Language Selection -->
+    <string name="language_system">System Default</string>
+
+    <!-- Screen Titles -->
+    <string name="title_capture">Capture</string>
+    <string name="title_officer_profile">Officer Profile</string>
+    <string name="title_analytics">Analytics</string>
+
+    <!-- Camera and Permissions -->
+    <string name="camera_permission_required">Camera permission is required to capture documents and a live selfie.</string>
+    <string name="grant_camera_permission">Grant camera permission</string>
+
+    <!-- Capture Process -->
+    <string name="ocr_processing">Reading document on-device (OCR + MRZ + face signature)…</string>
+    <string name="review_step_title">Step 3 — Review what was read</string>
+    <string name="button_rescan">Rescan</string>
+    <string name="button_verify_registry">Verify against registry</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_no_connection_queued">No connection — queued, will sync automatically</string>
+    <string name="toast_using_label">Using: %s</string>
+    <string name="toast_upload_failed">Upload failed: %s</string>
+
+    <!-- Profile Screen -->
+    <string name="no_activity_recorded">No activity recorded yet.</string>
+    <string name="button_log_out">Log out</string>
+
+    <!-- Traveler Profile -->
+    <string name="no_risk_assessment">No risk assessment on file.</string>
+    <string name="no_officer_notes">No officer notes recorded.</string>
+    <string name="screening_history_title">Screening History</string>
+
+    <!-- Session Timeout -->
+    <string name="session_expiring_title">Session expiring</string>
+    <string name="session_timeout_message">You\'ve been inactive. For security, this session will end automatically.</string>
+    <string name="signing_out_countdown">Signing out in %ds</string>
 </resources>

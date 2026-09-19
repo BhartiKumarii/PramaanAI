@@ -94,11 +94,48 @@
     <string name="error_nationality_required">Nationality is required</string>
 
     <!-- Identity Network Graph -->
-    <string name="identity_network_title">Identity Network</string>
-    <string name="identity_network_entities">%d entities</string>
-    <string name="graph_legend_person">Person</string>
-    <string name="graph_legend_checkpoint">Checkpoint</string>
-    <string name="graph_legend_document">Document</string>
-    <string name="graph_legend_vehicle">Vehicle</string>
-    <string name="graph_legend_travel_event">Travel Event</string>
+    <string name="identity_network_title">ངོ་བོ་དྲ་བ</string>
+    <string name="identity_network_entities">%d ཚོགས་པ</string>
+    <string name="graph_legend_person">མི</string>
+    <string name="graph_legend_checkpoint">ཞིབ་བཤེར་ས</string>
+    <string name="graph_legend_document">ཡིག་ཆ</string>
+    <string name="graph_legend_vehicle">འཁོར་ལོ</string>
+    <string name="graph_legend_travel_event">འགྲུལ་བསྐྱོད་སྐོར</string>
+
+    <!-- Language Selection -->
+    <string name="language_system">རིམ་ལུགས་གཞི་རྟེན</string>
+
+    <!-- Screen Titles -->
+    <string name="title_capture">འཛིན་པ</string>
+    <string name="title_officer_profile">དྲུང་ཆེ་རྣམ་ཐར</string>
+    <string name="title_analytics">དཔྱད་གཞི</string>
+
+    <!-- Camera and Permissions -->
+    <string name="camera_permission_required">ཡིག་ཆ་དང་ད་ལྟའི་རང་པར་ལེན་ནི་ལུ་པར་ཆས་གནང་བ་དགོས།</string>
+    <string name="grant_camera_permission">པར་ཆས་གནང་བ་སྦྱིན</string>
+
+    <!-- Capture Process -->
+    <string name="ocr_processing">ཡི་གུའི་ཆས་ནང་ཡིག་ཆ་ཀློག་དོ (OCR + MRZ + ཞལ་རྟགས)…</string>
+    <string name="review_step_title">གོ་རིམ་ ༣ — ཀློགས་པའི་ཞིབ་བཤེར</string>
+    <string name="button_rescan">ཡང་བསྐྱར་ཀློག</string>
+    <string name="button_verify_registry">ཐོ་འགོད་ལུ་ངེས་གཏན</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_no_connection_queued">འབྲེལ་བ་མེད — ཞུགས་པ་རེ་ཞིག་ཡོད་ སྦྱོར་རིང་འགྱུར</string>
+    <string name="toast_using_label">ལག་ལེན: %s</string>
+    <string name="toast_upload_failed">ཡར་འདེགས་ཕམ: %s</string>
+
+    <!-- Profile Screen -->
+    <string name="no_activity_recorded">ད་ལྟ་མ་གནས་ལས་དོན་ཐོ་འགོད་མ་འབད།</string>
+    <string name="button_log_out">ཐོན་འགྱུར</string>
+
+    <!-- Traveler Profile -->
+    <string name="no_risk_assessment">ཡིག་ཆའི་ནང་ཉེན་ཁ་གཏན་འབེབས་མེད།</string>
+    <string name="no_officer_notes">དྲུང་ཆེ་ཟིན་ཐོ་ཐོ་འགོད་མ་འབད།</string>
+    <string name="screening_history_title">ཞིབ་བཤེར་ལོ་རྒྱུས</string>
+
+    <!-- Session Timeout -->
+    <string name="session_expiring_title">དུས་ཚོད་མཇུག་མ་བཞིན</string>
+    <string name="session_timeout_message">ཁྱོད་ལཱ་མ་འབད་སྡོད། ཉེན་སྲུང་གི་དོན་ལུ་ དུས་ཚོད་འདི་ལས་བརྟེན་རང་བཞིན་གྱིས་མཇུག་འགྱུར།</string>
+    <string name="signing_out_countdown">སྐར་ཆ་ %d ནང་ཐོན་འགྱུར</string>
 </resources>

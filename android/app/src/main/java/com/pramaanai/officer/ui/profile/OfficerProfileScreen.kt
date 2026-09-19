@@ -34,9 +34,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pramaanai.officer.R
 import com.pramaanai.officer.data.Permissions
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.ui.theme.Gray200
@@ -56,7 +58,7 @@ fun OfficerProfileScreen(repository: ScreeningRepository, onBack: () -> Unit, on
     val myActivity = recentActivity.filter { it.officer == profile.officerId }.take(6)
     val failedLoginAttempts = recentActivity.count { it.officer == profile.officerId && it.result.startsWith("FAILED") }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Officer Profile") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.title_officer_profile)) }) }) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -113,7 +115,7 @@ fun OfficerProfileScreen(repository: ScreeningRepository, onBack: () -> Unit, on
             item {
                 ProfileSection("Activity") {
                     if (myActivity.isEmpty()) {
-                        Text("No activity recorded yet.", style = MaterialTheme.typography.bodySmall, color = Gray500)
+                        Text(stringResource(R.string.no_activity_recorded), style = MaterialTheme.typography.bodySmall, color = Gray500)
                     } else {
                         myActivity.forEach { entry ->
                             Text(
@@ -131,7 +133,7 @@ fun OfficerProfileScreen(repository: ScreeningRepository, onBack: () -> Unit, on
                     onClick = onLogout,
                     colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                ) { Text("Log out") }
+                ) { Text(stringResource(R.string.button_log_out)) }
             }
         }
     }
