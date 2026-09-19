@@ -39,17 +39,24 @@ object FaceDetectionAnalyzer {
                 .addOnFailureListener { e -> cont.resumeWithException(e) }
         }
 
-        val width = bitmap.width
-        val height = bitmap.height
+        val imgWidth = bitmap.width
+        val imgHeight = bitmap.height
         val detected = faces.map { face ->
             val box = face.boundingBox
             val x0 = box.left.coerceAtLeast(0)
             val y0 = box.top.coerceAtLeast(0)
-            val x1 = box.right.coerceAtMost(width)
-            val y1 = box.bottom.coerceAtMost(height)
-            val touchesEdge = x0 <= 1 || y0 <= 1 || x1 >= width - 1 || y1 >= height - 1
+            val x1 = box.right.coerceAtMost(imgWidth)
+            val y1 = box.bottom.coerceAtMost(imgHeight)
+            val touchesEdge = x0 <= 1 || y0 <= 1 || x1 >= imgWidth - 1 || y1 >= imgHeight - 1
+            // Convert corner coordinates to position+dimensions to match
+            // backend schema: app/services/face/base.py DetectedFace.location
             DetectedFace(
-                location = LocationBox(x0 = x0, y0 = y0, x1 = x1, y1 = y1),
+                location = LocationBox(
+                    x = x0,
+                    y = y0,
+                    width = x1 - x0,
+                    height = y1 - y0
+                ),
                 // ML Kit's default detector doesn't expose a single face
                 // "confidence" score the way a raw model does — 1.0 for
                 // every face it actually returns (it only returns faces

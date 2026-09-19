@@ -1,10 +1,12 @@
 package com.pramaanai.officer.data.model
 
+// Matches app/services/face/base.py DetectedFace.location exactly:
+// {x, y, width, height} in pixel coordinates
 data class LocationBox(
-    val x0: Int,
-    val y0: Int,
-    val x1: Int,
-    val y1: Int,
+    val x: Int,
+    val y: Int,
+    val width: Int,
+    val height: Int,
 )
 
 data class RiskSignalBreakdown(

@@ -28,7 +28,7 @@ object MockScreenings {
                 topReason = "forensics: no significant compression anomaly detected",
                 breakdown = listOf(
                     RiskSignalBreakdown("checksum", 0.2353, 0.0, 0.0, "all validation checks passed", null),
-                    RiskSignalBreakdown("forensics", 0.2353, 0.08, 0.0188, "grid cell (40,60)-(90,110) mean ELA intensity 0.21, z-score 0.6", LocationBox(40, 60, 90, 110)),
+                    RiskSignalBreakdown("forensics", 0.2353, 0.08, 0.0188, "grid cell (40,60)-(90,110) mean ELA intensity 0.21, z-score 0.6", LocationBox(x = 40, y = 60, width = 50, height = 50)),
                     RiskSignalBreakdown("blacklist", 0.2353, 0.0, 0.0, "no registry hits", null),
                     RiskSignalBreakdown("face_match", 0.1765, 0.05, 0.0088, "cosine similarity 0.95 vs threshold 0.75: match", null),
                     RiskSignalBreakdown("identity_graph", 0.1176, 0.0, 0.0, "embedding matches only its own declared identity", null),
@@ -52,7 +52,7 @@ object MockScreenings {
                 breakdown = listOf(
                     RiskSignalBreakdown("blacklist", 0.2353, 1.0, 0.2353, "EXACT match on document_number vs registry entry 'MOHAMMED ASIF KHAN' (overstay violation), confidence 1.0", null),
                     RiskSignalBreakdown("checksum", 0.2353, 0.0, 0.0, "all validation checks passed", null),
-                    RiskSignalBreakdown("forensics", 0.2353, 0.12, 0.0282, "grid cell (200,140)-(250,190) mean ELA intensity 0.34, z-score 1.1", LocationBox(200, 140, 250, 190)),
+                    RiskSignalBreakdown("forensics", 0.2353, 0.12, 0.0282, "grid cell (200,140)-(250,190) mean ELA intensity 0.34, z-score 1.1", LocationBox(x = 200, y = 140, width = 50, height = 50)),
                     RiskSignalBreakdown("face_match", 0.1765, 0.09, 0.0159, "cosine similarity 0.91 vs threshold 0.75: match", null),
                     RiskSignalBreakdown("identity_graph", 0.1176, 0.0, 0.0, "embedding matches only its own declared identity", null),
                 ),
@@ -77,7 +77,7 @@ object MockScreenings {
                 breakdown = listOf(
                     RiskSignalBreakdown("blacklist", 0.2353, 0.5, 0.1176, "FUZZY match on full_name vs registry entry 'SITA DEVI THAPA' (watchlist — prior smuggling investigation), confidence 0.91 (0.5x fuzzy multiplier applied)", null),
                     RiskSignalBreakdown("checksum", 0.2353, 0.3, 0.0706, "expiry: document expiry 2026-10-01 vs today: not expired — low severity note on stay-duration field", null),
-                    RiskSignalBreakdown("forensics", 0.2353, 0.18, 0.0424, "grid cell (10,10)-(60,60) mean ELA intensity 0.4, z-score 1.4", LocationBox(10, 10, 60, 60)),
+                    RiskSignalBreakdown("forensics", 0.2353, 0.18, 0.0424, "grid cell (10,10)-(60,60) mean ELA intensity 0.4, z-score 1.4", LocationBox(x = 10, y = 10, width = 50, height = 50)),
                     RiskSignalBreakdown("face_match", 0.1765, 0.15, 0.0265, "cosine similarity 0.85 vs threshold 0.75: match", null),
                     RiskSignalBreakdown("identity_graph", 0.1176, 0.0, 0.0, "embedding matches only its own declared identity", null),
                 ),
@@ -101,7 +101,7 @@ object MockScreenings {
                 topReason = "checksum: all validation checks passed",
                 breakdown = listOf(
                     RiskSignalBreakdown("checksum", 0.2353, 0.0, 0.0, "all validation checks passed, MRZ composite check digit valid", null),
-                    RiskSignalBreakdown("forensics", 0.2353, 0.03, 0.007, "grid cell (5,5)-(50,50) mean ELA intensity 0.1, z-score 0.2", LocationBox(5, 5, 50, 50)),
+                    RiskSignalBreakdown("forensics", 0.2353, 0.03, 0.007, "grid cell (5,5)-(50,50) mean ELA intensity 0.1, z-score 0.2", LocationBox(x = 5, y = 5, width = 45, height = 45)),
                     RiskSignalBreakdown("blacklist", 0.2353, 0.0, 0.0, "no registry hits", null),
                     RiskSignalBreakdown("face_match", 0.1765, 0.02, 0.0035, "cosine similarity 0.98 vs threshold 0.75: match", null),
                     RiskSignalBreakdown("identity_graph", 0.1176, 0.0, 0.0, "embedding matches only its own declared identity", null),
