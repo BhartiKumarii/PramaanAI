@@ -81,4 +81,13 @@
     <string name="error_dob_required">यो चेकपोइन्टका लागि जन्म मिति आवश्यक छ</string>
     <string name="error_expiry_required">यो चेकपोइन्टका लागि समाप्ति मिति आवश्यक छ</string>
     <string name="error_nationality_required">राष्ट्रियता आवश्यक छ</string>
+
+    <!-- Identity Network Graph -->
+    <string name="identity_network_title">पहिचान नेटवर्क</string>
+    <string name="identity_network_entities">%d संस्थाहरू</string>
+    <string name="graph_legend_person">व्यक्ति</string>
+    <string name="graph_legend_checkpoint">चेकपोइन्ट</string>
+    <string name="graph_legend_document">कागजात</string>
+    <string name="graph_legend_vehicle">सवारी साधन</string>
+    <string name="graph_legend_travel_event">यात्रा घटना</string>
 </resources>
