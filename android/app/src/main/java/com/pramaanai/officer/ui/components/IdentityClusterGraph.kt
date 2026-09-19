@@ -46,6 +46,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import com.pramaanai.officer.R
 import com.pramaanai.officer.data.model.IdentityClusterMember
+import com.pramaanai.officer.data.model.FaceMatchStatus
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.ChartBlue
 import com.pramaanai.officer.ui.theme.ChartPurple
@@ -116,18 +117,28 @@ fun IdentityClusterGraph(
                 )
             }
 
-            // Legend
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                LegendItem(stringResource(R.string.graph_legend_person), 0xFF45BA50.toInt(), Icons.Filled.Person)
-                LegendItem(stringResource(R.string.graph_legend_checkpoint), 0xFF00B5EB.toInt(), Icons.Filled.LocationOn)
-                LegendItem(stringResource(R.string.graph_legend_document), 0xFFAD87ED.toInt(), Icons.Filled.Description)
-                LegendItem(stringResource(R.string.graph_legend_vehicle), 0xFFFF8918.toInt(), Icons.Filled.DirectionsCar)
-                LegendItem(stringResource(R.string.graph_legend_travel_event), 0xFFF14D4C.toInt(), Icons.Filled.FlightTakeoff)
+            // Legend - Enhanced for face match status
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                // First row - Person types with face match status
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    LegendItem(stringResource(R.string.graph_legend_person_new), NodeType.PERSON_NEW.color, Icons.Filled.Person)
+                    LegendItem(stringResource(R.string.graph_legend_person_verified), NodeType.PERSON_VERIFIED.color, Icons.Filled.Person)
+                    LegendItem(stringResource(R.string.graph_legend_person_partial), NodeType.PERSON_PARTIAL.color, Icons.Filled.Person)
+                }
+                androidx.compose.foundation.layout.Spacer(Modifier.height(4.dp))
+                // Second row - Other entity types
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    LegendItem(stringResource(R.string.graph_legend_checkpoint), NodeType.CHECKPOINT.color, Icons.Filled.LocationOn)
+                    LegendItem(stringResource(R.string.graph_legend_document), NodeType.DOCUMENT.color, Icons.Filled.Description)
+                    LegendItem(stringResource(R.string.graph_legend_vehicle), NodeType.VEHICLE.color, Icons.Filled.DirectionsCar)
+                    LegendItem(stringResource(R.string.graph_legend_travel_event), NodeType.TRAVEL_EVENT.color, Icons.Filled.FlightTakeoff)
+                }
             }
 
             // Graph Canvas with touch interaction
@@ -174,26 +185,75 @@ fun IdentityClusterGraph(
                             val endX = centerX + toNode.x
                             val endY = centerY + toNode.y
 
-                            // Draw edge line
+                            // Get edge style based on relationship type
+                            val edgeStyle = when (edge.relationshipType) {
+                                "FACE_VERIFIED" -> EdgeStyle.FACE_VERIFIED
+                                "FACE_SIMILAR" -> EdgeStyle.FACE_SIMILAR
+                                "DOCUMENT_LINKED" -> EdgeStyle.DOCUMENT_LINKED
+                                "TRAVEL_HISTORY" -> EdgeStyle.TRAVEL_HISTORY
+                                else -> EdgeStyle.IDENTITY_MATCH
+                            }
+
+                            // Draw edge line with appropriate style
+                            val edgeColor = edgeStyle.color.copy(alpha = 0.7f)
                             drawLine(
-                                color = Gray300.copy(alpha = 0.5f),
+                                color = edgeColor,
                                 start = Offset(startX, startY),
                                 end = Offset(endX, endY),
-                                strokeWidth = 1.5f,
+                                strokeWidth = edgeStyle.strokeWidth,
+                                pathEffect = edgeStyle.dashEffect?.let {
+                                    androidx.compose.ui.graphics.PathEffect.dashPathEffect(it)
+                                }
                             )
 
-                            // Draw edge label at midpoint
+                            // Draw edge label at midpoint with confidence info
                             val midX = (startX + endX) / 2
                             val midY = (startY + endY) / 2
-                            drawContext.canvas.nativeCanvas.drawText(
-                                edge.label,
-                                midX,
-                                midY - 4f,
+
+                            val labelText = when (edge.relationshipType) {
+                                "FACE_VERIFIED", "FACE_SIMILAR" -> {
+                                    if (edge.confidence > 0.0) {
+                                        "${edge.label} ${(edge.confidence * 100).toInt()}%"
+                                    } else {
+                                        edge.label
+                                    }
+                                }
+                                else -> edge.label
+                            }
+
+                            // Label background for better readability
+                            val labelPaint = android.graphics.Paint().apply {
+                                color = android.graphics.Color.WHITE
+                                textSize = 18f
+                                textAlign = android.graphics.Paint.Align.CENTER
+                                typeface = Typeface.DEFAULT
+                                isAntiAlias = true
+                            }
+                            val labelBounds = android.graphics.Rect()
+                            labelPaint.getTextBounds(labelText, 0, labelText.length, labelBounds)
+
+                            drawContext.canvas.nativeCanvas.drawRoundRect(
+                                midX - labelBounds.width() / 2f - 4f,
+                                midY - labelBounds.height() / 2f - 6f,
+                                midX + labelBounds.width() / 2f + 4f,
+                                midY + labelBounds.height() / 2f + 2f,
+                                6f, 6f,
                                 android.graphics.Paint().apply {
-                                    color = android.graphics.Color.GRAY
-                                    textSize = 20f
+                                    color = android.graphics.Color.WHITE
+                                    alpha = 220 // Semi-transparent background
+                                }
+                            )
+
+                            drawContext.canvas.nativeCanvas.drawText(
+                                labelText,
+                                midX,
+                                midY,
+                                android.graphics.Paint().apply {
+                                    color = android.graphics.Color.BLACK
+                                    textSize = 18f
                                     textAlign = android.graphics.Paint.Align.CENTER
-                                    typeface = Typeface.DEFAULT_BOLD
+                                    typeface = Typeface.DEFAULT
+                                    isAntiAlias = true
                                 },
                             )
                         }
@@ -248,6 +308,22 @@ fun IdentityClusterGraph(
                             center = Offset(nodeX, nodeY),
                         )
 
+                        // Face match confidence ring for person nodes
+                        if (node.type.badge in listOf("N", "V", "P", "?") && node.faceConfidence > 0.0) {
+                            val confidenceColor = when {
+                                node.faceConfidence >= 0.8 -> SuccessGreen  // High confidence
+                                node.faceConfidence >= 0.6 -> WarningAmber  // Medium confidence
+                                else -> DestructiveRed                      // Low confidence
+                            }
+                            val confidenceAlpha = (0.3f + (node.faceConfidence * 0.5f)).toFloat()
+                            drawCircle(
+                                color = confidenceColor.copy(alpha = confidenceAlpha),
+                                radius = nodeRadius + 4f,
+                                center = Offset(nodeX, nodeY),
+                                style = Stroke(width = 2f),
+                            )
+                        }
+
                         // Badge letter with improved mobile readability
                         val badgeFontSize = when {
                             node.isCenter -> 32f
@@ -266,6 +342,34 @@ fun IdentityClusterGraph(
                                 isAntiAlias = true
                             },
                         )
+
+                        // Previous encounters indicator for person nodes
+                        if (node.previousEncounters > 0 && node.type.badge in listOf("N", "V", "P", "?")) {
+                            val encounterText = if (node.previousEncounters > 9) "9+" else node.previousEncounters.toString()
+                            val encounterBadgeX = nodeX + nodeRadius - 8f
+                            val encounterBadgeY = nodeY - nodeRadius + 8f
+
+                            // Small badge background
+                            drawCircle(
+                                color = ChartBlue,
+                                radius = 10f,
+                                center = Offset(encounterBadgeX, encounterBadgeY),
+                            )
+
+                            // Encounter count text
+                            drawContext.canvas.nativeCanvas.drawText(
+                                encounterText,
+                                encounterBadgeX,
+                                encounterBadgeY + 3f,
+                                android.graphics.Paint().apply {
+                                    color = android.graphics.Color.WHITE
+                                    textSize = 16f
+                                    textAlign = android.graphics.Paint.Align.CENTER
+                                    typeface = Typeface.DEFAULT_BOLD
+                                    isAntiAlias = true
+                                },
+                            )
+                        }
 
                         // Node label with better mobile formatting
                         val displayLabel = when {
@@ -332,15 +436,24 @@ private data class GraphNode(
     val x: Float,
     val y: Float,
     val isCenter: Boolean = false,
+    val faceMatchStatus: FaceMatchStatus = FaceMatchStatus.UNKNOWN,
+    val faceConfidence: Double = 0.0,
+    val previousEncounters: Int = 0,
+    val relationshipType: String = "IDENTITY_MATCH",
 )
 
 private enum class NodeType(val badge: String, val color: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    PERSON("P", 0xFF45BA50.toInt(), Icons.Filled.Person),
+    // Person nodes with face match status differentiation
+    PERSON_NEW("N", 0xFF2ECC71.toInt(), Icons.Filled.Person),           // New face - bright green
+    PERSON_VERIFIED("V", 0xFF3498DB.toInt(), Icons.Filled.Person),      // Verified match - blue
+    PERSON_PARTIAL("P", 0xFFF39C12.toInt(), Icons.Filled.Person),       // Partial match - orange
+    PERSON_UNKNOWN("?", 0xFF95A5A6.toInt(), Icons.Filled.Person),       // Unknown status - gray
+
+    // Other entity types
     CHECKPOINT("C", 0xFF00B5EB.toInt(), Icons.Filled.LocationOn),
     VEHICLE("V", 0xFFFF8918.toInt(), Icons.Filled.DirectionsCar),
     TRAVEL_EVENT("T", 0xFFF14D4C.toInt(), Icons.Filled.FlightTakeoff),
     DOCUMENT("D", 0xFFAD87ED.toInt(), Icons.Filled.Description),
-    UNKNOWN("?", 0xFF8F8F8F.toInt(), Icons.Filled.Person),
 }
 
 private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
@@ -350,14 +463,18 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
     val centerX = 0f
     val centerY = 0f
 
-    // Center node (primary person)
+    // Center node (primary person) with face match status
     result.add(GraphNode(
         id = center.recordId,
         label = center.referenceName,
-        type = NodeType.PERSON,
+        type = getPersonNodeType(center.faceMatchStatus),
         x = centerX,
         y = centerY,
         isCenter = true,
+        faceMatchStatus = center.faceMatchStatus,
+        faceConfidence = center.faceConfidence,
+        previousEncounters = center.previousEncounters,
+        relationshipType = center.relationshipType,
     ))
 
     // For mobile optimization, use adaptive radii based on screen space
@@ -376,6 +493,10 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
                     type = nodeType,
                     x = centerX + xOffset,
                     y = centerY,
+                    faceMatchStatus = member.faceMatchStatus,
+                    faceConfidence = member.faceConfidence,
+                    previousEncounters = member.previousEncounters,
+                    relationshipType = member.relationshipType,
                 ))
             }
         }
@@ -396,6 +517,10 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
                     type = nodeType,
                     x = centerX + pos.x,
                     y = centerY + pos.y,
+                    faceMatchStatus = member.faceMatchStatus,
+                    faceConfidence = member.faceConfidence,
+                    previousEncounters = member.previousEncounters,
+                    relationshipType = member.relationshipType,
                 ))
             }
         }
@@ -423,6 +548,10 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
                     type = nodeType,
                     x = centerX + currentRadius * cos(angle).toFloat(),
                     y = centerY + currentRadius * sin(angle).toFloat(),
+                    faceMatchStatus = member.faceMatchStatus,
+                    faceConfidence = member.faceConfidence,
+                    previousEncounters = member.previousEncounters,
+                    relationshipType = member.relationshipType,
                 ))
                 nodesInCurrentRing++
             }
@@ -433,13 +562,31 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
 }
 
 private fun inferNodeType(member: IdentityClusterMember): NodeType {
-    // Infer type from available data - in real implementation, this would come from backend
-    return when {
-        member.referenceName.contains("CHECKPOINT", ignoreCase = true) -> NodeType.CHECKPOINT
-        member.referenceName.contains("VEHICLE", ignoreCase = true) -> NodeType.VEHICLE
-        member.referenceName.contains("TRAVEL", ignoreCase = true) -> NodeType.TRAVEL_EVENT
-        member.referenceName.contains("DOC", ignoreCase = true) || member.referenceName.contains("PASSPORT", ignoreCase = true) -> NodeType.DOCUMENT
-        else -> NodeType.PERSON
+    return when (member.entityType.uppercase()) {
+        "PERSON" -> getPersonNodeType(member.faceMatchStatus)
+        "CHECKPOINT" -> NodeType.CHECKPOINT
+        "VEHICLE" -> NodeType.VEHICLE
+        "TRAVEL_EVENT" -> NodeType.TRAVEL_EVENT
+        "DOCUMENT" -> NodeType.DOCUMENT
+        else -> {
+            // Fallback to name-based inference for backward compatibility
+            when {
+                member.referenceName.contains("CHECKPOINT", ignoreCase = true) -> NodeType.CHECKPOINT
+                member.referenceName.contains("VEHICLE", ignoreCase = true) -> NodeType.VEHICLE
+                member.referenceName.contains("TRAVEL", ignoreCase = true) -> NodeType.TRAVEL_EVENT
+                member.referenceName.contains("DOC", ignoreCase = true) || member.referenceName.contains("PASSPORT", ignoreCase = true) -> NodeType.DOCUMENT
+                else -> getPersonNodeType(member.faceMatchStatus)
+            }
+        }
+    }
+}
+
+private fun getPersonNodeType(faceMatchStatus: FaceMatchStatus): NodeType {
+    return when (faceMatchStatus) {
+        FaceMatchStatus.NEW_FACE -> NodeType.PERSON_NEW
+        FaceMatchStatus.VERIFIED_MATCH -> NodeType.PERSON_VERIFIED
+        FaceMatchStatus.PARTIAL_MATCH -> NodeType.PERSON_PARTIAL
+        FaceMatchStatus.NO_FACE_DATA, FaceMatchStatus.UNKNOWN -> NodeType.PERSON_UNKNOWN
     }
 }
 
@@ -447,28 +594,70 @@ private data class GraphEdge(
     val from: String,
     val to: String,
     val label: String,
+    val relationshipType: String = "IDENTITY_MATCH",
+    val confidence: Double = 1.0,
 )
+
+private enum class EdgeStyle(val color: Color, val strokeWidth: Float, val dashEffect: FloatArray?) {
+    FACE_VERIFIED(SuccessGreen, 3f, null),                    // Solid thick green line
+    FACE_SIMILAR(ChartBlue, 2f, floatArrayOf(10f, 5f)),      // Dashed blue line
+    DOCUMENT_LINKED(ChartPurple, 2f, floatArrayOf(5f, 5f)),  // Dotted purple line
+    TRAVEL_HISTORY(WarningAmber, 1.5f, floatArrayOf(15f, 10f)), // Long dash orange line
+    IDENTITY_MATCH(Color.Gray, 1.5f, null),                  // Regular gray line
+}
 
 private fun edgesFromMembers(members: List<IdentityClusterMember>): List<GraphEdge> {
     val edges = mutableListOf<GraphEdge>()
     val centerId = members.firstOrNull()?.recordId ?: return emptyList()
+    val centerMember = members.first()
 
-    // Connect center to all others
+    // Connect center to all others with appropriate relationship types
     members.drop(1).forEach { member ->
+        val relationshipType = when {
+            member.entityType == "PERSON" -> {
+                when (member.faceMatchStatus) {
+                    FaceMatchStatus.VERIFIED_MATCH -> "FACE_VERIFIED"
+                    FaceMatchStatus.PARTIAL_MATCH -> "FACE_SIMILAR"
+                    else -> "IDENTITY_MATCH"
+                }
+            }
+            member.entityType == "DOCUMENT" -> "DOCUMENT_LINKED"
+            member.entityType == "TRAVEL_EVENT" -> "TRAVEL_HISTORY"
+            else -> "IDENTITY_MATCH"
+        }
+
+        val label = when (relationshipType) {
+            "FACE_VERIFIED" -> "Verified Face"
+            "FACE_SIMILAR" -> "Similar Face"
+            "DOCUMENT_LINKED" -> "Same Document"
+            "TRAVEL_HISTORY" -> "Travel History"
+            else -> "Connected"
+        }
+
         edges.add(GraphEdge(
             from = centerId,
             to = member.recordId,
-            label = "same_face",
+            label = label,
+            relationshipType = relationshipType,
+            confidence = member.faceConfidence,
         ))
     }
 
-    // Add some cross-connections for visual richness
+    // Add meaningful cross-connections based on data
     if (members.size > 3) {
-        edges.add(GraphEdge(
-            from = members[1].recordId,
-            to = members[2].recordId,
-            label = "same_doc",
-        ))
+        val personMembers = members.filter { it.entityType == "PERSON" }
+        val documentMembers = members.filter { it.entityType == "DOCUMENT" }
+
+        // Connect people who share documents
+        if (personMembers.size >= 2 && documentMembers.isNotEmpty()) {
+            edges.add(GraphEdge(
+                from = personMembers[0].recordId,
+                to = personMembers[1].recordId,
+                label = "Shared Doc",
+                relationshipType = "DOCUMENT_LINKED",
+                confidence = 0.8,
+            ))
+        }
     }
 
     return edges

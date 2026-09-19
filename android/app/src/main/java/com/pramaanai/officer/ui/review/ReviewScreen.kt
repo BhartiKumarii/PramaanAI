@@ -329,7 +329,7 @@ private fun TravelerHeader(item: ScreeningQueueItem) {
     Column {
         Text(item.travelerName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            "${item.documentType.replaceFirstChar { it.uppercase() }} · ${item.nationality} · ${item.checkpoint}",
+            "${getLocalizedDocumentType(item.documentType)} · ${item.nationality} · ${item.checkpoint}",
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -346,14 +346,14 @@ private fun RiskScoreCard(item: ScreeningQueueItem) {
                 Column {
                     RiskBadge(level = risk.level)
                     Spacer(Modifier.height(4.dp))
-                    Text(risk.decision.replace("_", " "), style = MaterialTheme.typography.bodySmall, color = Gray600)
+                    Text(getLocalizedDecision(risk.decision), style = MaterialTheme.typography.bodySmall, color = Gray600)
                 }
             }
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.top_reason), style = MaterialTheme.typography.labelMedium)
-            Text(risk.topReason, style = MaterialTheme.typography.bodyMedium)
+            Text(getLocalizedValidationReason(risk.topReason), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -493,15 +493,15 @@ private fun SignalRow(signal: RiskSignalBreakdown) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(signal.signal.replace("_", " ").replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold)
-                Text("weight ${"%.2f".format(signal.weight)} · contribution ${"%.3f".format(signal.contribution)}", style = MaterialTheme.typography.labelSmall)
+                Text(getLocalizedSignalName(signal.signal), fontWeight = FontWeight.SemiBold)
+                Text("${stringResource(R.string.weight_label)} ${"%.2f".format(signal.weight)} · ${stringResource(R.string.contribution_label)} ${"%.3f".format(signal.contribution)}", style = MaterialTheme.typography.labelSmall)
             }
             Spacer(Modifier.height(4.dp))
-            Text(signal.reason, style = MaterialTheme.typography.bodySmall)
+            Text(getLocalizedValidationReason(signal.reason), style = MaterialTheme.typography.bodySmall)
             if (signal.location != null) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Region: (${signal.location.x0},${signal.location.y0})–(${signal.location.x1},${signal.location.y1})",
+                    "${stringResource(R.string.region_label)}: (${signal.location.x0},${signal.location.y0})–(${signal.location.x1},${signal.location.y1})",
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -523,7 +523,7 @@ private fun NotImplementedCard(title: String, reason: String) {
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                 ) {
                     Text(
-                        "NOT IMPLEMENTED",
+                        stringResource(R.string.not_implemented),
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
@@ -533,5 +533,59 @@ private fun NotImplementedCard(title: String, reason: String) {
             Spacer(Modifier.height(4.dp))
             Text(reason, style = MaterialTheme.typography.bodySmall)
         }
+    }
+}
+
+// Helper functions to translate backend values to localized strings
+@Composable
+private fun getLocalizedDocumentType(documentType: String): String {
+    return when (documentType.lowercase()) {
+        "passport" -> stringResource(R.string.document_passport)
+        "national_id" -> stringResource(R.string.document_national_id)
+        "driving_license" -> stringResource(R.string.document_driving_license)
+        "aadhaar" -> stringResource(R.string.document_aadhaar)
+        "pan_card" -> stringResource(R.string.document_pan_card)
+        "voter_id" -> stringResource(R.string.document_voter_id)
+        else -> documentType.replaceFirstChar { it.uppercase() }
+    }
+}
+
+@Composable
+private fun getLocalizedDecision(decision: String): String {
+    return when (decision.uppercase()) {
+        "CLEAR" -> stringResource(R.string.decision_clear)
+        "SECONDARY_REVIEW" -> stringResource(R.string.decision_secondary_review)
+        "HOLD_REFER" -> stringResource(R.string.decision_hold_refer)
+        "REVIEW_REQUIRED" -> stringResource(R.string.decision_review_required)
+        else -> decision.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+    }
+}
+
+@Composable
+private fun getLocalizedSignalName(signal: String): String {
+    return when (signal.lowercase()) {
+        "checksum" -> stringResource(R.string.signal_checksum)
+        "face_match" -> stringResource(R.string.signal_face_match)
+        "forensics" -> stringResource(R.string.signal_forensics)
+        "blacklist" -> stringResource(R.string.signal_blacklist)
+        "identity_graph" -> stringResource(R.string.signal_identity_graph)
+        "mrz" -> stringResource(R.string.signal_mrz)
+        "tampering" -> stringResource(R.string.signal_tampering)
+        else -> signal.replace("_", " ").replaceFirstChar { it.uppercase() }
+    }
+}
+
+@Composable
+private fun getLocalizedValidationReason(reason: String): String {
+    return when {
+        reason.contains("checksum", ignoreCase = true) -> stringResource(R.string.reason_checksum_failed)
+        reason.contains("date of birth", ignoreCase = true) || reason.contains("dob", ignoreCase = true) -> stringResource(R.string.reason_dob_mismatch)
+        reason.contains("multiple identity", ignoreCase = true) -> stringResource(R.string.reason_multiple_identity)
+        reason.contains("face", ignoreCase = true) && reason.contains("match", ignoreCase = true) -> stringResource(R.string.reason_face_mismatch)
+        reason.contains("expired", ignoreCase = true) -> stringResource(R.string.reason_document_expired)
+        reason.contains("registry", ignoreCase = true) || reason.contains("watchlist", ignoreCase = true) -> stringResource(R.string.reason_registry_hit)
+        reason.contains("MRZ", ignoreCase = true) -> stringResource(R.string.reason_mrz_invalid)
+        reason.contains("tamper", ignoreCase = true) -> stringResource(R.string.reason_tampering_detected)
+        else -> reason
     }
 }

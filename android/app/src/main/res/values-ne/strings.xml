@@ -86,6 +86,9 @@
     <string name="identity_network_title">पहिचान नेटवर्क</string>
     <string name="identity_network_entities">%d संस्थाहरू</string>
     <string name="graph_legend_person">व्यक्ति</string>
+    <string name="graph_legend_person_new">नयाँ अनुहार</string>
+    <string name="graph_legend_person_verified">प्रमाणित मिलान</string>
+    <string name="graph_legend_person_partial">आंशिक मिलान</string>
     <string name="graph_legend_checkpoint">चेकपोइन्ट</string>
     <string name="graph_legend_document">कागजात</string>
     <string name="graph_legend_vehicle">सवारी साधन</string>

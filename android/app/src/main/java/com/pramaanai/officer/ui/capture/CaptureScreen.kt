@@ -780,9 +780,9 @@ fun CaptureScreen(
 
             when (step) {
                 CaptureStep.DOCUMENT_FRONT -> {
-                    Text("Step 1 of 3 — Document front", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.capture_step_1_title), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Align the front of your document within the frame. Auto-captures when aligned.",
+                        stringResource(R.string.capture_step_1_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     if (previewState.value.qualityMetrics != null) {
@@ -790,9 +790,9 @@ fun CaptureScreen(
                     }
                 }
                 CaptureStep.DOCUMENT_BACK -> {
-                    Text("Step 2 of 3 — Document back", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.capture_step_2_title), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Now capture the back of your document. Auto-captures when aligned.",
+                        stringResource(R.string.capture_step_2_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     if (previewState.value.qualityMetrics != null) {
@@ -800,7 +800,7 @@ fun CaptureScreen(
                     }
                 }
                 CaptureStep.SELFIE -> {
-                    Text("Step 3 of 3 — Live selfie", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.capture_step_3_title), style = MaterialTheme.typography.titleMedium)
                     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                         Text(
                             text = livenessPrompt,

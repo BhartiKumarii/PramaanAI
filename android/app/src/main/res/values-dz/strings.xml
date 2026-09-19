@@ -97,6 +97,9 @@
     <string name="identity_network_title">ངོ་བོ་དྲ་བ</string>
     <string name="identity_network_entities">%d ཚོགས་པ</string>
     <string name="graph_legend_person">མི</string>
+    <string name="graph_legend_person_new">གསར་པའི་ཞལ</string>
+    <string name="graph_legend_person_verified">བདེན་བཤེར་མཐུན</string>
+    <string name="graph_legend_person_partial">ཆ་ཤས་མཐུན</string>
     <string name="graph_legend_checkpoint">ཞིབ་བཤེར་ས</string>
     <string name="graph_legend_document">ཡིག་ཆ</string>
     <string name="graph_legend_vehicle">འཁོར་ལོ</string>

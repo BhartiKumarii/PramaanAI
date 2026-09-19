@@ -89,6 +89,9 @@
     <string name="identity_network_title">Identity Network</string>
     <string name="identity_network_entities">%d entities</string>
     <string name="graph_legend_person">Person</string>
+    <string name="graph_legend_person_new">New Face</string>
+    <string name="graph_legend_person_verified">Verified Match</string>
+    <string name="graph_legend_person_partial">Partial Match</string>
     <string name="graph_legend_checkpoint">Checkpoint</string>
     <string name="graph_legend_document">Document</string>
     <string name="graph_legend_vehicle">Vehicle</string>

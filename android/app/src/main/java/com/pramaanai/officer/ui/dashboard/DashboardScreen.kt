@@ -46,9 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.computeAnalytics
 import com.pramaanai.officer.data.dailyActivity
@@ -134,8 +136,8 @@ fun DashboardScreen(
             // clipped the third row on phones and left the cards mostly empty.
             Column(modifier = Modifier.tourAnchor("stat_cards"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 listOf(
-                    StatCardData("Total Screenings", stats.total, Icons.Filled.Description),
-                    StatCardData("Screenings Today", stats.today, Icons.Filled.Today, trendPct = stats.todayVsYesterdayPct),
+                    StatCardData(stringResource(R.string.dashboard_total_screenings), stats.total, Icons.Filled.Description),
+                    StatCardData(stringResource(R.string.dashboard_screenings_today), stats.today, Icons.Filled.Today, trendPct = stats.todayVsYesterdayPct),
                     StatCardData("High-Risk Cases", stats.highRisk, Icons.Filled.Warning),
                     StatCardData("Pending Reviews", stats.pending, Icons.Filled.PendingActions),
                     StatCardData("Documents Scanned", stats.documentsScanned, Icons.Filled.CameraAlt),
@@ -149,7 +151,7 @@ fun DashboardScreen(
         }
 
         item {
-            SectionCard(title = "Screening Activity") {
+            SectionCard(title = stringResource(R.string.dashboard_screening_activity)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ChartRange.entries.forEach { range ->
                         FilterChip(
@@ -186,21 +188,21 @@ fun DashboardScreen(
         item {
             SectionCard(title = "Risk Overview", modifier = Modifier.tourAnchor("risk_overview")) {
                 Text(
-                    "${stats.total} total risk assessments",
+                    stringResource(R.string.dashboard_total_risk_assessments, stats.total),
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600,
                 )
                 Spacer(Modifier.height(10.dp))
-                MonoRibbonBar("Low risk", stats.lowRisk, stats.total, color = SuccessGreen)
-                MonoRibbonBar("Medium risk", stats.mediumRisk, stats.total, color = WarningAmber)
-                MonoRibbonBar("High risk", stats.highRisk, stats.total, color = DestructiveRed)
+                MonoRibbonBar(stringResource(R.string.dashboard_low_risk), stats.lowRisk, stats.total, color = SuccessGreen)
+                MonoRibbonBar(stringResource(R.string.dashboard_medium_risk), stats.mediumRisk, stats.total, color = WarningAmber)
+                MonoRibbonBar(stringResource(R.string.dashboard_high_risk), stats.highRisk, stats.total, color = DestructiveRed)
             }
         }
 
         item {
-            SectionCard(title = "Recent Screenings") {
+            SectionCard(title = stringResource(R.string.dashboard_recent_screenings)) {
                 if (items.isEmpty()) {
-                    Text("No screenings yet.", style = MaterialTheme.typography.bodySmall, color = Gray600)
+                    Text(stringResource(R.string.dashboard_no_screenings), style = MaterialTheme.typography.bodySmall, color = Gray600)
                 } else {
                     items.take(5).forEach { item -> RecentRow(item, onClick = { onOpenScreening(item.id) }) }
                 }
@@ -209,7 +211,7 @@ fun DashboardScreen(
 
         item {
             SectionCard(title = "More") {
-                QuickActionButton("View Screening Queue", onViewQueue)
+                QuickActionButton(stringResource(R.string.dashboard_view_queue), onViewQueue)
                 Spacer(Modifier.height(8.dp))
                 QuickActionButton("View History", onViewHistory)
                 Spacer(Modifier.height(8.dp))
@@ -242,7 +244,7 @@ private fun NewScreeningCta(onClick: () -> Unit, modifier: Modifier = Modifier) 
                 Icon(Icons.Filled.AddCircle, contentDescription = null, tint = BackgroundDark, modifier = Modifier.size(28.dp))
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text("New Screening", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = BackgroundDark)
+                    Text(stringResource(R.string.dashboard_new_screening), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = BackgroundDark)
                     Text("Scan a document to start", style = MaterialTheme.typography.labelSmall, color = BackgroundDark.copy(alpha = 0.7f))
                 }
             }
