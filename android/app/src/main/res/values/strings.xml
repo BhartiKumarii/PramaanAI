@@ -149,9 +149,9 @@
 
     <!-- Capture Process Steps -->
     <string name="capture_step_1_title">Step 1 of 3 — Document front</string>
-    <string name="capture_step_1_desc">Align the front of your document within the frame. Auto-captures when aligned.</string>
+    <string name="capture_step_1_desc">Align the front of your document within the frame and tap capture.</string>
     <string name="capture_step_2_title">Step 2 of 3 — Document back</string>
-    <string name="capture_step_2_desc">Now capture the back of your document. Auto-captures when aligned.</string>
+    <string name="capture_step_2_desc">Now capture the back of your document. Tap capture when ready.</string>
     <string name="capture_step_3_title">Step 3 of 3 — Live selfie</string>
     <string name="capture_document_front">Capture document front</string>
     <string name="capture_document_back">Capture document back</string>
@@ -160,6 +160,7 @@
     <string name="upload_document_back">Upload document back instead</string>
     <string name="upload_selfie">Upload selfie photo instead</string>
     <string name="auto_capturing">Auto-capturing…</string>
+    <string name="capture_flip_camera">Flip camera</string>
     <string name="start_over">Start over</string>
 
     <!-- Priority and Status -->
@@ -246,4 +247,221 @@
     <string name="decision_secondary_review">Secondary review</string>
     <string name="decision_hold_refer">Hold/refer</string>
     <string name="decision_review_required">Review required</string>
+
+    <!-- Dashboard extras -->
+    <string name="dashboard_high_risk_cases">High-Risk Cases</string>
+    <string name="dashboard_pending_reviews">Pending Reviews</string>
+    <string name="dashboard_documents_scanned">Documents Scanned</string>
+    <string name="dashboard_needs_attention">Needs Attention</string>
+    <string name="dashboard_risk_overview">Risk Overview</string>
+    <string name="dashboard_more_section">More</string>
+    <string name="dashboard_view_history">View History</string>
+    <string name="dashboard_view_analytics">View Analytics</string>
+    <string name="chart_today">Today</string>
+    <string name="chart_weekly">Weekly</string>
+    <string name="chart_monthly">Monthly</string>
+
+    <!-- Queue extras -->
+    <string name="filter_all">All</string>
+    <string name="filter_high_priority">High priority</string>
+    <string name="filter_pending">Pending</string>
+    <string name="filter_recently_created">Recently created</string>
+    <string name="filter_cleared">Cleared</string>
+    <string name="filter_disputed">Disputed</string>
+    <string name="queue_empty_title">No matching screenings</string>
+    <string name="queue_empty_subtitle">Cases will appear here once submitted from a new screening.</string>
+    <string name="queue_awaiting_decision">Awaiting decision</string>
+    <string name="queue_status_prefix">Status: </string>
+    <string name="time_just_now">just now</string>
+    <string name="time_minutes_ago">%dm ago</string>
+    <string name="time_hours_ago">%dh ago</string>
+
+    <!-- History extras -->
+    <string name="history_search_placeholder">Search traveler, nationality, or screening ID</string>
+    <string name="history_empty_title">No results</string>
+    <string name="history_empty_subtitle">No screening history matches your search or filters.</string>
+
+    <!-- Alerts extras -->
+    <string name="alerts_empty_title">No active alerts</string>
+    <string name="alerts_empty_subtitle">Cases requiring officer attention will appear here.</string>
+    <string name="alert_document_review">Document Review Required</string>
+    <string name="alert_risk_review">Risk Assessment Requires Review</string>
+    <string name="alert_duplicate">Duplicate Record</string>
+    <string name="alert_incomplete">Incomplete Information</string>
+    <string name="alert_verification">Verification Required</string>
+
+    <!-- More menu -->
+    <string name="more_analytics">Analytics</string>
+    <string name="more_audit_log">Audit Log</string>
+    <string name="more_officer_profile">Officer Profile</string>
+    <string name="more_settings">Settings</string>
+    <string name="more_logout">Logout</string>
+
+    <!-- Settings extras -->
+    <string name="settings_account">Account Settings</string>
+    <string name="settings_officer_id">Officer ID</string>
+    <string name="settings_role">Role</string>
+    <string name="settings_checkpoint_label">Checkpoint</string>
+    <string name="settings_notifications">Notification Settings</string>
+    <string name="settings_push_notifications">Push notifications for new alerts</string>
+    <string name="settings_high_risk_only">Only notify for high-risk cases</string>
+    <string name="settings_local_only_notice">Stored on this device only — not synced to the backend in this build.</string>
+    <string name="settings_risk_config">Screening Rules &amp; Risk Configuration</string>
+    <string name="settings_risk_signals_desc">Signals combined into the risk score: document checksum/MRZ validation, forensics (ELA), deepfake heuristic, blacklist/registry lookup, face match, identity graph, and liveness heuristic.</string>
+    <string name="settings_risk_weights_desc">Weights and thresholds are configured and enforced server-side by the scoring engine only — this app cannot read or set them, and no UI path here can ever submit a manually chosen score.</string>
+    <string name="settings_document">Document Settings</string>
+    <string name="settings_accepted_types">Accepted document types</string>
+    <string name="settings_accepted_types_value">Passport, National ID, Visa</string>
+    <string name="settings_cross_validation">Front/back cross-validation</string>
+    <string name="settings_enabled">Enabled</string>
+    <string name="settings_system_prefs">System Preferences</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_value">Follows system light/dark setting</string>
+    <string name="settings_backend">Backend</string>
+    <string name="settings_selected">Selected</string>
+    <string name="settings_select">Select</string>
+
+    <!-- Officer Profile extras -->
+    <string name="profile_field_officer">Field Officer</string>
+    <string name="profile_personal_info">Personal Information</string>
+    <string name="profile_officer_id">Officer ID</string>
+    <string name="profile_role">Role</string>
+    <string name="profile_checkpoint">Checkpoint</string>
+    <string name="profile_account_status">Account status</string>
+    <string name="profile_active">Active</string>
+    <string name="profile_security">Security</string>
+    <string name="profile_secure_session">Secure session</string>
+    <string name="profile_last_login">Last login</string>
+    <string name="profile_session_token">Session token</string>
+    <string name="profile_session_token_value">Held in memory for this app session only</string>
+    <string name="profile_idle_timeout">Idle timeout</string>
+    <string name="profile_idle_timeout_value">Warns after 5 min inactivity, signs out 30s later</string>
+    <string name="profile_failed_logins">Failed login attempts</string>
+    <string name="profile_failed_logins_value">%d recorded</string>
+    <string name="profile_account_settings">Account Settings</string>
+    <string name="profile_account_settings_desc">Language, notifications, and system preferences</string>
+    <string name="profile_activity">Activity</string>
+
+    <!-- Audit Log extras -->
+    <string name="audit_empty_title">No audit entries yet</string>
+    <string name="audit_empty_subtitle">Officer logins, screenings, and decisions will be recorded here.</string>
+    <string name="audit_officer_prefix">Officer: </string>
+
+    <!-- Analytics extras -->
+    <string name="analytics_volume">Volume</string>
+    <string name="analytics_total_screenings">Total screenings</string>
+    <string name="analytics_this_period">This period</string>
+    <string name="analytics_risk_distribution">Risk Distribution</string>
+    <string name="analytics_low_risk">Low risk</string>
+    <string name="analytics_medium_risk">Medium risk</string>
+    <string name="analytics_high_risk">High risk</string>
+    <string name="analytics_case_status">Case Status</string>
+    <string name="analytics_pending_cases">Pending cases</string>
+    <string name="analytics_completed_cases">Completed cases</string>
+    <string name="analytics_review_rate">Review rate (disputed / decided)</string>
+    <string name="analytics_notes">Notes</string>
+    <string name="analytics_notes_text">Average processing time and location-matching statistics are not tracked in this build — no start/end timestamps or location-match signal exist yet to compute them honestly, so they\'re omitted rather than estimated.</string>
+
+    <!-- Capture extras -->
+    <string name="quality_blur">Blur</string>
+    <string name="quality_glare">Glare</string>
+    <string name="quality_lighting">Lighting</string>
+    <string name="quality_shadows">Shadows</string>
+    <string name="liveness_turn_left">Turn your head slowly to the left</string>
+    <string name="liveness_turn_right">Turn your head slowly to the right</string>
+    <string name="liveness_blink">Blink twice</string>
+    <string name="liveness_nod">Nod your head once</string>
+    <string name="liveness_hold_still">Look directly at the camera and hold still</string>
+    <string name="review_step_subtitle">Nothing is typed in by hand. These values were read from the document on this device.</string>
+    <string name="capture_label_front">Document front</string>
+    <string name="capture_label_back">Document back</string>
+    <string name="capture_label_live">Live capture</string>
+    <string name="capture_label_document">Document photo</string>
+    <string name="field_full_name">Full name</string>
+    <string name="field_document_number">Document number</string>
+    <string name="field_nationality">Nationality</string>
+    <string name="field_date_of_birth">Date of birth</string>
+    <string name="field_gender">Gender</string>
+    <string name="field_date_of_expiry">Date of expiry</string>
+    <string name="field_not_detected">Not detected</string>
+    <string name="capture_nothing_read">Nothing could be read from this photo. Rescan with the document\'s data page filling the frame, flat and in good light.</string>
+    <string name="capture_verify_explanation">Verifying checks these values against the registry and runs the document checks. Anything that doesn\'t line up is flagged for your review.</string>
+    <string name="capture_submitting">Submitting to screening backend…</string>
+    <string name="capture_submission_failed">Screening submission failed</string>
+    <string name="capture_retry">Retry</string>
+    <string name="capture_generic">Capture</string>
+    <string name="upload_generic">Upload photo instead</string>
+
+    <!-- Workflow / screening checks -->
+    <string name="step_info_extraction">Information Extraction</string>
+    <string name="extraction_no_ocr">No OCR result on this record.</string>
+    <string name="extraction_mrz">Machine-readable zone</string>
+    <string name="extraction_disclaimer">Read from the document on this device — nothing here was typed in by hand. A misread value shows up as an inconsistency in the checks that follow.</string>
+    <string name="check_document_read">Document read</string>
+    <string name="check_expiry">Expiry</string>
+    <string name="check_document_validation">Document validation</string>
+    <string name="check_no_evidence">No checksum or cross-check evidence was available</string>
+    <string name="check_citizen_registry">Citizen registry match</string>
+    <string name="check_not_evaluated">Not evaluated for this screening</string>
+    <string name="check_duplicate_document">Duplicate / reused document</string>
+    <string name="check_watchlist">Watchlist registry (demo data)</string>
+    <string name="check_no_watchlist_match">No matching entry in the mock watchlist</string>
+    <string name="check_face_in_capture">Face in live capture</string>
+    <string name="check_not_run_device">Not run on this device</string>
+    <string name="check_face_match">Face match</string>
+    <string name="check_needs_both">Needs both a document photo and a live capture</string>
+    <string name="check_liveness">Liveness / spoof check</string>
+    <string name="check_not_computed">Not computed on this device</string>
+    <string name="check_forensics">Document forensics (ELA)</string>
+    <string name="check_deepfake">Deepfake heuristic</string>
+    <string name="check_identity_graph">Identity graph</string>
+    <string name="check_needs_live">Needs a live capture to compare against earlier records</string>
+    <string name="check_passed">Passed</string>
+    <string name="check_review">Review</string>
+    <string name="check_alert">Alert</string>
+    <string name="check_not_run">Not run</string>
+    <string name="step_doc_verification">Document Verification</string>
+    <string name="verification_explanation">Each line is a real check the backend ran on the values above, with the exact values it compared. \"Not run\" means the check couldn\'t be performed — never a silent pass.</string>
+    <string name="step_screening_title">Screening</string>
+    <string name="screening_disclaimer">This build has no configured watchlist beyond the mock registry and no real location-match signal — nationality or location alone never drives a risk label.</string>
+
+    <!-- Risk assessment -->
+    <string name="risk_name_missing">Name not read from document</string>
+    <string name="risk_officer_review">Officer review recommended</string>
+    <string name="risk_no_flags">No review flags raised</string>
+    <string name="risk_disclaimer">A risk alert to support the officer\'s judgment — not a finding about the traveler.</string>
+    <string name="risk_checks_title">Checks</string>
+    <string name="risk_checks_summary">%1$d passed · %2$d to review · %3$d not run</string>
+    <string name="risk_breakdown">Risk breakdown</string>
+    <string name="signal_document_checks">Document checks</string>
+    <string name="signal_face_in_capture">Face in live capture</string>
+    <string name="signal_watchlist_registry">Watchlist registry</string>
+    <string name="signal_identity_graph_label">Identity graph</string>
+
+    <!-- Officer review -->
+    <string name="review_officer_title">Officer Review</string>
+    <string name="review_instructions">Decide with your own procedure. If you flag this screening or send it on, the reasons below are recorded automatically — nothing to type.</string>
+    <string name="review_raised_title">Raised on this screening</string>
+    <string name="complete_cleared">Cleared</string>
+    <string name="complete_flagged">Flagged for Review</string>
+    <string name="complete_sent">Sent to Immigration</string>
+    <string name="complete_title">Screening complete</string>
+    <string name="complete_decision">Decision recorded: %s</string>
+    <string name="send_to_immigration_title">Send to Immigration Officer</string>
+    <string name="send_to_immigration_intro">The case goes to the Immigration Officer\'s queue for further review and final decision.</string>
+    <string name="send_to_immigration_label">Send to Immigration</string>
+
+    <!-- Capture step descriptions (auto-capture removed) -->
+    <string name="capture_step_1_desc_manual">Align the front of your document within the frame and tap capture.</string>
+    <string name="capture_step_2_desc_manual">Now capture the back of your document. Tap capture when ready.</string>
+
+    <!-- Workflow result extras -->
+    <string name="check_fields_read">%d field(s) read from the document</string>
+    <string name="check_rescan_document">No fields could be read — rescan the document in better light</string>
+    <string name="check_tampering_risk">Tampering risk %d%%</string>
+    <string name="check_watchlist_hit">%1$s match on %2$s (%3$s)</string>
+    <string name="complete_notes">Notes: %s</string>
+    <string name="signal_liveness">Liveness / spoof</string>
+    <string name="signal_citizen_registry_label">Citizen registry</string>
+    <string name="signal_duplicate_doc">Duplicate / reused document</string>
 </resources>

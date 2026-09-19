@@ -138,10 +138,10 @@ fun DashboardScreen(
                 listOf(
                     StatCardData(stringResource(R.string.dashboard_total_screenings), stats.total, Icons.Filled.Description),
                     StatCardData(stringResource(R.string.dashboard_screenings_today), stats.today, Icons.Filled.Today, trendPct = stats.todayVsYesterdayPct),
-                    StatCardData("High-Risk Cases", stats.highRisk, Icons.Filled.Warning),
-                    StatCardData("Pending Reviews", stats.pending, Icons.Filled.PendingActions),
-                    StatCardData("Documents Scanned", stats.documentsScanned, Icons.Filled.CameraAlt),
-                    StatCardData("Needs Attention", alerts.size, Icons.Filled.NotificationsActive),
+                    StatCardData(stringResource(R.string.dashboard_high_risk_cases), stats.highRisk, Icons.Filled.Warning),
+                    StatCardData(stringResource(R.string.dashboard_pending_reviews), stats.pending, Icons.Filled.PendingActions),
+                    StatCardData(stringResource(R.string.dashboard_documents_scanned), stats.documentsScanned, Icons.Filled.CameraAlt),
+                    StatCardData(stringResource(R.string.dashboard_needs_attention), alerts.size, Icons.Filled.NotificationsActive),
                 ).chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                         pair.forEach { data -> Box(Modifier.weight(1f)) { StatCard(data) } }
@@ -157,7 +157,7 @@ fun DashboardScreen(
                         FilterChip(
                             selected = chartRange == range,
                             onClick = { chartRange = range },
-                            label = { Text(range.label) },
+                            label = { Text(stringResource(range.labelRes)) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = AccentGreen.copy(alpha = 0.18f),
                                 selectedLabelColor = AccentGreen,
@@ -186,7 +186,7 @@ fun DashboardScreen(
         }
 
         item {
-            SectionCard(title = "Risk Overview", modifier = Modifier.tourAnchor("risk_overview")) {
+            SectionCard(title = stringResource(R.string.dashboard_risk_overview), modifier = Modifier.tourAnchor("risk_overview")) {
                 Text(
                     stringResource(R.string.dashboard_total_risk_assessments, stats.total),
                     style = MaterialTheme.typography.bodySmall,
@@ -210,18 +210,22 @@ fun DashboardScreen(
         }
 
         item {
-            SectionCard(title = "More") {
+            SectionCard(title = stringResource(R.string.dashboard_more_section)) {
                 QuickActionButton(stringResource(R.string.dashboard_view_queue), onViewQueue)
                 Spacer(Modifier.height(8.dp))
-                QuickActionButton("View History", onViewHistory)
+                QuickActionButton(stringResource(R.string.dashboard_view_history), onViewHistory)
                 Spacer(Modifier.height(8.dp))
-                QuickActionButton("View Analytics", onViewAnalytics)
+                QuickActionButton(stringResource(R.string.dashboard_view_analytics), onViewAnalytics)
             }
         }
     }
 }
 
-private enum class ChartRange(val label: String) { TODAY("Today"), WEEKLY("Weekly"), MONTHLY("Monthly") }
+private enum class ChartRange(val labelRes: Int) {
+    TODAY(R.string.chart_today),
+    WEEKLY(R.string.chart_weekly),
+    MONTHLY(R.string.chart_monthly),
+}
 
 // Prominent, full-width CTA pinned at the very top of the dashboard — a
 // screening always starts by picking a document type (see
@@ -245,7 +249,7 @@ private fun NewScreeningCta(onClick: () -> Unit, modifier: Modifier = Modifier) 
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(stringResource(R.string.dashboard_new_screening), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = BackgroundDark)
-                    Text("Scan a document to start", style = MaterialTheme.typography.labelSmall, color = BackgroundDark.copy(alpha = 0.7f))
+                    Text(stringResource(R.string.scan_document_prompt), style = MaterialTheme.typography.labelSmall, color = BackgroundDark.copy(alpha = 0.7f))
                 }
             }
         }

@@ -13,9 +13,17 @@
     <string name="common_finish">ਪੂਰਾ ਕਰੋ</string>
     <string name="common_sign_in">ਸਾਈਨ ਇਨ ਕਰੋ</string>
     <string name="common_clear">ਕਲੀਅਰ ਕਰੋ</string>
+    <string name="common_secondary_review">ਦੂਜੀ ਸਮੀਖਿਆ</string>
+    <string name="common_hold_refer">ਰੋਕੋ/ਰੈਫ਼ਰ ਕਰੋ</string>
     <string name="common_flag_review">ਫਲੈਗ ਕਰੋ / ਹੋਰ ਸਮੀਖਿਆ</string>
     <string name="common_log_out">ਲਾਗ ਆਊਟ</string>
     <string name="common_cancel">ਰੱਦ ਕਰੋ</string>
+    <string name="common_checkpoint">ਚੈਕਪੁਆਇੰਟ</string>
+    <string name="common_loading_checkpoints">ਚੈਕਪੁਆਇੰਟ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…</string>
+    <string name="common_select_checkpoint">ਚੈਕਪੁਆਇੰਟ ਚੁਣੋ</string>
+    <string name="common_show_password">ਪਾਸਵਰਡ ਦਿਖਾਓ</string>
+    <string name="common_hide_password">ਪਾਸਵਰਡ ਲੁਕਾਓ</string>
+    <string name="auth_failed_message">ਪ੍ਰਮਾਣੀਕਰਨ ਅਸਫ਼ਲ — ਅਫ਼ਸਰ ਆਈਡੀ ਅਤੇ ਪਾਸਵਰਡ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਯਕੀਨੀ ਬਣਾਓ ਕਿ ਬੈਕਐਂਡ ਤੱਕ ਪਹੁੰਚ ਹੋ ਸਕਦੀ ਹੈ।</string>
 
     <string name="system_operational">ਸਿਸਟਮ ਠੀਕ ਢੰਗ ਨਾਲ ਚੱਲ ਰਿਹਾ ਹੈ</string>
 
@@ -62,7 +70,7 @@
     <string name="new_screening_subtitle">ਦਸਤਾਵੇਜ਼ ਪੜਤਾਲ ਲਈ ਯਾਤਰੀ ਵੇਰਵਾ ਦਰਜ ਕਰੋ</string>
     <string name="checkpoint_label">ਚੈਕਪੁਆਇੰਟ</string>
     <string name="traveler_name">ਯਾਤਰੀ ਦਾ ਨਾਮ</string>
-    <string name="document_type_label">ਦਸਤਾਵੇਜ਼ ਦਾ ਕਿਸਮ</string>
+    <string name="document_type_label">ਦਸਤਾਵੇਜ਼ ਦੀ ਕਿਸਮ</string>
     <string name="document_number_label">ਦਸਤਾਵੇਜ਼ ਨੰਬਰ</string>
     <string name="dob_label">ਜਨਮ ਤਾਰੀਖ (DD/MM/YYYY)</string>
     <string name="expiry_label">ਮਿਆਦ ਖਤਮ ਹੋਣ ਦੀ ਤਾਰੀਖ (DD/MM/YYYY)</string>
@@ -76,4 +84,374 @@
     <string name="error_dob_required">ਇਸ ਚੈਕਪੁਆਇੰਟ ਲਈ ਜਨਮ ਤਾਰੀਖ ਲੋੜੀਂਦੀ ਹੈ</string>
     <string name="error_expiry_required">ਇਸ ਚੈਕਪੁਆਇੰਟ ਲਈ ਮਿਆਦ ਖਤਮ ਹੋਣ ਦੀ ਤਾਰੀਖ ਲੋੜੀਂਦੀ ਹੈ</string>
     <string name="error_nationality_required">ਰਾਸ਼ਟਰੀਤਾ ਲੋੜੀਂਦੀ ਹੈ</string>
+
+    <!-- Identity Network Graph -->
+    <string name="identity_network_title">ਪਛਾਣ ਨੈੱਟਵਰਕ</string>
+    <string name="identity_network_entities">%d ਇਕਾਈਆਂ</string>
+    <string name="graph_legend_person">ਵਿਅਕਤੀ</string>
+    <string name="graph_legend_person_new">ਨਵਾਂ ਚਿਹਰਾ</string>
+    <string name="graph_legend_person_verified">ਪੁਸ਼ਟੀ ਕੀਤਾ ਮਿਲਾਨ</string>
+    <string name="graph_legend_person_partial">ਅੰਸ਼ਕ ਮਿਲਾਨ</string>
+    <string name="graph_legend_checkpoint">ਚੈਕਪੁਆਇੰਟ</string>
+    <string name="graph_legend_document">ਦਸਤਾਵੇਜ਼</string>
+    <string name="graph_legend_vehicle">ਵਾਹਨ</string>
+    <string name="graph_legend_travel_event">ਯਾਤਰਾ ਘਟਨਾ</string>
+
+    <!-- Language Selection -->
+    <string name="language_system">ਸਿਸਟਮ ਡਿਫ਼ਾਲਟ</string>
+
+    <!-- Screen Titles -->
+    <string name="title_capture">ਕੈਪਚਰ</string>
+    <string name="title_officer_profile">ਅਫ਼ਸਰ ਪ੍ਰੋਫ਼ਾਈਲ</string>
+    <string name="title_analytics">ਵਿਸ਼ਲੇਸ਼ਣ</string>
+
+    <!-- Camera and Permissions -->
+    <string name="camera_permission_required">ਦਸਤਾਵੇਜ਼ ਅਤੇ ਲਾਈਵ ਸੈਲਫ਼ੀ ਲੈਣ ਲਈ ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ।</string>
+    <string name="grant_camera_permission">ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ</string>
+
+    <!-- Capture Process -->
+    <string name="ocr_processing">ਡਿਵਾਈਸ \'ਤੇ ਦਸਤਾਵੇਜ਼ ਪੜ੍ਹ ਰਿਹਾ ਹੈ (OCR + MRZ + ਚਿਹਰਾ ਦਸਤਖ਼ਤ)…</string>
+    <string name="review_step_title">ਕਦਮ ੩ — ਪੜ੍ਹੇ ਗਏ ਡਾਟਾ ਦੀ ਸਮੀਖਿਆ ਕਰੋ</string>
+    <string name="button_rescan">ਦੁਬਾਰਾ ਸਕੈਨ ਕਰੋ</string>
+    <string name="button_verify_registry">ਰਜਿਸਟਰੀ ਨਾਲ ਤਸਦੀਕ ਕਰੋ</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_no_connection_queued">ਕੋਈ ਕਨੈਕਸ਼ਨ ਨਹੀਂ — ਕਤਾਰ ਵਿੱਚ ਪਾਇਆ, ਆਪਣੇ ਆਪ ਸਿੰਕ ਹੋ ਜਾਵੇਗਾ</string>
+    <string name="toast_using_label">ਵਰਤੋਂ: %s</string>
+    <string name="toast_upload_failed">ਅੱਪਲੋਡ ਅਸਫ਼ਲ: %s</string>
+
+    <!-- Profile Screen -->
+    <string name="no_activity_recorded">ਅਜੇ ਕੋਈ ਗਤੀਵਿਧੀ ਦਰਜ ਨਹੀਂ ਹੋਈ।</string>
+    <string name="button_log_out">ਲਾਗ ਆਊਟ</string>
+
+    <!-- Traveler Profile -->
+    <string name="no_risk_assessment">ਫ਼ਾਈਲ ਵਿੱਚ ਕੋਈ ਜੋਖਮ ਮੁਲਾਂਕਣ ਨਹੀਂ।</string>
+    <string name="no_officer_notes">ਕੋਈ ਅਫ਼ਸਰ ਨੋਟ ਦਰਜ ਨਹੀਂ ਹੋਏ।</string>
+    <string name="screening_history_title">ਸਕ੍ਰੀਨਿੰਗ ਇਤਿਹਾਸ</string>
+
+    <!-- Session Timeout -->
+    <string name="session_expiring_title">ਸੈਸ਼ਨ ਖਤਮ ਹੋ ਰਿਹਾ ਹੈ</string>
+    <string name="session_timeout_message">ਤੁਸੀਂ ਗੈਰ-ਸਰਗਰਮ ਸੀ। ਸੁਰੱਖਿਆ ਲਈ, ਇਹ ਸੈਸ਼ਨ ਆਪਣੇ ਆਪ ਖਤਮ ਹੋ ਜਾਵੇਗਾ।</string>
+    <string name="signing_out_countdown">%d ਸਕਿੰਟਾਂ ਵਿੱਚ ਸਾਈਨ ਆਊਟ ਹੋ ਰਿਹਾ ਹੈ</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_total_screenings">ਕੁੱਲ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="dashboard_screenings_today">ਅੱਜ ਦੀਆਂ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="dashboard_screening_activity">ਸਕ੍ਰੀਨਿੰਗ ਗਤੀਵਿਧੀ</string>
+    <string name="dashboard_recent_screenings">ਤਾਜ਼ਾ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="dashboard_new_screening">ਨਵੀਂ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="dashboard_no_screenings">ਅਜੇ ਕੋਈ ਸਕ੍ਰੀਨਿੰਗ ਨਹੀਂ।</string>
+    <string name="dashboard_view_queue">ਸਕ੍ਰੀਨਿੰਗ ਕਤਾਰ ਦੇਖੋ</string>
+    <string name="dashboard_total_risk_assessments">%d ਕੁੱਲ ਜੋਖਮ ਮੁਲਾਂਕਣ</string>
+    <string name="dashboard_low_risk">ਘੱਟ ਜੋਖਮ</string>
+    <string name="dashboard_medium_risk">ਦਰਮਿਆਨਾ ਜੋਖਮ</string>
+    <string name="dashboard_high_risk">ਵੱਧ ਜੋਖਮ</string>
+
+    <!-- Capture Process Steps -->
+    <string name="capture_step_1_title">ਕਦਮ ੧/੩ — ਦਸਤਾਵੇਜ਼ ਦਾ ਅਗਲਾ ਪਾਸਾ</string>
+    <string name="capture_step_1_desc">ਫ਼ਰੇਮ ਵਿੱਚ ਆਪਣੇ ਦਸਤਾਵੇਜ਼ ਦਾ ਅਗਲਾ ਪਾਸਾ ਲਿਆਓ ਅਤੇ ਕੈਪਚਰ \'ਤੇ ਟੈਪ ਕਰੋ।</string>
+    <string name="capture_step_2_title">ਕਦਮ ੨/੩ — ਦਸਤਾਵੇਜ਼ ਦਾ ਪਿਛਲਾ ਪਾਸਾ</string>
+    <string name="capture_step_2_desc">ਹੁਣ ਆਪਣੇ ਦਸਤਾਵੇਜ਼ ਦਾ ਪਿਛਲਾ ਪਾਸਾ ਕੈਪਚਰ ਕਰੋ। ਤਿਆਰ ਹੋਣ \'ਤੇ ਕੈਪਚਰ \'ਤੇ ਟੈਪ ਕਰੋ।</string>
+    <string name="capture_step_3_title">ਕਦਮ ੩/੩ — ਲਾਈਵ ਸੈਲਫ਼ੀ</string>
+    <string name="capture_document_front">ਦਸਤਾਵੇਜ਼ ਦਾ ਅਗਲਾ ਪਾਸਾ ਕੈਪਚਰ ਕਰੋ</string>
+    <string name="capture_document_back">ਦਸਤਾਵੇਜ਼ ਦਾ ਪਿਛਲਾ ਪਾਸਾ ਕੈਪਚਰ ਕਰੋ</string>
+    <string name="capture_selfie">ਸੈਲਫ਼ੀ ਕੈਪਚਰ ਕਰੋ</string>
+    <string name="upload_document_front">ਇਸ ਦੀ ਥਾਂ ਦਸਤਾਵੇਜ਼ ਦਾ ਅਗਲਾ ਪਾਸਾ ਅੱਪਲੋਡ ਕਰੋ</string>
+    <string name="upload_document_back">ਇਸ ਦੀ ਥਾਂ ਦਸਤਾਵੇਜ਼ ਦਾ ਪਿਛਲਾ ਪਾਸਾ ਅੱਪਲੋਡ ਕਰੋ</string>
+    <string name="upload_selfie">ਇਸ ਦੀ ਥਾਂ ਸੈਲਫ਼ੀ ਫ਼ੋਟੋ ਅੱਪਲੋਡ ਕਰੋ</string>
+    <string name="auto_capturing">ਆਪਣੇ ਆਪ ਕੈਪਚਰ ਹੋ ਰਿਹਾ ਹੈ…</string>
+    <string name="capture_flip_camera">ਕੈਮਰਾ ਬਦਲੋ</string>
+    <string name="start_over">ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਕਰੋ</string>
+
+    <!-- Priority and Status -->
+    <string name="priority_high">ਵੱਧ ਤਰਜੀਹ</string>
+    <string name="priority_medium">ਦਰਮਿਆਨੀ ਤਰਜੀਹ</string>
+    <string name="priority_low">ਘੱਟ ਤਰਜੀਹ</string>
+    <string name="status_pending">ਬਕਾਇਆ</string>
+    <string name="status_recently_created">ਹਾਲ ਹੀ ਵਿੱਚ ਬਣਾਇਆ</string>
+    <string name="status_completed">ਮੁਕੰਮਲ</string>
+    <string name="status_in_review">ਸਮੀਖਿਆ ਅਧੀਨ</string>
+
+    <!-- Document Types -->
+    <string name="document_passport">ਪਾਸਪੋਰਟ</string>
+    <string name="document_national_id">ਕੌਮੀ ਪਛਾਣ ਪੱਤਰ</string>
+    <string name="document_driving_license">ਡਰਾਈਵਿੰਗ ਲਾਇਸੈਂਸ</string>
+    <string name="document_aadhaar">ਆਧਾਰ ਕਾਰਡ</string>
+    <string name="document_pan_card">ਪੈਨ ਕਾਰਡ</string>
+    <string name="document_voter_id">ਵੋਟਰ ਆਈਡੀ</string>
+
+    <!-- Signal Breakdown and Reasons -->
+    <string name="signal_breakdown_title">ਸਿਗਨਲ ਵਿਸ਼ਲੇਸ਼ਣ</string>
+    <string name="registry_hits_title">ਰਜਿਸਟਰੀ ਹਿੱਟ</string>
+    <string name="audit_history_title">ਆਡਿਟ ਇਤਿਹਾਸ</string>
+    <string name="top_reason">ਮੁੱਖ ਕਾਰਨ</string>
+    <string name="extracted_names">ਕੱਢੇ ਗਏ ਨਾਮ</string>
+
+    <!-- Validation Reasons -->
+    <string name="reason_checksum_failed">ਦਸਤਾਵੇਜ਼ ਚੈਕਸਮ ਤਸਦੀਕ ਅਸਫ਼ਲ</string>
+    <string name="reason_dob_mismatch">ਰਜਿਸਟਰੀ ਨਾਲ ਜਨਮ ਤਾਰੀਖ ਮੇਲ ਨਹੀਂ ਖਾਂਦੀ</string>
+    <string name="reason_multiple_identity">ਕਈ ਪਛਾਣ ਸਮੂਹ ਮਿਲੇ</string>
+    <string name="reason_face_mismatch">ਚਿਹਰਾ ਦਸਤਾਵੇਜ਼ ਦੀ ਫ਼ੋਟੋ ਨਾਲ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ</string>
+    <string name="reason_document_expired">ਦਸਤਾਵੇਜ਼ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ</string>
+    <string name="reason_registry_hit">ਵਾਚਲਿਸਟ ਰਜਿਸਟਰੀ ਵਿੱਚ ਮਿਲਿਆ</string>
+    <string name="reason_mrz_invalid">MRZ ਤਸਦੀਕ ਅਸਫ਼ਲ</string>
+    <string name="reason_tampering_detected">ਦਸਤਾਵੇਜ਼ ਵਿੱਚ ਛੇੜਛਾੜ ਮਿਲੀ</string>
+
+    <!-- Review Screen -->
+    <string name="title_screening_review">ਸਕ੍ਰੀਨਿੰਗ ਸਮੀਖਿਆ</string>
+    <string name="no_audit_trail">ਇਸ ਰਿਕਾਰਡ ਲਈ ਅਜੇ ਕੋਈ ਬੈਕਐਂਡ ਆਡਿਟ ਟ੍ਰੇਲ ਨਹੀਂ।</string>
+    <string name="loading_text">ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…</string>
+    <string name="captured_document">ਕੈਪਚਰ ਕੀਤਾ ਦਸਤਾਵੇਜ਼</string>
+
+    <!-- Tour and Practice -->
+    <string name="title_practice_screening">ਅਭਿਆਸ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="button_back">ਪਿੱਛੇ</string>
+    <string name="button_next">ਅਗਲਾ</string>
+    <string name="button_flag">ਫਲੈਗ ਕਰੋ</string>
+    <string name="finish_practice">ਅਭਿਆਸ ਖਤਮ ਕਰੋ</string>
+    <string name="skip_tour">ਟੂਰ ਛੱਡੋ</string>
+    <string name="scan_document_prompt">ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਦਸਤਾਵੇਜ਼ ਸਕੈਨ ਕਰੋ</string>
+
+    <!-- Audit Log -->
+    <string name="title_audit_log">ਆਡਿਟ ਲਾਗ</string>
+
+    <!-- ReasonDialog -->
+    <string name="secondary_review_intro">ਇਸ ਕੇਸ ਨੂੰ ਹੋਰ ਸਮੀਖਿਆ ਦੀ ਲੋੜ ਹੈ। ਹੇਠ ਲਿਖੇ ਕਾਰਨ ਨੱਥੀ ਕੀਤੇ ਜਾਣਗੇ।</string>
+    <string name="hold_refer_intro">ਇਸ ਯਾਤਰੀ ਨੂੰ ਹੋਰ ਜਾਂਚ ਲਈ ਰੋਕਣਾ ਜਾਂ ਰੈਫ਼ਰ ਕਰਨਾ ਚਾਹੀਦਾ ਹੈ। ਹੇਠ ਲਿਖੇ ਕਾਰਨ ਨੱਥੀ ਕੀਤੇ ਜਾਣਗੇ।</string>
+
+    <!-- Workflow Result Screen -->
+    <string name="clear_screening_title">ਇਹ ਸਕ੍ਰੀਨਿੰਗ ਕਲੀਅਰ ਕਰੋ</string>
+    <string name="clear_screening_message">ਇਸ ਯਾਤਰੀ ਨੂੰ ਅੱਗੇ ਜਾਣ ਦੀ ਇਜਾਜ਼ਤ ਦਿੱਤੀ ਗਈ ਹੈ। ਇਹ ਫ਼ੈਸਲਾ ਦਰਜ ਕੀਤਾ ਜਾਵੇਗਾ ਅਤੇ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ।</string>
+    <string name="secondary_review_title">ਦੂਜੀ ਸਮੀਖਿਆ ਲੋੜੀਂਦੀ ਹੈ</string>
+    <string name="send_secondary_review">ਦੂਜੀ ਸਮੀਖਿਆ ਲਈ ਭੇਜੋ</string>
+    <string name="hold_refer_title">ਰੋਕੋ / ਰੈਫ਼ਰ ਕਰੋ</string>
+    <string name="back_to_queue">ਕਤਾਰ \'ਤੇ ਵਾਪਸ ਜਾਓ</string>
+
+    <!-- Technical Display Terms -->
+    <string name="weight_label">ਵਜ਼ਨ</string>
+    <string name="contribution_label">ਯੋਗਦਾਨ</string>
+    <string name="region_label">ਖੇਤਰ</string>
+    <string name="not_implemented">ਲਾਗੂ ਨਹੀਂ ਕੀਤਾ</string>
+
+    <!-- Signal Names -->
+    <string name="signal_checksum">ਚੈਕਸਮ ਤਸਦੀਕ</string>
+    <string name="signal_face_match">ਚਿਹਰਾ ਮਿਲਾਨ</string>
+    <string name="signal_forensics">ਫੋਰੈਂਸਿਕ ਵਿਸ਼ਲੇਸ਼ਣ</string>
+    <string name="signal_blacklist">ਵਾਚਲਿਸਟ ਜਾਂਚ</string>
+    <string name="signal_identity_graph">ਪਛਾਣ ਗ੍ਰਾਫ਼ ਵਿਸ਼ਲੇਸ਼ਣ</string>
+    <string name="signal_mrz">MRZ ਤਸਦੀਕ</string>
+    <string name="signal_tampering">ਛੇੜਛਾੜ ਸਨਾਖ਼ਤ</string>
+
+    <!-- Decision Types -->
+    <string name="decision_clear">ਕਲੀਅਰ</string>
+    <string name="decision_secondary_review">ਦੂਜੀ ਸਮੀਖਿਆ</string>
+    <string name="decision_hold_refer">ਰੋਕੋ/ਰੈਫ਼ਰ</string>
+    <string name="decision_review_required">ਸਮੀਖਿਆ ਲੋੜੀਂਦੀ</string>
+
+    <!-- Dashboard extras -->
+    <string name="dashboard_high_risk_cases">ਵੱਧ ਜੋਖਮ ਵਾਲੇ ਕੇਸ</string>
+    <string name="dashboard_pending_reviews">ਬਕਾਇਆ ਸਮੀਖਿਆਵਾਂ</string>
+    <string name="dashboard_documents_scanned">ਸਕੈਨ ਕੀਤੇ ਦਸਤਾਵੇਜ਼</string>
+    <string name="dashboard_needs_attention">ਧਿਆਨ ਦੀ ਲੋੜ ਹੈ</string>
+    <string name="dashboard_risk_overview">ਜੋਖਮ ਸਾਰਾਂਸ਼</string>
+    <string name="dashboard_more_section">ਹੋਰ</string>
+    <string name="dashboard_view_history">ਇਤਿਹਾਸ ਦੇਖੋ</string>
+    <string name="dashboard_view_analytics">ਵਿਸ਼ਲੇਸ਼ਣ ਦੇਖੋ</string>
+    <string name="chart_today">ਅੱਜ</string>
+    <string name="chart_weekly">ਹਫ਼ਤਾਵਾਰੀ</string>
+    <string name="chart_monthly">ਮਹੀਨਾਵਾਰ</string>
+
+    <!-- Queue extras -->
+    <string name="filter_all">ਸਭ</string>
+    <string name="filter_high_priority">ਵੱਧ ਤਰਜੀਹ</string>
+    <string name="filter_pending">ਬਕਾਇਆ</string>
+    <string name="filter_recently_created">ਹਾਲ ਹੀ ਵਿੱਚ ਬਣਾਇਆ</string>
+    <string name="filter_cleared">ਕਲੀਅਰ ਕੀਤਾ</string>
+    <string name="filter_disputed">ਵਿਵਾਦਿਤ</string>
+    <string name="queue_empty_title">ਕੋਈ ਸਕ੍ਰੀਨਿੰਗ ਮੇਲ ਨਹੀਂ ਖਾਂਦੀ</string>
+    <string name="queue_empty_subtitle">ਨਵੀਂ ਸਕ੍ਰੀਨਿੰਗ ਜਮ੍ਹਾਂ ਹੋਣ \'ਤੇ ਕੇਸ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੇ।</string>
+    <string name="queue_awaiting_decision">ਫ਼ੈਸਲੇ ਦੀ ਉਡੀਕ</string>
+    <string name="queue_status_prefix">ਸਥਿਤੀ: </string>
+    <string name="time_just_now">ਹੁਣੇ</string>
+    <string name="time_minutes_ago">%d ਮਿੰਟ ਪਹਿਲਾਂ</string>
+    <string name="time_hours_ago">%d ਘੰਟੇ ਪਹਿਲਾਂ</string>
+
+    <!-- History extras -->
+    <string name="history_search_placeholder">ਯਾਤਰੀ, ਰਾਸ਼ਟਰੀਤਾ, ਜਾਂ ਸਕ੍ਰੀਨਿੰਗ ਆਈਡੀ ਖੋਜੋ</string>
+    <string name="history_empty_title">ਕੋਈ ਨਤੀਜੇ ਨਹੀਂ</string>
+    <string name="history_empty_subtitle">ਤੁਹਾਡੀ ਖੋਜ ਜਾਂ ਫਿਲਟਰ ਨਾਲ ਕੋਈ ਸਕ੍ਰੀਨਿੰਗ ਇਤਿਹਾਸ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ।</string>
+
+    <!-- Alerts extras -->
+    <string name="alerts_empty_title">ਕੋਈ ਸਰਗਰਮ ਚੇਤਾਵਨੀ ਨਹੀਂ</string>
+    <string name="alerts_empty_subtitle">ਅਫ਼ਸਰ ਦੇ ਧਿਆਨ ਦੀ ਲੋੜ ਵਾਲੇ ਕੇਸ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੇ।</string>
+    <string name="alert_document_review">ਦਸਤਾਵੇਜ਼ ਸਮੀਖਿਆ ਲੋੜੀਂਦੀ</string>
+    <string name="alert_risk_review">ਜੋਖਮ ਮੁਲਾਂਕਣ ਸਮੀਖਿਆ ਲੋੜੀਂਦੀ</string>
+    <string name="alert_duplicate">ਡੁਪਲੀਕੇਟ ਰਿਕਾਰਡ</string>
+    <string name="alert_incomplete">ਅਧੂਰੀ ਜਾਣਕਾਰੀ</string>
+    <string name="alert_verification">ਤਸਦੀਕ ਲੋੜੀਂਦੀ</string>
+
+    <!-- More menu -->
+    <string name="more_analytics">ਵਿਸ਼ਲੇਸ਼ਣ</string>
+    <string name="more_audit_log">ਆਡਿਟ ਲਾਗ</string>
+    <string name="more_officer_profile">ਅਫ਼ਸਰ ਪ੍ਰੋਫ਼ਾਈਲ</string>
+    <string name="more_settings">ਸੈਟਿੰਗਾਂ</string>
+    <string name="more_logout">ਲਾਗ ਆਊਟ</string>
+
+    <!-- Settings extras -->
+    <string name="settings_account">ਖਾਤਾ ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_officer_id">ਅਫ਼ਸਰ ਆਈਡੀ</string>
+    <string name="settings_role">ਭੂਮਿਕਾ</string>
+    <string name="settings_checkpoint_label">ਚੈਕਪੁਆਇੰਟ</string>
+    <string name="settings_notifications">ਸੂਚਨਾ ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_push_notifications">ਨਵੀਆਂ ਚੇਤਾਵਨੀਆਂ ਲਈ ਪੁਸ਼ ਸੂਚਨਾਵਾਂ</string>
+    <string name="settings_high_risk_only">ਸਿਰਫ਼ ਵੱਧ-ਜੋਖਮ ਕੇਸਾਂ \'ਤੇ ਸੂਚਨਾ ਦਿਓ</string>
+    <string name="settings_local_only_notice">ਸਿਰਫ਼ ਇਸ ਡਿਵਾਈਸ \'ਤੇ ਸੁਰੱਖਿਅਤ — ਇਸ ਬਿਲਡ ਵਿੱਚ ਬੈਕਐਂਡ ਨਾਲ ਸਿੰਕ ਨਹੀਂ ਹੁੰਦਾ।</string>
+    <string name="settings_risk_config">ਸਕ੍ਰੀਨਿੰਗ ਨਿਯਮ ਅਤੇ ਜੋਖਮ ਸੰਰਚਨਾ</string>
+    <string name="settings_risk_signals_desc">ਜੋਖਮ ਸਕੋਰ ਵਿੱਚ ਮਿਲਾਏ ਗਏ ਸਿਗਨਲ: ਦਸਤਾਵੇਜ਼ ਚੈਕਸਮ/MRZ ਤਸਦੀਕ, ਫੋਰੈਂਸਿਕ (ELA), ਡੀਪਫੇਕ ਹਿਊਰਿਸਟਿਕ, ਬਲੈਕਲਿਸਟ/ਰਜਿਸਟਰੀ ਲੁੱਕਅੱਪ, ਚਿਹਰਾ ਮਿਲਾਨ, ਪਛਾਣ ਗ੍ਰਾਫ਼ ਅਤੇ ਲਾਈਵਨੈੱਸ ਹਿਊਰਿਸਟਿਕ।</string>
+    <string name="settings_risk_weights_desc">ਵਜ਼ਨ ਅਤੇ ਥ੍ਰੈਸ਼ਹੋਲਡ ਸਰਵਰ-ਸਾਈਡ \'ਤੇ ਸਕੋਰਿੰਗ ਇੰਜਣ ਦੁਆਰਾ ਸੰਰਚਿਤ ਅਤੇ ਲਾਗੂ ਕੀਤੇ ਜਾਂਦੇ ਹਨ — ਇਹ ਐਪ ਉਹਨਾਂ ਨੂੰ ਪੜ੍ਹ ਜਾਂ ਸੈੱਟ ਨਹੀਂ ਕਰ ਸਕਦੀ।</string>
+    <string name="settings_document">ਦਸਤਾਵੇਜ਼ ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_accepted_types">ਸਵੀਕਾਰ ਕੀਤੇ ਦਸਤਾਵੇਜ਼ ਦੀਆਂ ਕਿਸਮਾਂ</string>
+    <string name="settings_accepted_types_value">ਪਾਸਪੋਰਟ, ਕੌਮੀ ਆਈਡੀ, ਵੀਜ਼ਾ</string>
+    <string name="settings_cross_validation">ਅਗਲੇ/ਪਿਛਲੇ ਪਾਸੇ ਕ੍ਰਾਸ-ਵੈਲੀਡੇਸ਼ਨ</string>
+    <string name="settings_enabled">ਸਰਗਰਮ</string>
+    <string name="settings_system_prefs">ਸਿਸਟਮ ਤਰਜੀਹਾਂ</string>
+    <string name="settings_theme">ਥੀਮ</string>
+    <string name="settings_theme_value">ਸਿਸਟਮ ਲਾਈਟ/ਡਾਰਕ ਸੈਟਿੰਗ ਦੀ ਪਾਲਣਾ ਕਰਦਾ ਹੈ</string>
+    <string name="settings_backend">ਬੈਕਐਂਡ</string>
+    <string name="settings_selected">ਚੁਣਿਆ</string>
+    <string name="settings_select">ਚੁਣੋ</string>
+
+    <!-- Officer Profile extras -->
+    <string name="profile_field_officer">ਫੀਲਡ ਅਫ਼ਸਰ</string>
+    <string name="profile_personal_info">ਨਿੱਜੀ ਜਾਣਕਾਰੀ</string>
+    <string name="profile_officer_id">ਅਫ਼ਸਰ ਆਈਡੀ</string>
+    <string name="profile_role">ਭੂਮਿਕਾ</string>
+    <string name="profile_checkpoint">ਚੈਕਪੁਆਇੰਟ</string>
+    <string name="profile_account_status">ਖਾਤੇ ਦੀ ਸਥਿਤੀ</string>
+    <string name="profile_active">ਸਰਗਰਮ</string>
+    <string name="profile_security">ਸੁਰੱਖਿਆ</string>
+    <string name="profile_secure_session">ਸੁਰੱਖਿਅਤ ਸੈਸ਼ਨ</string>
+    <string name="profile_last_login">ਆਖ਼ਰੀ ਲਾਗਿਨ</string>
+    <string name="profile_session_token">ਸੈਸ਼ਨ ਟੋਕਨ</string>
+    <string name="profile_session_token_value">ਸਿਰਫ਼ ਇਸ ਐਪ ਸੈਸ਼ਨ ਦੀ ਮੈਮਰੀ ਵਿੱਚ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ</string>
+    <string name="profile_idle_timeout">ਗੈਰ-ਸਰਗਰਮੀ ਸਮਾਂ ਸੀਮਾ</string>
+    <string name="profile_idle_timeout_value">੫ ਮਿੰਟ ਗੈਰ-ਸਰਗਰਮੀ \'ਤੇ ਚੇਤਾਵਨੀ, ੩੦ ਸਕਿੰਟ ਬਾਅਦ ਸਾਈਨ ਆਊਟ</string>
+    <string name="profile_failed_logins">ਅਸਫ਼ਲ ਲਾਗਿਨ ਕੋਸ਼ਿਸ਼ਾਂ</string>
+    <string name="profile_failed_logins_value">%d ਰਿਕਾਰਡ ਕੀਤੀਆਂ</string>
+    <string name="profile_account_settings">ਖਾਤਾ ਸੈਟਿੰਗਾਂ</string>
+    <string name="profile_account_settings_desc">ਭਾਸ਼ਾ, ਸੂਚਨਾਵਾਂ ਅਤੇ ਸਿਸਟਮ ਤਰਜੀਹਾਂ</string>
+    <string name="profile_activity">ਗਤੀਵਿਧੀ</string>
+
+    <!-- Audit Log extras -->
+    <string name="audit_empty_title">ਅਜੇ ਕੋਈ ਆਡਿਟ ਐਂਟਰੀ ਨਹੀਂ</string>
+    <string name="audit_empty_subtitle">ਅਫ਼ਸਰ ਲਾਗਿਨ, ਸਕ੍ਰੀਨਿੰਗ ਅਤੇ ਫ਼ੈਸਲੇ ਇੱਥੇ ਰਿਕਾਰਡ ਕੀਤੇ ਜਾਣਗੇ।</string>
+    <string name="audit_officer_prefix">ਅਫ਼ਸਰ: </string>
+
+    <!-- Analytics extras -->
+    <string name="analytics_volume">ਮਾਤਰਾ</string>
+    <string name="analytics_total_screenings">ਕੁੱਲ ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="analytics_this_period">ਇਸ ਸਮੇਂ</string>
+    <string name="analytics_risk_distribution">ਜੋਖਮ ਵੰਡ</string>
+    <string name="analytics_low_risk">ਘੱਟ ਜੋਖਮ</string>
+    <string name="analytics_medium_risk">ਦਰਮਿਆਨਾ ਜੋਖਮ</string>
+    <string name="analytics_high_risk">ਵੱਧ ਜੋਖਮ</string>
+    <string name="analytics_case_status">ਕੇਸ ਸਥਿਤੀ</string>
+    <string name="analytics_pending_cases">ਬਕਾਇਆ ਕੇਸ</string>
+    <string name="analytics_completed_cases">ਮੁਕੰਮਲ ਕੇਸ</string>
+    <string name="analytics_review_rate">ਸਮੀਖਿਆ ਦਰ (ਵਿਵਾਦਿਤ / ਫ਼ੈਸਲੇ)</string>
+    <string name="analytics_notes">ਨੋਟ</string>
+    <string name="analytics_notes_text">ਇਸ ਬਿਲਡ ਵਿੱਚ ਔਸਤ ਪ੍ਰੋਸੈਸਿੰਗ ਸਮਾਂ ਅਤੇ ਥਾਂ-ਮਿਲਾਨ ਅੰਕੜੇ ਟ੍ਰੈਕ ਨਹੀਂ ਕੀਤੇ ਜਾਂਦੇ — ਇਮਾਨਦਾਰੀ ਨਾਲ ਗਿਣਤੀ ਕਰਨ ਲਈ ਅਜੇ ਕੋਈ ਸ਼ੁਰੂ/ਅੰਤ ਟਾਈਮਸਟੈਂਪ ਜਾਂ ਥਾਂ-ਮਿਲਾਨ ਸਿਗਨਲ ਨਹੀਂ, ਇਸ ਲਈ ਅੰਦਾਜ਼ਾ ਲਗਾਉਣ ਦੀ ਬਜਾਏ ਛੱਡ ਦਿੱਤਾ ਗਿਆ।</string>
+
+    <!-- Capture extras -->
+    <string name="quality_blur">ਧੁੰਦਲਾ</string>
+    <string name="quality_glare">ਚਮਕ</string>
+    <string name="quality_lighting">ਰੌਸ਼ਨੀ</string>
+    <string name="quality_shadows">ਪਰਛਾਵੇਂ</string>
+    <string name="liveness_turn_left">ਹੌਲੀ-ਹੌਲੀ ਸਿਰ ਖੱਬੇ ਪਾਸੇ ਮੋੜੋ</string>
+    <string name="liveness_turn_right">ਹੌਲੀ-ਹੌਲੀ ਸਿਰ ਸੱਜੇ ਪਾਸੇ ਮੋੜੋ</string>
+    <string name="liveness_blink">ਦੋ ਵਾਰ ਅੱਖਾਂ ਝਪਕਾਓ</string>
+    <string name="liveness_nod">ਇੱਕ ਵਾਰ ਸਿਰ ਹਿਲਾਓ</string>
+    <string name="liveness_hold_still">ਸਿੱਧੇ ਕੈਮਰੇ ਵੱਲ ਦੇਖੋ ਅਤੇ ਸਥਿਰ ਰਹੋ</string>
+    <string name="review_step_subtitle">ਕੁਝ ਵੀ ਹੱਥ ਨਾਲ ਟਾਈਪ ਨਹੀਂ ਕੀਤਾ ਗਿਆ। ਇਹ ਮੁੱਲ ਇਸ ਡਿਵਾਈਸ \'ਤੇ ਦਸਤਾਵੇਜ਼ ਤੋਂ ਪੜ੍ਹੇ ਗਏ ਸਨ।</string>
+    <string name="capture_label_front">ਦਸਤਾਵੇਜ਼ ਅਗਲਾ ਪਾਸਾ</string>
+    <string name="capture_label_back">ਦਸਤਾਵੇਜ਼ ਪਿਛਲਾ ਪਾਸਾ</string>
+    <string name="capture_label_live">ਲਾਈਵ ਕੈਪਚਰ</string>
+    <string name="capture_label_document">ਦਸਤਾਵੇਜ਼ ਫ਼ੋਟੋ</string>
+    <string name="field_full_name">ਪੂਰਾ ਨਾਮ</string>
+    <string name="field_document_number">ਦਸਤਾਵੇਜ਼ ਨੰਬਰ</string>
+    <string name="field_nationality">ਰਾਸ਼ਟਰੀਤਾ</string>
+    <string name="field_date_of_birth">ਜਨਮ ਤਾਰੀਖ</string>
+    <string name="field_gender">ਲਿੰਗ</string>
+    <string name="field_date_of_expiry">ਮਿਆਦ ਖਤਮ ਹੋਣ ਦੀ ਤਾਰੀਖ</string>
+    <string name="field_not_detected">ਨਹੀਂ ਲੱਭਿਆ</string>
+    <string name="capture_nothing_read">ਇਸ ਫ਼ੋਟੋ ਤੋਂ ਕੁਝ ਨਹੀਂ ਪੜ੍ਹਿਆ ਜਾ ਸਕਿਆ। ਦਸਤਾਵੇਜ਼ ਦਾ ਡਾਟਾ ਵਾਲਾ ਪੰਨਾ ਫ਼ਰੇਮ ਵਿੱਚ ਸਿੱਧਾ, ਸਮਤਲ ਅਤੇ ਚੰਗੀ ਰੌਸ਼ਨੀ ਵਿੱਚ ਰੱਖ ਕੇ ਦੁਬਾਰਾ ਸਕੈਨ ਕਰੋ।</string>
+    <string name="capture_verify_explanation">ਤਸਦੀਕ ਇਹਨਾਂ ਮੁੱਲਾਂ ਨੂੰ ਰਜਿਸਟਰੀ ਨਾਲ ਮਿਲਾਉਂਦੀ ਹੈ ਅਤੇ ਦਸਤਾਵੇਜ਼ ਜਾਂਚ ਚਲਾਉਂਦੀ ਹੈ। ਜੋ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ ਉਹ ਤੁਹਾਡੀ ਸਮੀਖਿਆ ਲਈ ਫਲੈਗ ਕੀਤਾ ਜਾਂਦਾ ਹੈ।</string>
+    <string name="capture_submitting">ਸਕ੍ਰੀਨਿੰਗ ਬੈਕਐਂਡ \'ਤੇ ਭੇਜੀ ਜਾ ਰਹੀ ਹੈ…</string>
+    <string name="capture_submission_failed">ਸਕ੍ਰੀਨਿੰਗ ਜਮ੍ਹਾਂ ਕਰਨ ਵਿੱਚ ਅਸਫ਼ਲ</string>
+    <string name="capture_retry">ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ</string>
+    <string name="capture_generic">ਕੈਪਚਰ</string>
+    <string name="upload_generic">ਇਸ ਦੀ ਥਾਂ ਫ਼ੋਟੋ ਅੱਪਲੋਡ ਕਰੋ</string>
+
+    <!-- Workflow / screening checks -->
+    <string name="step_info_extraction">ਜਾਣਕਾਰੀ ਕੱਢਣਾ</string>
+    <string name="extraction_no_ocr">ਇਸ ਰਿਕਾਰਡ ਲਈ ਕੋਈ OCR ਨਤੀਜੇ ਨਹੀਂ।</string>
+    <string name="extraction_mrz">ਮਸ਼ੀਨ-ਪੜ੍ਹਨਯੋਗ ਖੇਤਰ</string>
+    <string name="extraction_disclaimer">ਇਸ ਡਿਵਾਈਸ \'ਤੇ ਦਸਤਾਵੇਜ਼ ਤੋਂ ਪੜ੍ਹਿਆ ਗਿਆ — ਇੱਥੇ ਕੁਝ ਵੀ ਹੱਥ ਨਾਲ ਟਾਈਪ ਨਹੀਂ ਕੀਤਾ ਗਿਆ। ਗਲਤ ਪੜ੍ਹਤ ਅਗਲੀਆਂ ਜਾਂਚਾਂ ਵਿੱਚ ਅਸੰਗਤੀ ਵਜੋਂ ਦਿਖਾਈ ਦੇਵੇਗੀ।</string>
+    <string name="check_document_read">ਦਸਤਾਵੇਜ਼ ਪੜ੍ਹਿਆ</string>
+    <string name="check_expiry">ਮਿਆਦ</string>
+    <string name="check_document_validation">ਦਸਤਾਵੇਜ਼ ਤਸਦੀਕ</string>
+    <string name="check_no_evidence">ਕੋਈ ਚੈਕਸਮ ਜਾਂ ਕ੍ਰਾਸ-ਚੈਕ ਸਬੂਤ ਨਹੀਂ ਮਿਲਿਆ</string>
+    <string name="check_citizen_registry">ਨਾਗਰਿਕ ਰਜਿਸਟਰੀ ਮਿਲਾਨ</string>
+    <string name="check_not_evaluated">ਇਸ ਸਕ੍ਰੀਨਿੰਗ ਵਿੱਚ ਮੁਲਾਂਕਣ ਨਹੀਂ ਕੀਤਾ</string>
+    <string name="check_duplicate_document">ਡੁਪਲੀਕੇਟ / ਦੁਬਾਰਾ ਵਰਤਿਆ ਦਸਤਾਵੇਜ਼</string>
+    <string name="check_watchlist">ਵਾਚਲਿਸਟ ਰਜਿਸਟਰੀ (ਡੈਮੋ ਡਾਟਾ)</string>
+    <string name="check_no_watchlist_match">ਨਕਲੀ ਵਾਚਲਿਸਟ ਵਿੱਚ ਕੋਈ ਮੇਲ ਨਹੀਂ</string>
+    <string name="check_face_in_capture">ਲਾਈਵ ਕੈਪਚਰ ਵਿੱਚ ਚਿਹਰਾ</string>
+    <string name="check_not_run_device">ਇਸ ਡਿਵਾਈਸ \'ਤੇ ਨਹੀਂ ਚਲਾਇਆ</string>
+    <string name="check_face_match">ਚਿਹਰਾ ਮਿਲਾਨ</string>
+    <string name="check_needs_both">ਦਸਤਾਵੇਜ਼ ਫ਼ੋਟੋ ਅਤੇ ਲਾਈਵ ਕੈਪਚਰ ਦੋਵੇਂ ਲੋੜੀਂਦੇ</string>
+    <string name="check_liveness">ਲਾਈਵਨੈੱਸ / ਸਪੂਫ਼ ਜਾਂਚ</string>
+    <string name="check_not_computed">ਇਸ ਡਿਵਾਈਸ \'ਤੇ ਗਣਨਾ ਨਹੀਂ ਕੀਤੀ</string>
+    <string name="check_forensics">ਦਸਤਾਵੇਜ਼ ਫੋਰੈਂਸਿਕ (ELA)</string>
+    <string name="check_deepfake">ਡੀਪਫੇਕ ਹਿਊਰਿਸਟਿਕ</string>
+    <string name="check_identity_graph">ਪਛਾਣ ਗ੍ਰਾਫ਼</string>
+    <string name="check_needs_live">ਪਿਛਲੇ ਰਿਕਾਰਡਾਂ ਨਾਲ ਤੁਲਨਾ ਲਈ ਲਾਈਵ ਕੈਪਚਰ ਲੋੜੀਂਦਾ</string>
+    <string name="check_passed">ਪਾਸ</string>
+    <string name="check_review">ਸਮੀਖਿਆ</string>
+    <string name="check_alert">ਚੇਤਾਵਨੀ</string>
+    <string name="check_not_run">ਨਹੀਂ ਚਲਾਇਆ</string>
+    <string name="step_doc_verification">ਦਸਤਾਵੇਜ਼ ਤਸਦੀਕ</string>
+    <string name="verification_explanation">ਹਰ ਲਾਈਨ ਬੈਕਐਂਡ ਦੁਆਰਾ ਉੱਪਰ ਦਿੱਤੇ ਮੁੱਲਾਂ \'ਤੇ ਚਲਾਈ ਗਈ ਅਸਲ ਜਾਂਚ ਹੈ। \"ਨਹੀਂ ਚਲਾਇਆ\" ਦਾ ਮਤਲਬ ਜਾਂਚ ਸੰਭਵ ਨਹੀਂ ਸੀ — ਕਦੇ ਵੀ ਚੁੱਪ ਪਾਸ ਨਹੀਂ।</string>
+    <string name="step_screening_title">ਸਕ੍ਰੀਨਿੰਗ</string>
+    <string name="screening_disclaimer">ਇਸ ਬਿਲਡ ਵਿੱਚ ਨਕਲੀ ਰਜਿਸਟਰੀ ਤੋਂ ਇਲਾਵਾ ਕੋਈ ਵਾਚਲਿਸਟ ਸੰਰਚਿਤ ਨਹੀਂ ਅਤੇ ਕੋਈ ਅਸਲ ਥਾਂ-ਮਿਲਾਨ ਸਿਗਨਲ ਨਹੀਂ — ਰਾਸ਼ਟਰੀਤਾ ਜਾਂ ਥਾਂ ਇਕੱਲੇ ਕਦੇ ਵੀ ਜੋਖਮ ਲੇਬਲ ਨਹੀਂ ਤੈਅ ਕਰਦੇ।</string>
+
+    <!-- Risk assessment -->
+    <string name="risk_name_missing">ਦਸਤਾਵੇਜ਼ ਤੋਂ ਨਾਮ ਨਹੀਂ ਪੜ੍ਹਿਆ ਜਾ ਸਕਿਆ</string>
+    <string name="risk_officer_review">ਅਫ਼ਸਰ ਸਮੀਖਿਆ ਸਿਫ਼ਾਰਸ਼ੀ</string>
+    <string name="risk_no_flags">ਕੋਈ ਸਮੀਖਿਆ ਫਲੈਗ ਨਹੀਂ</string>
+    <string name="risk_disclaimer">ਅਫ਼ਸਰ ਦੇ ਫ਼ੈਸਲੇ ਵਿੱਚ ਮਦਦ ਲਈ ਜੋਖਮ ਚੇਤਾਵਨੀ — ਯਾਤਰੀ ਬਾਰੇ ਫ਼ੈਸਲਾ ਨਹੀਂ।</string>
+    <string name="risk_checks_title">ਜਾਂਚਾਂ</string>
+    <string name="risk_checks_summary">%1$d ਪਾਸ · %2$d ਸਮੀਖਿਆ · %3$d ਨਹੀਂ ਚਲਾਈ</string>
+    <string name="risk_breakdown">ਜੋਖਮ ਵਿਸ਼ਲੇਸ਼ਣ</string>
+    <string name="signal_document_checks">ਦਸਤਾਵੇਜ਼ ਜਾਂਚਾਂ</string>
+    <string name="signal_face_in_capture">ਲਾਈਵ ਕੈਪਚਰ ਵਿੱਚ ਚਿਹਰਾ</string>
+    <string name="signal_watchlist_registry">ਵਾਚਲਿਸਟ ਰਜਿਸਟਰੀ</string>
+    <string name="signal_identity_graph_label">ਪਛਾਣ ਗ੍ਰਾਫ਼</string>
+
+    <!-- Officer review -->
+    <string name="review_officer_title">ਅਫ਼ਸਰ ਸਮੀਖਿਆ</string>
+    <string name="review_instructions">ਆਪਣੀ ਪ੍ਰਕਿਰਿਆ ਨਾਲ ਫ਼ੈਸਲਾ ਕਰੋ। ਜੇ ਤੁਸੀਂ ਇਹ ਸਕ੍ਰੀਨਿੰਗ ਫਲੈਗ ਜਾਂ ਭੇਜਦੇ ਹੋ, ਹੇਠ ਲਿਖੇ ਕਾਰਨ ਆਪਣੇ ਆਪ ਰਿਕਾਰਡ ਹੋ ਜਾਂਦੇ ਹਨ — ਟਾਈਪ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ।</string>
+    <string name="review_raised_title">ਇਸ ਸਕ੍ਰੀਨਿੰਗ ਵਿੱਚ ਉਠਾਏ ਗਏ</string>
+    <string name="complete_cleared">ਕਲੀਅਰ ਕੀਤਾ</string>
+    <string name="complete_flagged">ਸਮੀਖਿਆ ਲਈ ਫਲੈਗ ਕੀਤਾ</string>
+    <string name="complete_sent">ਇਮੀਗ੍ਰੇਸ਼ਨ ਨੂੰ ਭੇਜਿਆ</string>
+    <string name="complete_title">ਸਕ੍ਰੀਨਿੰਗ ਮੁਕੰਮਲ</string>
+    <string name="complete_decision">ਰਿਕਾਰਡ ਕੀਤਾ ਫ਼ੈਸਲਾ: %s</string>
+    <string name="send_to_immigration_title">ਇਮੀਗ੍ਰੇਸ਼ਨ ਅਫ਼ਸਰ ਨੂੰ ਭੇਜੋ</string>
+    <string name="send_to_immigration_intro">ਕੇਸ ਹੋਰ ਸਮੀਖਿਆ ਅਤੇ ਅੰਤਿਮ ਫ਼ੈਸਲੇ ਲਈ ਇਮੀਗ੍ਰੇਸ਼ਨ ਅਫ਼ਸਰ ਦੀ ਕਤਾਰ ਵਿੱਚ ਜਾਂਦਾ ਹੈ।</string>
+    <string name="send_to_immigration_label">ਇਮੀਗ੍ਰੇਸ਼ਨ ਨੂੰ ਭੇਜੋ</string>
+
+    <!-- Capture step descriptions (auto-capture removed) -->
+    <string name="capture_step_1_desc_manual">ਫ਼ਰੇਮ ਵਿੱਚ ਆਪਣੇ ਦਸਤਾਵੇਜ਼ ਦਾ ਅਗਲਾ ਪਾਸਾ ਲਿਆਓ ਅਤੇ ਕੈਪਚਰ \'ਤੇ ਟੈਪ ਕਰੋ।</string>
+    <string name="capture_step_2_desc_manual">ਹੁਣ ਆਪਣੇ ਦਸਤਾਵੇਜ਼ ਦਾ ਪਿਛਲਾ ਪਾਸਾ ਕੈਪਚਰ ਕਰੋ। ਤਿਆਰ ਹੋਣ \'ਤੇ ਕੈਪਚਰ \'ਤੇ ਟੈਪ ਕਰੋ।</string>
 </resources>

@@ -28,6 +28,8 @@ import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.model.AlertCategory
 import com.pramaanai.officer.data.model.AlertItem
 import com.pramaanai.officer.ui.components.EmptyState
+import androidx.compose.ui.res.stringResource
+import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.Gray100
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
@@ -42,7 +44,7 @@ fun AlertsScreen(repository: ScreeningRepository, padding: PaddingValues, onOpen
 
     if (alerts.isEmpty()) {
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            EmptyState("No active alerts", "Cases requiring officer attention will appear here.")
+            EmptyState(stringResource(R.string.alerts_empty_title), stringResource(R.string.alerts_empty_subtitle))
         }
         return
     }
@@ -57,12 +59,13 @@ fun AlertsScreen(repository: ScreeningRepository, padding: PaddingValues, onOpen
     }
 }
 
+@Composable
 private fun categoryLabel(category: AlertCategory): String = when (category) {
-    AlertCategory.DOCUMENT_REVIEW_REQUIRED -> "Document Review Required"
-    AlertCategory.RISK_ASSESSMENT_REVIEW -> "Risk Assessment Requires Review"
-    AlertCategory.DUPLICATE_RECORD -> "Duplicate Record"
-    AlertCategory.INCOMPLETE_INFORMATION -> "Incomplete Information"
-    AlertCategory.VERIFICATION_REQUIRED -> "Verification Required"
+    AlertCategory.DOCUMENT_REVIEW_REQUIRED -> stringResource(R.string.alert_document_review)
+    AlertCategory.RISK_ASSESSMENT_REVIEW -> stringResource(R.string.alert_risk_review)
+    AlertCategory.DUPLICATE_RECORD -> stringResource(R.string.alert_duplicate)
+    AlertCategory.INCOMPLETE_INFORMATION -> stringResource(R.string.alert_incomplete)
+    AlertCategory.VERIFICATION_REQUIRED -> stringResource(R.string.alert_verification)
 }
 
 @Composable
@@ -83,7 +86,7 @@ private fun AlertRow(alert: AlertItem, onClick: () -> Unit) {
                         .background(Gray100, RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 3.dp),
                 )
-                Text(timeAgo(alert.createdAt), style = MaterialTheme.typography.labelSmall, color = Gray500)
+                Text(timeAgo(alert.createdAt, androidx.compose.ui.platform.LocalContext.current.resources), style = MaterialTheme.typography.labelSmall, color = Gray500)
             }
             Spacer(Modifier.height(6.dp))
             Text(alert.travelerName, fontWeight = FontWeight.SemiBold)
@@ -92,13 +95,13 @@ private fun AlertRow(alert: AlertItem, onClick: () -> Unit) {
     }
 }
 
-private fun timeAgo(timestamp: Long): String {
+private fun timeAgo(timestamp: Long, res: android.content.res.Resources): String {
     val diffMs = System.currentTimeMillis() - timestamp
     val minutes = diffMs / (60 * 1000)
     return when {
-        minutes < 1 -> "just now"
-        minutes < 60 -> "${minutes}m ago"
-        minutes < 60 * 24 -> "${minutes / 60}h ago"
+        minutes < 1 -> res.getString(R.string.time_just_now)
+        minutes < 60 -> res.getString(R.string.time_minutes_ago, minutes.toInt())
+        minutes < 60 * 24 -> res.getString(R.string.time_hours_ago, (minutes / 60).toInt())
         else -> SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(timestamp))
     }
 }
