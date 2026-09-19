@@ -9,7 +9,6 @@ import {
 } from '../api/resources'
 import { Card, StatTile } from '../components/StatTile'
 import { CaseTable } from '../components/CaseTable'
-import { ComprehensiveTestingDashboard } from '../components/ComprehensiveTestingDashboard'
 import type {
   AdminDashboard as AdminDashboardData,
   CaseListItem,
@@ -127,9 +126,6 @@ export function Dashboard() {
           One combined view of everything — case counts, workload, and system status together.
         </p>
       </div>
-
-      {/* Comprehensive Testing Dashboard */}
-      <ComprehensiveTestingDashboard />
 
       <Card title="Immigration case counts">
         {immigration.status === 'loading' && <p className="text-sm text-muted-foreground">Loading…</p>}
