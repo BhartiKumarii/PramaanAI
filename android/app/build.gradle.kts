@@ -77,6 +77,7 @@ dependencies {
     // ScreeningSubmission on the backend: only extracted text/vectors
     // cross the wire).
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
 
     // On-device face detection (presence/count/position over the live
     // selfie capture) — real Google Play Services detector, same

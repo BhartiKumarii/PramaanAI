@@ -1,9 +1,13 @@
 package com.pramaanai.officer.data.vision
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -42,33 +46,71 @@ object DocumentOcrExtractor {
         val detectedDocumentType: String?,
     )
 
-    private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    private const val TAG = "DocumentOcrExtractor"
+
+    private val latinRecognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    private val devanagariRecognizer by lazy { TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build()) }
 
     suspend fun recognize(bitmap: Bitmap): ExtractionResult {
+        Log.d(TAG, "OCR input: ${bitmap.width}x${bitmap.height}, config=${bitmap.config}, recycled=${bitmap.isRecycled}")
         val image = InputImage.fromBitmap(bitmap, 0)
 
-        // Use the standard ML Kit recognizer with enhanced pattern matching for Indian documents
-        val text = suspendCancellableCoroutine { cont ->
-            recognizer.process(image)
-                .addOnSuccessListener { result -> cont.resume(result.text) }
-                .addOnFailureListener { e -> cont.resumeWithException(e) }
+        // Run both Latin and Devanagari recognizers in parallel — Indian
+        // identity documents (Aadhaar, PAN, voter ID) mix both scripts.
+        val (latinText, devanagariText) = coroutineScope {
+            val latinDeferred = async {
+                suspendCancellableCoroutine { cont ->
+                    latinRecognizer.process(image)
+                        .addOnSuccessListener { result -> cont.resume(result.text) }
+                        .addOnFailureListener { e ->
+                            Log.w(TAG, "Latin recognizer failed", e)
+                            cont.resume("")
+                        }
+                }
+            }
+            val devDeferred = async {
+                suspendCancellableCoroutine { cont ->
+                    devanagariRecognizer.process(image)
+                        .addOnSuccessListener { result -> cont.resume(result.text) }
+                        .addOnFailureListener { e ->
+                            Log.w(TAG, "Devanagari recognizer failed", e)
+                            cont.resume("")
+                        }
+                }
+            }
+            latinDeferred.await() to devDeferred.await()
         }
-        val mrz = parseTd3Mrz(text)
-        // The MRZ is machine-printed with check digits — far more reliable
-        // than label-keyword guessing over free text — so where it exists it
-        // wins over the heuristic fields for the values it carries.
-        val fields = LinkedHashMap(mapFields(text)).apply {
-            // Extract Indian document numbers using pattern matching
-            putAll(extractIndianDocumentNumbers(text))
 
-            // "Surname:" and "Given Names:" are separate printed fields — the
-            // generic label pass keeps only one of them, so join both.
-            joinedLabelledName(text)?.let { put("name", it) }
+        // Merge: use the longer/richer text as the primary, supplement with
+        // the other. The Devanagari recognizer also reads Latin script, so
+        // it often produces a superset.
+        val text = if (devanagariText.length > latinText.length) {
+            Log.d(TAG, "Using Devanagari result (${devanagariText.length} chars) over Latin (${latinText.length} chars)")
+            devanagariText
+        } else {
+            Log.d(TAG, "Using Latin result (${latinText.length} chars) over Devanagari (${devanagariText.length} chars)")
+            latinText
+        }
+        val supplementaryText = if (text === devanagariText) latinText else devanagariText
+        Log.d(TAG, "OCR raw text:\n$text")
+        // Try MRZ from both texts (Latin is often better for MRZ since it's
+        // strictly A-Z/0-9)
+        val mrz = parseTd3Mrz(text) ?: parseTd3Mrz(supplementaryText)
+        val combinedText = "$text\n$supplementaryText"
+        val fields = LinkedHashMap(mapFields(text)).apply {
+            // Fill gaps from the supplementary recognizer
+            val suppFields = mapFields(supplementaryText)
+            for ((k, v) in suppFields) {
+                if (!containsKey(k)) put(k, v)
+            }
+            putAll(extractIndianDocumentNumbers(combinedText))
+            joinedLabelledName(combinedText)?.let { put("name", it) }
             mrz?.let { putAll(it.fields) }
         }
         val mrzLines = mrz?.lines ?: emptyList()
-        val docType = detectDocumentType(text)
+        val docType = detectDocumentType(combinedText)
         val confidence = calculateConfidence(fields, mrzLines, docType)
+        Log.d(TAG, "Extraction: ${fields.size} fields, confidence=$confidence, docType=$docType")
         return ExtractionResult(
             fields = fields,
             rawText = text,
@@ -86,55 +128,62 @@ object DocumentOcrExtractor {
             // Hindi/Indian labels
             "नाम", "पूरा नाम", "नाम:", "पिता का नाम", "father", "father name", "father's name",
             // Nepali labels
-            "नाम", "पुरा नाम",
-            // Bhutanese labels (similar to Hindi in many cases)
+            "पुरा नाम", "थर",
+            // Bhutanese / Dzongkha
+            "མིང་",
         ),
         "passport_number" to listOf(
             "passport no", "passport number", "passport no.", "passport #",
             "document no", "document number", "doc no", "doc number",
             "passport:", "passport no:", "passport number:",
+            "पासपोर्ट नं", "राहदानी नं",
         ),
         "document_number" to listOf(
             "document no", "document number", "doc no", "doc number",
             "id no", "id number", "identity no", "identity number",
-            // Indian document patterns
-            "aadhaar no", "aadhar no", "aadhaar number", "aadhaar", "ाधार संख्या", "आधार नं", "आधार",
-            "pan no", "pan number", "pan", "पैन", "पैन नं",
-            "licence no", "license no", "licence number", "license number", "dl no", "driving license",
+            // Indian documents
+            "aadhaar no", "aadhar no", "aadhaar number", "aadhaar", "आधार संख्या", "आधार नं", "आधार",
+            "pan no", "pan number", "permanent account number", "पैन", "पैन नं",
+            "licence no", "license no", "licence number", "license number", "dl no",
+            "driving licence", "driving license", "अनुज्ञापत्र",
             "permit no", "permit number", "visa no", "visa number",
             // Voter ID
-            "voter id", "voter no", "epic no", "electoral roll",
-            // Passport patterns
-            "passport no", "passport number", "passport", "पासपोर्ट",
+            "voter id", "voter no", "epic no", "electoral roll", "मतदाता",
+            // Nepali citizenship certificate
+            "नागरिकता नं", "प्रमाणपत्र नं", "na. pra. no",
+            // Bhutanese CID
+            "cid no", "cid number", "citizen identity",
         ),
         "nationality" to listOf(
             "nationality", "nationality:", "citizenship", "country",
             "nationality/citizenship", "nationalité", "nacionalidad",
+            "राष्ट्रियता", "नागरिकता",
         ),
         "date_of_birth" to listOf(
             "date of birth", "birth", "dob", "d.o.b.", "born",
             "date of birth:", "birth date", "birthday",
             // Hindi labels
-            "जन्म तिथि", "जन्म दिनांक", "जन्मतारीख", "dob", "जन्म",
+            "जन्म तिथि", "जन्म दिनांक", "जन्मतारीख", "जन्म",
+            // Nepali
+            "जन्म मिति",
         ),
         "date_of_expiry" to listOf(
             "date of expiry", "expiry", "expiration", "expires",
             "valid until", "valid till", "expiry date", "date of expiration",
+            // Hindi/Nepali
+            "वैधता", "अन्तिम तिथि", "म्याद सकिने",
         ),
-        // Canonical key is "gender" (not "sex") to match the backend's
-        // OCR field-extraction and cross-check keys (see
-        // app/services/ocr/field_extraction.py and
-        // app/services/validation/cross_check.py's cross_check_gender).
         "gender" to listOf(
             "sex", "gender", "m/f", "male/female",
-            // Hindi labels
-            "लिंग", "जेंडर", "पुरुष", "महिला", "male", "female", "m", "f",
+            "लिंग", "जेंडर", "पुरुष", "महिला", "male", "female",
         ),
         "place_of_birth" to listOf(
             "place of birth", "birth place", "pob", "place of birth:",
+            "जन्म स्थान",
         ),
         "date_of_issue" to listOf(
             "date of issue", "issue date", "issued", "date of issue:",
+            "जारी मिति", "जारी तिथि",
         ),
         "issuing_authority" to listOf(
             "issuing authority", "authority", "issued by", "issuing office",
@@ -177,21 +226,36 @@ object DocumentOcrExtractor {
     private fun detectDocumentType(text: String): String? {
         val lower = text.lowercase()
         return when {
-            // Indian specific document patterns
-            lower.contains("aadhaar") || lower.contains("aadhar") || lower.contains("आधार") -> "NATIONAL_ID"
-            PAN_PATTERN.find(text) != null || lower.contains("permanent account number") || lower.contains("pan card") -> "PAN_CARD"
-            lower.contains("voter") || lower.contains("epic") || lower.contains("electoral") -> "VOTER_ID"
+            // Indian documents
+            lower.contains("aadhaar") || lower.contains("aadhar") || lower.contains("आधार")
+                || lower.contains("unique identification") -> "NATIONAL_ID"
+            PAN_PATTERN.find(text) != null || lower.contains("permanent account number")
+                || lower.contains("income tax") || lower.contains("pan card") -> "PAN_CARD"
+            lower.contains("voter") || lower.contains("epic") || lower.contains("electoral")
+                || lower.contains("election commission") || lower.contains("निर्वाचन") -> "VOTER_ID"
+            lower.contains("driving licence") || lower.contains("driving license")
+                || lower.contains("motor vehicle") || lower.contains("transport")
+                || lower.contains("सारथी") || lower.contains("अनुज्ञापत्र") -> "DRIVING_LICENCE"
+
+            // Passport (Indian, Nepali, Bhutanese)
             INDIAN_PASSPORT_PATTERN.find(text) != null && lower.contains("passport") -> "PASSPORT"
-            lower.contains("driving licence") || lower.contains("driving license") || lower.contains("driver") -> "DRIVING_LICENCE"
+            lower.contains("passport") || lower.contains("पासपोर्ट") || lower.contains("राहदानी") -> "PASSPORT"
 
-            // General patterns
-            lower.contains("passport") || lower.contains("पासपोर्ट") -> "PASSPORT"
-            lower.contains("visa") -> "VISA"
-            lower.contains("permit") -> "PERMIT"
+            // Visa
+            lower.contains("visa") || lower.contains("वीसा") || lower.contains("वीजा") -> "VISA"
+
+            // Permit
+            lower.contains("permit") || lower.contains("अनुमति") -> "PERMIT"
+
+            // Nepal
+            lower.contains("नागरिकता") || lower.contains("citizenship certificate")
+                || lower.contains("nepal") && lower.contains("citizenship") -> "CITIZENSHIP_CERTIFICATE"
+
+            // Bhutan
+            lower.contains("citizen identity") || lower.contains("cid")
+                || lower.contains("bhutan") && lower.contains("identity") -> "NATIONAL_ID"
+
             lower.contains("identity card") || lower.contains("id card") -> "NATIONAL_ID"
-
-            // Nepal/Bhutan patterns
-            lower.contains("नागरिकता") -> "CITIZENSHIP_CERTIFICATE" // Nepali citizenship
 
             else -> null
         }
@@ -201,7 +265,6 @@ object DocumentOcrExtractor {
     private fun extractIndianDocumentNumbers(text: String): Map<String, String> {
         val result = mutableMapOf<String, String>()
 
-        // Extract Aadhaar number
         AADHAAR_PATTERN.find(text)?.let { match ->
             val aadhaar = match.groupValues[1].replace("\\s".toRegex(), "")
             if (aadhaar.length == 12) {
@@ -210,25 +273,121 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Extract PAN number
         PAN_PATTERN.find(text)?.let { match ->
             result["document_number"] = match.groupValues[1]
             result["pan_number"] = match.groupValues[1]
         }
 
-        // Extract Indian passport number
         INDIAN_PASSPORT_PATTERN.find(text)?.let { match ->
             result["passport_number"] = match.groupValues[1]
             result["document_number"] = match.groupValues[1]
         }
 
-        // Extract Voter ID
         VOTER_ID_PATTERN.find(text)?.let { match ->
             result["document_number"] = match.groupValues[1]
             result["voter_id"] = match.groupValues[1]
         }
 
+        // Document-type-specific field extraction
+        if (result.containsKey("aadhaar_number")) {
+            extractAadhaarFields(text, result)
+        }
+        if (result.containsKey("pan_number")) {
+            extractPanFields(text, result)
+        }
+        extractCommonFields(text, result)
+
         return result
+    }
+
+    private fun extractPanFields(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        // PAN card name is usually the line right after "Name" or the
+        // prominent printed name (all caps on the card)
+        if (!result.containsKey("name")) {
+            for (line in lines) {
+                if (line.matches(Regex("^[A-Z ]{4,40}$")) &&
+                    !line.contains("INCOME", true) &&
+                    !line.contains("TAX", true) &&
+                    !line.contains("GOVT", true) &&
+                    !line.contains("INDIA", true) &&
+                    !line.contains("PERMANENT", true) &&
+                    !line.contains("ACCOUNT", true)) {
+                    result["name"] = line.trim()
+                    break
+                }
+            }
+        }
+        if (!result.containsKey("nationality")) {
+            result["nationality"] = "INDIAN"
+        }
+    }
+
+    private fun extractCommonFields(text: String, result: MutableMap<String, String>) {
+        // Gender from standalone "Male"/"Female" or Hindi equivalents
+        if (!result.containsKey("gender")) {
+            AADHAAR_GENDER_PATTERN.find(text)?.let { match ->
+                val g = match.value.lowercase()
+                result["gender"] = when {
+                    g == "male" || g == "पुरुष" -> "M"
+                    g == "female" || g == "महिला" -> "F"
+                    else -> match.value
+                }
+            }
+        }
+        // DOB from common patterns across document types
+        if (!result.containsKey("date_of_birth")) {
+            AADHAAR_DOB_PATTERN.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_birth"] = it }
+            }
+        }
+    }
+
+    private val AADHAAR_DOB_PATTERN = Regex("""(?:DOB|D\.O\.B\.?|जन्म\s*तिथि)\s*[:/]\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+    private val AADHAAR_GENDER_PATTERN = Regex("""(?:Male|Female|पुरुष|महिला|MALE|FEMALE)""")
+    private val AADHAAR_NAME_LINE_PATTERN = Regex("""^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$""")
+
+    private fun extractAadhaarFields(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // DOB from "जन्म तिथि / DOB : 31/10/2004" or similar
+        if (!result.containsKey("date_of_birth")) {
+            AADHAAR_DOB_PATTERN.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_birth"] = it }
+            }
+        }
+
+        // Gender from "महिला / Female" or "Male" etc.
+        if (!result.containsKey("gender")) {
+            AADHAAR_GENDER_PATTERN.find(text)?.let { match ->
+                val g = match.value.lowercase()
+                result["gender"] = when {
+                    g == "male" || g == "पुरुष" -> "M"
+                    g == "female" || g == "महिला" -> "F"
+                    else -> match.value
+                }
+            }
+        }
+
+        // Name: look for a line that matches "Firstname Lastname" in English
+        // (typically the line right after the Hindi name on Aadhaar)
+        if (!result.containsKey("name")) {
+            for (line in lines) {
+                if (AADHAAR_NAME_LINE_PATTERN.matches(line) &&
+                    !line.contains("Government", true) &&
+                    !line.contains("India", true) &&
+                    !line.contains("Aadhaar", true) &&
+                    !line.contains("proof", true)) {
+                    result["name"] = line
+                    break
+                }
+            }
+        }
+
+        // Aadhaar is Indian, so nationality is always INDIAN
+        if (!result.containsKey("nationality")) {
+            result["nationality"] = "INDIAN"
+        }
     }
 
     /** Best-effort line-based heuristic: for each target field, scan
@@ -242,16 +401,21 @@ object DocumentOcrExtractor {
         val lines = rawText.lines().map { it.trim() }.filter { it.isNotEmpty() }
         val result = LinkedHashMap<String, String>()
 
-        // First pass: try label-based extraction
         for ((field, labels) in LABELS) {
             for ((index, line) in lines.withIndex()) {
                 val lower = line.lowercase()
                 val matchedLabel = labels.firstOrNull { lower.contains(it) } ?: continue
 
-                val afterLabel = line.substringAfter(matchedLabel, "")
-                    .substringAfter(":", afterLabel(line, matchedLabel))
-                    .trim(' ', ':', '-', '=')
-                val candidate = afterLabel.ifBlank {
+                // Find the label position case-insensitively, then take text after it
+                val labelIdx = lower.indexOf(matchedLabel)
+                val textAfterLabel = if (labelIdx >= 0) {
+                    line.substring(labelIdx + matchedLabel.length)
+                } else ""
+                val afterSeparator = textAfterLabel
+                    .trimStart()
+                    .removePrefix("/").removePrefix(":").removePrefix("-").removePrefix("=")
+                    .trim()
+                val candidate = afterSeparator.ifBlank {
                     lines.getOrNull(index + 1)?.takeIf { !containsAnyLabel(it) }.orEmpty()
                 }
                 if (candidate.isBlank()) continue
@@ -266,9 +430,7 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Third pass: pattern-based extraction for common formats
         extractFromPatterns(rawText, result)
-
         return result
     }
 
