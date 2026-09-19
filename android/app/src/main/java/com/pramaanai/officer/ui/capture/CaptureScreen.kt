@@ -440,7 +440,7 @@ private val LIVENESS_PROMPT_IDS = listOf(
     R.string.liveness_hold_still,
 )
 
-enum class CaptureStep { DOCUMENT_FRONT, DOCUMENT_BACK, SELFIE, EXTRACTING, REVIEW_FIELDS, SUBMITTING, ERROR }
+enum class CaptureStep { DOCUMENT_FRONT, DOCUMENT_BACK, SELFIE, LIVENESS_CHECK, EXTRACTING, REVIEW_FIELDS, SUBMITTING, ERROR }
 
 // One "document number" field regardless of document type — the backend's
 // cross-check only ever reads the "passport_number" OCR key (see
@@ -544,12 +544,42 @@ fun CaptureScreen(
     var documentEmbedding by remember { mutableStateOf<List<Float>?>(null) }
     var liveEmbedding by remember { mutableStateOf<List<Float>?>(null) }
     var faceDetectionResult by remember { mutableStateOf<com.pramaanai.officer.data.model.FaceDetectionResult?>(null) }
+    var livenessResult by remember { mutableStateOf<com.pramaanai.officer.data.vision.LivenessAnalysisResult?>(null) }
     var fields by remember { mutableStateOf(ExtractedFields()) }
     LaunchedEffect(step) {
         if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK || step == CaptureStep.SELFIE) {
             scanLineAnimator.start()
         } else {
             scanLineAnimator.stop()
+        }
+    }
+
+    fun runLivenessCheck() {
+        val selfie = selfieFile ?: return
+        step = CaptureStep.LIVENESS_CHECK
+        scope.launch {
+            try {
+                val liveness = withContext(Dispatchers.Default) {
+                    val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
+                        ?: throw IllegalStateException("Could not decode selfie image")
+
+                    // Run liveness detection (single-frame for simplicity)
+                    com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
+                }
+
+                livenessResult = liveness
+
+                // Only proceed if LIVE or UNCERTAIN (give benefit of doubt)
+                if (liveness.status == "LIVE" || liveness.status == "UNCERTAIN") {
+                    runExtraction()
+                } else {
+                    errorMessage = "Liveness check failed: ${liveness.reason}\n\nPlease recapture with better lighting and ensure it's a live face, not a photo."
+                    step = CaptureStep.ERROR
+                }
+            } catch (e: Exception) {
+                errorMessage = "Liveness check failed: ${e.message ?: e.toString()}"
+                step = CaptureStep.ERROR
+            }
         }
     }
 
@@ -672,7 +702,7 @@ fun CaptureScreen(
             }
             CaptureStep.SELFIE -> {
                 selfieFile = outputFile
-                runExtraction()
+                runLivenessCheck()  // Run liveness check before extraction
             }
             else -> {
                 // Should not happen
@@ -711,7 +741,7 @@ fun CaptureScreen(
             ) {
             val stepperStep = when (step) {
                 CaptureStep.DOCUMENT_FRONT, CaptureStep.DOCUMENT_BACK, CaptureStep.SELFIE -> 1
-                CaptureStep.EXTRACTING -> 2
+                CaptureStep.LIVENESS_CHECK, CaptureStep.EXTRACTING -> 2
                 CaptureStep.REVIEW_FIELDS -> 3
                 else -> 4
             }
@@ -724,6 +754,34 @@ fun CaptureScreen(
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
                     Text(stringResource(R.string.grant_camera_permission))
+                }
+                return@Column
+            }
+
+            if (step == CaptureStep.LIVENESS_CHECK) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(64.dp),
+                        color = AccentGreen,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    Text(
+                        "Checking liveness...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Verifying this is a real face, not a photo or screen",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Gray500,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp),
+                    )
                 }
                 return@Column
             }
