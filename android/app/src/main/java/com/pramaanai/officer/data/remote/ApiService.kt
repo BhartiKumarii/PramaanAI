@@ -182,7 +182,12 @@ data class RegistryLookupResult(val status: String, val hits: List<RegistryHit>)
 
 data class DeepfakeResult(val status: String, val score: Double?, val reason: String)
 
-data class LivenessResult(val status: String, val score: Double?, val reason: String)
+// Matches app/services/liveness/base.py LivenessResult exactly
+data class LivenessResult(
+    val status: String,  // LIVE | SUSPECTED_SPOOF | NOT_IMPLEMENTED | UNCERTAIN
+    val score: Double?,  // Spoof risk 0.0-1.0 (higher = more suspicious)
+    val reason: String
+)
 
 data class VerificationListItemResponse(
     val id: String,
