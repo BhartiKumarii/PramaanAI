@@ -1,119 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Eye, FileText, FileWarning, Shield, ShieldCheck, Share2, BarChart3, MapPin, Activity, Users, Fingerprint, Search, UserCheck } from 'lucide-react'
+import { ArrowRight, AlertCircle, WifiOff, Smartphone, Shield, Brain, Zap, Database, Lock, Layers, Users } from 'lucide-react'
 import { PublicNavbar } from '../components/PublicNavbar'
 import { Footer } from '../components/Footer'
+import { AsciiWave } from '../components/decor/AsciiWave'
 
-const VERIFICATION_SIGNALS = [
-  {
-    icon: FileText,
-    title: 'DOCUMENT INTELLIGENCE',
-    body: 'Extract and validate relevant information from identity and travel documents using OCR and document-aware processing.',
-  },
-  {
-    icon: FileWarning,
-    title: 'TAMPERING DETECTION',
-    body: 'Identify potential alterations such as modified photographs, dates of birth, document numbers, stamps, text, or other visual inconsistencies.',
-  },
-  {
-    icon: UserCheck,
-    title: 'IDENTITY VERIFICATION',
-    body: 'Compare extracted identity information against available verification sources and identify inconsistencies.',
-  },
-  {
-    icon: Eye,
-    title: 'FACE–DOCUMENT VERIFICATION',
-    body: 'Compare the person presented at the checkpoint with the photograph associated with the document.',
-  },
-  {
-    icon: Share2,
-    title: 'MULTIPLE IDENTITY DETECTION',
-    body: 'Identify conflicting identity records or the association of different documents with the same person for further officer review.',
-  },
-  {
-    icon: BarChart3,
-    title: 'RISK-BASED ASSESSMENT',
-    body: 'Convert verification signals into an understandable result with supporting reasons.',
-  },
+const FACT_GRID = [
+  { label: 'Countries', value: '2+' },
+  { label: 'Border Types', value: 'Land + River' },
+  { label: 'Treaty Rights', value: 'Multiple' },
+  { label: 'Checkpoints', value: 'Unlimited' },
 ]
 
-const WORKFLOW_STEPS = [
-  {
-    step: '01',
-    title: 'CAPTURE',
-    body: 'The officer captures the identity or travel document through the mobile application.',
-  },
-  {
-    step: '02',
-    title: 'ON-DEVICE PROCESSING',
-    body: 'Initial image processing and required preprocessing take place on the officer\'s device before transmission.',
-  },
-  {
-    step: '03',
-    title: 'SECURE VERIFICATION',
-    body: 'Required information is securely transmitted to the central verification system when connectivity is available.',
-  },
-  {
-    step: '04',
-    title: 'MULTI-LEVEL ANALYSIS',
-    body: 'PramaanAI performs document validation, tampering analysis, identity matching, face comparison, and other configured checks.',
-  },
-  {
-    step: '05',
-    title: 'EXPLAINABLE RESULT',
-    body: 'The system presents a clear verification status together with the signals that contributed to it.',
-  },
-  {
-    step: '06',
-    title: 'HUMAN DECISION',
-    body: 'The officer remains responsible for the final action. PramaanAI supports the decision; it does not replace the officer.',
-  },
+const PROBLEM_POINTS = [
+  { icon: AlertCircle, title: 'No Digital Cross-Check', body: 'Officers rely on visual inspection alone — no real-time identity registry or document validation.' },
+  { icon: WifiOff, title: 'Infrastructure Gaps', body: 'Many land border crossings lack reliable internet, power, or fixed immigration desks.' },
+  { icon: Users, title: 'Multiple Identities', body: 'One person can present different documents at different crossings with no system to detect duplicates.' },
+  { icon: Smartphone, title: 'Officer Workload', body: 'High volumes with minimal tooling — every decision is manual, slow, and error-prone.' },
 ]
 
-const RISK_LEVELS = [
-  {
-    level: 'LOW',
-    description: 'No significant verification issue detected.',
-    color: 'text-green-400',
-  },
-  {
-    level: 'MEDIUM — NEEDS REVIEW',
-    description: 'A mismatch, uncertainty, or potential anomaly requires additional officer attention.',
-    color: 'text-yellow-400',
-  },
-  {
-    level: 'HIGH — FLAGGED',
-    description: 'Significant verification concerns or strong conflicting signals have been detected.',
-    color: 'text-red-400',
-  },
-  {
-    level: 'UNABLE TO VERIFY',
-    description: 'Verification could not be completed because of factors such as unavailable verification sources, unreadable information, unsupported documents, or connectivity limitations.',
-    color: 'text-gray-400',
-  },
-]
-
-const CONNECTIVITY_MODES = [
-  {
-    title: 'CONNECTED',
-    description: 'Full verification workflow through the central server.',
-    icon: Activity,
-  },
-  {
-    title: 'WEAK CONNECTIVITY',
-    description: 'Essential information can be processed locally while communication is optimized for available connectivity.',
-    icon: Activity,
-  },
-  {
-    title: 'OFFLINE',
-    description: 'Verification-related information can be securely queued on the device and synchronized when connectivity is restored.',
-    icon: Activity,
-  },
-  {
-    title: 'FREQUENT TRAVELLERS',
-    description: 'Secure local caching can reduce unnecessary repeated verification for eligible repeat cases while maintaining controlled access and data protection.',
-    icon: Users,
-  },
+const FEATURES = [
+  { icon: Brain, title: 'On-Device AI', body: 'OCR, MRZ parsing, face embedding, and tampering checks run locally — no cloud required.' },
+  { icon: Zap, title: 'Offline-First', body: 'Full verification workflow works offline. Cases queue and sync when connectivity returns.' },
+  { icon: Shield, title: 'Privacy by Design', body: 'No raw biometrics leave the device. Only verification results and hashes are transmitted.' },
+  { icon: Database, title: 'Identity Graph', body: 'Cross-checkpoint identity clustering detects multiple documents per person across borders.' },
+  { icon: Lock, title: 'Immutable Audit', body: 'Every check creates a tamper-evident log. Supervisors see full history; nothing can be deleted.' },
+  { icon: Layers, title: 'Explainable Risk', body: 'LOW/MEDIUM/HIGH with per-signal breakdown — officers see exactly why, not just a score.' },
 ]
 
 function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
