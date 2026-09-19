@@ -127,4 +127,96 @@
     <string name="session_expiring_title">सत्र समाप्त हुँदै</string>
     <string name="session_timeout_message">तपाईं निष्क्रिय हुनुभएको छ। सुरक्षाका लागि, यो सत्र स्वचालित रूपमा समाप्त हुनेछ।</string>
     <string name="signing_out_countdown">%d सेकेन्डमा साइन आउट हुँदै</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_total_screenings">कुल स्क्रिनिङ</string>
+    <string name="dashboard_screenings_today">आजको स्क्रिनिङ</string>
+    <string name="dashboard_screening_activity">स्क्रिनिङ गतिविधि</string>
+    <string name="dashboard_recent_screenings">हालको स्क्रिनिङ</string>
+    <string name="dashboard_new_screening">नयाँ स्क्रिनिङ</string>
+    <string name="dashboard_no_screenings">अहिलेसम्म कुनै स्क्रिनिङ छैन।</string>
+    <string name="dashboard_view_queue">स्क्रिनिङ कतार हेर्नुहोस्</string>
+    <string name="dashboard_total_risk_assessments">%d कुल जोखिम मूल्याङ्कन</string>
+    <string name="dashboard_low_risk">कम जोखिम</string>
+    <string name="dashboard_medium_risk">मध्यम जोखिम</string>
+    <string name="dashboard_high_risk">उच्च जोखिम</string>
+
+    <!-- Capture Process Steps -->
+    <string name="capture_step_1_title">चरण 1 को 3 — कागजातको अगाडिको भाग</string>
+    <string name="capture_step_1_desc">आफ्नो कागजातको अगाडिको भागलाई फ्रेम भित्र मिलाउनुहोस्। मिलाउँदा स्वचालित रूपमा क्याप्चर हुन्छ।</string>
+    <string name="capture_step_2_title">चरण 2 को 3 — कागजातको पछाडिको भाग</string>
+    <string name="capture_step_2_desc">अब आफ्नो कागजातको पछाडिको भाग क्याप्चर गर्नुहोस्। मिलाउँदा स्वचालित रूपमा क्याप्चर हुन्छ।</string>
+    <string name="capture_step_3_title">चरण 3 को 3 — लाइभ सेल्फी</string>
+    <string name="capture_document_front">कागजातको अगाडिको भाग क्याप्चर गर्नुहोस्</string>
+    <string name="capture_document_back">कागजातको पछाडिको भाग क्याप्चर गर्नुहोस्</string>
+    <string name="capture_selfie">सेल्फी क्याप्चर गर्नुहोस्</string>
+    <string name="upload_document_front">बरु कागजातको अगाडिको भाग अपलोड गर्नुहोस्</string>
+    <string name="upload_document_back">बरु कागजातको पछाडिको भाग अपलोड गर्नुहोस्</string>
+    <string name="upload_selfie">बरु सेल्फी फोटो अपलोड गर्नुहोस्</string>
+    <string name="auto_capturing">स्वचालित रूपमा क्याप्चर हुँदै…</string>
+    <string name="start_over">फेरि सुरु गर्नुहोस्</string>
+
+    <!-- Priority and Status -->
+    <string name="priority_high">उच्च प्राथमिकता</string>
+    <string name="priority_medium">मध्यम प्राथमिकता</string>
+    <string name="priority_low">कम प्राथमिकता</string>
+    <string name="status_pending">विचाराधीन</string>
+    <string name="status_recently_created">हालै सिर्जना गरिएको</string>
+    <string name="status_completed">सम्पन्न</string>
+    <string name="status_in_review">समीक्षामा</string>
+
+    <!-- Document Types -->
+    <string name="document_passport">राहदानी</string>
+    <string name="document_national_id">राष्ट्रिय परिचयपत्र</string>
+    <string name="document_driving_license">ड्राइभिङ लाइसेन्स</string>
+    <string name="document_aadhaar">आधार कार्ड</string>
+    <string name="document_pan_card">प्यान कार्ड</string>
+    <string name="document_voter_id">मतदाता परिचयपत्र</string>
+
+    <!-- Signal Breakdown and Reasons -->
+    <string name="signal_breakdown_title">सिग्नल विश्लेषण</string>
+    <string name="registry_hits_title">रजिस्ट्री हिटहरू</string>
+    <string name="audit_history_title">अडिट इतिहास</string>
+    <string name="top_reason">मुख्य कारण</string>
+    <string name="extracted_names">निकालिएका नामहरू</string>
+
+    <!-- Validation Reasons -->
+    <string name="reason_checksum_failed">कागजात चेकसम प्रमाणीकरण असफल</string>
+    <string name="reason_dob_mismatch">जन्म मिति रजिस्ट्रीसँग मेल खाँदैन</string>
+    <string name="reason_multiple_identity">बहु पहिचान क्लस्टर फेला परेको</string>
+    <string name="reason_face_mismatch">अनुहार कागजातको फोटोसँग मेल खाँदैन</string>
+    <string name="reason_document_expired">कागजातको म्याद सकिएको छ</string>
+    <string name="reason_registry_hit">वाचलिस्ट रजिस्ट्रीमा भेटिएको</string>
+    <string name="reason_mrz_invalid">MRZ प्रमाणीकरण असफल</string>
+    <string name="reason_tampering_detected">कागजात छेडछाड फेला परेको</string>
+
+    <!-- Review Screen -->
+    <string name="title_screening_review">स्क्रिनिङ समीक्षा</string>
+    <string name="no_audit_trail">यो रेकर्डका लागि अहिलेसम्म कुनै बैकएन्ड अडिट ट्रेल छैन।</string>
+    <string name="loading_text">लोड हुँदै…</string>
+    <string name="captured_document">कैप्चर गरिएको कागजात</string>
+
+    <!-- Tour and Practice -->
+    <string name="title_practice_screening">अभ्यास स्क्रिनिङ</string>
+    <string name="button_back">पछाडि</string>
+    <string name="button_next">अर्को</string>
+    <string name="button_flag">झण्डा लगाउनुहोस्</string>
+    <string name="finish_practice">अभ्यास समाप्त गर्नुहोस्</string>
+    <string name="skip_tour">टुर छोड्नुहोस्</string>
+    <string name="scan_document_prompt">सुरु गर्न कागजात स्क्यान गर्नुहोस्</string>
+
+    <!-- Audit Log -->
+    <string name="title_audit_log">अडिट लग</string>
+
+    <!-- ReasonDialog -->
+    <string name="secondary_review_intro">यो मुद्दाको थप समीक्षा आवश्यक छ। तलका कारणहरू संलग्न गरिनेछ।</string>
+    <string name="hold_refer_intro">यो यात्रीलाई थप अनुसन्धानका लागि रोकिनु पर्छ वा रेफर गरिनु पर्छ। तलका कारणहरू संलग्न गरिनेछ।</string>
+
+    <!-- Workflow Result Screen -->
+    <string name="clear_screening_title">यो स्क्रिनिङ क्लियर गर्नुहोस्</string>
+    <string name="clear_screening_message">यो यात्रीलाई अगाडि बढ्न अनुमति छ। यो निर्णय लग गरिनेछ र अनडू गर्न सकिँदैन।</string>
+    <string name="secondary_review_title">द्वितीयक समीक्षा आवश्यक</string>
+    <string name="send_secondary_review">द्वितीयक समीक्षाका लागि पठाउनुहोस्</string>
+    <string name="hold_refer_title">रोक्नुहोस् / रेफर गर्नुहोस्</string>
+    <string name="back_to_queue">कतारमा फिर्ता</string>
 </resources>

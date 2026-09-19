@@ -127,4 +127,96 @@
     <string name="session_expiring_title">सत्र समाप्त हो रहा है</string>
     <string name="session_timeout_message">आप निष्क्रिय रहे हैं। सुरक्षा के लिए, यह सत्र स्वचालित रूप से समाप्त हो जाएगा।</string>
     <string name="signing_out_countdown">%d सेकंड में साइन आउट हो रहे हैं</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_total_screenings">कुल स्क्रीनिंग</string>
+    <string name="dashboard_screenings_today">आज की स्क्रीनिंग</string>
+    <string name="dashboard_screening_activity">स्क्रीनिंग गतिविधि</string>
+    <string name="dashboard_recent_screenings">हाल की स्क्रीनिंग</string>
+    <string name="dashboard_new_screening">नई स्क्रीनिंग</string>
+    <string name="dashboard_no_screenings">अभी तक कोई स्क्रीनिंग नहीं।</string>
+    <string name="dashboard_view_queue">स्क्रीनिंग कतार देखें</string>
+    <string name="dashboard_total_risk_assessments">%d कुल जोखिम मूल्यांकन</string>
+    <string name="dashboard_low_risk">कम जोखिम</string>
+    <string name="dashboard_medium_risk">मध्यम जोखिम</string>
+    <string name="dashboard_high_risk">उच्च जोखिम</string>
+
+    <!-- Capture Process Steps -->
+    <string name="capture_step_1_title">चरण 1 का 3 — दस्तावेज़ का अगला भाग</string>
+    <string name="capture_step_1_desc">अपने दस्तावेज़ के सामने वाले हिस्से को फ्रेम के भीतर संरेखित करें। संरेखित होने पर स्वतः कैप्चर हो जाता है।</string>
+    <string name="capture_step_2_title">चरण 2 का 3 — दस्तावेज़ का पिछला भाग</string>
+    <string name="capture_step_2_desc">अब अपने दस्तावेज़ का पिछला भाग कैप्चर करें। संरेखित होने पर स्वतः कैप्चर हो जाता है।</string>
+    <string name="capture_step_3_title">चरण 3 का 3 — लाइव सेल्फी</string>
+    <string name="capture_document_front">दस्तावेज़ का सामने वाला भाग कैप्चर करें</string>
+    <string name="capture_document_back">दस्तावेज़ का पिछला भाग कैप्चर करें</string>
+    <string name="capture_selfie">सेल्फी कैप्चर करें</string>
+    <string name="upload_document_front">इसके बजाय दस्तावेज़ का सामने वाला भाग अपलोड करें</string>
+    <string name="upload_document_back">इसके बजाय दस्तावेज़ का पिछला भाग अपलोड करें</string>
+    <string name="upload_selfie">इसके बजाय सेल्फी फ़ोटो अपलोड करें</string>
+    <string name="auto_capturing">स्वतः कैप्चर हो रहा है…</string>
+    <string name="start_over">फिर से शुरू करें</string>
+
+    <!-- Priority and Status -->
+    <string name="priority_high">उच्च प्राथमिकता</string>
+    <string name="priority_medium">मध्यम प्राथमिकता</string>
+    <string name="priority_low">निम्न प्राथमिकता</string>
+    <string name="status_pending">लंबित</string>
+    <string name="status_recently_created">हाल ही में बनाया गया</string>
+    <string name="status_completed">पूर्ण</string>
+    <string name="status_in_review">समीक्षाधीन</string>
+
+    <!-- Document Types -->
+    <string name="document_passport">पासपोर्ट</string>
+    <string name="document_national_id">राष्ट्रीय पहचान पत्र</string>
+    <string name="document_driving_license">ड्राइविंग लाइसेंस</string>
+    <string name="document_aadhaar">आधार कार्ड</string>
+    <string name="document_pan_card">पैन कार्ड</string>
+    <string name="document_voter_id">मतदाता पहचान पत्र</string>
+
+    <!-- Signal Breakdown and Reasons -->
+    <string name="signal_breakdown_title">सिग्नल विश्लेषण</string>
+    <string name="registry_hits_title">रजिस्ट्री हिट्स</string>
+    <string name="audit_history_title">ऑडिट इतिहास</string>
+    <string name="top_reason">मुख्य कारण</string>
+    <string name="extracted_names">निकाले गए नाम</string>
+
+    <!-- Validation Reasons -->
+    <string name="reason_checksum_failed">दस्तावेज़ चेकसम सत्यापन विफल</string>
+    <string name="reason_dob_mismatch">जन्म तिथि रजिस्ट्री से मेल नहीं खाती</string>
+    <string name="reason_multiple_identity">मल्टिपल पहचान क्लस्टर का पता चला</string>
+    <string name="reason_face_mismatch">चेहरा दस्तावेज़ फ़ोटो से मेल नहीं खाता</string>
+    <string name="reason_document_expired">दस्तावेज़ की अवधि समाप्त हो गई है</string>
+    <string name="reason_registry_hit">वॉचलिस्ट रजिस्ट्री में मिला</string>
+    <string name="reason_mrz_invalid">MRZ सत्यापन विफल</string>
+    <string name="reason_tampering_detected">दस्तावेज़ छेड़छाड़ का पता चला</string>
+
+    <!-- Review Screen -->
+    <string name="title_screening_review">स्क्रीनिंग समीक्षा</string>
+    <string name="no_audit_trail">इस रिकॉर्ड के लिए अभी तक कोई बैकएंड ऑडिट ट्रेल नहीं।</string>
+    <string name="loading_text">लोड हो रहा है…</string>
+    <string name="captured_document">कैप्चर किया गया दस्तावेज़</string>
+
+    <!-- Tour and Practice -->
+    <string name="title_practice_screening">अभ्यास स्क्रीनिंग</string>
+    <string name="button_back">पीछे</string>
+    <string name="button_next">अगला</string>
+    <string name="button_flag">फ़्लैग करें</string>
+    <string name="finish_practice">अभ्यास समाप्त करें</string>
+    <string name="skip_tour">टूर छोड़ें</string>
+    <string name="scan_document_prompt">शुरू करने के लिए एक दस्तावेज़ स्कैन करें</string>
+
+    <!-- Audit Log -->
+    <string name="title_audit_log">ऑडिट लॉग</string>
+
+    <!-- ReasonDialog -->
+    <string name="secondary_review_intro">इस मामले की अतिरिक्त समीक्षा की आवश्यकता है। नीचे दिए गए कारण संलग्न किए जाएंगे।</string>
+    <string name="hold_refer_intro">इस यात्री को आगे की जांच के लिए रोका जाना चाहिए या रेफर किया जाना चाहिए। नीचे दिए गए कारण संलग्न किए जाएंगे।</string>
+
+    <!-- Workflow Result Screen -->
+    <string name="clear_screening_title">इस स्क्रीनिंग को क्लियर करें</string>
+    <string name="clear_screening_message">इस यात्री को आगे बढ़ने की मंजूरी है। यह निर्णय लॉग किया जाएगा और इसे पूर्ववत नहीं किया जा सकता।</string>
+    <string name="secondary_review_title">द्वितीयक समीक्षा आवश्यक</string>
+    <string name="send_secondary_review">द्वितीयक समीक्षा के लिए भेजें</string>
+    <string name="hold_refer_title">रोकें / भेजें</string>
+    <string name="back_to_queue">कतार में वापस</string>
 </resources>

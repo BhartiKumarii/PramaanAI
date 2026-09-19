@@ -108,7 +108,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
 
     LaunchedEffect(screeningId) { item = repository.getById(screeningId) }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("New Screening") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.new_screening_title)) }) }) { padding ->
         GridPatternBackground(modifier = Modifier.padding(padding)) {
             val currentItem = item
             if (currentItem == null) {
@@ -135,14 +135,14 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                 }
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (step in 3..6) {
-                        OutlinedButton(onClick = { step-- }, modifier = Modifier.weight(1f)) { Text("Back") }
+                        OutlinedButton(onClick = { step-- }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.common_back)) }
                     }
                     when (step) {
                         in 2..5 -> Button(
                             onClick = { step++ },
                             colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                             modifier = Modifier.weight(1f),
-                        ) { Text("Next") }
+                        ) { Text(stringResource(R.string.common_next)) }
                         6 -> {
                             Button(
                                 onClick = { showClearDialog = true },
@@ -162,7 +162,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                             onClick = onComplete,
                             colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                             modifier = Modifier.weight(1f),
-                        ) { Text("Back to Queue") }
+                        ) { Text(stringResource(R.string.back_to_queue)) }
                     }
                 }
             }
@@ -174,8 +174,8 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("Clear this screening") },
-            text = { Text("This traveler is cleared to proceed. This decision will be logged and cannot be undone.") },
+            title = { Text(stringResource(R.string.clear_screening_title)) },
+            text = { Text(stringResource(R.string.clear_screening_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -193,12 +193,12 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = BackgroundDark)
                 ) {
-                    Text("Clear")
+                    Text(stringResource(R.string.common_clear))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -206,10 +206,10 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
 
     if (showSecondaryDialog) {
         ReasonDialog(
-            title = "Secondary Review Required",
-            intro = "This case requires additional review. The reasons below will be attached.",
+            title = stringResource(R.string.secondary_review_title),
+            intro = stringResource(R.string.secondary_review_intro),
             reasons = reasons,
-            confirmLabel = "Send for Secondary Review",
+            confirmLabel = stringResource(R.string.send_secondary_review),
             onDismiss = { showSecondaryDialog = false },
             onConfirm = {
                 scope.launch {
@@ -229,10 +229,10 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
 
     if (showHoldDialog) {
         ReasonDialog(
-            title = "Hold / Refer",
-            intro = "This traveler should be held for further investigation or referred. The reasons below will be attached.",
+            title = stringResource(R.string.hold_refer_title),
+            intro = stringResource(R.string.hold_refer_intro),
             reasons = reasons,
-            confirmLabel = "Hold / Refer",
+            confirmLabel = stringResource(R.string.hold_refer_title),
             onDismiss = { showHoldDialog = false },
             onConfirm = {
                 scope.launch {

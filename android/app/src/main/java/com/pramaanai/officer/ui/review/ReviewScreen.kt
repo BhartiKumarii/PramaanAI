@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -69,6 +70,7 @@ import com.pramaanai.officer.ui.theme.Gray100
 import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Gray600
 import com.pramaanai.officer.ui.theme.Ink900
+import com.pramaanai.officer.R
 import kotlinx.coroutines.launch
 
 private val SIGNAL_BOX_COLORS = mapOf(
@@ -117,7 +119,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
         }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Screening Review") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.title_screening_review)) }) }) { padding ->
         val currentItem = item
         if (currentItem == null) {
             Column(
@@ -145,7 +147,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
             item { Spacer(Modifier.height(16.dp)) }
 
             if (currentItem.registryHits.isNotEmpty()) {
-                item { Text("Registry hits", style = MaterialTheme.typography.titleMedium) }
+                item { Text(stringResource(R.string.registry_hits_title), style = MaterialTheme.typography.titleMedium) }
                 item {
                     Text(
                         "Checked against mock_central_registry — a sandboxed test dataset, not a real " +
@@ -167,7 +169,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
                 item { Spacer(Modifier.height(16.dp)) }
             }
 
-            item { Text("Signal breakdown", style = MaterialTheme.typography.titleMedium) }
+            item { Text(stringResource(R.string.signal_breakdown_title), style = MaterialTheme.typography.titleMedium) }
             item { Spacer(Modifier.height(8.dp)) }
             currentItem.risk?.breakdown?.let { breakdown ->
                 items(breakdown) { signal ->
@@ -208,7 +210,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
             blockchainResult?.let { item { BlockchainIntegrityRow(it) } }
             item { Spacer(Modifier.height(16.dp)) }
 
-            item { Text("Audit History", style = MaterialTheme.typography.titleMedium) }
+            item { Text(stringResource(R.string.audit_history_title), style = MaterialTheme.typography.titleMedium) }
             item {
                 Text(
                     "Real backend record of every officer action on this screening — read-only.",
@@ -219,14 +221,14 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
             item { Spacer(Modifier.height(8.dp)) }
             auditTrail?.let { trail ->
                 if (trail.isEmpty()) {
-                    item { Text("No backend audit trail yet for this record.", style = MaterialTheme.typography.bodySmall, color = Gray500) }
+                    item { Text(stringResource(R.string.no_audit_trail), style = MaterialTheme.typography.bodySmall, color = Gray500) }
                 } else {
                     items(trail) { event ->
                         AuditEventRow(event)
                         Spacer(Modifier.height(8.dp))
                     }
                 }
-            } ?: item { Text("Loading…", style = MaterialTheme.typography.bodySmall, color = Gray500) }
+            } ?: item { Text(stringResource(R.string.loading_text), style = MaterialTheme.typography.bodySmall, color = Gray500) }
 
             item { Spacer(Modifier.height(24.dp)) }
             // A Field Officer sends a case to Immigration; only an
@@ -350,7 +352,7 @@ private fun RiskScoreCard(item: ScreeningQueueItem) {
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Top reason", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.top_reason), style = MaterialTheme.typography.labelMedium)
             Text(risk.topReason, style = MaterialTheme.typography.bodyMedium)
         }
     }
@@ -374,7 +376,7 @@ private fun DocumentImageWithOverlay(item: ScreeningQueueItem) {
     if (originalWidth <= 0 || originalHeight <= 0) return
 
     Column {
-        Text("Captured document", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.captured_document), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         Box(
             modifier = Modifier

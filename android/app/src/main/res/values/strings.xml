@@ -130,4 +130,96 @@
     <string name="session_expiring_title">Session expiring</string>
     <string name="session_timeout_message">You\'ve been inactive. For security, this session will end automatically.</string>
     <string name="signing_out_countdown">Signing out in %ds</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_total_screenings">Total Screenings</string>
+    <string name="dashboard_screenings_today">Screenings Today</string>
+    <string name="dashboard_screening_activity">Screening Activity</string>
+    <string name="dashboard_recent_screenings">Recent Screenings</string>
+    <string name="dashboard_new_screening">New Screening</string>
+    <string name="dashboard_no_screenings">No screenings yet.</string>
+    <string name="dashboard_view_queue">View Screening Queue</string>
+    <string name="dashboard_total_risk_assessments">%d total risk assessments</string>
+    <string name="dashboard_low_risk">Low risk</string>
+    <string name="dashboard_medium_risk">Medium risk</string>
+    <string name="dashboard_high_risk">High risk</string>
+
+    <!-- Capture Process Steps -->
+    <string name="capture_step_1_title">Step 1 of 3 — Document front</string>
+    <string name="capture_step_1_desc">Align the front of your document within the frame. Auto-captures when aligned.</string>
+    <string name="capture_step_2_title">Step 2 of 3 — Document back</string>
+    <string name="capture_step_2_desc">Now capture the back of your document. Auto-captures when aligned.</string>
+    <string name="capture_step_3_title">Step 3 of 3 — Live selfie</string>
+    <string name="capture_document_front">Capture document front</string>
+    <string name="capture_document_back">Capture document back</string>
+    <string name="capture_selfie">Capture selfie</string>
+    <string name="upload_document_front">Upload document front instead</string>
+    <string name="upload_document_back">Upload document back instead</string>
+    <string name="upload_selfie">Upload selfie photo instead</string>
+    <string name="auto_capturing">Auto-capturing…</string>
+    <string name="start_over">Start over</string>
+
+    <!-- Priority and Status -->
+    <string name="priority_high">High Priority</string>
+    <string name="priority_medium">Medium Priority</string>
+    <string name="priority_low">Low Priority</string>
+    <string name="status_pending">Pending</string>
+    <string name="status_recently_created">Recently Created</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_in_review">In Review</string>
+
+    <!-- Document Types -->
+    <string name="document_passport">Passport</string>
+    <string name="document_national_id">National ID</string>
+    <string name="document_driving_license">Driving License</string>
+    <string name="document_aadhaar">Aadhaar Card</string>
+    <string name="document_pan_card">PAN Card</string>
+    <string name="document_voter_id">Voter ID</string>
+
+    <!-- Signal Breakdown and Reasons -->
+    <string name="signal_breakdown_title">Signal breakdown</string>
+    <string name="registry_hits_title">Registry hits</string>
+    <string name="audit_history_title">Audit History</string>
+    <string name="top_reason">Top reason</string>
+    <string name="extracted_names">Extracted names</string>
+
+    <!-- Validation Reasons -->
+    <string name="reason_checksum_failed">Document checksum validation failed</string>
+    <string name="reason_dob_mismatch">Date of birth mismatch with registry</string>
+    <string name="reason_multiple_identity">Multiple identity cluster detected</string>
+    <string name="reason_face_mismatch">Face does not match document photo</string>
+    <string name="reason_document_expired">Document has expired</string>
+    <string name="reason_registry_hit">Found in watchlist registry</string>
+    <string name="reason_mrz_invalid">MRZ validation failed</string>
+    <string name="reason_tampering_detected">Document tampering detected</string>
+
+    <!-- Review Screen -->
+    <string name="title_screening_review">Screening Review</string>
+    <string name="no_audit_trail">No backend audit trail yet for this record.</string>
+    <string name="loading_text">Loading…</string>
+    <string name="captured_document">Captured document</string>
+
+    <!-- Tour and Practice -->
+    <string name="title_practice_screening">Practice Screening</string>
+    <string name="button_back">Back</string>
+    <string name="button_next">Next</string>
+    <string name="button_flag">Flag</string>
+    <string name="finish_practice">Finish practice</string>
+    <string name="skip_tour">Skip tour</string>
+    <string name="scan_document_prompt">Scan a document to start</string>
+
+    <!-- Audit Log -->
+    <string name="title_audit_log">Audit Log</string>
+
+    <!-- ReasonDialog -->
+    <string name="secondary_review_intro">This case requires additional review. The reasons below will be attached.</string>
+    <string name="hold_refer_intro">This traveler should be held for further investigation or referred. The reasons below will be attached.</string>
+
+    <!-- Workflow Result Screen -->
+    <string name="clear_screening_title">Clear this screening</string>
+    <string name="clear_screening_message">This traveler is cleared to proceed. This decision will be logged and cannot be undone.</string>
+    <string name="secondary_review_title">Secondary Review Required</string>
+    <string name="send_secondary_review">Send for Secondary Review</string>
+    <string name="hold_refer_title">Hold / Refer</string>
+    <string name="back_to_queue">Back to Queue</string>
 </resources>
