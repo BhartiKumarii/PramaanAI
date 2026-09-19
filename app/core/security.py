@@ -44,13 +44,13 @@ def _create_token(subject: str, role: str, expires_delta: timedelta, token_type:
 
 def create_access_token(user_id: str, role: str) -> str:
     settings = get_settings()
-    return _create_token(user_id, role, timedelta(minutes=settings.access_token_expire_minutes), "access")
+    return _create_token(str(user_id), role, timedelta(minutes=settings.access_token_expire_minutes), "access")
 
 
 def create_refresh_token(user_id: str, role: str) -> str:
     settings = get_settings()
     return _create_token(
-        user_id, role, timedelta(minutes=settings.refresh_token_expire_minutes), "refresh"
+        str(user_id), role, timedelta(minutes=settings.refresh_token_expire_minutes), "refresh"
     )
 
 
