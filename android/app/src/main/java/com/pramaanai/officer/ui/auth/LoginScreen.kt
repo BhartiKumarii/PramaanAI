@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -47,6 +48,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
+import com.pramaanai.officer.data.local.LocaleManager
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalContext
 import com.pramaanai.officer.data.remote.CheckpointResponse
 import com.pramaanai.officer.ui.theme.Gray100
 import com.pramaanai.officer.ui.theme.Gray200
@@ -67,6 +75,9 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
     var checkpoints by remember { mutableStateOf<List<CheckpointResponse>>(emptyList()) }
     var selectedCheckpoint by remember { mutableStateOf<CheckpointResponse?>(null) }
     var checkpointMenuExpanded by remember { mutableStateOf(false) }
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val currentLanguage = LocaleManager.getSavedLanguageTag(context)
     val scope = rememberCoroutineScope()
     val authFailedMessage = stringResource(R.string.auth_failed_message)
 
@@ -98,7 +109,55 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
         }
     }
 
+    fun getLanguageDisplayName(tag: String): String {
+        return when (tag) {
+            "system" -> context.getString(R.string.language_system)
+            "en" -> context.getString(R.string.language_english)
+            "hi" -> context.getString(R.string.language_hindi)
+            "ne" -> context.getString(R.string.language_nepali)
+            "dz" -> context.getString(R.string.language_dzongkha)
+            else -> tag
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(White)) {
+        // Language selector at top right
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.TopEnd
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = languageMenuExpanded,
+                onExpandedChange = { languageMenuExpanded = it }
+            ) {
+                TextButton(
+                    onClick = { languageMenuExpanded = true },
+                    modifier = Modifier.menuAnchor()
+                ) {
+                    Icon(Icons.Default.Language, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(getLanguageDisplayName(currentLanguage))
+                }
+                DropdownMenu(
+                    expanded = languageMenuExpanded,
+                    onDismissRequest = { languageMenuExpanded = false }
+                ) {
+                    LocaleManager.SUPPORTED.forEach { langTag ->
+                        DropdownMenuItem(
+                            text = { Text(getLanguageDisplayName(langTag)) },
+                            onClick = {
+                                LocaleManager.setSavedLanguageTag(context, langTag)
+                                languageMenuExpanded = false
+                                // Restart activity to apply language change
+                                (context as? androidx.activity.ComponentActivity)?.recreate()
+                            }
+                        )
+                    }
+                }
+            }
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
