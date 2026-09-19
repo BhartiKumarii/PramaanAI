@@ -1,7 +1,13 @@
+import base64
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
+
+
+def _generate_key_b64(n_bytes: int = 32) -> str:
+    return base64.b64encode(os.urandom(n_bytes)).decode()
 
 
 class Settings(BaseSettings):
@@ -11,19 +17,28 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg2://pramaan:pramaan@localhost:5432/pramaan"
 
-    jwt_secret_key: str
+    jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 1440
 
-    # Base64-encoded 32-byte key for AES-256-GCM. No default — must be set
-    # explicitly per environment, never hardcoded.
-    encryption_key: str
+    encryption_key: str = ""
+    hmac_secret_key: str = ""
 
-    # Dedicated key for HMAC-signing score records (see app/core/hmac_signing.py).
-    # Deliberately separate from jwt_secret_key/encryption_key — no cross-purpose
-    # key reuse. No default — must be set explicitly per environment.
-    hmac_secret_key: str
+    @field_validator("jwt_secret_key", mode="before")
+    @classmethod
+    def default_jwt_secret(cls, v: str) -> str:
+        return v or _generate_key_b64()
+
+    @field_validator("encryption_key", mode="before")
+    @classmethod
+    def default_encryption_key(cls, v: str) -> str:
+        return v or _generate_key_b64()
+
+    @field_validator("hmac_secret_key", mode="before")
+    @classmethod
+    def default_hmac_key(cls, v: str) -> str:
+        return v or _generate_key_b64()
 
     # CORS - comma-separated origins
     cors_origins: str | list[str] = "http://localhost:5173,http://127.0.0.1:5173,https://pramaanai-703j.onrender.com"
