@@ -219,4 +219,25 @@
     <string name="send_secondary_review">द्वितीयक समीक्षा के लिए भेजें</string>
     <string name="hold_refer_title">रोकें / भेजें</string>
     <string name="back_to_queue">कतार में वापस</string>
+
+    <!-- Technical Display Terms -->
+    <string name="weight_label">भार</string>
+    <string name="contribution_label">योगदान</string>
+    <string name="region_label">क्षेत्र</string>
+    <string name="not_implemented">कार्यान्वित नहीं</string>
+
+    <!-- Signal Names -->
+    <string name="signal_checksum">चेकसम सत्यापन</string>
+    <string name="signal_face_match">चेहरा मिलान</string>
+    <string name="signal_forensics">फोरेंसिक विश्लेषण</string>
+    <string name="signal_blacklist">वॉचलिस्ट जांच</string>
+    <string name="signal_identity_graph">पहचान ग्राफ विश्लेषण</string>
+    <string name="signal_mrz">MRZ सत्यापन</string>
+    <string name="signal_tampering">छेड़छाड़ का पता लगाना</string>
+
+    <!-- Decision Types -->
+    <string name="decision_clear">क्लियर</string>
+    <string name="decision_secondary_review">द्वितीयक समीक्षा</string>
+    <string name="decision_hold_refer">रोकें/भेजें</string>
+    <string name="decision_review_required">समीक्षा आवश्यक</string>
 </resources>

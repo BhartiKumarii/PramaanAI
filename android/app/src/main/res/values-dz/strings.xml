@@ -230,4 +230,25 @@
     <string name="send_secondary_review">གཉིས་ཆེན་གྱི་ལྟ་ཞིབ་ལུ་བཏང་</string>
     <string name="hold_refer_title">བཀག / སྐུར</string>
     <string name="back_to_queue">ཕྲེང་འདུག་ལུ་ལོག</string>
+
+    <!-- Technical Display Terms -->
+    <string name="weight_label">ལྗིད་ཚད</string>
+    <string name="contribution_label">འབྲེལ་བ</string>
+    <string name="region_label">ལུང་ཕྱོགས</string>
+    <string name="not_implemented">བསྟར་སྤྱོད་མ་འབད</string>
+
+    <!-- Signal Names -->
+    <string name="signal_checksum">ཞིབ་བཤེར་གཞི་རྟགས</string>
+    <string name="signal_face_match">ཞལ་པར་མཐུན</string>
+    <string name="signal_forensics">ཁྲིམས་རིག་དཔྱད་པ</string>
+    <string name="signal_blacklist">བལྟ་ཐོ་ཞིབ</string>
+    <string name="signal_identity_graph">ངོ་བོ་ཐིག་ལེ་དཔྱད</string>
+    <string name="signal_mrz">MRZ ཞིབ་བཤེར</string>
+    <string name="signal_tampering">བཟོ་བཅོས་འཚོལ</string>
+
+    <!-- Decision Types -->
+    <string name="decision_clear">གཙང་མ</string>
+    <string name="decision_secondary_review">གཉིས་ཆེན་ལྟ་ཞིབ</string>
+    <string name="decision_hold_refer">བཀག/སྐུར</string>
+    <string name="decision_review_required">ལྟ་ཞིབ་དགོས</string>
 </resources>

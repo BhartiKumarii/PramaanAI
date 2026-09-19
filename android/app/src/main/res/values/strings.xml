@@ -222,4 +222,25 @@
     <string name="send_secondary_review">Send for Secondary Review</string>
     <string name="hold_refer_title">Hold / Refer</string>
     <string name="back_to_queue">Back to Queue</string>
+
+    <!-- Technical Display Terms -->
+    <string name="weight_label">weight</string>
+    <string name="contribution_label">contribution</string>
+    <string name="region_label">Region</string>
+    <string name="not_implemented">NOT IMPLEMENTED</string>
+
+    <!-- Signal Names -->
+    <string name="signal_checksum">Checksum validation</string>
+    <string name="signal_face_match">Face matching</string>
+    <string name="signal_forensics">Forensic analysis</string>
+    <string name="signal_blacklist">Watchlist check</string>
+    <string name="signal_identity_graph">Identity graph analysis</string>
+    <string name="signal_mrz">MRZ validation</string>
+    <string name="signal_tampering">Tampering detection</string>
+
+    <!-- Decision Types -->
+    <string name="decision_clear">Clear</string>
+    <string name="decision_secondary_review">Secondary review</string>
+    <string name="decision_hold_refer">Hold/refer</string>
+    <string name="decision_review_required">Review required</string>
 </resources>
