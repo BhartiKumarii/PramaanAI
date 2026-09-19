@@ -120,13 +120,14 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(White)) {
-        // Language selector at top right
-        Box(
+    Column(modifier = Modifier.fillMaxSize().background(White)) {
+        // Language selector at the top
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            contentAlignment = Alignment.TopEnd
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             ExposedDropdownMenuBox(
                 expanded = languageMenuExpanded,
@@ -136,9 +137,9 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
                     onClick = { languageMenuExpanded = true },
                     modifier = Modifier.menuAnchor()
                 ) {
-                    Icon(Icons.Default.Language, contentDescription = null)
+                    Icon(Icons.Default.Language, contentDescription = null, tint = Ink900)
                     Spacer(Modifier.width(8.dp))
-                    Text(getLanguageDisplayName(currentLanguage))
+                    Text(getLanguageDisplayName(currentLanguage), color = Ink900)
                 }
                 DropdownMenu(
                     expanded = languageMenuExpanded,
@@ -158,9 +159,12 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
                 }
             }
         }
+
+        // Main login content - using weight to fill remaining space
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
