@@ -61,8 +61,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.model.ScreeningQueueItem
 import com.pramaanai.officer.data.model.ScreeningStatus
@@ -146,15 +148,15 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                                 onClick = { showClearDialog = true },
                                 colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = BackgroundDark),
                                 modifier = Modifier.weight(1f),
-                            ) { Text("Clear", maxLines = 1) }
+                            ) { Text(stringResource(R.string.common_clear), maxLines = 1) }
                             OutlinedButton(
                                 onClick = { showSecondaryDialog = true },
                                 modifier = Modifier.weight(1f),
-                            ) { Text("Secondary", maxLines = 1) }
+                            ) { Text(stringResource(R.string.common_secondary_review), maxLines = 1) }
                             OutlinedButton(
                                 onClick = { showHoldDialog = true },
                                 modifier = Modifier.weight(1f),
-                            ) { Text("Hold/Refer", maxLines = 1) }
+                            ) { Text(stringResource(R.string.common_hold_refer), maxLines = 1) }
                         }
                         7 -> Button(
                             onClick = onComplete,

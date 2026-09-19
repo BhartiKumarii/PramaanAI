@@ -70,13 +70,17 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
     try:
-        user_id = uuid.UUID(payload["sub"])
+        user_id = payload["sub"]  # Keep as string since our model now uses String type
+        # Validate it's a proper UUID format
+        uuid.UUID(user_id)  # This validates the format but we keep it as string
     except (KeyError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject"
         ) from exc
 
-    user = db.get(User, user_id)
+    # Use string comparison directly - no UUID conversion
+    user = db.query(User).filter(User.id == user_id).first()
+
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
     return user

@@ -13,9 +13,17 @@
     <string name="common_finish">समाप्त करें</string>
     <string name="common_sign_in">साइन इन करें</string>
     <string name="common_clear">क्लियर करें</string>
+    <string name="common_secondary_review">द्वितीयक समीक्षा</string>
+    <string name="common_hold_refer">रोकें/भेजें</string>
     <string name="common_flag_review">फ़्लैग करें / आगे समीक्षा</string>
     <string name="common_log_out">लॉग आउट</string>
     <string name="common_cancel">रद्द करें</string>
+    <string name="common_checkpoint">चेकपॉइंट</string>
+    <string name="common_loading_checkpoints">चेकपॉइंट लोड हो रहे हैं…</string>
+    <string name="common_select_checkpoint">चेकपॉइंट चुनें</string>
+    <string name="common_show_password">पासवर्ड दिखाएं</string>
+    <string name="common_hide_password">पासवर्ड छुपाएं</string>
+    <string name="auth_failed_message">प्रमाणीकरण विफल — अधिकारी आईडी और पासवर्ड जांचें, और सुनिश्चित करें कि बैकएंड पहुंच योग्य है।</string>
 
     <string name="system_operational">सिस्टम सुचारू रूप से चल रहा है</string>
 
