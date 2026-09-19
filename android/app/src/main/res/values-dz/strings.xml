@@ -138,4 +138,96 @@
     <string name="session_expiring_title">དུས་ཚོད་མཇུག་མ་བཞིན</string>
     <string name="session_timeout_message">ཁྱོད་ལཱ་མ་འབད་སྡོད། ཉེན་སྲུང་གི་དོན་ལུ་ དུས་ཚོད་འདི་ལས་བརྟེན་རང་བཞིན་གྱིས་མཇུག་འགྱུར།</string>
     <string name="signing_out_countdown">སྐར་ཆ་ %d ནང་ཐོན་འགྱུར</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_total_screenings">ཡོངས་རྫོགས་ཞིབ་བཤེར</string>
+    <string name="dashboard_screenings_today">ད་རིས་ཞིབ་བཤེར</string>
+    <string name="dashboard_screening_activity">ཞིབ་བཤེར་ལཱ་འགན</string>
+    <string name="dashboard_recent_screenings">ཉེ་བའི་ཞིབ་བཤེར</string>
+    <string name="dashboard_new_screening">ཞིབ་བཤེར་གསར་བ</string>
+    <string name="dashboard_no_screenings">ད་ལྟ་མ་གནས་ཞིབ་བཤེར་མེད།</string>
+    <string name="dashboard_view_queue">ཞིབ་བཤེར་གྲལ་ཐིག་ལྟ</string>
+    <string name="dashboard_total_risk_assessments">%d ཡོངས་རྫོགས་ཉེན་ཁ་གཏན་འབེབས</string>
+    <string name="dashboard_low_risk">ཉེན་ཁ་ཆུང་ཀུ</string>
+    <string name="dashboard_medium_risk">ཉེན་ཁ་བར་མ</string>
+    <string name="dashboard_high_risk">ཉེན་ཁ་མཐོ་བ</string>
+
+    <!-- Capture Process Steps -->
+    <string name="capture_step_1_title">གོ་རིམ་ ༡ ཀྱི་ ༣ — ཡིག་ཆའི་མདུན་ངོས</string>
+    <string name="capture_step_1_desc">ཁྱོད་རའི་ཡིག་ཆའི་མདུན་ངོས་ཕེམ་ནང་སྒྲིག། སྒྲིག་ཚར་བ་ཅིན་རང་བཞིན་གྱིས་འཛིན་པ་རེད།</string>
+    <string name="capture_step_2_title">གོ་རིམ་ ༢ ཀྱི་ ༣ — ཡིག་ཆའི་རྒྱབ་ངོས</string>
+    <string name="capture_step_2_desc">ད་ཁྱོད་རའི་ཡིག་ཆའི་རྒྱབ་ངོས་འཛིན་པ་རེད། སྒྲིག་ཚར་བ་ཅིན་རང་བཞིན་གྱིས་འཛིན་པ་རེད།</string>
+    <string name="capture_step_3_title">གོ་རིམ་ ༣ ཀྱི་ ༣ — དངོས་གནས་རང་པར</string>
+    <string name="capture_document_front">ཡིག་ཆའི་མདུན་ངོས་འཛིན་པ</string>
+    <string name="capture_document_back">ཡིག་ཆའི་རྒྱབ་ངོས་འཛིན་པ</string>
+    <string name="capture_selfie">རང་པར་འཛིན་པ</string>
+    <string name="upload_document_front">དེའི་ཚབ་ཏུ་ཡིག་ཆའི་མདུན་ངོས་ཡར་འདེགས</string>
+    <string name="upload_document_back">དེའི་ཚབ་ཏུ་ཡིག་ཆའི་རྒྱབ་ངོས་ཡར་འདེགས</string>
+    <string name="upload_selfie">དེའི་ཚབ་ཏུ་རང་པར་ཡར་འདེགས</string>
+    <string name="auto_capturing">རང་བཞིན་གྱིས་འཛིན་བའི་བཞིན་པ་རེད…</string>
+    <string name="start_over">ཡང་བསྐྱར་འགོ་བཙུགས</string>
+
+    <!-- Priority and Status -->
+    <string name="priority_high">གལ་ཆེན་མཐོ་བ</string>
+    <string name="priority_medium">གལ་ཆེན་བར་མ</string>
+    <string name="priority_low">གལ་ཆེན་ཆུང་ཀུ</string>
+    <string name="status_pending">བསྒུག་བཞིན</string>
+    <string name="status_recently_created">ཉེ་ཆར་བཟོས་པ</string>
+    <string name="status_completed">ཚར་བ</string>
+    <string name="status_in_review">ཞིབ་བཤེར་ནང</string>
+
+    <!-- Document Types -->
+    <string name="document_passport">ཕྱི་རྒྱལ་ལག་ཁྱེར</string>
+    <string name="document_national_id">རྒྱལ་ཁབ་ངོས་འཛིན</string>
+    <string name="document_driving_license">མོ་ཏ་འདེད་ཆོག</string>
+    <string name="document_aadhaar">ཨ་དྷར་ཡིག་ཆ</string>
+    <string name="document_pan_card">པན་ཡིག་ཆ</string>
+    <string name="document_voter_id">འོས་འདེམས་ངོས་འཛིན</string>
+
+    <!-- Signal Breakdown and Reasons -->
+    <string name="signal_breakdown_title">བརྡ་རྟགས་དབྱེ་བའི་གཞི</string>
+    <string name="registry_hits_title">ཐོ་འགོད་ཕོག་པ</string>
+    <string name="audit_history_title">ཞིབ་བཤེར་ལོ་རྒྱུས</string>
+    <string name="top_reason">གཙོ་བོའི་རྒྱུ་མཚན</string>
+    <string name="extracted_names">འདོན་པའི་མིང</string>
+
+    <!-- Validation Reasons -->
+    <string name="reason_checksum_failed">ཡིག་ཆ་ཞིབ་བཤེར་ཕམ་པ</string>
+    <string name="reason_dob_mismatch">སྐྱེ་ཚེས་ཐོ་འགོད་མི་མཐུན</string>
+    <string name="reason_multiple_identity">ངོ་བོ་མང་པོའི་ཚོམ་བུ་རྙེད</string>
+    <string name="reason_face_mismatch">ཞལ་པར་མི་མཐུན</string>
+    <string name="reason_document_expired">ཡིག་ཆ་དུས་ཚོད་རྒྱལ</string>
+    <string name="reason_registry_hit">བལྟ་ཐོའི་ནང་རྙེད</string>
+    <string name="reason_mrz_invalid">MRZ ཞིབ་བཤེར་ཕམ</string>
+    <string name="reason_tampering_detected">ཡིག་ཆ་བཟོ་བཅོས་རྙེད</string>
+
+    <!-- Review Screen -->
+    <string name="title_screening_review">ཞིབ་བཤེར་ལྟ་ཞིབ</string>
+    <string name="no_audit_trail">ཐོ་འདི་གི་དོན་ལུ་ད་ལྟ་མ་གནས་རྒྱབ་ཞིབ་བཤེར་ཐོ་མེད།</string>
+    <string name="loading_text">འཇུག་བཞིན…</string>
+    <string name="captured_document">འཇུག་པའི་ཡིག་ཆ</string>
+
+    <!-- Tour and Practice -->
+    <string name="title_practice_screening">སྦྱོང་བརྡར་ཞིབ་བཤེར</string>
+    <string name="button_back">རྒྱབ་ཏུ</string>
+    <string name="button_next">རྗེས་མ</string>
+    <string name="button_flag">དར་ཆ་བཙུགས</string>
+    <string name="finish_practice">སྦྱོང་བརྡར་མཇུག</string>
+    <string name="skip_tour">འགྲུལ་བསྐོར་བམ</string>
+    <string name="scan_document_prompt">འགོ་བཙུགས་ལུ་ཡིག་ཆ་བལྟ</string>
+
+    <!-- Audit Log -->
+    <string name="title_audit_log">ཞིབ་བཤེར་ཐོ</string>
+
+    <!-- ReasonDialog -->
+    <string name="secondary_review_intro">འདི་གི་རྒྱུ་མཚན་ཁ་སྐོང་ཞིབ་བཤེར་དགོས། འོག་གི་རྒྱུ་མཚན་ཁ་སྐོང་འབད་འོང།</string>
+    <string name="hold_refer_intro">འདི་འགྲུལ་མི་འདི་ཞིབ་ཕྲ་ལུ་བཞག་དགོ་ཡང་ན་གཏང་དགོ། འོག་གི་རྒྱུ་མཚན་ཁ་སྐོང་འབད་འོང།</string>
+
+    <!-- Workflow Result Screen -->
+    <string name="clear_screening_title">ཞིབ་བཤེར་འདི་གཙང་མ་བཟོ</string>
+    <string name="clear_screening_message">འགྲུལ་བ་འདི་ལུ་མདུན་སྐྱོད་ཆོག། ཐག་གཅོད་འདི་ཐོ་བཀོད་འབད་འོང་སྟེ་འདི་ཕྱིར་ལོག་འབད་མི་ཚུགས།</string>
+    <string name="secondary_review_title">གཉིས་ཆེན་གྱི་ལྟ་ཞིབ་དགོས</string>
+    <string name="send_secondary_review">གཉིས་ཆེན་གྱི་ལྟ་ཞིབ་ལུ་བཏང་</string>
+    <string name="hold_refer_title">བཀག / སྐུར</string>
+    <string name="back_to_queue">ཕྲེང་འདུག་ལུ་ལོག</string>
 </resources>
