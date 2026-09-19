@@ -154,13 +154,10 @@ private class TokenAuthenticator(private val refreshApi: () -> ApiService) : Aut
 }
 
 object RetrofitClient {
-    // Local dev backend (docker compose). Requires `adb reverse tcp:8000
-    // tcp:8000` against whichever device this is installed on (emulator or
-    // a real phone over USB) — that forwards the device's own port 8000
-    // back to this host's port 8000. Works identically on both, unlike the
-    // emulator-only 10.0.2.2 alias. Use this while actively changing
-    // backend code — it's instant, no deploy round-trip.
-    private const val LOCAL_BASE_URL = "http://127.0.0.1:8000/"
+    // Local dev backend (docker compose). Updated to use network IP so phone
+    // can connect over WiFi without USB debugging or adb port forwarding.
+    // This allows wireless debugging and testing without USB cable.
+    private const val LOCAL_BASE_URL = "http://10.170.126.94:8000/"
 
     // Render deployment (see /render.yaml) — real HTTPS, no USB tether or
     // adb tunnel needed, works over WiFi/mobile data. Free-tier service
