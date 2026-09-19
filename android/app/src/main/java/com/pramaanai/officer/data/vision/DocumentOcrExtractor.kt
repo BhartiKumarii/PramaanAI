@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -43,35 +42,17 @@ object DocumentOcrExtractor {
         val detectedDocumentType: String?,
     )
 
-    private val latinRecognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
-    private val devanagariRecognizer by lazy { TextRecognition.getClient(DevanagariTextRecognizerOptions.DEFAULT_OPTIONS) }
+    private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     suspend fun recognize(bitmap: Bitmap): ExtractionResult {
         val image = InputImage.fromBitmap(bitmap, 0)
 
-        // Run both Latin and Devanagari OCR in parallel for better coverage of mixed-script documents
-        val latinText = suspendCancellableCoroutine { cont ->
-            latinRecognizer.process(image)
+        // Use the standard ML Kit recognizer with enhanced pattern matching for Indian documents
+        val text = suspendCancellableCoroutine { cont ->
+            recognizer.process(image)
                 .addOnSuccessListener { result -> cont.resume(result.text) }
                 .addOnFailureListener { e -> cont.resumeWithException(e) }
         }
-
-        val devanagariText = suspendCancellableCoroutine { cont ->
-            devanagariRecognizer.process(image)
-                .addOnSuccessListener { result -> cont.resume(result.text) }
-                .addOnFailureListener { e ->
-                    // Devanagari recognition might fail on English-only documents, that's ok
-                    cont.resume("")
-                }
-        }
-
-        // Combine both recognition results
-        val combinedText = if (devanagariText.isNotBlank()) {
-            "$latinText\n$devanagariText"
-        } else {
-            latinText
-        }
-        val text = combinedText
         val mrz = parseTd3Mrz(text)
         // The MRZ is machine-printed with check digits — far more reliable
         // than label-keyword guessing over free text — so where it exists it

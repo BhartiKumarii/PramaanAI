@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.user import User
@@ -17,8 +17,11 @@ from app.repositories.verification_repository import get_verification
 router = APIRouter(prefix="/images", tags=["images"])
 
 # Directory where images are stored (should match Android app storage)
-IMAGES_DIR = Path(settings.images_dir) if hasattr(settings, 'images_dir') else Path("images")
-IMAGES_DIR.mkdir(exist_ok=True)
+def get_images_dir():
+    settings = get_settings()
+    images_dir = Path(getattr(settings, 'images_dir', 'images'))
+    images_dir.mkdir(exist_ok=True)
+    return images_dir
 
 
 @router.get(
@@ -36,7 +39,7 @@ def get_document_image(
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="verification record not found")
 
-    image_path = IMAGES_DIR / f"{verification_id}.jpg"
+    image_path = get_images_dir() / f"{verification_id}.jpg"
     if not image_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="document image not found")
 
@@ -58,7 +61,7 @@ def get_document_back_image(
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="verification record not found")
 
-    image_path = IMAGES_DIR / f"{verification_id}_back.jpg"
+    image_path = get_images_dir() / f"{verification_id}_back.jpg"
     if not image_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="document back image not found")
 
@@ -80,7 +83,7 @@ def get_selfie_image(
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="verification record not found")
 
-    image_path = IMAGES_DIR / f"{verification_id}_selfie.jpg"
+    image_path = get_images_dir() / f"{verification_id}_selfie.jpg"
     if not image_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="selfie image not found")
 
