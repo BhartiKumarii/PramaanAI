@@ -554,35 +554,6 @@ fun CaptureScreen(
         }
     }
 
-    fun runLivenessCheck() {
-        val selfie = selfieFile ?: return
-        step = CaptureStep.LIVENESS_CHECK
-        scope.launch {
-            try {
-                val liveness = withContext(Dispatchers.Default) {
-                    val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
-                        ?: throw IllegalStateException("Could not decode selfie image")
-
-                    // Run liveness detection (single-frame for simplicity)
-                    com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
-                }
-
-                livenessResult = liveness
-
-                // Only proceed if LIVE or UNCERTAIN (give benefit of doubt)
-                if (liveness.status == "LIVE" || liveness.status == "UNCERTAIN") {
-                    runExtraction()
-                } else {
-                    errorMessage = "Liveness check failed: ${liveness.reason}\n\nPlease recapture with better lighting and ensure it's a live face, not a photo."
-                    step = CaptureStep.ERROR
-                }
-            } catch (e: Exception) {
-                errorMessage = "Liveness check failed: ${e.message ?: e.toString()}"
-                step = CaptureStep.ERROR
-            }
-        }
-    }
-
     fun runExtraction() {
         val docFront = documentFrontFile ?: return
         val docBack = documentBackFile // Optional - may be null for some document types
@@ -638,6 +609,35 @@ fun CaptureScreen(
                 step = CaptureStep.REVIEW_FIELDS
             } catch (e: Exception) {
                 errorMessage = "On-device extraction failed: ${e.message ?: e.toString()}"
+                step = CaptureStep.ERROR
+            }
+        }
+    }
+
+    fun runLivenessCheck() {
+        val selfie = selfieFile ?: return
+        step = CaptureStep.LIVENESS_CHECK
+        scope.launch {
+            try {
+                val liveness = withContext(Dispatchers.Default) {
+                    val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
+                        ?: throw IllegalStateException("Could not decode selfie image")
+
+                    // Run liveness detection (single-frame for simplicity)
+                    com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
+                }
+
+                livenessResult = liveness
+
+                // Only proceed if LIVE or UNCERTAIN (give benefit of doubt)
+                if (liveness.status == "LIVE" || liveness.status == "UNCERTAIN") {
+                    runExtraction()
+                } else {
+                    errorMessage = "Liveness check failed: ${liveness.reason}\n\nPlease recapture with better lighting and ensure it's a live face, not a photo."
+                    step = CaptureStep.ERROR
+                }
+            } catch (e: Exception) {
+                errorMessage = "Liveness check failed: ${e.message ?: e.toString()}"
                 step = CaptureStep.ERROR
             }
         }

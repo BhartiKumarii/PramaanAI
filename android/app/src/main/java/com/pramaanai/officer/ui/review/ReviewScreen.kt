@@ -396,8 +396,8 @@ private fun DocumentImageWithOverlay(item: ScreeningQueueItem) {
                     val color = SIGNAL_BOX_COLORS[signal.signal] ?: DEFAULT_BOX_COLOR
                     drawRect(
                         color = color,
-                        topLeft = Offset(loc.x0 * scaleX, loc.y0 * scaleY),
-                        size = Size((loc.x1 - loc.x0) * scaleX, (loc.y1 - loc.y0) * scaleY),
+                        topLeft = Offset(loc.x * scaleX, loc.y * scaleY),
+                        size = Size(loc.width * scaleX, loc.height * scaleY),
                         style = Stroke(width = 4f),
                     )
                 }
@@ -501,7 +501,7 @@ private fun SignalRow(signal: RiskSignalBreakdown) {
             if (signal.location != null) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "${stringResource(R.string.region_label)}: (${signal.location.x0},${signal.location.y0})–(${signal.location.x1},${signal.location.y1})",
+                    "${stringResource(R.string.region_label)}: (${signal.location.x},${signal.location.y}) ${signal.location.width}×${signal.location.height}",
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
