@@ -38,13 +38,20 @@ import com.pramaanai.officer.data.model.ScreeningQueueItem
 import com.pramaanai.officer.data.model.ScreeningStatus
 import com.pramaanai.officer.ui.components.EmptyState
 import com.pramaanai.officer.ui.components.RiskBadge
+import androidx.compose.ui.res.stringResource
+import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private enum class StatusFilter(val label: String) { ALL("All"), PENDING("Pending"), CLEARED("Cleared"), DISPUTED("Disputed") }
+private enum class StatusFilter(val labelRes: Int) {
+    ALL(R.string.filter_all),
+    PENDING(R.string.filter_pending),
+    CLEARED(R.string.filter_cleared),
+    DISPUTED(R.string.filter_disputed),
+}
 
 @Composable
 fun HistoryScreen(repository: ScreeningRepository, padding: PaddingValues, onOpenScreening: (String) -> Unit) {
@@ -69,7 +76,7 @@ fun HistoryScreen(repository: ScreeningRepository, padding: PaddingValues, onOpe
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text("Search traveler, nationality, or screening ID") },
+            placeholder = { Text(stringResource(R.string.history_search_placeholder)) },
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -77,12 +84,12 @@ fun HistoryScreen(repository: ScreeningRepository, padding: PaddingValues, onOpe
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusFilter.entries.forEach { f ->
-                FilterChip(selected = statusFilter == f, onClick = { statusFilter = f }, label = { Text(f.label) })
+                FilterChip(selected = statusFilter == f, onClick = { statusFilter = f }, label = { Text(stringResource(f.labelRes)) })
             }
         }
         Spacer(Modifier.height(8.dp))
         if (filtered.isEmpty()) {
-            EmptyState("No results", "No screening history matches your search or filters.")
+            EmptyState(stringResource(R.string.history_empty_title), stringResource(R.string.history_empty_subtitle))
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(filtered, key = { it.id }) { item ->

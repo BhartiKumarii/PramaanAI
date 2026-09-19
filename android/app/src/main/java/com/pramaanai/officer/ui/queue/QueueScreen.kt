@@ -36,6 +36,8 @@ import com.pramaanai.officer.data.model.ScreeningQueueItem
 import com.pramaanai.officer.data.model.ScreeningStatus
 import com.pramaanai.officer.ui.components.EmptyState
 import com.pramaanai.officer.ui.components.RiskBadge
+import androidx.compose.ui.res.stringResource
+import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Gray600
@@ -43,11 +45,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private enum class QueueFilter(val label: String) {
-    ALL("All"),
-    HIGH_PRIORITY("High priority"),
-    PENDING("Pending"),
-    RECENT("Recently created"),
+private enum class QueueFilter(val labelRes: Int) {
+    ALL(R.string.filter_all),
+    HIGH_PRIORITY(R.string.filter_high_priority),
+    PENDING(R.string.filter_pending),
+    RECENT(R.string.filter_recently_created),
 }
 
 @Composable
@@ -74,11 +76,11 @@ fun QueueScreen(repository: ScreeningRepository, padding: PaddingValues, onOpenS
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             QueueFilter.entries.forEach { f ->
-                FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) })
+                FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(stringResource(f.labelRes)) })
             }
         }
         if (filtered.isEmpty()) {
-            EmptyState("No matching screenings", "Cases will appear here once submitted from a new screening.")
+            EmptyState(stringResource(R.string.queue_empty_title), stringResource(R.string.queue_empty_subtitle))
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
@@ -114,25 +116,25 @@ private fun QueueRow(item: ScreeningQueueItem, onClick: () -> Unit) {
             }
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(item.risk?.topReason ?: "Awaiting decision", style = MaterialTheme.typography.labelSmall, color = Gray500, modifier = Modifier.weight(1f))
-                Text(timeAgo(item.submittedAt), style = MaterialTheme.typography.labelSmall, color = Gray500)
+                Text(item.risk?.topReason ?: stringResource(R.string.queue_awaiting_decision), style = MaterialTheme.typography.labelSmall, color = Gray500, modifier = Modifier.weight(1f))
+                Text(timeAgo(item.submittedAt, androidx.compose.ui.platform.LocalContext.current.resources), style = MaterialTheme.typography.labelSmall, color = Gray500)
             }
             Spacer(Modifier.height(4.dp))
             // Built-in sample records (ids "mock-N") are synthetic — say so on the card,
             // not just in the id, so they are never mistaken for a real screening.
             val demoTag = if (item.id.startsWith("mock-")) " · DEMO DATA (synthetic)" else ""
-            Text("Status: ${item.status.name} · ID ${item.id.take(8)}$demoTag", style = MaterialTheme.typography.labelSmall, color = Gray500)
+            Text("${stringResource(R.string.queue_status_prefix)}${item.status.name} · ID ${item.id.take(8)}$demoTag", style = MaterialTheme.typography.labelSmall, color = Gray500)
         }
     }
 }
 
-private fun timeAgo(timestamp: Long): String {
+private fun timeAgo(timestamp: Long, res: android.content.res.Resources): String {
     val diffMs = System.currentTimeMillis() - timestamp
     val minutes = diffMs / (60 * 1000)
     return when {
-        minutes < 1 -> "just now"
-        minutes < 60 -> "${minutes}m ago"
-        minutes < 60 * 24 -> "${minutes / 60}h ago"
+        minutes < 1 -> res.getString(R.string.time_just_now)
+        minutes < 60 -> res.getString(R.string.time_minutes_ago, minutes.toInt())
+        minutes < 60 * 24 -> res.getString(R.string.time_hours_ago, (minutes / 60).toInt())
         else -> SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(timestamp))
     }
 }

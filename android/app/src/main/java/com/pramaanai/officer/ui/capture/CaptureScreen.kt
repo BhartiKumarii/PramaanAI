@@ -57,6 +57,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -103,10 +104,10 @@ import kotlin.random.Random
 @Composable
 fun QualityIndicatorsRow(metrics: OpenCVManager.QualityMetrics) {
     val indicators = listOf(
-        QualityIndicator("Blur", metrics.blurScore, 0.7f),
-        QualityIndicator("Glare", 1f - metrics.glareScore, 0.7f),
-        QualityIndicator("Lighting", metrics.lightingScore, 0.6f),
-        QualityIndicator("Shadows", 1f - metrics.shadowScore, 0.6f),
+        QualityIndicator(stringResource(R.string.quality_blur), metrics.blurScore, 0.7f),
+        QualityIndicator(stringResource(R.string.quality_glare), 1f - metrics.glareScore, 0.7f),
+        QualityIndicator(stringResource(R.string.quality_lighting), metrics.lightingScore, 0.6f),
+        QualityIndicator(stringResource(R.string.quality_shadows), 1f - metrics.shadowScore, 0.6f),
     )
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -245,13 +246,8 @@ fun analyzeFrame(
             frameColor = if (isAligned) 0xFF00FF00.toInt() else 0xFFFF0000.toInt(),
         )
 
-        if (isAligned && result.correctedBitmap != null) {
-            // Copy the corrected bitmap before recycling the source —
-            // Bitmap.createBitmap(src, x, y, w, h) may share pixel data
-            // with the source on some Android versions.
-            val safeCopy = result.correctedBitmap!!.copy(Bitmap.Config.ARGB_8888, false)
+        if (result.correctedBitmap != null) {
             result.correctedBitmap!!.recycle()
-            onAutoCapture(safeCopy)
         }
         return newState
     } catch (e: Exception) {
@@ -436,12 +432,12 @@ fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDocumentOverlay(
     }
 }
 
-private val LIVENESS_PROMPTS = listOf(
-    "Turn your head slowly to the left",
-    "Turn your head slowly to the right",
-    "Blink twice",
-    "Nod your head once",
-    "Look directly at the camera and hold still",
+private val LIVENESS_PROMPT_IDS = listOf(
+    R.string.liveness_turn_left,
+    R.string.liveness_turn_right,
+    R.string.liveness_blink,
+    R.string.liveness_nod,
+    R.string.liveness_hold_still,
 )
 
 enum class CaptureStep { DOCUMENT_FRONT, DOCUMENT_BACK, SELFIE, EXTRACTING, REVIEW_FIELDS, SUBMITTING, ERROR }
@@ -507,7 +503,8 @@ fun CaptureScreen(
     var selfieFile by remember { mutableStateOf<File?>(null) }
     var correctedDocumentFrontBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var correctedDocumentBackBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    val livenessPrompt = remember(step) { LIVENESS_PROMPTS[Random.nextInt(LIVENESS_PROMPTS.size)] }
+    val livenessPromptId = remember(step) { LIVENESS_PROMPT_IDS[Random.nextInt(LIVENESS_PROMPT_IDS.size)] }
+    var selfieLensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_FRONT) }
 
     val previewState = remember { mutableStateOf(DocumentPreviewState()) }
 
@@ -735,14 +732,14 @@ fun CaptureScreen(
                 Spacer(Modifier.height(64.dp))
                 CircularProgressIndicator()
                 Spacer(Modifier.height(16.dp))
-                Text("Reading document on-device (OCR + MRZ + face signature)…", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.ocr_processing), style = MaterialTheme.typography.bodyMedium)
                 return@Column
             }
 
             if (step == CaptureStep.REVIEW_FIELDS) {
-                Text("Step 3 — Review what was read", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.review_step_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Nothing is typed in by hand. These values were read from the document on this device.",
+                    stringResource(R.string.review_step_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = Gray600,
                 )
@@ -756,24 +753,23 @@ fun CaptureScreen(
                 ) {
                     // Document photos
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        PhotoTile("Document front", documentFrontFile?.path, Modifier.weight(1f), wholeImage = true)
-                        PhotoTile("Document back", documentBackFile?.path, Modifier.weight(1f), wholeImage = true)
-                        PhotoTile("Live capture", selfieFile?.path, Modifier.weight(1f))
+                        PhotoTile(stringResource(R.string.capture_label_front), documentFrontFile?.path, Modifier.weight(1f), wholeImage = true)
+                        PhotoTile(stringResource(R.string.capture_label_back), documentBackFile?.path, Modifier.weight(1f), wholeImage = true)
+                        PhotoTile(stringResource(R.string.capture_label_live), selfieFile?.path, Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(12.dp))
                     ConfidenceTag(confidence = extractionConfidence.toDouble())
                     Spacer(Modifier.height(4.dp))
-                    ExtractedFieldRow("Full name", fields.name)
-                    ExtractedFieldRow("Document number", fields.passportNumber)
-                    ExtractedFieldRow("Nationality", fields.nationality)
-                    ExtractedFieldRow("Date of birth", fields.dateOfBirth)
-                    ExtractedFieldRow("Gender", fields.gender)
-                    ExtractedFieldRow("Date of expiry", fields.dateOfExpiry)
+                    ExtractedFieldRow(stringResource(R.string.field_full_name), fields.name)
+                    ExtractedFieldRow(stringResource(R.string.field_document_number), fields.passportNumber)
+                    ExtractedFieldRow(stringResource(R.string.field_nationality), fields.nationality)
+                    ExtractedFieldRow(stringResource(R.string.field_date_of_birth), fields.dateOfBirth)
+                    ExtractedFieldRow(stringResource(R.string.field_gender), fields.gender)
+                    ExtractedFieldRow(stringResource(R.string.field_date_of_expiry), fields.dateOfExpiry)
                     if (listOf(fields.name, fields.passportNumber, fields.nationality, fields.dateOfBirth, fields.dateOfExpiry).all { it.isBlank() }) {
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Nothing could be read from this photo. Rescan with the document's data page " +
-                                "filling the frame, flat and in good light.",
+                            stringResource(R.string.capture_nothing_read),
                             style = MaterialTheme.typography.bodySmall,
                             color = WarningAmber,
                             modifier = Modifier
@@ -784,8 +780,7 @@ fun CaptureScreen(
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "Verifying checks these values against the registry and runs the document checks. " +
-                            "Anything that doesn't line up is flagged for your review.",
+                        stringResource(R.string.capture_verify_explanation),
                         style = MaterialTheme.typography.labelSmall,
                         color = Gray500,
                     )
@@ -821,17 +816,17 @@ fun CaptureScreen(
                 Spacer(Modifier.height(64.dp))
                 CircularProgressIndicator()
                 Spacer(Modifier.height(16.dp))
-                Text("Submitting to screening backend…", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.capture_submitting), style = MaterialTheme.typography.bodyMedium)
                 return@Column
             }
 
             if (step == CaptureStep.ERROR) {
                 Spacer(Modifier.height(64.dp))
-                Text("Screening submission failed", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.capture_submission_failed), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(errorMessage.orEmpty(), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(16.dp))
-                Button(onClick = { submit() }) { Text("Retry") }
+                Button(onClick = { submit() }) { Text(stringResource(R.string.capture_retry)) }
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(onClick = {
                     documentFrontFile = null
@@ -841,7 +836,7 @@ fun CaptureScreen(
                     correctedDocumentBackBitmap = null
                     fields = ExtractedFields()
                     step = CaptureStep.DOCUMENT_FRONT
-                }) { Text("Start over") }
+                }) { Text(stringResource(R.string.start_over)) }
                 return@Column
             }
 
@@ -870,7 +865,7 @@ fun CaptureScreen(
                     Text(stringResource(R.string.capture_step_3_title), style = MaterialTheme.typography.titleMedium)
                     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                         Text(
-                            text = livenessPrompt,
+                            text = stringResource(livenessPromptId),
                             modifier = Modifier.padding(16.dp),
                             style = MaterialTheme.typography.headlineSmall,
                         )
@@ -892,31 +887,13 @@ fun CaptureScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                lensFacing = if (step == CaptureStep.SELFIE) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK,
+                lensFacing = if (step == CaptureStep.SELFIE) selfieLensFacing else CameraSelector.LENS_FACING_BACK,
                 onImageCaptureReady = { imageCapture = it },
                 onAnalysisReady = { imageAnalysis = it },
                 step = step,
                 previewState = previewState,
                 scanLineProgress = scanLineProgress,
-                onAutoCapture = { bitmap ->
-                    when (step) {
-                        CaptureStep.DOCUMENT_FRONT -> {
-                            correctedDocumentFrontBitmap = bitmap
-                            val outputFile = File(context.cacheDir, "document_front_photo.jpg")
-                            saveBitmapToFile(bitmap, outputFile)
-                            onImageReady(outputFile, "Auto-captured document front")
-                        }
-                        CaptureStep.DOCUMENT_BACK -> {
-                            correctedDocumentBackBitmap = bitmap
-                            val outputFile = File(context.cacheDir, "document_back_photo.jpg")
-                            saveBitmapToFile(bitmap, outputFile)
-                            onImageReady(outputFile, "Auto-captured document back")
-                        }
-                        else -> {
-                            // Selfies don't auto-capture
-                        }
-                    }
-                },
+                onAutoCapture = { /* manual capture only */ },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -950,55 +927,57 @@ fun CaptureScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (previewState.value.isAligned && (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK))
-                        MaterialTheme.colorScheme.primary
-                    else if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK)
-                        AccentGreen.copy(alpha = 0.8f)
+                    containerColor = if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK)
+                        AccentGreen
                     else
                         MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = if (previewState.value.isAligned && (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK))
-                        MaterialTheme.colorScheme.onPrimary
-                    else if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK)
+                    contentColor = if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK)
                         BackgroundDark
                     else
                         MaterialTheme.colorScheme.onSurface,
                 ),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
             ) {
-                if ((step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK) && previewState.value.isAligned) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(Icons.Filled.FlashOn, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Auto-capturing…", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Filled.FlashOn,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK) BackgroundDark else MaterialTheme.colorScheme.onSurface,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            when (step) {
-                                CaptureStep.DOCUMENT_FRONT -> "Capture document front"
-                                CaptureStep.DOCUMENT_BACK -> "Capture document back"
-                                CaptureStep.SELFIE -> "Capture selfie"
-                                else -> "Capture"
-                            },
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Filled.FlashOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK) BackgroundDark else MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        when (step) {
+                            CaptureStep.DOCUMENT_FRONT -> stringResource(R.string.capture_document_front)
+                            CaptureStep.DOCUMENT_BACK -> stringResource(R.string.capture_document_back)
+                            CaptureStep.SELFIE -> stringResource(R.string.capture_selfie)
+                            else -> stringResource(R.string.capture_generic)
+                        },
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+
+            if (step == CaptureStep.SELFIE) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        selfieLensFacing = if (selfieLensFacing == CameraSelector.LENS_FACING_FRONT)
+                            CameraSelector.LENS_FACING_BACK
+                        else
+                            CameraSelector.LENS_FACING_FRONT
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                ) {
+                    Text(stringResource(R.string.capture_flip_camera))
                 }
             }
 
@@ -1020,10 +999,10 @@ fun CaptureScreen(
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
             ) {
                 Text(when (step) {
-                    CaptureStep.DOCUMENT_FRONT -> "Upload document front instead"
-                    CaptureStep.DOCUMENT_BACK -> "Upload document back instead"
-                    CaptureStep.SELFIE -> "Upload selfie photo instead"
-                    else -> "Upload photo instead"
+                    CaptureStep.DOCUMENT_FRONT -> stringResource(R.string.upload_document_front)
+                    CaptureStep.DOCUMENT_BACK -> stringResource(R.string.upload_document_back)
+                    CaptureStep.SELFIE -> stringResource(R.string.upload_selfie)
+                    else -> stringResource(R.string.upload_generic)
                 })
             }
             Spacer(Modifier.height(16.dp))

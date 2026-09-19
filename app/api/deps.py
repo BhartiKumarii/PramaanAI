@@ -8,17 +8,21 @@ from app.services.blockchain.base import BlockchainService
 from app.services.blockchain.local_hash_chain import LocalHashChainBlockchainService
 from app.services.deepfake.base import DeepfakeProvider
 from app.services.deepfake.heuristic_provider import HeuristicDeepfakeProvider
+from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
 from app.services.face.base import FaceDetector, FaceProvider
 from app.services.face.classical_provider import ClassicalFaceProvider
+from app.services.face.enhanced_provider import EnhancedFaceProvider, EnhancedFaceDetector
 from app.services.face.yunet_detector import YuNetFaceDetector
 from app.services.liveness.base import LivenessProvider
 from app.services.liveness.heuristic_provider import HeuristicLivenessProvider
+from app.services.liveness.advanced_provider import AdvancedLivenessProvider
 from app.services.ocr.base import OCRProvider
 from app.services.ocr.tesseract_provider import TesseractOCRProvider
 from app.services.risk.base import RiskEngine
 from app.services.risk.engine import DefaultRiskEngine
 from app.services.tampering.base import TamperingProvider
 from app.services.tampering.pillow_provider import ELATamperingProvider
+from app.services.tampering.forensics_provider import ComprehensiveForensicsProvider
 from app.services.validation.base import ValidationEngine
 from app.services.validation.engine import DefaultValidationEngine
 
@@ -35,17 +39,17 @@ def get_validation_engine() -> ValidationEngine:
 
 @lru_cache
 def get_tampering_provider() -> TamperingProvider:
-    return ELATamperingProvider()
+    return ComprehensiveForensicsProvider()
 
 
 @lru_cache
 def get_face_provider() -> FaceProvider:
-    return ClassicalFaceProvider()
+    return EnhancedFaceProvider()
 
 
 @lru_cache
 def get_face_detector() -> FaceDetector:
-    return YuNetFaceDetector()
+    return EnhancedFaceDetector()
 
 
 @lru_cache
@@ -55,12 +59,12 @@ def get_risk_engine() -> RiskEngine:
 
 @lru_cache
 def get_deepfake_provider() -> DeepfakeProvider:
-    return HeuristicDeepfakeProvider()
+    return AdvancedDeepfakeProvider()
 
 
 @lru_cache
 def get_liveness_provider() -> LivenessProvider:
-    return HeuristicLivenessProvider()
+    return AdvancedLivenessProvider()
 
 
 def get_blockchain_service(db: Session = Depends(get_db)) -> BlockchainService:

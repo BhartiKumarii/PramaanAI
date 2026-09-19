@@ -13,9 +13,17 @@
     <string name="common_finish">সম্পূৰ্ণ কৰক</string>
     <string name="common_sign_in">ছাইন ইন কৰক</string>
     <string name="common_clear">ক্লিয়াৰ কৰক</string>
+    <string name="common_secondary_review">দ্বিতীয় পৰ্যালোচনা</string>
+    <string name="common_hold_refer">ধৰি ৰাখক/ৰেফাৰ কৰক</string>
     <string name="common_flag_review">ফ্লেগ কৰক / অধিক পৰ্যালোচনা</string>
     <string name="common_log_out">লগ আউট</string>
     <string name="common_cancel">বাতিল কৰক</string>
+    <string name="common_checkpoint">চেকপইণ্ট</string>
+    <string name="common_loading_checkpoints">চেকপইণ্ট লোড হৈ আছে…</string>
+    <string name="common_select_checkpoint">চেকপইণ্ট বাছক</string>
+    <string name="common_show_password">পাছৱৰ্ড দেখুৱাওক</string>
+    <string name="common_hide_password">পাছৱৰ্ড লুকাওক</string>
+    <string name="auth_failed_message">প্ৰমাণীকৰণ বিফল — অফিচাৰ আইডি আৰু পাছৱৰ্ড পৰীক্ষা কৰক আৰু বেকেণ্ডত সংযোগ হৈছে নে নিশ্চিত কৰক।</string>
 
     <string name="system_operational">চিষ্টেম স্বাভাৱিকভাৱে চলি আছে</string>
 
@@ -58,22 +66,392 @@
     <string name="step_complete">সম্পূৰ্ণ</string>
 
     <!-- New Screening Screen -->
-    <string name="new_screening_title">নতুন ス크িনিং</string>
+    <string name="new_screening_title">নতুন স্ক্ৰীনিং</string>
     <string name="new_screening_subtitle">নথি সত্যাপন বাবে যাত্ৰীৰ বিবৰণ লিখক</string>
-    <string name="checkpoint_label">চেকপয়েন্ট</string>
+    <string name="checkpoint_label">চেকপইণ্ট</string>
     <string name="traveler_name">যাত্ৰীৰ নাম</string>
     <string name="document_type_label">নথিৰ ধৰণ</string>
     <string name="document_number_label">নথি নম্বৰ</string>
     <string name="dob_label">জন্ম তারিখ (DD/MM/YYYY)</string>
-    <string name="expiry_label">মিযদ সমাপ্তিৰ তারিখ (DD/MM/YYYY)</string>
+    <string name="expiry_label">ম্যাদ সমাপ্তিৰ তারিখ (DD/MM/YYYY)</string>
     <string name="nationality_label">জাতীয়তা</string>
-    <string name="continue_to_capture">ক্যাপচাৰ বাবে অগ্ৰসৰ কৰক</string>
-    <string name="required_fields_note">* প্ৰয়োজনীয় ফিল্ড চেকপয়েন্ট অনুযায়ী পৰিবৰ্তন কৰে</string>
+    <string name="continue_to_capture">কেপচাৰ বাবে অগ্ৰসৰ কৰক</string>
+    <string name="required_fields_note">* প্ৰয়োজনীয় ফিল্ড চেকপইণ্ট অনুযায়ী পৰিবৰ্তন হয়</string>
 
     <!-- Error messages -->
-    <string name="error_traveler_name_required">যাত্ৰীৰ নাম প্ৰয়োজন</string>
-    <string name="error_document_number_required">ইয়াল চেকপয়েন্ট বাবে নথি নম্বৰ প্ৰয়োজন</string>
-    <string name="error_dob_required">ইয়াল চেকপয়েন্ট বাবে জন্ম তারিখ প্ৰয়োজন</string>
-    <string name="error_expiry_required">ইয়াল চেকপয়েন্ট বাবে মিযদ সমাপ্তিৰ তারিখ প্ৰয়োজন</string>
-    <string name="error_nationality_required">জাতীয়তা প্ৰয়োজন</string>
+    <string name="error_traveler_name_required">যাত্ৰীৰ নাম প্ৰয়োজন</string>
+    <string name="error_document_number_required">ইয়াত চেকপইণ্ট বাবে নথি নম্বৰ প্ৰয়োজন</string>
+    <string name="error_dob_required">ইয়াত চেকপইণ্ট বাবে জন্ম তারিখ প্ৰয়োজন</string>
+    <string name="error_expiry_required">ইয়াত চেকপইণ্ট বাবে ম্যাদ সমাপ্তিৰ তারিখ প্ৰয়োজন</string>
+    <string name="error_nationality_required">জাতীয়তা প্ৰয়োজন</string>
+
+    <!-- Identity Network Graph -->
+    <string name="identity_network_title">পৰিচয় নেটৱৰ্ক</string>
+    <string name="identity_network_entities">%d সত্তা</string>
+    <string name="graph_legend_person">ব্যক্তি</string>
+    <string name="graph_legend_person_new">নতুন মুখ</string>
+    <string name="graph_legend_person_verified">সত্যাপিত মিল</string>
+    <string name="graph_legend_person_partial">আংশিক মিল</string>
+    <string name="graph_legend_checkpoint">চেকপইণ্ট</string>
+    <string name="graph_legend_document">নথি</string>
+    <string name="graph_legend_vehicle">বাহন</string>
+    <string name="graph_legend_travel_event">ভ্ৰমণ ঘটনা</string>
+
+    <!-- Language Selection -->
+    <string name="language_system">চিষ্টেম ডিফল্ট</string>
+
+    <!-- Screen Titles -->
+    <string name="title_capture">কেপচাৰ</string>
+    <string name="title_officer_profile">অফিচাৰ প্ৰফাইল</string>
+    <string name="title_analytics">বিশ্লেষণ</string>
+
+    <!-- Camera and Permissions -->
+    <string name="camera_permission_required">নথি আৰু লাইভ চেলফি কেপচাৰ কৰিবলৈ কেমেৰা অনুমতি প্ৰয়োজন।</string>
+    <string name="grant_camera_permission">কেমেৰা অনুমতি দিয়ক</string>
+
+    <!-- Capture Process -->
+    <string name="ocr_processing">ডিভাইচত নথি পঢ়ি আছে (OCR + MRZ + মুখ স্বাক্ষৰ)…</string>
+    <string name="review_step_title">পদক্ষেপ ৩ — পঢ়া তথ্য পৰ্যালোচনা কৰক</string>
+    <string name="button_rescan">পুনৰ স্কেন কৰক</string>
+    <string name="button_verify_registry">ৰেজিষ্ট্ৰিৰ বিপৰীতে সত্যাপন কৰক</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_no_connection_queued">সংযোগ নাই — শাৰীবদ্ধ, স্বয়ংক্ৰিয়ভাৱে ছিঙ্ক হ\'ব</string>
+    <string name="toast_using_label">ব্যৱহাৰ: %s</string>
+    <string name="toast_upload_failed">আপলোড বিফল: %s</string>
+
+    <!-- Profile Screen -->
+    <string name="no_activity_recorded">এতিয়ালৈকে কোনো কাৰ্যকলাপ ৰেকৰ্ড কৰা হোৱা নাই।</string>
+    <string name="button_log_out">লগ আউট</string>
+
+    <!-- Traveler Profile -->
+    <string name="no_risk_assessment">ফাইলত কোনো বিপদ মূল্যায়ন নাই।</string>
+    <string name="no_officer_notes">কোনো অফিচাৰ টোকা ৰেকৰ্ড কৰা হোৱা নাই।</string>
+    <string name="screening_history_title">স্ক্ৰীনিং ইতিহাস</string>
+
+    <!-- Session Timeout -->
+    <string name="session_expiring_title">চেশ্বন শেষ হৈ আছে</string>
+    <string name="session_timeout_message">আপুনি নিষ্ক্ৰিয় আছিল। সুৰক্ষাৰ বাবে, এই চেশ্বন স্বয়ংক্ৰিয়ভাৱে শেষ হ\'ব।</string>
+    <string name="signing_out_countdown">%d ছেকেণ্ডত ছাইন আউট হৈ আছে</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_total_screenings">মুঠ স্ক্ৰীনিং</string>
+    <string name="dashboard_screenings_today">আজিৰ স্ক্ৰীনিং</string>
+    <string name="dashboard_screening_activity">স্ক্ৰীনিং কাৰ্যকলাপ</string>
+    <string name="dashboard_recent_screenings">শেহতীয়া স্ক্ৰীনিং</string>
+    <string name="dashboard_new_screening">নতুন স্ক্ৰীনিং</string>
+    <string name="dashboard_no_screenings">এতিয়ালৈকে কোনো স্ক্ৰীনিং নাই।</string>
+    <string name="dashboard_view_queue">স্ক্ৰীনিং শাৰী চাওক</string>
+    <string name="dashboard_total_risk_assessments">%d মুঠ বিপদ মূল্যায়ন</string>
+    <string name="dashboard_low_risk">কম বিপদ</string>
+    <string name="dashboard_medium_risk">মধ্যম বিপদ</string>
+    <string name="dashboard_high_risk">উচ্চ বিপদ</string>
+
+    <!-- Capture Process Steps -->
+    <string name="capture_step_1_title">পদক্ষেপ ১/৩ — নথিৰ সন্মুখ</string>
+    <string name="capture_step_1_desc">ফ্ৰেমত আপোনাৰ নথিৰ সন্মুখ অংশ থাপক আৰু কেপচাৰ টেপ কৰক।</string>
+    <string name="capture_step_2_title">পদক্ষেপ ২/৩ — নথিৰ পিছফাল</string>
+    <string name="capture_step_2_desc">এতিয়া আপোনাৰ নথিৰ পিছফাল কেপচাৰ কৰক। সাজু হ\'লে কেপচাৰ টেপ কৰক।</string>
+    <string name="capture_step_3_title">পদক্ষেপ ৩/৩ — লাইভ চেলফি</string>
+    <string name="capture_document_front">নথিৰ সন্মুখ কেপচাৰ কৰক</string>
+    <string name="capture_document_back">নথিৰ পিছফাল কেপচাৰ কৰক</string>
+    <string name="capture_selfie">চেলফি কেপচাৰ কৰক</string>
+    <string name="upload_document_front">তাৰ সলনি নথিৰ সন্মুখ আপলোড কৰক</string>
+    <string name="upload_document_back">তাৰ সলনি নথিৰ পিছফাল আপলোড কৰক</string>
+    <string name="upload_selfie">তাৰ সলনি চেলফি ফটো আপলোড কৰক</string>
+    <string name="auto_capturing">স্বয়ংক্ৰিয়ভাৱে কেপচাৰ হৈ আছে…</string>
+    <string name="capture_flip_camera">কেমেৰা সলনি কৰক</string>
+    <string name="start_over">আৰম্ভৰ পৰা কৰক</string>
+
+    <!-- Priority and Status -->
+    <string name="priority_high">উচ্চ অগ্ৰাধিকাৰ</string>
+    <string name="priority_medium">মধ্যম অগ্ৰাধিকাৰ</string>
+    <string name="priority_low">কম অগ্ৰাধিকাৰ</string>
+    <string name="status_pending">বিচাৰাধীন</string>
+    <string name="status_recently_created">শেহতীয়াকৈ সৃষ্টি কৰা</string>
+    <string name="status_completed">সম্পূৰ্ণ</string>
+    <string name="status_in_review">পৰ্যালোচনাধীন</string>
+
+    <!-- Document Types -->
+    <string name="document_passport">পাছপ\'ৰ্ট</string>
+    <string name="document_national_id">জাতীয় পৰিচয়পত্ৰ</string>
+    <string name="document_driving_license">ড্ৰাইভিং লাইচেন্স</string>
+    <string name="document_aadhaar">আধাৰ কাৰ্ড</string>
+    <string name="document_pan_card">পেন কাৰ্ড</string>
+    <string name="document_voter_id">ভোটাৰ আইডি</string>
+
+    <!-- Signal Breakdown and Reasons -->
+    <string name="signal_breakdown_title">চিগনেল বিশ্লেষণ</string>
+    <string name="registry_hits_title">ৰেজিষ্ট্ৰি হিট</string>
+    <string name="audit_history_title">অডিট ইতিহাস</string>
+    <string name="top_reason">প্ৰধান কাৰণ</string>
+    <string name="extracted_names">নিষ্কাশিত নাম</string>
+
+    <!-- Validation Reasons -->
+    <string name="reason_checksum_failed">নথি চেকচাম সত্যাপন বিফল</string>
+    <string name="reason_dob_mismatch">ৰেজিষ্ট্ৰিৰ সৈতে জন্ম তারিখ নিমিলে</string>
+    <string name="reason_multiple_identity">একাধিক পৰিচয় ক্লাষ্টাৰ চিনাক্ত</string>
+    <string name="reason_face_mismatch">মুখ নথিৰ ফটোৰ সৈতে নিমিলে</string>
+    <string name="reason_document_expired">নথিৰ ম্যাদ শেষ হৈছে</string>
+    <string name="reason_registry_hit">ৱাচলিষ্ট ৰেজিষ্ট্ৰিত পোৱা গৈছে</string>
+    <string name="reason_mrz_invalid">MRZ সত্যাপন বিফল</string>
+    <string name="reason_tampering_detected">নথিত কাৰচাজি চিনাক্ত</string>
+
+    <!-- Review Screen -->
+    <string name="title_screening_review">স্ক্ৰীনিং পৰ্যালোচনা</string>
+    <string name="no_audit_trail">এই ৰেকৰ্ডৰ বাবে এতিয়ালৈকে কোনো বেকেণ্ড অডিট ট্ৰেইল নাই।</string>
+    <string name="loading_text">লোড হৈ আছে…</string>
+    <string name="captured_document">কেপচাৰ কৰা নথি</string>
+
+    <!-- Tour and Practice -->
+    <string name="title_practice_screening">অনুশীলন স্ক্ৰীনিং</string>
+    <string name="button_back">পিছলৈ</string>
+    <string name="button_next">পৰৱৰ্তী</string>
+    <string name="button_flag">ফ্লেগ কৰক</string>
+    <string name="finish_practice">অনুশীলন শেষ কৰক</string>
+    <string name="skip_tour">ভ্ৰমণ এৰি যাওক</string>
+    <string name="scan_document_prompt">আৰম্ভ কৰিবলৈ এখন নথি স্কেন কৰক</string>
+
+    <!-- Audit Log -->
+    <string name="title_audit_log">অডিট লগ</string>
+
+    <!-- ReasonDialog -->
+    <string name="secondary_review_intro">এই কেচক অতিৰিক্ত পৰ্যালোচনাৰ প্ৰয়োজন। তলৰ কাৰণসমূহ সংযুক্ত কৰা হ\'ব।</string>
+    <string name="hold_refer_intro">এই যাত্ৰীক অধিক তদন্তৰ বাবে ধৰি ৰাখিব বা ৰেফাৰ কৰিব লাগিব। তলৰ কাৰণসমূহ সংযুক্ত কৰা হ\'ব।</string>
+
+    <!-- Workflow Result Screen -->
+    <string name="clear_screening_title">এই স্ক্ৰীনিং ক্লিয়াৰ কৰক</string>
+    <string name="clear_screening_message">এই যাত্ৰীক আগবাঢ়িবলৈ অনুমতি দিয়া হৈছে। এই সিদ্ধান্ত লগ কৰা হ\'ব আৰু পিছত সলনি কৰিব নোৱাৰি।</string>
+    <string name="secondary_review_title">দ্বিতীয় পৰ্যালোচনা প্ৰয়োজন</string>
+    <string name="send_secondary_review">দ্বিতীয় পৰ্যালোচনাৰ বাবে পঠিয়াওক</string>
+    <string name="hold_refer_title">ধৰি ৰাখক / ৰেফাৰ কৰক</string>
+    <string name="back_to_queue">শাৰীলৈ উভতি যাওক</string>
+
+    <!-- Technical Display Terms -->
+    <string name="weight_label">ওজন</string>
+    <string name="contribution_label">অৱদান</string>
+    <string name="region_label">অঞ্চল</string>
+    <string name="not_implemented">কাৰ্যকৰী কৰা হোৱা নাই</string>
+
+    <!-- Signal Names -->
+    <string name="signal_checksum">চেকচাম সত্যাপন</string>
+    <string name="signal_face_match">মুখ মিলান</string>
+    <string name="signal_forensics">ফৰেন্সিক বিশ্লেষণ</string>
+    <string name="signal_blacklist">ৱাচলিষ্ট পৰীক্ষা</string>
+    <string name="signal_identity_graph">পৰিচয় গ্ৰাফ বিশ্লেষণ</string>
+    <string name="signal_mrz">MRZ সত্যাপন</string>
+    <string name="signal_tampering">কাৰচাজি চিনাক্তকৰণ</string>
+
+    <!-- Decision Types -->
+    <string name="decision_clear">ক্লিয়াৰ</string>
+    <string name="decision_secondary_review">দ্বিতীয় পৰ্যালোচনা</string>
+    <string name="decision_hold_refer">ধৰি ৰাখক/ৰেফাৰ</string>
+    <string name="decision_review_required">পৰ্যালোচনা প্ৰয়োজন</string>
+
+    <!-- Dashboard extras -->
+    <string name="dashboard_high_risk_cases">উচ্চ বিপদৰ কেচ</string>
+    <string name="dashboard_pending_reviews">বিচাৰাধীন পৰ্যালোচনা</string>
+    <string name="dashboard_documents_scanned">স্কেন কৰা নথি</string>
+    <string name="dashboard_needs_attention">মনোযোগ প্ৰয়োজন</string>
+    <string name="dashboard_risk_overview">বিপদ সাৰাংশ</string>
+    <string name="dashboard_more_section">অধিক</string>
+    <string name="dashboard_view_history">ইতিহাস চাওক</string>
+    <string name="dashboard_view_analytics">বিশ্লেষণ চাওক</string>
+    <string name="chart_today">আজি</string>
+    <string name="chart_weekly">সাপ্তাহিক</string>
+    <string name="chart_monthly">মাহিলী</string>
+
+    <!-- Queue extras -->
+    <string name="filter_all">সকলো</string>
+    <string name="filter_high_priority">উচ্চ অগ্ৰাধিকাৰ</string>
+    <string name="filter_pending">বিচাৰাধীন</string>
+    <string name="filter_recently_created">শেহতীয়াকৈ সৃষ্টি কৰা</string>
+    <string name="filter_cleared">ক্লিয়াৰ কৰা</string>
+    <string name="filter_disputed">বিতৰ্কিত</string>
+    <string name="queue_empty_title">কোনো স্ক্ৰীনিং মিলা নাই</string>
+    <string name="queue_empty_subtitle">নতুন স্ক্ৰীনিং জমা দিলে কেচসমূহ ইয়াত দেখা যাব।</string>
+    <string name="queue_awaiting_decision">সিদ্ধান্তৰ অপেক্ষাত</string>
+    <string name="queue_status_prefix">অৱস্থা: </string>
+    <string name="time_just_now">এইমাত্ৰ</string>
+    <string name="time_minutes_ago">%d মিনিট আগতে</string>
+    <string name="time_hours_ago">%d ঘণ্টা আগতে</string>
+
+    <!-- History extras -->
+    <string name="history_search_placeholder">যাত্ৰী, জাতীয়তা, বা স্ক্ৰীনিং আইডি সন্ধান কৰক</string>
+    <string name="history_empty_title">কোনো ফলাফল নাই</string>
+    <string name="history_empty_subtitle">আপোনাৰ সন্ধান বা ফিল্টাৰৰ সৈতে কোনো স্ক্ৰীনিং ইতিহাস মিলা নাই।</string>
+
+    <!-- Alerts extras -->
+    <string name="alerts_empty_title">কোনো সক্ৰিয় সতৰ্কবাণী নাই</string>
+    <string name="alerts_empty_subtitle">অফিচাৰৰ মনোযোগ প্ৰয়োজন কেচসমূহ ইয়াত দেখা যাব।</string>
+    <string name="alert_document_review">নথি পৰ্যালোচনা প্ৰয়োজন</string>
+    <string name="alert_risk_review">বিপদ মূল্যায়ন পৰ্যালোচনা প্ৰয়োজন</string>
+    <string name="alert_duplicate">ডুপ্লিকেট ৰেকৰ্ড</string>
+    <string name="alert_incomplete">অসম্পূৰ্ণ তথ্য</string>
+    <string name="alert_verification">সত্যাপন প্ৰয়োজন</string>
+
+    <!-- More menu -->
+    <string name="more_analytics">বিশ্লেষণ</string>
+    <string name="more_audit_log">অডিট লগ</string>
+    <string name="more_officer_profile">অফিচাৰ প্ৰফাইল</string>
+    <string name="more_settings">ছেটিংছ</string>
+    <string name="more_logout">লগআউট</string>
+
+    <!-- Settings extras -->
+    <string name="settings_account">একাউণ্ট ছেটিংছ</string>
+    <string name="settings_officer_id">অফিচাৰ আইডি</string>
+    <string name="settings_role">ভূমিকা</string>
+    <string name="settings_checkpoint_label">চেকপইণ্ট</string>
+    <string name="settings_notifications">জাননী ছেটিংছ</string>
+    <string name="settings_push_notifications">নতুন সতৰ্কবাণীৰ বাবে পুশ্ব জাননী</string>
+    <string name="settings_high_risk_only">কেৱল উচ্চ-বিপদ কেচত জাননী দিয়ক</string>
+    <string name="settings_local_only_notice">কেৱল এই ডিভাইচত সংৰক্ষিত — এই বিল্ডত বেকেণ্ডলৈ ছিঙ্ক নহয়।</string>
+    <string name="settings_risk_config">স্ক্ৰীনিং নিয়ম আৰু বিপদ কনফিগাৰেশ্বন</string>
+    <string name="settings_risk_signals_desc">বিপদ স্কোৰত মিশ্ৰিত চিগনেল: নথি চেকচাম/MRZ সত্যাপন, ফৰেন্সিক (ELA), ডীপফেক হিউৰিষ্টিক, ব্লেকলিষ্ট/ৰেজিষ্ট্ৰি লুকআপ, মুখ মিলান, পৰিচয় গ্ৰাফ আৰু লাইভনেছ হিউৰিষ্টিক।</string>
+    <string name="settings_risk_weights_desc">ওজন আৰু থ্ৰেশ্বহোল্ড চাৰ্ভাৰ-চাইডত স্কোৰিং ইঞ্জিনে কনফিগাৰ আৰু প্ৰয়োগ কৰে — এই এপে সেইবোৰ পঢ়িব বা ছেট কৰিব নোৱাৰে।</string>
+    <string name="settings_document">নথি ছেটিংছ</string>
+    <string name="settings_accepted_types">গ্ৰহণযোগ্য নথিৰ ধৰণ</string>
+    <string name="settings_accepted_types_value">পাছপ\'ৰ্ট, জাতীয় আইডি, ভিছা</string>
+    <string name="settings_cross_validation">সন্মুখ/পিছফাল ক্ৰছ-ভেলিডেশ্বন</string>
+    <string name="settings_enabled">সক্ৰিয়</string>
+    <string name="settings_system_prefs">চিষ্টেম পছন্দ</string>
+    <string name="settings_theme">থিম</string>
+    <string name="settings_theme_value">চিষ্টেম লাইট/ডাৰ্ক ছেটিং অনুসৰণ কৰে</string>
+    <string name="settings_backend">বেকেণ্ড</string>
+    <string name="settings_selected">বাছনি কৰা</string>
+    <string name="settings_select">বাছক</string>
+
+    <!-- Officer Profile extras -->
+    <string name="profile_field_officer">ফিল্ড অফিচাৰ</string>
+    <string name="profile_personal_info">ব্যক্তিগত তথ্য</string>
+    <string name="profile_officer_id">অফিচাৰ আইডি</string>
+    <string name="profile_role">ভূমিকা</string>
+    <string name="profile_checkpoint">চেকপইণ্ট</string>
+    <string name="profile_account_status">একাউণ্টৰ অৱস্থা</string>
+    <string name="profile_active">সক্ৰিয়</string>
+    <string name="profile_security">সুৰক্ষা</string>
+    <string name="profile_secure_session">সুৰক্ষিত চেশ্বন</string>
+    <string name="profile_last_login">শেষ লগইন</string>
+    <string name="profile_session_token">চেশ্বন টোকেন</string>
+    <string name="profile_session_token_value">কেৱল এই এপ চেশ্বনৰ মেমৰিত ৰখা হয়</string>
+    <string name="profile_idle_timeout">নিষ্ক্ৰিয়তাৰ সময়সীমা</string>
+    <string name="profile_idle_timeout_value">৫ মিনিট নিষ্ক্ৰিয়তাত সতৰ্কবাণী, ৩০ ছেকেণ্ড পাছত ছাইন আউট</string>
+    <string name="profile_failed_logins">বিফল লগইন প্ৰচেষ্টা</string>
+    <string name="profile_failed_logins_value">%d ৰেকৰ্ড কৰা হৈছে</string>
+    <string name="profile_account_settings">একাউণ্ট ছেটিংছ</string>
+    <string name="profile_account_settings_desc">ভাষা, জাননী আৰু চিষ্টেম পছন্দ</string>
+    <string name="profile_activity">কাৰ্যকলাপ</string>
+
+    <!-- Audit Log extras -->
+    <string name="audit_empty_title">এতিয়ালৈকে কোনো অডিট এণ্ট্ৰি নাই</string>
+    <string name="audit_empty_subtitle">অফিচাৰ লগইন, স্ক্ৰীনিং আৰু সিদ্ধান্ত ইয়াত ৰেকৰ্ড কৰা হ\'ব।</string>
+    <string name="audit_officer_prefix">অফিচাৰ: </string>
+
+    <!-- Analytics extras -->
+    <string name="analytics_volume">পৰিমাণ</string>
+    <string name="analytics_total_screenings">মুঠ স্ক্ৰীনিং</string>
+    <string name="analytics_this_period">এই সময়কালত</string>
+    <string name="analytics_risk_distribution">বিপদ বিতৰণ</string>
+    <string name="analytics_low_risk">কম বিপদ</string>
+    <string name="analytics_medium_risk">মধ্যম বিপদ</string>
+    <string name="analytics_high_risk">উচ্চ বিপদ</string>
+    <string name="analytics_case_status">কেচৰ অৱস্থা</string>
+    <string name="analytics_pending_cases">বিচাৰাধীন কেচ</string>
+    <string name="analytics_completed_cases">সম্পূৰ্ণ কেচ</string>
+    <string name="analytics_review_rate">পৰ্যালোচনা হাৰ (বিতৰ্কিত / সিদ্ধান্ত)</string>
+    <string name="analytics_notes">টোকা</string>
+    <string name="analytics_notes_text">এই বিল্ডত গড় প্ৰক্ৰিয়াকৰণ সময় আৰু স্থান-মিলান পৰিসংখ্যা ট্ৰেক কৰা নহয় — সৎভাৱে গণনা কৰিবলৈ এতিয়াও কোনো আৰম্ভ/শেষ টাইমষ্টেম্প বা স্থান-মিলান চিগনেল নাই, সেয়ে অনুমান নকৰি বাদ দিয়া হৈছে।</string>
+
+    <!-- Capture extras -->
+    <string name="quality_blur">অস্পষ্ট</string>
+    <string name="quality_glare">জিলিকনি</string>
+    <string name="quality_lighting">পোহৰ</string>
+    <string name="quality_shadows">ছাঁ</string>
+    <string name="liveness_turn_left">লাহে লাহে মূৰ বাওঁফালে ঘূৰাওক</string>
+    <string name="liveness_turn_right">লাহে লাহে মূৰ সোঁফালে ঘূৰাওক</string>
+    <string name="liveness_blink">দুবাৰ চকু পিটপিটাওক</string>
+    <string name="liveness_nod">এবাৰ মূৰ দোঁৱাওক</string>
+    <string name="liveness_hold_still">পোনে কেমেৰালৈ চাওক আৰু স্থিৰ থাকক</string>
+    <string name="review_step_subtitle">হাতে একো টাইপ কৰা হোৱা নাই। এই মানসমূহ এই ডিভাইচত নথিৰ পৰা পঢ়া হৈছিল।</string>
+    <string name="capture_label_front">নথি সন্মুখ</string>
+    <string name="capture_label_back">নথি পিছফাল</string>
+    <string name="capture_label_live">লাইভ কেপচাৰ</string>
+    <string name="capture_label_document">নথিৰ ফটো</string>
+    <string name="field_full_name">সম্পূৰ্ণ নাম</string>
+    <string name="field_document_number">নথি নম্বৰ</string>
+    <string name="field_nationality">জাতীয়তা</string>
+    <string name="field_date_of_birth">জন্ম তারিখ</string>
+    <string name="field_gender">লিংগ</string>
+    <string name="field_date_of_expiry">ম্যাদ সমাপ্তিৰ তারিখ</string>
+    <string name="field_not_detected">চিনাক্ত হোৱা নাই</string>
+    <string name="capture_nothing_read">এই ফটোৰ পৰা একো পঢ়িব পৰা নগ\'ল। নথিৰ ডাটা পৃষ্ঠা ফ্ৰেমত সমতলভাৱে আৰু ভাল পোহৰত ৰাখি পুনৰ স্কেন কৰক।</string>
+    <string name="capture_verify_explanation">সত্যাপনে এই মানসমূহ ৰেজিষ্ট্ৰিৰ বিপৰীতে পৰীক্ষা কৰে আৰু নথি পৰীক্ষা চলায়। যি মিলা নাই সেয়া আপোনাৰ পৰ্যালোচনাৰ বাবে ফ্লেগ কৰা হয়।</string>
+    <string name="capture_submitting">স্ক্ৰীনিং বেকেণ্ডলৈ জমা দিয়া হৈ আছে…</string>
+    <string name="capture_submission_failed">স্ক্ৰীনিং জমা দিয়াত বিফল</string>
+    <string name="capture_retry">পুনৰ চেষ্টা কৰক</string>
+    <string name="capture_generic">কেপচাৰ</string>
+    <string name="upload_generic">তাৰ সলনি ফটো আপলোড কৰক</string>
+
+    <!-- Workflow / screening checks -->
+    <string name="step_info_extraction">তথ্য নিষ্কাশন</string>
+    <string name="extraction_no_ocr">এই ৰেকৰ্ডত কোনো OCR ফলাফল নাই।</string>
+    <string name="extraction_mrz">মেচিন-পঢ়নযোগ্য অঞ্চল</string>
+    <string name="extraction_disclaimer">এই ডিভাইচত নথিৰ পৰা পঢ়া হৈছে — ইয়াত একো হাতে টাইপ কৰা হোৱা নাই। ভুল পঢ়ন পৰৱৰ্তী পৰীক্ষাত অসঙ্গতি হিচাপে দেখা যাব।</string>
+    <string name="check_document_read">নথি পঢ়া হৈছে</string>
+    <string name="check_expiry">ম্যাদ</string>
+    <string name="check_document_validation">নথি সত্যাপন</string>
+    <string name="check_no_evidence">কোনো চেকচাম বা ক্ৰছ-চেক প্ৰমাণ পোৱা নগ\'ল</string>
+    <string name="check_citizen_registry">নাগৰিক ৰেজিষ্ট্ৰি মিল</string>
+    <string name="check_not_evaluated">এই স্ক্ৰীনিংত মূল্যায়ন কৰা হোৱা নাই</string>
+    <string name="check_duplicate_document">ডুপ্লিকেট / পুনৰব্যৱহৃত নথি</string>
+    <string name="check_watchlist">ৱাচলিষ্ট ৰেজিষ্ট্ৰি (ডেমো ডাটা)</string>
+    <string name="check_no_watchlist_match">মক ৱাচলিষ্টত কোনো মিল নাই</string>
+    <string name="check_face_in_capture">লাইভ কেপচাৰত মুখ</string>
+    <string name="check_not_run_device">এই ডিভাইচত চলোৱা হোৱা নাই</string>
+    <string name="check_face_match">মুখ মিলান</string>
+    <string name="check_needs_both">নথিৰ ফটো আৰু লাইভ কেপচাৰ দুয়োটা প্ৰয়োজন</string>
+    <string name="check_liveness">লাইভনেছ / স্পুফ চেক</string>
+    <string name="check_not_computed">এই ডিভাইচত গণনা কৰা হোৱা নাই</string>
+    <string name="check_forensics">নথি ফৰেন্সিক (ELA)</string>
+    <string name="check_deepfake">ডীপফেক হিউৰিষ্টিক</string>
+    <string name="check_identity_graph">পৰিচয় গ্ৰাফ</string>
+    <string name="check_needs_live">পূৰ্বৰ ৰেকৰ্ডৰ সৈতে তুলনাৰ বাবে লাইভ কেপচাৰ প্ৰয়োজন</string>
+    <string name="check_passed">পাছ</string>
+    <string name="check_review">পৰ্যালোচনা</string>
+    <string name="check_alert">সতৰ্কবাণী</string>
+    <string name="check_not_run">চলোৱা হোৱা নাই</string>
+    <string name="step_doc_verification">নথি সত্যাপন</string>
+    <string name="verification_explanation">প্ৰতিটো শাৰী হ\'ল বেকেণ্ডে ওপৰৰ মানসমূহত চলোৱা প্ৰকৃত পৰীক্ষা। \"চলোৱা হোৱা নাই\" মানে পৰীক্ষা সম্ভৱ নাছিল — কেতিয়াও নীৰৱ পাছ নহয়।</string>
+    <string name="step_screening_title">স্ক্ৰীনিং</string>
+    <string name="screening_disclaimer">এই বিল্ডত মক ৰেজিষ্ট্ৰিৰ বাহিৰে কোনো ৱাচলিষ্ট কনফিগাৰ কৰা হোৱা নাই আৰু কোনো প্ৰকৃত স্থান-মিলান চিগনেল নাই — জাতীয়তা বা স্থান অকলে কেতিয়াও বিপদ লেবেল নিৰ্ধাৰণ নকৰে।</string>
+
+    <!-- Risk assessment -->
+    <string name="risk_name_missing">নথিৰ পৰা নাম পঢ়িব পৰা নগ\'ল</string>
+    <string name="risk_officer_review">অফিচাৰ পৰ্যালোচনা পৰামৰ্শিত</string>
+    <string name="risk_no_flags">কোনো পৰ্যালোচনা ফ্লেগ নাই</string>
+    <string name="risk_disclaimer">অফিচাৰৰ বিচাৰত সহায়তাৰ বাবে বিপদ সতৰ্কবাণী — যাত্ৰী সম্পৰ্কে সিদ্ধান্ত নহয়।</string>
+    <string name="risk_checks_title">পৰীক্ষাসমূহ</string>
+    <string name="risk_checks_summary">%1$d পাছ · %2$d পৰ্যালোচনা · %3$d চলোৱা নহ\'ল</string>
+    <string name="risk_breakdown">বিপদ বিশ্লেষণ</string>
+    <string name="signal_document_checks">নথি পৰীক্ষা</string>
+    <string name="signal_face_in_capture">লাইভ কেপচাৰত মুখ</string>
+    <string name="signal_watchlist_registry">ৱাচলিষ্ট ৰেজিষ্ট্ৰি</string>
+    <string name="signal_identity_graph_label">পৰিচয় গ্ৰাফ</string>
+
+    <!-- Officer review -->
+    <string name="review_officer_title">অফিচাৰ পৰ্যালোচনা</string>
+    <string name="review_instructions">আপোনাৰ নিজা পদ্ধতিৰে সিদ্ধান্ত লওক। যদি আপুনি এই স্ক্ৰীনিং ফ্লেগ কৰে বা পঠিয়ায়, তলৰ কাৰণসমূহ স্বয়ংক্ৰিয়ভাৱে ৰেকৰ্ড হয় — টাইপ কৰাৰ প্ৰয়োজন নাই।</string>
+    <string name="review_raised_title">এই স্ক্ৰীনিংত উত্থাপিত</string>
+    <string name="complete_cleared">ক্লিয়াৰ কৰা হৈছে</string>
+    <string name="complete_flagged">পৰ্যালোচনাৰ বাবে ফ্লেগ কৰা হৈছে</string>
+    <string name="complete_sent">ইমিগ্ৰেশ্বনলৈ পঠিওৱা হৈছে</string>
+    <string name="complete_title">স্ক্ৰীনিং সম্পূৰ্ণ</string>
+    <string name="complete_decision">ৰেকৰ্ড কৰা সিদ্ধান্ত: %s</string>
+    <string name="send_to_immigration_title">ইমিগ্ৰেশ্বন অফিচাৰলৈ পঠিয়াওক</string>
+    <string name="send_to_immigration_intro">কেচটো অধিক পৰ্যালোচনা আৰু অন্তিম সিদ্ধান্তৰ বাবে ইমিগ্ৰেশ্বন অফিচাৰৰ শাৰীলৈ যায়।</string>
+    <string name="send_to_immigration_label">ইমিগ্ৰেশ্বনলৈ পঠিয়াওক</string>
+
+    <!-- Capture step descriptions (auto-capture removed) -->
+    <string name="capture_step_1_desc_manual">ফ্ৰেমত আপোনাৰ নথিৰ সন্মুখ অংশ থাপক আৰু কেপচাৰ টেপ কৰক।</string>
+    <string name="capture_step_2_desc_manual">এতিয়া আপোনাৰ নথিৰ পিছফাল কেপচাৰ কৰক। সাজু হ\'লে কেপচাৰ টেপ কৰক।</string>
 </resources>

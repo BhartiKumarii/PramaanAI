@@ -28,8 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Ink900
@@ -45,20 +47,15 @@ fun MoreScreen(
     onLogout: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
-        MoreRow("Analytics", Icons.Filled.Analytics, onOpenAnalytics)
+        MoreRow(stringResource(R.string.more_analytics), Icons.Filled.Analytics, onOpenAnalytics)
         Spacer(Modifier.height(8.dp))
-        // Audit Log is read-only for every role (per-officer view of real
-        // events) and Settings holds personal preferences (language,
-        // notifications) alongside admin-only sections — so both stay
-        // visible to every role; only specific sensitive controls inside
-        // Settings are gated (see SettingsScreen.kt), not the screen itself.
-        MoreRow("Audit Log", Icons.Filled.History, onOpenAuditLog)
+        MoreRow(stringResource(R.string.more_audit_log), Icons.Filled.History, onOpenAuditLog)
         Spacer(Modifier.height(8.dp))
-        MoreRow("Officer Profile", Icons.Filled.Person, onOpenOfficerProfile)
+        MoreRow(stringResource(R.string.more_officer_profile), Icons.Filled.Person, onOpenOfficerProfile)
         Spacer(Modifier.height(8.dp))
-        MoreRow("Settings", Icons.Filled.Settings, onOpenSettings)
+        MoreRow(stringResource(R.string.more_settings), Icons.Filled.Settings, onOpenSettings)
         Spacer(Modifier.height(8.dp))
-        MoreRow("Logout", Icons.Filled.Logout, onLogout)
+        MoreRow(stringResource(R.string.more_logout), Icons.Filled.Logout, onLogout)
     }
 }
 

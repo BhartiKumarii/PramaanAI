@@ -84,7 +84,7 @@ class ComprehensiveVerificationService(private val context: Context) {
         .writeTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    private val baseUrl = "https://pramaan-ai-backend.herokuapp.com/api/v1"
+    private val baseUrl = "https://bordershield-pramaan-api.onrender.com"
 
     companion object {
         private const val TAG = "ComprehensiveVerificationService"

@@ -83,19 +83,19 @@ fun SettingsScreen(repository: ScreeningRepository, onBack: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
             }
             item {
-                SettingsSection("Account Settings") {
-                    SettingsInfoRow("Officer ID", profile.officerId)
-                    SettingsInfoRow("Role", profile.role)
-                    SettingsInfoRow("Checkpoint", profile.checkpoint)
+                SettingsSection(stringResource(R.string.settings_account)) {
+                    SettingsInfoRow(stringResource(R.string.settings_officer_id), profile.officerId)
+                    SettingsInfoRow(stringResource(R.string.settings_role), profile.role)
+                    SettingsInfoRow(stringResource(R.string.settings_checkpoint_label), profile.checkpoint)
                 }
                 Spacer(Modifier.height(12.dp))
             }
             item {
-                SettingsSection("Notification Settings") {
-                    SettingsToggleRow("Push notifications for new alerts", pushNotifications) { pushNotifications = it }
-                    SettingsToggleRow("Only notify for high-risk cases", highRiskAlertsOnly) { highRiskAlertsOnly = it }
+                SettingsSection(stringResource(R.string.settings_notifications)) {
+                    SettingsToggleRow(stringResource(R.string.settings_push_notifications), pushNotifications) { pushNotifications = it }
+                    SettingsToggleRow(stringResource(R.string.settings_high_risk_only), highRiskAlertsOnly) { highRiskAlertsOnly = it }
                     Text(
-                        "Stored on this device only — not synced to the backend in this build.",
+                        stringResource(R.string.settings_local_only_notice),
                         style = MaterialTheme.typography.labelSmall,
                         color = Gray600,
                     )
@@ -103,18 +103,14 @@ fun SettingsScreen(repository: ScreeningRepository, onBack: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
             }
             item {
-                SettingsSection("Screening Rules & Risk Configuration") {
+                SettingsSection(stringResource(R.string.settings_risk_config)) {
                     Text(
-                        "Signals combined into the risk score: document checksum/MRZ validation, " +
-                            "forensics (ELA), deepfake heuristic, blacklist/registry lookup, face match, " +
-                            "identity graph, and liveness heuristic.",
+                        stringResource(R.string.settings_risk_signals_desc),
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Weights and thresholds are configured and enforced server-side by the scoring " +
-                            "engine only — this app cannot read or set them, and no UI path here can ever " +
-                            "submit a manually chosen score.",
+                        stringResource(R.string.settings_risk_weights_desc),
                         style = MaterialTheme.typography.labelSmall,
                         color = Gray600,
                     )
@@ -122,16 +118,16 @@ fun SettingsScreen(repository: ScreeningRepository, onBack: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
             }
             item {
-                SettingsSection("Document Settings") {
-                    SettingsInfoRow("Accepted document types", "Passport, National ID, Visa")
-                    SettingsInfoRow("Front/back cross-validation", "Enabled")
+                SettingsSection(stringResource(R.string.settings_document)) {
+                    SettingsInfoRow(stringResource(R.string.settings_accepted_types), stringResource(R.string.settings_accepted_types_value))
+                    SettingsInfoRow(stringResource(R.string.settings_cross_validation), stringResource(R.string.settings_enabled))
                 }
                 Spacer(Modifier.height(12.dp))
             }
             item {
-                SettingsSection("System Preferences") {
-                    SettingsInfoRow("Theme", "Follows system light/dark setting")
-                    SettingsInfoRow("Backend", "http://127.0.0.1:8000 (via adb reverse)")
+                SettingsSection(stringResource(R.string.settings_system_prefs)) {
+                    SettingsInfoRow(stringResource(R.string.settings_theme), stringResource(R.string.settings_theme_value))
+                    SettingsInfoRow(stringResource(R.string.settings_backend), "http://127.0.0.1:8000 (via adb reverse)")
                 }
             }
         }

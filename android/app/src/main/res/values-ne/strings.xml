@@ -45,7 +45,10 @@
     <string name="language_english">अंग्रेजी (English)</string>
     <string name="language_hindi">हिन्दी (Hindi)</string>
     <string name="language_nepali">नेपाली</string>
-    <string name="language_dzongkha">རྫོང་ཁ (Dzongkha)</string>
+    <string name="language_bengali">বাংলা (बंगाली)</string>
+    <string name="language_punjabi">ਪੰਜਾਬੀ (पंजाबी)</string>
+    <string name="language_assamese">অসমীয়া (असमिया)</string>
+    <string name="language_dzongkha">རྫོང་ཁ (जोङ्खा)</string>
     <string name="language_unverified_notice">अप्रमाणित अनुवाद</string>
 
     <string name="login_title">PramaanAI</string>
@@ -146,9 +149,9 @@
 
     <!-- Capture Process Steps -->
     <string name="capture_step_1_title">चरण 1 को 3 — कागजातको अगाडिको भाग</string>
-    <string name="capture_step_1_desc">आफ्नो कागजातको अगाडिको भागलाई फ्रेम भित्र मिलाउनुहोस्। मिलाउँदा स्वचालित रूपमा क्याप्चर हुन्छ।</string>
+    <string name="capture_step_1_desc">आफ्नो कागजातको अगाडिको भागलाई फ्रेम भित्र मिलाउनुहोस् र क्याप्चर गर्नुहोस्।</string>
     <string name="capture_step_2_title">चरण 2 को 3 — कागजातको पछाडिको भाग</string>
-    <string name="capture_step_2_desc">अब आफ्नो कागजातको पछाडिको भाग क्याप्चर गर्नुहोस्। मिलाउँदा स्वचालित रूपमा क्याप्चर हुन्छ।</string>
+    <string name="capture_step_2_desc">अब आफ्नो कागजातको पछाडिको भाग क्याप्चर गर्नुहोस्। तयार हुँदा क्याप्चर गर्नुहोस्।</string>
     <string name="capture_step_3_title">चरण 3 को 3 — लाइभ सेल्फी</string>
     <string name="capture_document_front">कागजातको अगाडिको भाग क्याप्चर गर्नुहोस्</string>
     <string name="capture_document_back">कागजातको पछाडिको भाग क्याप्चर गर्नुहोस्</string>
@@ -157,6 +160,7 @@
     <string name="upload_document_back">बरु कागजातको पछाडिको भाग अपलोड गर्नुहोस्</string>
     <string name="upload_selfie">बरु सेल्फी फोटो अपलोड गर्नुहोस्</string>
     <string name="auto_capturing">स्वचालित रूपमा क्याप्चर हुँदै…</string>
+    <string name="capture_flip_camera">क्यामेरा बदल्नुहोस्</string>
     <string name="start_over">फेरि सुरु गर्नुहोस्</string>
 
     <!-- Priority and Status -->
@@ -243,4 +247,211 @@
     <string name="decision_secondary_review">द्वितीयक समीक्षा</string>
     <string name="decision_hold_refer">रोक्नुहोस्/रेफर</string>
     <string name="decision_review_required">समीक्षा आवश्यक</string>
+
+    <!-- Dashboard extras -->
+    <string name="dashboard_high_risk_cases">उच्च-जोखिम मामलाहरू</string>
+    <string name="dashboard_pending_reviews">विचाराधीन समीक्षाहरू</string>
+    <string name="dashboard_documents_scanned">स्क्यान गरिएका कागजातहरू</string>
+    <string name="dashboard_needs_attention">ध्यान आवश्यक</string>
+    <string name="dashboard_risk_overview">जोखिम अवलोकन</string>
+    <string name="dashboard_more_section">थप</string>
+    <string name="dashboard_view_history">इतिहास हेर्नुहोस्</string>
+    <string name="dashboard_view_analytics">विश्लेषण हेर्नुहोस्</string>
+    <string name="chart_today">आज</string>
+    <string name="chart_weekly">साप्ताहिक</string>
+    <string name="chart_monthly">मासिक</string>
+
+    <!-- Queue extras -->
+    <string name="filter_all">सबै</string>
+    <string name="filter_high_priority">उच्च प्राथमिकता</string>
+    <string name="filter_pending">विचाराधीन</string>
+    <string name="filter_recently_created">हालै सिर्जना गरिएको</string>
+    <string name="filter_cleared">क्लियर गरिएको</string>
+    <string name="filter_disputed">विवादित</string>
+    <string name="queue_empty_title">मेल खाने स्क्रिनिङ छैन</string>
+    <string name="queue_empty_subtitle">नयाँ स्क्रिनिङबाट सबमिट गरेपछि मामलाहरू यहाँ देखिनेछ।</string>
+    <string name="queue_awaiting_decision">निर्णयको पर्खाइमा</string>
+    <string name="queue_status_prefix">स्थिति: </string>
+    <string name="time_just_now">अहिले भर्खर</string>
+    <string name="time_minutes_ago">%d मिनेट अगाडि</string>
+    <string name="time_hours_ago">%d घण्टा अगाडि</string>
+
+    <!-- History extras -->
+    <string name="history_search_placeholder">यात्री, राष्ट्रियता, वा स्क्रिनिङ ID खोज्नुहोस्</string>
+    <string name="history_empty_title">कुनै नतिजा छैन</string>
+    <string name="history_empty_subtitle">तपाईंको खोज वा फिल्टरसँग कुनै स्क्रिनिङ इतिहास मेल खाँदैन।</string>
+
+    <!-- Alerts extras -->
+    <string name="alerts_empty_title">कुनै सक्रिय अलर्ट छैन</string>
+    <string name="alerts_empty_subtitle">अधिकारीको ध्यान चाहिने मामलाहरू यहाँ देखिनेछ।</string>
+    <string name="alert_document_review">कागजात समीक्षा आवश्यक</string>
+    <string name="alert_risk_review">जोखिम मूल्याङ्कन समीक्षा आवश्यक</string>
+    <string name="alert_duplicate">दोहोरिएको रेकर्ड</string>
+    <string name="alert_incomplete">अपूर्ण जानकारी</string>
+    <string name="alert_verification">प्रमाणीकरण आवश्यक</string>
+
+    <!-- More menu -->
+    <string name="more_analytics">विश्लेषण</string>
+    <string name="more_audit_log">अडिट लग</string>
+    <string name="more_officer_profile">अधिकारी प्रोफाइल</string>
+    <string name="more_settings">सेटिङहरू</string>
+    <string name="more_logout">लगआउट</string>
+
+    <!-- Settings extras -->
+    <string name="settings_account">खाता सेटिङहरू</string>
+    <string name="settings_officer_id">अधिकारी आईडी</string>
+    <string name="settings_role">भूमिका</string>
+    <string name="settings_checkpoint_label">चेकपोइन्ट</string>
+    <string name="settings_notifications">सूचना सेटिङहरू</string>
+    <string name="settings_push_notifications">नयाँ अलर्टका लागि पुश सूचनाहरू</string>
+    <string name="settings_high_risk_only">उच्च-जोखिम मामलाहरूमा मात्र सूचित गर्नुहोस्</string>
+    <string name="settings_local_only_notice">यो यन्त्रमा मात्र भण्डार गरिएको — यो बिल्डमा बैकएन्डसँग सिङ्क हुँदैन।</string>
+    <string name="settings_risk_config">स्क्रिनिङ नियम र जोखिम कन्फिगरेशन</string>
+    <string name="settings_risk_signals_desc">जोखिम स्कोरमा मिलाइएका सिग्नलहरू: कागजात चेकसम/MRZ सत्यापन, फोरेन्सिक (ELA), डीपफेक ह्यूरिस्टिक, ब्ल्याकलिस्ट/रजिस्ट्री लुकअप, अनुहार मिलान, पहिचान ग्राफ, र लाइभनेस ह्यूरिस्टिक।</string>
+    <string name="settings_risk_weights_desc">तौल र सीमाहरू सर्भर-साइड स्कोरिङ इन्जिनले मात्र कन्फिगर र लागू गर्छ — यो एपले तिनीहरूलाई पढ्न वा सेट गर्न सक्दैन, र यहाँ कुनै UI पथले हातले छानिएको स्कोर सबमिट गर्न सक्दैन।</string>
+    <string name="settings_document">कागजात सेटिङहरू</string>
+    <string name="settings_accepted_types">स्वीकृत कागजात प्रकारहरू</string>
+    <string name="settings_accepted_types_value">राहदानी, राष्ट्रिय परिचयपत्र, भिसा</string>
+    <string name="settings_cross_validation">अगाडि/पछाडि क्रस-सत्यापन</string>
+    <string name="settings_enabled">सक्रिय</string>
+    <string name="settings_system_prefs">प्रणाली प्राथमिकताहरू</string>
+    <string name="settings_theme">थिम</string>
+    <string name="settings_theme_value">प्रणालीको लाइट/डार्क सेटिङ अनुसरण गर्छ</string>
+    <string name="settings_backend">बैकएन्ड</string>
+    <string name="settings_selected">चयनित</string>
+    <string name="settings_select">चयन गर्नुहोस्</string>
+
+    <!-- Officer Profile extras -->
+    <string name="profile_field_officer">फिल्ड अधिकारी</string>
+    <string name="profile_personal_info">व्यक्तिगत जानकारी</string>
+    <string name="profile_officer_id">अधिकारी आईडी</string>
+    <string name="profile_role">भूमिका</string>
+    <string name="profile_checkpoint">चेकपोइन्ट</string>
+    <string name="profile_account_status">खाता स्थिति</string>
+    <string name="profile_active">सक्रिय</string>
+    <string name="profile_security">सुरक्षा</string>
+    <string name="profile_secure_session">सुरक्षित सत्र</string>
+    <string name="profile_last_login">अन्तिम लगइन</string>
+    <string name="profile_session_token">सत्र टोकन</string>
+    <string name="profile_session_token_value">यो एप सत्रका लागि मात्र मेमोरीमा राखिएको</string>
+    <string name="profile_idle_timeout">निष्क्रिय समय सीमा</string>
+    <string name="profile_idle_timeout_value">5 मिनेट निष्क्रियतामा चेतावनी, 30 सेकेन्ड पछि साइन आउट</string>
+    <string name="profile_failed_logins">असफल लगइन प्रयासहरू</string>
+    <string name="profile_failed_logins_value">%d रेकर्ड गरिएको</string>
+    <string name="profile_account_settings">खाता सेटिङहरू</string>
+    <string name="profile_account_settings_desc">भाषा, सूचनाहरू, र प्रणाली प्राथमिकताहरू</string>
+    <string name="profile_activity">गतिविधि</string>
+
+    <!-- Audit Log extras -->
+    <string name="audit_empty_title">अहिलेसम्म कुनै अडिट प्रविष्टि छैन</string>
+    <string name="audit_empty_subtitle">अधिकारी लगइन, स्क्रिनिङ र निर्णयहरू यहाँ रेकर्ड गरिनेछ।</string>
+    <string name="audit_officer_prefix">अधिकारी: </string>
+
+    <!-- Analytics extras -->
+    <string name="analytics_volume">मात्रा</string>
+    <string name="analytics_total_screenings">कुल स्क्रिनिङ</string>
+    <string name="analytics_this_period">यो अवधिमा</string>
+    <string name="analytics_risk_distribution">जोखिम वितरण</string>
+    <string name="analytics_low_risk">कम जोखिम</string>
+    <string name="analytics_medium_risk">मध्यम जोखिम</string>
+    <string name="analytics_high_risk">उच्च जोखिम</string>
+    <string name="analytics_case_status">मामलाको स्थिति</string>
+    <string name="analytics_pending_cases">विचाराधीन मामलाहरू</string>
+    <string name="analytics_completed_cases">सम्पन्न मामलाहरू</string>
+    <string name="analytics_review_rate">समीक्षा दर (विवादित / निर्णय गरिएको)</string>
+    <string name="analytics_notes">टिप्पणीहरू</string>
+    <string name="analytics_notes_text">यो बिल्डमा औसत प्रोसेसिङ समय र स्थान-मिलान तथ्याङ्कहरू ट्र्याक गरिएको छैन — तिनीहरूलाई इमानदारीपूर्वक गणना गर्न अहिलेसम्म कुनै सुरु/अन्त्य टाइमस्ट्याम्प वा स्थान-मिलान सिग्नल अवस्थित छैन, त्यसैले अनुमान गर्नुभन्दा हटाइएको छ।</string>
+
+    <!-- Capture extras -->
+    <string name="quality_blur">धमिलो</string>
+    <string name="quality_glare">चम्काउ</string>
+    <string name="quality_lighting">प्रकाश</string>
+    <string name="quality_shadows">छाया</string>
+    <string name="liveness_turn_left">आफ्नो टाउको बिस्तारै बायाँतिर घुमाउनुहोस्</string>
+    <string name="liveness_turn_right">आफ्नो टाउको बिस्तारै दायाँतिर घुमाउनुहोस्</string>
+    <string name="liveness_blink">दुई पटक आँखा झिम्काउनुहोस्</string>
+    <string name="liveness_nod">एक पटक टाउको हल्लाउनुहोस्</string>
+    <string name="liveness_hold_still">सिधै क्यामेरातिर हेर्नुहोस् र स्थिर रहनुहोस्</string>
+    <string name="review_step_subtitle">यहाँ कुनै कुरा हातले टाइप गरिएको छैन। यी मानहरू यो यन्त्रमा कागजातबाट पढिएको हो।</string>
+    <string name="capture_label_front">कागजातको अगाडिको भाग</string>
+    <string name="capture_label_back">कागजातको पछाडिको भाग</string>
+    <string name="capture_label_live">लाइभ क्याप्चर</string>
+    <string name="capture_label_document">कागजात फोटो</string>
+    <string name="field_full_name">पूरा नाम</string>
+    <string name="field_document_number">कागजात नम्बर</string>
+    <string name="field_nationality">राष्ट्रियता</string>
+    <string name="field_date_of_birth">जन्म मिति</string>
+    <string name="field_gender">लिङ्ग</string>
+    <string name="field_date_of_expiry">समाप्ति मिति</string>
+    <string name="field_not_detected">पत्ता लागेन</string>
+    <string name="capture_nothing_read">यो फोटोबाट केही पनि पढ्न सकिएन। कागजातको डाटा पेज फ्रेम भर्ने गरी, समतल र राम्रो उज्यालोमा फेरि स्क्यान गर्नुहोस्।</string>
+    <string name="capture_verify_explanation">प्रमाणीकरणले यी मानहरूलाई रजिस्ट्रीसँग जाँच गर्छ र कागजात जाँचहरू चलाउँछ। मेल नखाने कुरा तपाईंको समीक्षाका लागि चिन्ह लगाइन्छ।</string>
+    <string name="capture_submitting">स्क्रिनिङ बैकएन्डमा पठाउँदै…</string>
+    <string name="capture_submission_failed">स्क्रिनिङ सबमिशन असफल</string>
+    <string name="capture_retry">पुनः प्रयास गर्नुहोस्</string>
+    <string name="capture_generic">क्याप्चर गर्नुहोस्</string>
+    <string name="upload_generic">बरु फोटो अपलोड गर्नुहोस्</string>
+
+    <!-- Workflow / screening checks -->
+    <string name="step_info_extraction">जानकारी निकासी</string>
+    <string name="extraction_no_ocr">यो रेकर्डमा कुनै OCR नतिजा छैन।</string>
+    <string name="extraction_mrz">मेशिन-पठनयोग्य क्षेत्र</string>
+    <string name="extraction_disclaimer">यो यन्त्रमा कागजातबाट पढिएको — यहाँ कुनै कुरा हातले टाइप गरिएको छैन। गलत पढिएको मान पछिका जाँचहरूमा विसंगतिको रूपमा देखिन्छ।</string>
+    <string name="check_document_read">कागजात पढिएको</string>
+    <string name="check_expiry">समाप्ति</string>
+    <string name="check_document_validation">कागजात सत्यापन</string>
+    <string name="check_no_evidence">कुनै चेकसम वा क्रस-चेक प्रमाण उपलब्ध थिएन</string>
+    <string name="check_citizen_registry">नागरिक रजिस्ट्री मिलान</string>
+    <string name="check_not_evaluated">यो स्क्रिनिङका लागि मूल्याङ्कन गरिएको छैन</string>
+    <string name="check_duplicate_document">दोहोरिएको / पुन: प्रयोग गरिएको कागजात</string>
+    <string name="check_watchlist">वाचलिस्ट रजिस्ट्री (डेमो डाटा)</string>
+    <string name="check_no_watchlist_match">मक वाचलिस्टमा कुनै मेल खाने प्रविष्टि छैन</string>
+    <string name="check_face_in_capture">लाइभ क्याप्चरमा अनुहार</string>
+    <string name="check_not_run_device">यो यन्त्रमा चलाइएको छैन</string>
+    <string name="check_face_match">अनुहार मिलान</string>
+    <string name="check_needs_both">कागजात फोटो र लाइभ क्याप्चर दुवै चाहिन्छ</string>
+    <string name="check_liveness">लाइभनेस / स्पूफ जाँच</string>
+    <string name="check_not_computed">यो यन्त्रमा गणना गरिएको छैन</string>
+    <string name="check_forensics">कागजात फोरेन्सिक (ELA)</string>
+    <string name="check_deepfake">डीपफेक ह्यूरिस्टिक</string>
+    <string name="check_identity_graph">पहिचान ग्राफ</string>
+    <string name="check_needs_live">पहिलेका रेकर्डसँग तुलना गर्न लाइभ क्याप्चर चाहिन्छ</string>
+    <string name="check_passed">पास</string>
+    <string name="check_review">समीक्षा</string>
+    <string name="check_alert">अलर्ट</string>
+    <string name="check_not_run">चलाइएको छैन</string>
+    <string name="step_doc_verification">कागजात प्रमाणीकरण</string>
+    <string name="verification_explanation">प्रत्येक पङ्क्ति बैकएन्डले माथिका मानहरूमा चलाएको वास्तविक जाँच हो, सटीक मानहरूको तुलनासहित। \"चलाइएको छैन\" भनेको जाँच हुन सकेन — कहिल्यै मौन पास होइन।</string>
+    <string name="step_screening_title">स्क्रिनिङ</string>
+    <string name="screening_disclaimer">यो बिल्डमा मक रजिस्ट्री बाहेक कुनै कन्फिगर गरिएको वाचलिस्ट छैन र कुनै वास्तविक स्थान-मिलान सिग्नल छैन — राष्ट्रियता वा स्थान मात्रैले कहिल्यै जोखिम लेबल बनाउँदैन।</string>
+
+    <!-- Risk assessment -->
+    <string name="risk_name_missing">कागजातबाट नाम पढिएन</string>
+    <string name="risk_officer_review">अधिकारी समीक्षा सिफारिस गरिएको</string>
+    <string name="risk_no_flags">कुनै समीक्षा झण्डा उठाइएको छैन</string>
+    <string name="risk_disclaimer">अधिकारीको निर्णयलाई सहयोग गर्न एक जोखिम अलर्ट — यात्रीबारे कुनै निष्कर्ष होइन।</string>
+    <string name="risk_checks_title">जाँचहरू</string>
+    <string name="risk_checks_summary">%1$d पास · %2$d समीक्षा गर्नुहोस् · %3$d चलाइएको छैन</string>
+    <string name="risk_breakdown">जोखिम विश्लेषण</string>
+    <string name="signal_document_checks">कागजात जाँचहरू</string>
+    <string name="signal_face_in_capture">लाइभ क्याप्चरमा अनुहार</string>
+    <string name="signal_watchlist_registry">वाचलिस्ट रजिस्ट्री</string>
+    <string name="signal_identity_graph_label">पहिचान ग्राफ</string>
+
+    <!-- Officer review -->
+    <string name="review_officer_title">अधिकारी समीक्षा</string>
+    <string name="review_instructions">आफ्नो प्रक्रिया अनुसार निर्णय गर्नुहोस्। यदि तपाईंले यो स्क्रिनिङ झण्डा लगाउनुहुन्छ वा अगाडि पठाउनुहुन्छ भने, तलका कारणहरू स्वचालित रूपमा रेकर्ड हुन्छ — केही टाइप गर्नुपर्दैन।</string>
+    <string name="review_raised_title">यो स्क्रिनिङमा उठाइएको</string>
+    <string name="complete_cleared">क्लियर गरिएको</string>
+    <string name="complete_flagged">समीक्षाका लागि झण्डा लगाइएको</string>
+    <string name="complete_sent">आप्रवासनमा पठाइएको</string>
+    <string name="complete_title">स्क्रिनिङ सम्पन्न</string>
+    <string name="complete_decision">निर्णय रेकर्ड: %s</string>
+    <string name="send_to_immigration_title">आप्रवासन अधिकारीलाई पठाउनुहोस्</string>
+    <string name="send_to_immigration_intro">मामला आप्रवासन अधिकारीको कतारमा जान्छ थप समीक्षा र अन्तिम निर्णयका लागि।</string>
+    <string name="send_to_immigration_label">आप्रवासनमा पठाउनुहोस्</string>
+
+    <!-- Capture step descriptions (manual capture) -->
+    <string name="capture_step_1_desc_manual">आफ्नो कागजातको अगाडिको भागलाई फ्रेम भित्र मिलाउनुहोस् र क्याप्चर गर्नुहोस्।</string>
+    <string name="capture_step_2_desc_manual">अब आफ्नो कागजातको पछाडिको भाग क्याप्चर गर्नुहोस्। तयार हुँदा क्याप्चर गर्नुहोस्।</string>
 </resources>
