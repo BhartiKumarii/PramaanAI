@@ -41,6 +41,7 @@ import {
 import { PublicNavbar } from '../components/PublicNavbar'
 import { Footer } from '../components/Footer'
 import { AsciiWave } from '../components/decor/AsciiWave'
+import logoIcon from '../assets/logo-icon.png'
 
 const VERIFICATION_SIGNALS = [
   {
@@ -152,45 +153,62 @@ export function LandingPage() {
       <section className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 pt-20 lg:px-8">
         <div className="grid-pattern absolute inset-0" />
         <AsciiWave className="pointer-events-none absolute inset-0 h-full w-full opacity-20" />
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div
-            className={`inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-4 py-1.5 font-mono text-xs uppercase tracking-wider text-accent transition-all duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-2 opacity-0'}`}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Secure &middot; Explainable &middot; Connectivity-Aware
+        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[1fr_auto]">
+          {/* Left — text content */}
+          <div className="text-left">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-4 py-1.5 font-mono text-xs uppercase tracking-wider text-accent transition-all duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-2 opacity-0'}`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Secure &middot; Explainable &middot; Connectivity-Aware
+            </div>
+            <h1
+              className={`mt-8 text-4xl font-semibold leading-[1.1] tracking-tight transition-all delay-100 duration-700 sm:text-5xl lg:text-6xl ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
+            >
+              Intelligent Identity &amp; Document Verification for Border Checkpoints
+            </h1>
+            <p
+              className={`mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground transition-all delay-200 duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
+            >
+              PramaanAI assists border and checkpoint personnel in screening identity and travel documents through AI-assisted document analysis, identity verification, tampering detection, and risk-based assessment.
+            </p>
+            <p
+              className={`mt-4 max-w-2xl text-base text-muted-foreground/80 transition-all delay-250 duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
+            >
+              Designed for real-world field operations &mdash; from connected checkpoints to low-connectivity Border Out Posts.
+            </p>
+            <div
+              className={`mt-10 flex flex-wrap items-center gap-4 transition-all delay-300 duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
+            >
+              <Link
+                to="/features"
+                className="group flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-background hover:bg-accent/90 transition-colors"
+              >
+                Explore the Platform
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <a
+                href="#workflow"
+                className="flex items-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-secondary transition-colors"
+              >
+                View System Workflow
+                <ChevronDown className="h-4 w-4" />
+              </a>
+            </div>
           </div>
-          <h1
-            className={`mt-8 text-4xl font-semibold leading-[1.1] tracking-tight transition-all delay-100 duration-700 sm:text-6xl lg:text-7xl ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
-          >
-            Intelligent Identity &amp; Document Verification for Border Checkpoints
-          </h1>
-          <p
-            className={`mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground transition-all delay-200 duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
-          >
-            PramaanAI assists border and checkpoint personnel in screening identity and travel documents through AI-assisted document analysis, identity verification, tampering detection, and risk-based assessment.
-          </p>
-          <p
-            className={`mx-auto mt-4 max-w-2xl text-base text-muted-foreground/80 transition-all delay-250 duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
-          >
-            Designed for real-world field operations &mdash; from connected checkpoints to low-connectivity Border Out Posts.
-          </p>
+
+          {/* Right — rotating logo */}
           <div
-            className={`mt-10 flex flex-wrap items-center justify-center gap-4 transition-all delay-300 duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
+            className={`flex items-center justify-center transition-all delay-400 duration-700 ${heroVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
           >
-            <Link
-              to="/features"
-              className="group flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-background hover:bg-accent/90 transition-colors"
-            >
-              Explore the Platform
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <a
-              href="#workflow"
-              className="flex items-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-secondary transition-colors"
-            >
-              View System Workflow
-              <ChevronDown className="h-4 w-4" />
-            </a>
+            <div className="relative">
+              <div className="absolute -inset-8 rounded-full bg-accent/5 blur-2xl" />
+              <img
+                src={logoIcon}
+                alt="PramaanAI"
+                className="relative h-40 w-40 animate-[spin_20s_linear_infinite] drop-shadow-[0_0_30px_rgba(16,185,129,0.15)] sm:h-52 sm:w-52 lg:h-64 lg:w-64"
+              />
+            </div>
           </div>
         </div>
       </section>
