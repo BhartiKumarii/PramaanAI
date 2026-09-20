@@ -49,6 +49,14 @@ class ScreeningSubmission(BaseModel):
     face_detection_result: FaceDetectionResult | None = None
 
 
+class DocumentClassificationResponse(BaseModel):
+    is_identity_document: bool
+    document_type: str
+    country: str
+    confidence: float
+    reason: str
+
+
 class ScreeningResponse(BaseModel):
     verification_id: str
     # The Case this screening created (see app/models/case.py) — the
@@ -69,6 +77,7 @@ class ScreeningResponse(BaseModel):
     duplicate_document: DuplicateDocumentResult | None = None
     face_detection: FaceDetectionResult | None = None
     citizen_registry: CitizenRegistryResult | None = None
+    document_classification: DocumentClassificationResponse | None = None
 
 
 class VerificationRecordResponse(BaseModel):

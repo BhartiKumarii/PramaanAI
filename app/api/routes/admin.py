@@ -2,6 +2,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import require_role
@@ -36,7 +37,7 @@ def _user_response(db: Session, user: User) -> UserResponse:
 
 
 def _device_response(db: Session, device) -> DeviceResponse:
-    officer = db.get(User, device.officer_id)
+    officer = db.execute(select(User).where(User.id == str(device.officer_id))).scalar_one_or_none()
     return DeviceResponse(
         id=str(device.id), device_identifier=device.device_identifier,
         officer_username=officer.username if officer else None,

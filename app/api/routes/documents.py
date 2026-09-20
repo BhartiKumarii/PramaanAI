@@ -46,7 +46,8 @@ from app.repositories.network_repository import (
 )
 from app.repositories.verification_repository import create_verification
 from app.schemas.document import DocumentType
-from app.schemas.verification import ScreeningResponse, ScreeningSubmission
+from app.schemas.verification import DocumentClassificationResponse, ScreeningResponse, ScreeningSubmission
+from app.services.document_classifier.classifier import DocumentClassifier
 from app.services.blockchain.base import BlockchainService
 from app.services.citizen_registry.base import CitizenRegistryResult
 from app.services.citizen_registry.lookup import lookup_citizen_registry
@@ -69,6 +70,14 @@ from app.services.validation.mrz import MRZFormatError, extract_mrz_lines, parse
 from app.utils.image import downscale_image_bytes
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+
+_document_classifier: DocumentClassifier | None = None
+
+def _get_classifier() -> DocumentClassifier:
+    global _document_classifier
+    if _document_classifier is None:
+        _document_classifier = DocumentClassifier()
+    return _document_classifier
 
 
 def _update_network_graph(
@@ -218,6 +227,30 @@ async def detect_faces(
 
 
 @router.post(
+    "/classify",
+    response_model=DocumentClassificationResponse,
+    summary="Classify an uploaded image: is it an ID document, and if so which type/country?",
+)
+async def classify_document(
+    file: UploadFile = File(...),
+    _user: User = Depends(get_current_user),
+) -> DocumentClassificationResponse:
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    image_bytes = downscale_image_bytes(image_bytes)
+    classifier = _get_classifier()
+    result = classifier.classify(image_bytes)
+    return DocumentClassificationResponse(
+        is_identity_document=result.is_identity_document,
+        document_type=result.document_type,
+        country=result.country,
+        confidence=result.confidence,
+        reason=result.reason,
+    )
+
+
+@router.post(
     "/deepfake",
     response_model=DeepfakeResult,
     summary="Deepfake detection — a real frequency/noise heuristic (see module docstring for scope), never a faked pass",
@@ -276,16 +309,26 @@ def screen_document(
                 mrz_result = None
 
         stage = "validation"
+        aadhaar_for_validation = payload.aadhaar_number or payload.ocr_fields.get("aadhaar_number")
         validation_result: ValidationResult = validation_engine.validate(
             ocr_result=payload.ocr_fields,
             mrz_result=mrz_result,
             nationality=payload.nationality,
-            aadhaar_number=payload.aadhaar_number,
+            aadhaar_number=aadhaar_for_validation,
         )
 
         stage = "registry_lookup"
         name_for_lookup = payload.ocr_fields.get("name")
-        document_number_for_lookup = payload.ocr_fields.get("passport_number") or payload.aadhaar_number
+        document_number_for_lookup = (
+            payload.ocr_fields.get("passport_number")
+            or payload.ocr_fields.get("document_number")
+            or payload.ocr_fields.get("aadhaar_number")
+            or payload.ocr_fields.get("license_number")
+            or payload.ocr_fields.get("visa_number")
+            or payload.ocr_fields.get("pan_number")
+            or payload.ocr_fields.get("voter_id")
+            or payload.aadhaar_number
+        )
         registry_result: RegistryLookupResult = lookup_registry(db, document_number_for_lookup, name_for_lookup)
         duplicate_document_result: DuplicateDocumentResult | None = check_duplicate_document(
             db, document_number_for_lookup, name_for_lookup
@@ -451,37 +494,44 @@ async def screen_document_with_images(
             detail=f"Invalid screening data JSON: {e}"
         )
 
-    # Process the screening data (same logic as the original screen endpoint)
     if not payload.ocr_fields:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="ocr_fields is empty — on-device OCR must run before a screening is submitted",
         )
 
-    # Run the same screening logic as the original endpoint
-    # (I'll abbreviate this for space, but it would include all the same logic)
-    ocr_result = OCRResult(
-        document_type=payload.document_type.value, fields=payload.ocr_fields, ocr_confidence=payload.ocr_confidence
+    front_bytes = await document_front.read()
+    if not front_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty document image")
+
+    classifier = _get_classifier()
+    classification = classifier.classify(downscale_image_bytes(front_bytes))
+    classification_response = DocumentClassificationResponse(
+        is_identity_document=classification.is_identity_document,
+        document_type=classification.document_type,
+        country=classification.country,
+        confidence=classification.confidence,
+        reason=classification.reason,
     )
 
-    # ... (same validation, registry, face matching, etc. logic as above)
-    # For brevity, I'll call the original screen function and then save images
+    if not classification.is_identity_document:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Document rejected — not recognized as a valid identity document. {classification.reason}",
+        )
 
-    # First run the standard screening without images
     screen_response = screen_document(payload, _user, validation_engine, risk_engine, blockchain_service, db)
+    screen_response.document_classification = classification_response
 
-    # Now save the uploaded images
     settings = get_settings()
     images_dir = Path(getattr(settings, 'images_dir', 'images'))
     images_dir.mkdir(exist_ok=True)
 
     verification_id = screen_response.verification_id
 
-    # Save document front image
-    if document_front:
-        front_path = images_dir / f"{verification_id}.jpg"
-        with open(front_path, "wb") as buffer:
-            shutil.copyfileobj(document_front.file, buffer)
+    front_path = images_dir / f"{verification_id}.jpg"
+    with open(front_path, "wb") as buffer:
+        buffer.write(front_bytes)
 
     # Save document back image if provided
     if document_back:

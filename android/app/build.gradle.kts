@@ -92,5 +92,10 @@ dependencies {
     // 9.x + KSP2 bug that ruled out Room for LocalScreeningStore.
     implementation("androidx.work:work-runtime-ktx:2.11.2")
 
+    // TFLite runtime — runs MobileFaceNet and anti-spoof models on-device.
+    // Model files go in assets/models/; NeuralFaceEmbedding.kt and
+    // AntiSpoofDetector.kt handle "model not found" gracefully.
+    implementation("org.tensorflow:tensorflow-lite:2.16.1")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

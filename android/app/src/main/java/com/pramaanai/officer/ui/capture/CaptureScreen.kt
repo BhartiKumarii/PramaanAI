@@ -84,10 +84,14 @@ import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.model.ScreeningStatus
 import com.pramaanai.officer.data.sync.PendingSubmissionWorker
+import com.pramaanai.officer.data.vision.AntiSpoofDetector
 import com.pramaanai.officer.data.vision.DeepfakeAnalyzer
 import com.pramaanai.officer.data.vision.DocumentOcrExtractor
+import com.pramaanai.officer.data.vision.FaceAligner
 import com.pramaanai.officer.data.vision.FaceDetectionAnalyzer
 import com.pramaanai.officer.data.vision.FaceEmbedding
+import com.pramaanai.officer.data.vision.ImageQualityGate
+import com.pramaanai.officer.data.vision.NeuralFaceEmbedding
 import com.pramaanai.officer.data.vision.OpenCVManager
 import com.pramaanai.officer.data.vision.TamperingAnalyzer
 import com.pramaanai.officer.ui.components.ConfidenceTag
@@ -496,6 +500,9 @@ fun CaptureScreen(
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
         OpenCVManager.init(context)
+        FaceAligner.init(context)
+        NeuralFaceEmbedding.init(context)
+        AntiSpoofDetector.init(context)
     }
 
     var step by remember { mutableStateOf(CaptureStep.DOCUMENT_FRONT) }
@@ -568,10 +575,19 @@ fun CaptureScreen(
         scope.launch {
             try {
                 val bundle = withContext(Dispatchers.Default) {
-                    val docFrontBitmap = BitmapFactory.decodeFile(docFront.path)
+                    val rawDocFrontBitmap = BitmapFactory.decodeFile(docFront.path)
                         ?: correctedDocumentFrontBitmap
                         ?: throw IllegalStateException("Could not decode document front image")
-                    Log.d("CaptureScreen", "OCR input: file=${docFront.path}, size=${docFront.length()}, bitmap=${docFrontBitmap.width}x${docFrontBitmap.height}")
+                    Log.d("CaptureScreen", "OCR input: file=${docFront.path}, size=${docFront.length()}, bitmap=${rawDocFrontBitmap.width}x${rawDocFrontBitmap.height}")
+
+                    // Quality gate: detect document edges, check blur/glare,
+                    // produce a perspective-corrected crop for better OCR
+                    val qualityCheck = ImageQualityGate.check(rawDocFrontBitmap)
+                    if (qualityCheck.issues.isNotEmpty()) {
+                        Log.w("CaptureScreen", "Quality issues: ${qualityCheck.issues}")
+                    }
+                    val docFrontBitmap = qualityCheck.correctedBitmap ?: rawDocFrontBitmap
+
                     val docBackBitmap = docBack?.let {
                         BitmapFactory.decodeFile(it.path)
                             ?: correctedDocumentBackBitmap
@@ -579,24 +595,53 @@ fun CaptureScreen(
                     val selfieBitmap = BitmapFactory.decodeFile(selfie.path)
                         ?: throw IllegalStateException("Could not decode selfie image")
 
-                    // OCR on front side (main document data)
+                    // OCR on front side (uses corrected bitmap when available)
                     val ocr = DocumentOcrExtractor.recognize(docFrontBitmap)
 
-                    // Face embedding from front side photo
-                    val de = FaceEmbedding.extractEmbedding(docFrontBitmap)
-                    val le = FaceEmbedding.extractEmbedding(selfieBitmap)
+                    // Face alignment before embedding — produces a normalized
+                    // 112x112 face crop that improves embedding quality
+                    val docFaceAligned = FaceAligner.alignFace(docFrontBitmap)
+                    val selfieFaceAligned = FaceAligner.alignFace(selfieBitmap)
 
-                    // Real face presence/count/position over the live
-                    // selfie — the actual "multiple faces" / "no face"
-                    // fraud/quality signal, distinct from the embedding
-                    // match/no-match comparison above.
+                    // Face embedding: try neural (MobileFaceNet) first,
+                    // fall back to HOG if the model isn't loaded
+                    val de: List<Float>
+                    val le: List<Float>
+                    val docAlignedBitmap = docFaceAligned.alignedFace
+                    val selfieAlignedBitmap = selfieFaceAligned.alignedFace
+
+                    if (NeuralFaceEmbedding.isAvailable() && docAlignedBitmap != null && selfieAlignedBitmap != null) {
+                        val neuralDoc = NeuralFaceEmbedding.extract(docAlignedBitmap)
+                        val neuralSelfie = NeuralFaceEmbedding.extract(selfieAlignedBitmap)
+                        if (neuralDoc.embedding != null && neuralSelfie.embedding != null) {
+                            de = neuralDoc.embedding
+                            le = neuralSelfie.embedding
+                            Log.d("CaptureScreen", "Using MobileFaceNet neural embeddings (128-d)")
+                        } else {
+                            de = FaceEmbedding.extractEmbedding(docFrontBitmap)
+                            le = FaceEmbedding.extractEmbedding(selfieBitmap)
+                            Log.d("CaptureScreen", "Neural inference failed, using HOG embeddings")
+                        }
+                    } else {
+                        // HOG fallback — deterministic, no model file needed
+                        de = FaceEmbedding.extractEmbedding(docAlignedBitmap ?: docFrontBitmap)
+                        le = FaceEmbedding.extractEmbedding(selfieAlignedBitmap ?: selfieBitmap)
+                        Log.d("CaptureScreen", "Using HOG face embeddings (aligned=${docAlignedBitmap != null})")
+                    }
+
+                    docAlignedBitmap?.recycle()
+                    selfieAlignedBitmap?.recycle()
+
+                    // Face presence/count/position on the live selfie
                     val fd = FaceDetectionAnalyzer.detect(selfieBitmap)
 
-                    // On-device forensics — same principles as the backend
-                    // (ELA for tampering, frequency+noise for deepfake),
-                    // computed here because raw images never leave the device.
+                    // On-device forensics
                     val tp = TamperingAnalyzer.analyze(docFrontBitmap)
                     val df = DeepfakeAnalyzer.analyze(selfieBitmap)
+
+                    if (qualityCheck.correctedBitmap != null && qualityCheck.correctedBitmap !== rawDocFrontBitmap) {
+                        qualityCheck.correctedBitmap.recycle()
+                    }
 
                     ExtractionBundle(ocr, de, le, fd, tp, df)
                 }
@@ -639,11 +684,31 @@ fun CaptureScreen(
                         ?: throw IllegalStateException("Could not decode selfie image")
 
                     try {
-                        // Run liveness detection (single-frame for simplicity)
-                        com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
+                        // Heuristic liveness (texture + temporal if multi-frame)
+                        val heuristicResult = com.pramaanai.officer.data.vision.LivenessDetector.analyzeSingleFrame(selfieBitmap)
+
+                        // Supplement with TFLite anti-spoof if model is available
+                        val spoofResult = AntiSpoofDetector.detect(selfieBitmap)
+                        if (spoofResult.available && spoofResult.isLive != null) {
+                            val combinedScore = (heuristicResult.score + spoofResult.spoofScore) / 2.0
+                            val combinedStatus = when {
+                                combinedScore < 0.35 -> "LIVE"
+                                combinedScore > 0.65 -> "SUSPECTED_SPOOF"
+                                else -> "UNCERTAIN"
+                            }
+                            com.pramaanai.officer.data.vision.LivenessAnalysisResult(
+                                status = combinedStatus,
+                                score = combinedScore,
+                                reason = "${heuristicResult.reason} | Anti-spoof (${spoofResult.method}): score=${String.format("%.3f", spoofResult.spoofScore)}",
+                                temporalVariation = heuristicResult.temporalVariation,
+                                textureQuality = heuristicResult.textureQuality,
+                                framesAnalyzed = heuristicResult.framesAnalyzed,
+                            )
+                        } else {
+                            heuristicResult
+                        }
                     } catch (e: Exception) {
                         Log.e("CaptureScreen", "Liveness detection error", e)
-                        // If liveness fails, continue anyway (don't block the flow)
                         com.pramaanai.officer.data.vision.LivenessAnalysisResult(
                             status = "UNCERTAIN",
                             score = 0.5,
@@ -679,9 +744,22 @@ fun CaptureScreen(
         step = CaptureStep.SUBMITTING
         scope.launch {
             try {
+                val docNum = fields.passportNumber.trim()
+                val effectiveDocType = detectedDocType ?: documentType
                 val ocrFields = buildMap {
                     put("name", fields.name.trim())
-                    if (fields.passportNumber.isNotBlank()) put("passport_number", fields.passportNumber.trim())
+                    if (docNum.isNotBlank()) {
+                        put("document_number", docNum)
+                        when (effectiveDocType.uppercase()) {
+                            "PASSPORT" -> put("passport_number", docNum)
+                            "NATIONAL_ID" -> put("aadhaar_number", docNum)
+                            "PAN_CARD" -> put("pan_number", docNum)
+                            "VOTER_ID" -> put("voter_id", docNum)
+                            "DRIVING_LICENCE", "DRIVING_LICENSE" -> put("license_number", docNum)
+                            "VISA" -> put("visa_number", docNum)
+                            else -> put("passport_number", docNum)
+                        }
+                    }
                     put("nationality", fields.nationality.trim())
                     if (fields.dateOfBirth.isNotBlank()) put("date_of_birth", fields.dateOfBirth.trim())
                     if (fields.dateOfExpiry.isNotBlank()) put("date_of_expiry", fields.dateOfExpiry.trim())

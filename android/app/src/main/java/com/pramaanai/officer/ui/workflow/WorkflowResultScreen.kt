@@ -292,18 +292,36 @@ fun StepCard(title: String, content: @Composable androidx.compose.foundation.lay
     }
 }
 
-// Fields the backend's cross-check actually reads (see
-// app/services/validation/cross_check.py), in the order an officer would
-// read a passport's data page. Always listed — a field the scan couldn't
-// read shows as "Not detected" rather than silently disappearing.
-private val EXTRACTED_FIELD_ORDER = listOf(
-    "name" to "Full name",
-    "passport_number" to "Document number",
-    "nationality" to "Nationality",
-    "date_of_birth" to "Date of birth",
-    "gender" to "Gender",
-    "date_of_expiry" to "Date of expiry",
+private val DOC_NUMBER_LABEL = mapOf(
+    "passport" to "Passport number",
+    "national_id" to "Aadhaar number",
+    "aadhaar" to "Aadhaar number",
+    "pan_card" to "PAN number",
+    "voter_id" to "Voter ID",
+    "driving_licence" to "Licence number",
+    "driving_license" to "Licence number",
+    "visa" to "Visa number",
+    "citizenship_certificate" to "Citizenship number",
+    "permit" to "Permit number",
 )
+
+private val DOC_NUMBER_KEYS = listOf(
+    "passport_number", "document_number", "aadhaar_number",
+    "pan_number", "voter_id", "license_number", "visa_number",
+)
+
+fun extractedFieldOrder(documentType: String, ocrFields: Map<String, String>): List<Pair<String, String>> {
+    val numLabel = DOC_NUMBER_LABEL[documentType.lowercase()] ?: "Document number"
+    val numKey = DOC_NUMBER_KEYS.firstOrNull { ocrFields.containsKey(it) } ?: "document_number"
+    return listOf(
+        "name" to "Full name",
+        numKey to numLabel,
+        "nationality" to "Nationality",
+        "date_of_birth" to "Date of birth",
+        "gender" to "Gender",
+        "date_of_expiry" to "Date of expiry",
+    )
+}
 
 @Composable
 /** [wholeImage] letterboxes the photo so nothing is cropped — used for the
@@ -378,8 +396,9 @@ fun ExtractionStep(item: ScreeningQueueItem) {
         }
         ConfidenceTag(ocr.ocrConfidence)
         Spacer(Modifier.height(6.dp))
-        EXTRACTED_FIELD_ORDER.forEach { (key, label) -> ExtractedFieldRow(label, ocr.fields[key]) }
-        ocr.fields.filterKeys { key -> EXTRACTED_FIELD_ORDER.none { it.first == key } }.forEach { (key, value) ->
+        val fieldOrder = extractedFieldOrder(item.documentType ?: ocr.documentType, ocr.fields)
+        fieldOrder.forEach { (key, label) -> ExtractedFieldRow(label, ocr.fields[key]) }
+        ocr.fields.filterKeys { key -> fieldOrder.none { it.first == key } }.forEach { (key, value) ->
             ExtractedFieldRow(key.replace("_", " ").replaceFirstChar { it.uppercase() }, value)
         }
         val mrzLines = (ocr.mrzLines as List<String>?).orEmpty()
