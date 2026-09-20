@@ -16,10 +16,18 @@ from app.models.user import User, UserRole
 from app.models.verification import VerificationRecord
 
 
-def immigration_dashboard(db: Session, checkpoint_id: uuid.UUID | None) -> dict:
+def _to_uuid(value) -> uuid.UUID | None:
+    if value is None:
+        return None
+    if isinstance(value, uuid.UUID):
+        return value
+    return uuid.UUID(str(value))
+
+
+def immigration_dashboard(db: Session, checkpoint_id: uuid.UUID | str | None) -> dict:
     stmt = select(Case)
     if checkpoint_id is not None:
-        stmt = stmt.where(Case.checkpoint_id == checkpoint_id)
+        stmt = stmt.where(Case.checkpoint_id == _to_uuid(checkpoint_id))
     cases = list(db.execute(stmt).scalars())
 
     return {

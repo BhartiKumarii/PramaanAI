@@ -195,7 +195,7 @@ export function CaseReview() {
               {!v && <p className="text-sm text-muted-foreground">No verification evidence attached to this case.</p>}
               {v && (
                 <>
-                  {v.ocr && (
+                  {v.ocr ? (
                     <SignalRow
                       label="OCR Extraction"
                       status={`${Math.round(v.ocr.ocr_confidence * 100)}% confidence`}
@@ -204,64 +204,110 @@ export function CaseReview() {
                         .map(([k, val]) => `${k}: ${val}`)
                         .join(' · ')}
                     />
+                  ) : (
+                    <SignalRow label="OCR Extraction" status="NOT COMPUTED" tone="neutral" explanation="No OCR data was extracted for this screening." />
                   )}
-                  {v.validation && (
+                  {v.validation ? (
                     <SignalRow
                       label="Document Validation (MRZ / Verhoeff)"
                       status={v.validation.status}
                       tone={v.validation.status === 'PASS' ? 'clear' : 'high'}
                       explanation={v.validation.findings.map((f) => f.reason).join(' · ') || 'No findings.'}
                     />
+                  ) : (
+                    <SignalRow label="Document Validation (MRZ / Verhoeff)" status="NOT COMPUTED" tone="neutral" explanation="Validation was not executed — no MRZ or Aadhaar number provided." />
                   )}
-                  {v.tampering && (
+                  {v.tampering ? (
                     <SignalRow
                       label="Document Forensics (ELA)"
                       status={`${Math.round(v.tampering.tampering_risk * 100)}% anomaly risk`}
                       tone={v.tampering.tampering_risk > 0.5 ? 'high' : v.tampering.tampering_risk > 0.25 ? 'review' : 'clear'}
                       explanation={v.tampering.findings[0]?.reason ?? 'No anomalies above baseline.'}
                     />
+                  ) : (
+                    <SignalRow label="Document Forensics (ELA)" status="NOT COMPUTED" tone="neutral" explanation="Tampering analysis requires raw image bytes — not available in this screening mode." />
                   )}
-                  {v.deepfake && (
+                  {v.deepfake ? (
                     <SignalRow
                       label="Deepfake Heuristic"
                       status={v.deepfake.status}
                       tone={v.deepfake.status !== 'ANALYZED' ? 'neutral' : (v.deepfake.score ?? 0) > 0.5 ? 'high' : 'clear'}
                       explanation={v.deepfake.reason}
                     />
+                  ) : (
+                    <SignalRow label="Deepfake Heuristic" status="NOT COMPUTED" tone="neutral" explanation="Deepfake analysis requires raw image bytes — not available in this screening mode." />
                   )}
-                  {v.face && (
+                  {v.face ? (
                     <SignalRow
                       label="Face Match"
                       status={v.face.match ? 'MATCH' : 'NO MATCH'}
                       tone={v.face.match ? 'clear' : 'high'}
                       explanation={v.face.reason}
                     />
+                  ) : (
+                    <SignalRow label="Face Match" status="NOT COMPUTED" tone="neutral" explanation="Face match requires both document face and live selfie embeddings — one or both were not provided." />
                   )}
-                  {v.liveness && (
+                  {v.liveness ? (
                     <SignalRow
                       label="Liveness Check"
                       status={v.liveness.status}
                       tone={v.liveness.status === 'LIVE' ? 'clear' : v.liveness.status === 'SUSPECTED_SPOOF' ? 'high' : 'neutral'}
                       explanation={v.liveness.reason}
                     />
+                  ) : (
+                    <SignalRow label="Liveness Check" status="NOT COMPUTED" tone="neutral" explanation="Liveness check requires live capture image — not available in this screening mode." />
                   )}
-                  {v.identity_graph && (
+                  {v.face_detection ? (
+                    <SignalRow
+                      label="Face Detection (Live Capture)"
+                      status={v.face_detection.status.replace(/_/g, ' ')}
+                      tone={v.face_detection.status === 'SINGLE_FACE' ? 'clear' : v.face_detection.status === 'MULTIPLE_FACES' ? 'review' : 'high'}
+                      explanation={v.face_detection.reason}
+                    />
+                  ) : (
+                    <SignalRow label="Face Detection (Live Capture)" status="NOT COMPUTED" tone="neutral" explanation="Face detection requires live capture image — not available in this screening mode." />
+                  )}
+                  {v.identity_graph ? (
                     <SignalRow
                       label="Identity Graph"
                       status={v.identity_graph.status.replace('_', ' ')}
                       tone={v.identity_graph.status === 'CLUSTER_FOUND' ? 'review' : 'clear'}
                       explanation={v.identity_graph.reason}
                     />
+                  ) : (
+                    <SignalRow label="Identity Graph" status="NOT COMPUTED" tone="neutral" explanation="Identity graph requires a live face embedding to compare across cases." />
                   )}
-                  {v.registry && (
+                  {v.registry ? (
                     <SignalRow
-                      label="Registry Lookup (mock_central_registry)"
+                      label="Blacklist / Registry Lookup"
                       status={v.registry.status}
                       tone={v.registry.status === 'HIT' ? 'high' : 'clear'}
                       explanation={
                         v.registry.hits.map((h) => `${h.match_type}: ${h.explanation}`).join(' · ') || 'No hits.'
                       }
                     />
+                  ) : (
+                    <SignalRow label="Blacklist / Registry Lookup" status="NOT COMPUTED" tone="neutral" explanation="No document number or name available for registry lookup." />
+                  )}
+                  {v.citizen_registry ? (
+                    <SignalRow
+                      label="Citizen Registry Verification"
+                      status={v.citizen_registry.status.replace(/_/g, ' ')}
+                      tone={v.citizen_registry.status === 'MATCH' ? 'clear' : v.citizen_registry.status === 'MISMATCH' ? 'high' : 'neutral'}
+                      explanation={v.citizen_registry.reason}
+                    />
+                  ) : (
+                    <SignalRow label="Citizen Registry Verification" status="NOT COMPUTED" tone="neutral" explanation="No document number available for citizen registry lookup." />
+                  )}
+                  {v.duplicate_document ? (
+                    <SignalRow
+                      label="Duplicate Document Check"
+                      status={v.duplicate_document.status.replace(/_/g, ' ')}
+                      tone={v.duplicate_document.status === 'DIFFERENT_IDENTITY_REUSE' ? 'high' : v.duplicate_document.status === 'SAME_IDENTITY_REUSE' ? 'review' : 'clear'}
+                      explanation={v.duplicate_document.reason}
+                    />
+                  ) : (
+                    <SignalRow label="Duplicate Document Check" status="NOT COMPUTED" tone="neutral" explanation="No document number available for duplicate check." />
                   )}
                 </>
               )}

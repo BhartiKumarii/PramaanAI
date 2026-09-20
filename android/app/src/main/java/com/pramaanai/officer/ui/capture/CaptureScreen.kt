@@ -84,10 +84,12 @@ import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.model.ScreeningStatus
 import com.pramaanai.officer.data.sync.PendingSubmissionWorker
+import com.pramaanai.officer.data.vision.DeepfakeAnalyzer
 import com.pramaanai.officer.data.vision.DocumentOcrExtractor
 import com.pramaanai.officer.data.vision.FaceDetectionAnalyzer
 import com.pramaanai.officer.data.vision.FaceEmbedding
 import com.pramaanai.officer.data.vision.OpenCVManager
+import com.pramaanai.officer.data.vision.TamperingAnalyzer
 import com.pramaanai.officer.ui.components.ConfidenceTag
 import com.pramaanai.officer.ui.components.GridPatternBackground
 import com.pramaanai.officer.ui.components.WorkflowStepper
@@ -460,6 +462,8 @@ private data class ExtractionBundle(
     val documentEmbedding: List<Float>,
     val liveEmbedding: List<Float>,
     val faceDetection: com.pramaanai.officer.data.model.FaceDetectionResult,
+    val tampering: com.pramaanai.officer.data.model.TamperingResult,
+    val deepfake: com.pramaanai.officer.data.remote.DeepfakeResult,
 )
 
 data class DocumentPreviewState(
@@ -545,6 +549,8 @@ fun CaptureScreen(
     var liveEmbedding by remember { mutableStateOf<List<Float>?>(null) }
     var faceDetectionResult by remember { mutableStateOf<com.pramaanai.officer.data.model.FaceDetectionResult?>(null) }
     var livenessResult by remember { mutableStateOf<com.pramaanai.officer.data.vision.LivenessAnalysisResult?>(null) }
+    var tamperingResultState by remember { mutableStateOf<com.pramaanai.officer.data.model.TamperingResult?>(null) }
+    var deepfakeResultState by remember { mutableStateOf<com.pramaanai.officer.data.remote.DeepfakeResult?>(null) }
     var fields by remember { mutableStateOf(ExtractedFields()) }
     LaunchedEffect(step) {
         if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK || step == CaptureStep.SELFIE) {
@@ -585,7 +591,14 @@ fun CaptureScreen(
                     // fraud/quality signal, distinct from the embedding
                     // match/no-match comparison above.
                     val fd = FaceDetectionAnalyzer.detect(selfieBitmap)
-                    ExtractionBundle(ocr, de, le, fd)
+
+                    // On-device forensics — same principles as the backend
+                    // (ELA for tampering, frequency+noise for deepfake),
+                    // computed here because raw images never leave the device.
+                    val tp = TamperingAnalyzer.analyze(docFrontBitmap)
+                    val df = DeepfakeAnalyzer.analyze(selfieBitmap)
+
+                    ExtractionBundle(ocr, de, le, fd, tp, df)
                 }
                 val ocrResult = bundle.ocr
                 fields = ExtractedFields(
@@ -606,6 +619,8 @@ fun CaptureScreen(
                 documentEmbedding = bundle.documentEmbedding
                 liveEmbedding = bundle.liveEmbedding
                 faceDetectionResult = bundle.faceDetection
+                tamperingResultState = bundle.tampering
+                deepfakeResultState = bundle.deepfake
                 step = CaptureStep.REVIEW_FIELDS
             } catch (e: Exception) {
                 errorMessage = "On-device extraction failed: ${e.message ?: e.toString()}"
@@ -672,6 +687,14 @@ fun CaptureScreen(
                     if (fields.dateOfExpiry.isNotBlank()) put("date_of_expiry", fields.dateOfExpiry.trim())
                     if (fields.gender.isNotBlank()) put("gender", fields.gender.trim())
                 }
+                // Convert on-device liveness result to the DTO the backend expects
+                val livenessDto = livenessResult?.let {
+                    com.pramaanai.officer.data.remote.LivenessResult(
+                        status = it.status,
+                        score = it.score,
+                        reason = it.reason,
+                    )
+                }
                 val item = repository.submitScreening(
                     travelerName = fields.name,
                     documentType = documentType,
@@ -685,6 +708,9 @@ fun CaptureScreen(
                     documentBackImageFile = documentBackFile,
                     selfieImageFile = selfieFile,
                     faceDetectionResult = faceDetectionResult,
+                    tamperingResult = tamperingResultState,
+                    deepfakeResult = deepfakeResultState,
+                    livenessResult = livenessDto,
                 )
                 if (item.status == ScreeningStatus.OFFLINE_QUEUED) {
                     PendingSubmissionWorker.enqueue(context)

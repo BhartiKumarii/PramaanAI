@@ -121,6 +121,30 @@ export interface RiskResult {
   breakdown: RiskSignalBreakdown[]
 }
 
+export interface DuplicateDocumentResult {
+  status: string // NO_MATCH | SAME_IDENTITY_REUSE | DIFFERENT_IDENTITY_REUSE
+  match_count: number
+  reason: string
+}
+
+export interface DetectedFace {
+  location: Record<string, number>
+  confidence: number
+  touches_edge: boolean
+}
+
+export interface FaceDetectionResult {
+  status: string // NO_FACE | SINGLE_FACE | MULTIPLE_FACES
+  faces: DetectedFace[]
+  reason: string
+}
+
+export interface CitizenRegistryResult {
+  status: string // MATCH | MISMATCH | NO_RECORD
+  reason: string
+  mismatched_fields: string[]
+}
+
 export interface VerificationRecordResponse {
   id: string
   document_type: string
@@ -137,6 +161,9 @@ export interface VerificationRecordResponse {
   face: FaceMatchResult | null
   identity_graph: IdentityGraphResult | null
   liveness: LivenessResult | null
+  duplicate_document: DuplicateDocumentResult | null
+  face_detection: FaceDetectionResult | null
+  citizen_registry: CitizenRegistryResult | null
 }
 
 export interface ScreeningResponse extends VerificationRecordResponse {

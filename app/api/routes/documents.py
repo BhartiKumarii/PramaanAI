@@ -6,13 +6,15 @@
 """
 import hashlib
 import json
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-import json
 import shutil
 from pathlib import Path
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger("pramaan.screening")
 
 from app.api.deps import (
     get_blockchain_service,
@@ -247,161 +249,180 @@ def screen_document(
     blockchain_service: BlockchainService = Depends(get_blockchain_service),
     db: Session = Depends(get_db),
 ) -> ScreeningResponse:
-    if not payload.ocr_fields:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="ocr_fields is empty — on-device OCR must run before a screening is submitted",
-        )
-    ocr_result = OCRResult(
-        document_type=payload.document_type.value, fields=payload.ocr_fields, ocr_confidence=payload.ocr_confidence
-    )
-
-    mrz_result = None
-    if payload.mrz_text:
-        try:
-            lines = extract_mrz_lines(payload.mrz_text)
-            if lines is not None:
-                mrz_result = parse_td3(*lines)
-        except MRZFormatError:
-            mrz_result = None  # a real but unreadable MRZ read shouldn't abort the whole screening
-
-    validation_result: ValidationResult = validation_engine.validate(
-        ocr_result=payload.ocr_fields,
-        mrz_result=mrz_result,
-        nationality=payload.nationality,
-        aadhaar_number=payload.aadhaar_number,
-    )
-
-    name_for_lookup = payload.ocr_fields.get("name")
-    document_number_for_lookup = payload.ocr_fields.get("passport_number") or payload.aadhaar_number
-    registry_result: RegistryLookupResult = lookup_registry(db, document_number_for_lookup, name_for_lookup)
-    duplicate_document_result: DuplicateDocumentResult | None = check_duplicate_document(
-        db, document_number_for_lookup, name_for_lookup
-    )
-    citizen_registry_result: CitizenRegistryResult | None = lookup_citizen_registry(
-        db,
-        document_number_for_lookup,
-        name_for_lookup,
-        payload.ocr_fields.get("date_of_birth"),
-        payload.nationality,
-    )
-
-    face_result: FaceMatchResult | None = None
-    if payload.document_face_embedding and payload.live_face_embedding:
-        face_result = match_from_embeddings(payload.document_face_embedding, payload.live_face_embedding)
-
-    identity_graph_result: IdentityGraphResult | None = None
-    embedding_record = None
-    if payload.live_face_embedding:
-        embedding_record = insert_embedding(
-            db, name_for_lookup or "UNKNOWN", document_number_for_lookup, payload.live_face_embedding
-        )
-        graph = build_graph(list_all(db))
-        identity_graph_result = find_multi_identity_cluster(graph, str(embedding_record.id))
-
-    # Tampering/deepfake/liveness need pixel-level analysis, which can
-    # only run where the pixels are — on-device. Whatever the device
-    # already computed (or None if it hasn't yet) passes straight
-    # through; the risk engine treats a missing signal as "not run",
-    # never as "clean" (see app/services/risk/engine.py).
-    tampering_result = payload.tampering_result
-    deepfake_result = payload.deepfake_result
-    liveness_result = payload.liveness_result
-    face_detection_result = payload.face_detection_result
-
-    risk_result = risk_engine.score(
-        validation_result=validation_result,
-        tampering_result=tampering_result,
-        deepfake_result=deepfake_result,
-        registry_result=registry_result,
-        face_result=face_result,
-        identity_graph_result=identity_graph_result,
-        liveness_result=liveness_result,
-        duplicate_document_result=duplicate_document_result,
-        face_detection_result=face_detection_result,
-        citizen_registry_result=citizen_registry_result,
-    )
-
-    verification_record = create_verification(
-        db,
-        payload.document_type.value,
-        payload.nationality,
-        risk_result,
-        traveler_name=name_for_lookup,
-        ocr_result=ocr_result,
-        validation_result=validation_result,
-        tampering_result=tampering_result,
-        deepfake_result=deepfake_result,
-        registry_result=registry_result,
-        face_result=face_result,
-        identity_graph_result=identity_graph_result,
-        liveness_result=liveness_result,
-        duplicate_document_result=duplicate_document_result,
-        face_detection_result=face_detection_result,
-        citizen_registry_result=citizen_registry_result,
-    )
-
     if _user.checkpoint_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Your account has no assigned checkpoint — ask IT/Admin to assign one before screening.",
         )
-    case = create_case(
-        db,
-        checkpoint_id=_user.checkpoint_id,
-        field_officer_id=_user.id,
-        verification_id=verification_record.id,
-        document_type=payload.document_type.value,
-        nationality=payload.nationality,
-        traveler_name=name_for_lookup,
-        initial_status=CaseStatus.REVIEW_REQUIRED if risk_result.decision == "MANUAL_REVIEW" else CaseStatus.PENDING,
-        priority={"HIGH_RISK": CasePriority.HIGH, "MEDIUM_RISK": CasePriority.MEDIUM}.get(
-            risk_result.level, CasePriority.LOW
-        ),
-    )
+    if not payload.ocr_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ocr_fields is empty — on-device OCR must run before a screening is submitted",
+        )
 
-    log_event(db, verification_record.id, "CREATED", _user.id, case_id=case.id)
+    stage = "ocr_parse"
+    try:
+        ocr_result = OCRResult(
+            document_type=payload.document_type.value, fields=payload.ocr_fields, ocr_confidence=payload.ocr_confidence
+        )
 
-    if embedding_record is not None:
-        set_embedding_case_id(db, embedding_record, case.id)
-    _update_network_graph(
-        db, case=case, name=name_for_lookup, document_number=document_number_for_lookup,
-        nationality=payload.nationality, identity_graph_result=identity_graph_result,
-    )
+        mrz_result = None
+        if payload.mrz_text:
+            try:
+                lines = extract_mrz_lines(payload.mrz_text)
+                if lines is not None:
+                    mrz_result = parse_td3(*lines)
+            except MRZFormatError:
+                mrz_result = None
 
-    # No image ever reached the server to hash — the submitted encoded
-    # payload itself (fields + MRZ text + embeddings) is what's attested
-    # instead.
-    payload_hash = hashlib.sha256(
-        payload.model_dump_json(
-            exclude={"tampering_result", "deepfake_result", "liveness_result", "face_detection_result"}
-        ).encode()
-    ).hexdigest()
-    blockchain_service.create_verification_record(
-        verification_id=str(verification_record.id),
-        document_hash=payload_hash,
-        issuer_reference=str(_user.id),
-        event_type="SCREENING_CREATED",
-    )
+        stage = "validation"
+        validation_result: ValidationResult = validation_engine.validate(
+            ocr_result=payload.ocr_fields,
+            mrz_result=mrz_result,
+            nationality=payload.nationality,
+            aadhaar_number=payload.aadhaar_number,
+        )
 
-    return ScreeningResponse(
-        verification_id=str(verification_record.id),
-        case_id=str(case.id),
-        case_number=case.case_number,
-        case_status=case.status.value,
-        risk=risk_result,
-        ocr=ocr_result,
-        validation=validation_result,
-        tampering=tampering_result,
-        deepfake=deepfake_result,
-        registry=registry_result,
-        face=face_result,
-        identity_graph=identity_graph_result,
-        liveness=liveness_result,
-        duplicate_document=duplicate_document_result,
-        face_detection=face_detection_result,
-        citizen_registry=citizen_registry_result,
-    )
+        stage = "registry_lookup"
+        name_for_lookup = payload.ocr_fields.get("name")
+        document_number_for_lookup = payload.ocr_fields.get("passport_number") or payload.aadhaar_number
+        registry_result: RegistryLookupResult = lookup_registry(db, document_number_for_lookup, name_for_lookup)
+        duplicate_document_result: DuplicateDocumentResult | None = check_duplicate_document(
+            db, document_number_for_lookup, name_for_lookup
+        )
+        citizen_registry_result: CitizenRegistryResult | None = lookup_citizen_registry(
+            db,
+            document_number_for_lookup,
+            name_for_lookup,
+            payload.ocr_fields.get("date_of_birth"),
+            payload.nationality,
+        )
+
+        stage = "face_match"
+        face_result: FaceMatchResult | None = None
+        if payload.document_face_embedding and payload.live_face_embedding:
+            face_result = match_from_embeddings(payload.document_face_embedding, payload.live_face_embedding)
+
+        stage = "identity_graph"
+        identity_graph_result: IdentityGraphResult | None = None
+        embedding_record = None
+        if payload.live_face_embedding:
+            embedding_record = insert_embedding(
+                db, name_for_lookup or "UNKNOWN", document_number_for_lookup, payload.live_face_embedding
+            )
+            graph = build_graph(list_all(db))
+            identity_graph_result = find_multi_identity_cluster(graph, str(embedding_record.id))
+
+        tampering_result = payload.tampering_result
+        deepfake_result = payload.deepfake_result
+        liveness_result = payload.liveness_result
+        face_detection_result = payload.face_detection_result
+
+        stage = "risk_scoring"
+        risk_result = risk_engine.score(
+            validation_result=validation_result,
+            tampering_result=tampering_result,
+            deepfake_result=deepfake_result,
+            registry_result=registry_result,
+            face_result=face_result,
+            identity_graph_result=identity_graph_result,
+            liveness_result=liveness_result,
+            duplicate_document_result=duplicate_document_result,
+            face_detection_result=face_detection_result,
+            citizen_registry_result=citizen_registry_result,
+        )
+
+        stage = "persist_verification"
+        verification_record = create_verification(
+            db,
+            payload.document_type.value,
+            payload.nationality,
+            risk_result,
+            traveler_name=name_for_lookup,
+            ocr_result=ocr_result,
+            validation_result=validation_result,
+            tampering_result=tampering_result,
+            deepfake_result=deepfake_result,
+            registry_result=registry_result,
+            face_result=face_result,
+            identity_graph_result=identity_graph_result,
+            liveness_result=liveness_result,
+            duplicate_document_result=duplicate_document_result,
+            face_detection_result=face_detection_result,
+            citizen_registry_result=citizen_registry_result,
+        )
+
+        stage = "create_case"
+        case = create_case(
+            db,
+            checkpoint_id=_user.checkpoint_id,
+            field_officer_id=_user.id,
+            verification_id=verification_record.id,
+            document_type=payload.document_type.value,
+            nationality=payload.nationality,
+            traveler_name=name_for_lookup,
+            initial_status=CaseStatus.REVIEW_REQUIRED if risk_result.decision == "MANUAL_REVIEW" else CaseStatus.PENDING,
+            priority={"HIGH_RISK": CasePriority.HIGH, "MEDIUM_RISK": CasePriority.MEDIUM}.get(
+                risk_result.level, CasePriority.LOW
+            ),
+        )
+
+        stage = "audit_and_graph"
+        log_event(db, verification_record.id, "CREATED", _user.id, case_id=case.id)
+
+        if embedding_record is not None:
+            set_embedding_case_id(db, embedding_record, case.id)
+        _update_network_graph(
+            db, case=case, name=name_for_lookup, document_number=document_number_for_lookup,
+            nationality=payload.nationality, identity_graph_result=identity_graph_result,
+        )
+
+        stage = "blockchain"
+        payload_hash = hashlib.sha256(
+            payload.model_dump_json(
+                exclude={"tampering_result", "deepfake_result", "liveness_result", "face_detection_result"}
+            ).encode()
+        ).hexdigest()
+        blockchain_service.create_verification_record(
+            verification_id=str(verification_record.id),
+            document_hash=payload_hash,
+            issuer_reference=str(_user.id),
+            event_type="SCREENING_CREATED",
+        )
+
+        logger.info(
+            "screening_complete case=%s verification=%s risk=%s score=%d decision=%s traveler=%s",
+            case.case_number, verification_record.id, risk_result.level,
+            risk_result.score, risk_result.decision, name_for_lookup,
+        )
+
+        return ScreeningResponse(
+            verification_id=str(verification_record.id),
+            case_id=str(case.id),
+            case_number=case.case_number,
+            case_status=case.status.value,
+            risk=risk_result,
+            ocr=ocr_result,
+            validation=validation_result,
+            tampering=tampering_result,
+            deepfake=deepfake_result,
+            registry=registry_result,
+            face=face_result,
+            identity_graph=identity_graph_result,
+            liveness=liveness_result,
+            duplicate_document=duplicate_document_result,
+            face_detection=face_detection_result,
+            citizen_registry=citizen_registry_result,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("screening_failed stage=%s user=%s error=%s", stage, _user.username, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": str(exc), "stage": stage, "message": f"Screening failed at {stage}: {exc}"},
+        ) from exc
 
 
 @router.post(

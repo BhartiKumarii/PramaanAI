@@ -43,6 +43,8 @@ def build_graph(
     ids = list(embeddings)
     for i in range(len(ids)):
         for j in range(i + 1, len(ids)):
+            if len(embeddings[ids[i]]) != len(embeddings[ids[j]]):
+                continue
             similarity = cosine_similarity(embeddings[ids[i]], embeddings[ids[j]])
             if similarity >= threshold:
                 graph.add_edge(ids[i], ids[j], similarity=similarity)

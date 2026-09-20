@@ -320,6 +320,9 @@ class ScreeningRepository(
         documentBackImageFile: File? = null,
         selfieImageFile: File? = null,
         faceDetectionResult: com.pramaanai.officer.data.model.FaceDetectionResult? = null,
+        tamperingResult: com.pramaanai.officer.data.model.TamperingResult? = null,
+        deepfakeResult: com.pramaanai.officer.data.remote.DeepfakeResult? = null,
+        livenessResult: com.pramaanai.officer.data.remote.LivenessResult? = null,
     ): ScreeningQueueItem {
         val request = ScreeningSubmissionRequest(
             documentType = documentType,
@@ -330,6 +333,9 @@ class ScreeningRepository(
             documentFaceEmbedding = documentFaceEmbedding,
             liveFaceEmbedding = liveFaceEmbedding,
             faceDetectionResult = faceDetectionResult,
+            tamperingResult = tamperingResult,
+            deepfakeResult = deepfakeResult,
+            livenessResult = livenessResult,
         )
 
         val response = try {

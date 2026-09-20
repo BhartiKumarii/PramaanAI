@@ -1,6 +1,8 @@
+import time
 import uuid
+from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.security import (
@@ -18,13 +20,30 @@ from app.schemas.auth import CurrentUserResponse, LoginRequest, RefreshRequest, 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+_MAX_ATTEMPTS = 5
+_WINDOW_SECONDS = 60
+
+
+def _check_rate_limit(client_ip: str) -> None:
+    now = time.monotonic()
+    attempts = _login_attempts[client_ip]
+    _login_attempts[client_ip] = [t for t in attempts if now - t < _WINDOW_SECONDS]
+    if len(_login_attempts[client_ip]) >= _MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Try again in 60 seconds.",
+        )
+    _login_attempts[client_ip].append(now)
+
 
 @router.post(
     "/login",
     response_model=TokenResponse,
     summary="Authenticate an officer/supervisor/admin and obtain JWTs",
 )
-def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
+    _check_rate_limit(request.client.host if request.client else "unknown")
     user = get_user_by_username(db, payload.username)
     if user is None or not user.is_active or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")

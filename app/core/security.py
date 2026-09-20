@@ -87,8 +87,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 
 def require_role(*roles: UserRole):
-    # With single OFFICER role, just check if user is active
-    # (all authenticated users have full access)
     def dependency(user: User = Depends(get_current_user)) -> User:
+        if roles and user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role {user.role.value} does not have access to this resource",
+            )
         return user
     return dependency

@@ -39,18 +39,12 @@ def extract_embedding(image_bytes: bytes, box: tuple[int, int, int, int] | None 
     """Compute a real HOG-style embedding vector for a face image (or the
     `box` crop of it, if a detector supplied one)."""
     image = Image.open(__import__("io").BytesIO(image_bytes)).convert("L")
-    print(f"[DEBUG] Original image size: {image.size}")
 
     if box is not None:
-        print(f"[DEBUG] Cropping to box: {box}")
         image = image.crop(box)
-        print(f"[DEBUG] Cropped image size: {image.size}")
 
     image = image.resize(_EMBED_SIZE, Image.BILINEAR)
-    print(f"[DEBUG] Resized image to: {image.size}")
     pixels = np.asarray(image, dtype=np.float32)
-    print(f"[DEBUG] Pixel array shape: {pixels.shape}, dtype: {pixels.dtype}")
-    print(f"[DEBUG] Pixel value range: {pixels.min():.1f} to {pixels.max():.1f}")
 
     gx = _convolve2d(pixels, _SOBEL_X)
     gy = _convolve2d(pixels, _SOBEL_Y)
@@ -76,29 +70,18 @@ def extract_embedding(image_bytes: bytes, box: tuple[int, int, int, int] | None 
             norm = np.linalg.norm(bins) or 1.0
             histogram.extend((bins / norm).tolist())
 
-    print(f"[DEBUG] Final embedding length: {len(histogram)}")
-    if histogram:
-        hist_array = np.array(histogram)
-        print(f"[DEBUG] Embedding stats: mean={hist_array.mean():.6f}, std={hist_array.std():.6f}, min={hist_array.min():.6f}, max={hist_array.max():.6f}")
-
     return histogram
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
     """Real cosine similarity between two embedding vectors, in [-1, 1]."""
-    print(f"[DEBUG] Cosine similarity input lengths: a={len(a)}, b={len(b)}")
+    if len(a) != len(b):
+        return 0.0
     vec_a = np.asarray(a, dtype=np.float64)
     vec_b = np.asarray(b, dtype=np.float64)
 
     norm_a = np.linalg.norm(vec_a)
     norm_b = np.linalg.norm(vec_b)
     dot_product = np.dot(vec_a, vec_b)
-
-    print(f"[DEBUG] Vector norms: a={norm_a:.6f}, b={norm_b:.6f}")
-    print(f"[DEBUG] Dot product: {dot_product:.6f}")
-
     denom = (norm_a * norm_b) or 1e-9
-    similarity = float(dot_product / denom)
-
-    print(f"[DEBUG] Final cosine similarity: {similarity:.6f}")
-    return similarity
+    return float(dot_product / denom)

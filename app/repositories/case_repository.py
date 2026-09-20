@@ -22,6 +22,12 @@ def _generate_case_number(db: Session) -> str:
     return f"{prefix}{count_today + 1:04d}"
 
 
+def _to_uuid(value) -> uuid.UUID:
+    if isinstance(value, uuid.UUID):
+        return value
+    return uuid.UUID(str(value))
+
+
 def create_case(
     db: Session,
     *,
@@ -41,9 +47,9 @@ def create_case(
             case_number=_generate_case_number(db),
             status=initial_status,
             priority=priority,
-            checkpoint_id=checkpoint_id,
-            field_officer_id=field_officer_id,
-            verification_id=verification_id,
+            checkpoint_id=_to_uuid(checkpoint_id),
+            field_officer_id=_to_uuid(field_officer_id),
+            verification_id=_to_uuid(verification_id),
             document_type=document_type,
             nationality=nationality,
             traveler_name=traveler_name,

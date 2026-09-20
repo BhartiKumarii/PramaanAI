@@ -8,6 +8,14 @@ from app.models.case import Case
 from app.models.user import User
 
 
+def _to_uuid(value) -> uuid.UUID | None:
+    if value is None:
+        return None
+    if isinstance(value, uuid.UUID):
+        return value
+    return uuid.UUID(str(value))
+
+
 def log_event(
     db: Session,
     verification_id: uuid.UUID | None,
@@ -17,10 +25,10 @@ def log_event(
     case_id: uuid.UUID | None = None,
 ) -> AuditEvent:
     event = AuditEvent(
-        verification_id=verification_id,
-        case_id=case_id,
+        verification_id=_to_uuid(verification_id),
+        case_id=_to_uuid(case_id),
         event_type=event_type,
-        actor_user_id=actor_user_id,
+        actor_user_id=_to_uuid(actor_user_id),
         reason=reason,
     )
     db.add(event)

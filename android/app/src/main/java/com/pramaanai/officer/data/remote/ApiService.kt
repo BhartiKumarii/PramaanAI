@@ -158,11 +158,20 @@ data class CaseListItemResponse(
     val status: String,
 )
 
+data class DuplicateDocumentResult(
+    val status: String, // NO_MATCH | SAME_IDENTITY_REUSE | DIFFERENT_IDENTITY_REUSE
+    val matchCount: Int,
+    val reason: String,
+)
+
+data class CitizenRegistryResult(
+    val status: String, // MATCH | MISMATCH | NO_RECORD | REVOKED_MATCH
+    val reason: String,
+    val mismatchedFields: List<String> = emptyList(),
+)
+
 data class ScreeningResponse(
     val verificationId: String,
-    // The Case this screening created (see app/models/case.py on the
-    // backend) — "Send to Immigration" (see ScreeningRepository.
-    // sendCaseToImmigration) submits this id, not the verificationId.
     val caseId: String,
     val caseNumber: String,
     val caseStatus: String,
@@ -176,6 +185,8 @@ data class ScreeningResponse(
     val face: FaceMatchResult?,
     val identityGraph: IdentityGraphResult?,
     val faceDetection: FaceDetectionResult? = null,
+    val duplicateDocument: DuplicateDocumentResult? = null,
+    val citizenRegistry: CitizenRegistryResult? = null,
 )
 
 data class RegistryLookupResult(val status: String, val hits: List<RegistryHit>)
@@ -217,6 +228,9 @@ data class VerificationRecordResponse(
     val face: FaceMatchResult?,
     val identityGraph: IdentityGraphResult?,
     val liveness: LivenessResult?,
+    val faceDetection: FaceDetectionResult? = null,
+    val duplicateDocument: DuplicateDocumentResult? = null,
+    val citizenRegistry: CitizenRegistryResult? = null,
 )
 
 data class AuditEventResponse(
