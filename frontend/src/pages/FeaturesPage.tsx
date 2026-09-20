@@ -76,7 +76,7 @@ export function FeaturesPage() {
           <span
             className={`inline-block rounded-full border border-border px-3 py-1 font-mono text-xs uppercase tracking-wide text-muted-foreground transition-all duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-2 opacity-0'}`}
           >
-            SIH 2026 &middot; Problem Statement 26188
+            PramaanAI &middot; Platform Capabilities
           </span>
           <h1
             className={`mt-6 text-5xl font-semibold leading-[0.95] tracking-tight transition-all delay-100 duration-700 sm:text-7xl ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}

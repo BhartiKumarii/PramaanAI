@@ -9,9 +9,9 @@ export function Footer() {
           <img src={logoIcon} alt="PramaanAI" className="h-5 w-5" />
           <span className="text-sm font-semibold text-foreground">PramaanAI</span>
         </div>
-        <p className="text-xs text-muted-foreground">AI-assisted document verification, built for the field.</p>
+        <p className="text-xs text-muted-foreground">AI-assisted identity and document verification designed for real-world border and checkpoint operations.</p>
         <p className="text-xs text-muted-foreground">
-          SIH 2026 &middot; Problem Statement 26188 &middot; Prototype only &mdash; not connected to any real government database.
+          Prototype build &mdash; uses synthetic data only. Not connected to any real government database.
         </p>
         <nav className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
           <Link to="/features" className="hover:text-foreground">Features</Link>
