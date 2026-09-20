@@ -169,7 +169,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
         }
     }
 
-    val reasons = item?.let { flaggedReasons(it) }.orEmpty()
+    val reasons = item?.let { flaggedReasons(context, it) }.orEmpty()
 
     if (showClearDialog) {
         AlertDialog(
@@ -187,7 +187,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                                 step = 7
                             } catch (e: Exception) {
                                 showClearDialog = false
-                                Toast.makeText(context, friendlyActionError("clear this screening", e), Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, friendlyActionError(context, "clear this screening", e), Toast.LENGTH_LONG).show()
                             }
                         }
                     },
@@ -220,7 +220,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                         step = 7
                     } catch (e: Exception) {
                         showSecondaryDialog = false
-                        Toast.makeText(context, friendlyActionError("send for secondary review", e), Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, friendlyActionError(context, "send for secondary review", e), Toast.LENGTH_LONG).show()
                     }
                 }
             },
@@ -243,7 +243,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                         step = 7
                     } catch (e: Exception) {
                         showHoldDialog = false
-                        Toast.makeText(context, friendlyActionError("hold/refer this case", e), Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, friendlyActionError(context, "hold/refer this case", e), Toast.LENGTH_LONG).show()
                     }
                 }
             },
@@ -266,7 +266,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                         step = 7
                     } catch (e: Exception) {
                         showSendDialog = false
-                        Toast.makeText(context, friendlyActionError("send this case", e), Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, friendlyActionError(context, "send this case", e), Toast.LENGTH_LONG).show()
                     }
                 }
             },
@@ -767,7 +767,8 @@ private fun sourceLabel(signal: String): String = when (signal) {
 
 @Composable
 fun ReviewStep(item: ScreeningQueueItem) {
-    val reasons = flaggedReasons(item)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val reasons = flaggedReasons(context, item)
     StepCard("Officer Review") {
         Text(
             "Decide with your own procedure. If you flag this screening or send it on, the reasons below are recorded automatically — nothing to type.",

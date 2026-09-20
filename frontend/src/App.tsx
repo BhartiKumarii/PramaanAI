@@ -11,22 +11,15 @@ import { Dashboard } from './pages/Dashboard'
 import { CasesList } from './pages/CasesList'
 import { CaseReview } from './pages/CaseReview'
 import { AdminUsers } from './pages/AdminUsers'
-import { AdminDevices } from './pages/AdminDevices'
-import { AdminSystem } from './pages/AdminSystem'
-import { IdentityPatterns } from './pages/IdentityPatterns'
-import { IdentityNetwork } from './pages/IdentityNetwork'
+import { IdentityIntelligence } from './pages/IdentityIntelligence'
+import { DeviceManagement } from './pages/DeviceManagement'
 import { DocumentIntelligence } from './pages/DocumentIntelligence'
-import { PersonSearch } from './pages/PersonSearch'
 import { Officers } from './pages/Officers'
-import { FlaggedDevices } from './pages/FlaggedDevices'
-import { RevokedDevices } from './pages/RevokedDevices'
 import { AreaMonitoring } from './pages/AreaMonitoring'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { AuditLogs } from './pages/AuditLogs'
-import { Registry } from './pages/Registry'
 import { Checkpoints } from './pages/Checkpoints'
-import { TestingMode } from './pages/TestingMode'
 
 function AppRoutes() {
   const { user } = useAuth()
@@ -51,22 +44,15 @@ function AppRoutes() {
                 <Route path="/requests" element={<CasesList view="requests" />} />
                 <Route path="/results" element={<CasesList view="results" />} />
                 <Route path="/alerts" element={<CasesList view="alerts" />} />
-                <Route path="/person-search" element={<PersonSearch />} />
-                <Route path="/identity-patterns" element={<IdentityPatterns />} />
-                <Route path="/identity-network" element={<IdentityNetwork />} />
+                <Route path="/identity" element={<IdentityIntelligence />} />
                 <Route path="/document-intelligence" element={<DocumentIntelligence />} />
                 <Route path="/checkpoints" element={<Checkpoints />} />
                 <Route path="/area-monitoring" element={<AreaMonitoring />} />
                 <Route path="/officers" element={<Officers />} />
-                <Route path="/devices/flagged" element={<FlaggedDevices />} />
-                <Route path="/devices/revoked" element={<RevokedDevices />} />
+                <Route path="/devices" element={<DeviceManagement />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/devices" element={<AdminDevices />} />
-                <Route path="/admin/system" element={<AdminSystem />} />
-                <Route path="/admin/registry" element={<Registry />} />
                 <Route path="/admin/audit-logs" element={<AuditLogs />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/testing" element={<TestingMode />} />
+                <Route path="/analytics" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/console" replace />} />
               </Routes>

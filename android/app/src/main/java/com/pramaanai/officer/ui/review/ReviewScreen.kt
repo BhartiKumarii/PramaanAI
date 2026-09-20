@@ -275,7 +275,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
         }
     }
 
-    val reasons = item?.let { flaggedReasons(it) }.orEmpty()
+    val reasons = item?.let { flaggedReasons(context, it) }.orEmpty()
 
     if (showFlagDialog) {
         ReasonDialog(
@@ -293,7 +293,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
                         onBack()
                     } catch (e: Exception) {
                         showFlagDialog = false
-                        Toast.makeText(context, friendlyActionError("flag this screening", e), Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, friendlyActionError(context, "flag this screening", e), Toast.LENGTH_LONG).show()
                     }
                 }
             },
@@ -316,7 +316,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
                         onBack()
                     } catch (e: Exception) {
                         showSendDialog = false
-                        Toast.makeText(context, friendlyActionError("send this case", e), Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, friendlyActionError(context, "send this case", e), Toast.LENGTH_LONG).show()
                     }
                 }
             },

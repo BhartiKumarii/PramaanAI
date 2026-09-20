@@ -1,5 +1,6 @@
 package com.pramaanai.officer.ui.tour
 
+import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.CardDark
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.AccentGreen
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pramaanai.officer.ui.theme.Ink900
@@ -58,8 +60,11 @@ fun Modifier.tourAnchor(id: String): Modifier = this.onGloballyPositioned { coor
 data class TourStep(
     val id: String,
     val anchorId: String? = null,
-    val title: String,
-    val body: String,
+    val titleRes: Int = 0,
+    val bodyRes: Int = 0,
+    val title: String = "",
+    val body: String = "",
+    val ctaLabelRes: Int = 0,
     val ctaLabel: String? = null,
     val onCta: (() -> Unit)? = null,
 )
@@ -169,26 +174,29 @@ fun TourOverlay() {
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                Text(step.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                val displayTitle = if (step.titleRes != 0) stringResource(step.titleRes) else step.title
+                val displayBody = if (step.bodyRes != 0) stringResource(step.bodyRes) else step.body
+                Text(displayTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text(step.body, style = MaterialTheme.typography.bodyMedium)
+                Text(displayBody, style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    TextButton(onClick = { TourState.skip() }) { Text("Skip tour") }
+                    TextButton(onClick = { TourState.skip() }) { Text(stringResource(R.string.common_skip_tour)) }
                     Spacer(Modifier.weight(1f))
                     if (TourState.stepIndex > 0 && step.onCta == null) {
-                        TextButton(onClick = { TourState.back() }) { Text("Back") }
+                        TextButton(onClick = { TourState.back() }) { Text(stringResource(R.string.common_back)) }
                     }
                     if (step.onCta != null) {
+                        val ctaText = if (step.ctaLabelRes != 0) stringResource(step.ctaLabelRes) else step.ctaLabel ?: stringResource(R.string.common_continue)
                         Button(
                             onClick = step.onCta,
                             colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
-                        ) { Text(step.ctaLabel ?: "Continue") }
+                        ) { Text(ctaText) }
                     } else {
                         Button(
                             onClick = { TourState.next() },
                             colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
-                        ) { Text(if (TourState.stepIndex == TourState.steps.lastIndex) "Finish" else "Next") }
+                        ) { Text(if (TourState.stepIndex == TourState.steps.lastIndex) stringResource(R.string.common_finish) else stringResource(R.string.common_next)) }
                     }
                 }
             }

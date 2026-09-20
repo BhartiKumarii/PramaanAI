@@ -3,7 +3,6 @@ package com.pramaanai.officer.ui.profile
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.AccentGreen
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,23 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,15 +30,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pramaanai.officer.R
 import com.pramaanai.officer.data.Permissions
 import com.pramaanai.officer.data.ScreeningRepository
+import com.pramaanai.officer.ui.components.OfficerAvatar
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Gray600
 import com.pramaanai.officer.ui.theme.Ink900
-import com.pramaanai.officer.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,12 +56,7 @@ fun OfficerProfileScreen(repository: ScreeningRepository, onBack: () -> Unit, on
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier.size(56.dp).background(AccentGreen, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Filled.Person, contentDescription = null, tint = White, modifier = Modifier.size(28.dp))
-                    }
+                    OfficerAvatar(name = profile.officerId, size = 56.dp, fontSize = 20.sp)
                     Spacer(Modifier.width(14.dp))
                     Column {
                         Text(profile.officerId, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

@@ -289,6 +289,7 @@
     <string name="alert_duplicate">Duplicate Record</string>
     <string name="alert_incomplete">Incomplete Information</string>
     <string name="alert_verification">Verification Required</string>
+    <string name="alerts_mark_all_read">Mark all read</string>
 
     <!-- More menu -->
     <string name="more_analytics">Analytics</string>
@@ -464,4 +465,54 @@
     <string name="signal_liveness">Liveness / spoof</string>
     <string name="signal_citizen_registry_label">Citizen registry</string>
     <string name="signal_duplicate_doc">Duplicate / reused document</string>
+
+    <!-- Tour guide steps -->
+    <string name="tour_nav_title">Navigate the app</string>
+    <string name="tour_nav_body">Use these tabs to move between your Dashboard, Screening Queue, History, and Alerts.</string>
+    <string name="tour_new_screening_title">Start a new screening</string>
+    <string name="tour_new_screening_body">Tap here whenever a traveler arrives at your checkpoint.</string>
+    <string name="tour_daily_numbers_title">Your daily numbers</string>
+    <string name="tour_daily_numbers_body">These update in real time from your actual screenings today — nothing here is a placeholder.</string>
+    <string name="tour_risk_title">Risk at a glance</string>
+    <string name="tour_risk_body">See how many pending cases are low, medium, or high risk.</string>
+    <string name="tour_practice_title">Try a practice screening</string>
+    <string name="tour_practice_body">Next, let\'s walk through a full screening using sample data — nothing you do in practice mode is saved.</string>
+    <string name="tour_practice_cta">Start practice</string>
+    <string name="tour_detected_title">"Detected" ≠ "Verified"</string>
+    <string name="tour_detected_body">OCR found this field on the document image. That\'s all "Detected" means — nothing has confirmed it yet.</string>
+    <string name="tour_verified_title">This one is actually verified</string>
+    <string name="tour_verified_body">The backend\'s validation engine ran a real checksum here and confirmed it. That\'s the difference from "Detected."</string>
+    <string name="tour_exact_title">EXACT match</string>
+    <string name="tour_exact_body">This ties to the traveler\'s actual document number — a confirmed hit against the registry.</string>
+    <string name="tour_fuzzy_title">FUZZY match</string>
+    <string name="tour_fuzzy_body">This is only a name similarity, not a document-number match. Always apply officer judgment — never treat it the same as an EXACT hit.</string>
+
+    <!-- Tour overlay common -->
+    <string name="common_continue">Continue</string>
+
+    <!-- Flag / error messages -->
+    <string name="flag_officer_initiated">Officer-initiated review — no automated check raised a flag on this screening.</string>
+    <string name="error_no_connection">Couldn\'t %1$s — no connection to the server. Try again when you\'re back online.</string>
+    <string name="error_not_synced">This screening hasn\'t reached the server yet (it was saved offline). It can be sent once it has synced.</string>
+    <string name="error_already_decided">Couldn\'t %1$s — it has already been sent or decided.</string>
+    <string name="error_generic_action">Couldn\'t %1$s: %2$s</string>
+    <string name="error_unexpected">unexpected error</string>
+
+    <!-- Session -->
+    <string name="session_expired_notice">You were signed out after a period of inactivity.</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_search">Search</string>
+    <string name="cd_replay_tour">Replay guided tour</string>
+    <string name="cd_officer_profile">Officer profile</string>
+
+    <!-- Splash -->
+    <string name="splash_tagline">Secure · Explainable · Connectivity-Aware</string>
+
+    <!-- Actions for error messages -->
+    <string name="action_flag_screening">flag this screening</string>
+    <string name="action_send_case">send this case</string>
+    <string name="action_clear_screening">clear this screening</string>
+    <string name="action_secondary_review">send for secondary review</string>
+    <string name="action_hold_refer">hold/refer this case</string>
 </resources>

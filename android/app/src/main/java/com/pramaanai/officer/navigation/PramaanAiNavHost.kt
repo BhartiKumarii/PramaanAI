@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pramaanai.officer.R
 import com.pramaanai.officer.data.connectivity.ConnectivityMonitor
 import com.pramaanai.officer.data.connectivity.ConnectivityState
+import com.pramaanai.officer.data.local.ReadAlertsStore
 import com.pramaanai.officer.data.local.TourPreferences
 import com.pramaanai.officer.data.remote.RetrofitClient
 import kotlinx.coroutines.delay
@@ -105,36 +106,36 @@ private fun getSelectedCheckpointFromAuth(): com.pramaanai.officer.data.remote.C
  * PracticeWorkflowScreen.kt. The tour ends after the FUZZY spotlight (the
  * last step here); the officer then finishes the practice run itself with
  * its own Complete-step button, or backs out at any point. */
-private fun buildTourSteps(navController: androidx.navigation.NavHostController): List<TourStep> = listOf(
+private fun buildTourSteps(ctx: android.content.Context, navController: androidx.navigation.NavHostController): List<TourStep> = listOf(
     TourStep(
         id = "bottom_nav",
         anchorId = "bottom_nav",
-        title = "Navigate the app",
-        body = "Use these tabs to move between your Dashboard, Screening Queue, History, and Alerts.",
+        title = ctx.getString(R.string.tour_nav_title),
+        body = ctx.getString(R.string.tour_nav_body),
     ),
     TourStep(
         id = "new_screening",
         anchorId = "new_screening_button",
-        title = "Start a new screening",
-        body = "Tap here whenever a traveler arrives at your checkpoint.",
+        title = ctx.getString(R.string.tour_new_screening_title),
+        body = ctx.getString(R.string.tour_new_screening_body),
     ),
     TourStep(
         id = "stat_cards",
         anchorId = "stat_cards",
-        title = "Your daily numbers",
-        body = "These update in real time from your actual screenings today — nothing here is a placeholder.",
+        title = ctx.getString(R.string.tour_daily_numbers_title),
+        body = ctx.getString(R.string.tour_daily_numbers_body),
     ),
     TourStep(
         id = "risk_overview",
         anchorId = "risk_overview",
-        title = "Risk at a glance",
-        body = "See how many pending cases are low, medium, or high risk.",
+        title = ctx.getString(R.string.tour_risk_title),
+        body = ctx.getString(R.string.tour_risk_body),
     ),
     TourStep(
         id = "practice_intro",
-        title = "Try a practice screening",
-        body = "Next, let's walk through a full screening using sample data — nothing you do in practice mode is saved.",
-        ctaLabel = "Start practice",
+        title = ctx.getString(R.string.tour_practice_title),
+        body = ctx.getString(R.string.tour_practice_body),
+        ctaLabel = ctx.getString(R.string.tour_practice_cta),
         onCta = {
             navController.navigate(Routes.PRACTICE_WORKFLOW)
             TourState.next()
@@ -143,26 +144,26 @@ private fun buildTourSteps(navController: androidx.navigation.NavHostController)
     TourStep(
         id = "detected_example",
         anchorId = "detected_example",
-        title = "\"Detected\" ≠ \"Verified\"",
-        body = "OCR found this field on the document image. That's all \"Detected\" means — nothing has confirmed it yet.",
+        title = ctx.getString(R.string.tour_detected_title),
+        body = ctx.getString(R.string.tour_detected_body),
     ),
     TourStep(
         id = "verified_example",
         anchorId = "verified_example",
-        title = "This one is actually verified",
-        body = "The backend's validation engine ran a real checksum here and confirmed it. That's the difference from \"Detected.\"",
+        title = ctx.getString(R.string.tour_verified_title),
+        body = ctx.getString(R.string.tour_verified_body),
     ),
     TourStep(
         id = "exact_tag_example",
         anchorId = "exact_tag_example",
-        title = "EXACT match",
-        body = "This ties to the traveler's actual document number — a confirmed hit against the registry.",
+        title = ctx.getString(R.string.tour_exact_title),
+        body = ctx.getString(R.string.tour_exact_body),
     ),
     TourStep(
         id = "fuzzy_tag_example",
         anchorId = "fuzzy_tag_example",
-        title = "FUZZY match",
-        body = "This is only a name similarity, not a document-number match. Always apply officer judgment — never treat it the same as an EXACT hit.",
+        title = ctx.getString(R.string.tour_fuzzy_title),
+        body = ctx.getString(R.string.tour_fuzzy_body),
     ),
 )
 
@@ -172,6 +173,10 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val tourPrefs = remember(context) { TourPreferences.getInstance(context) }
+    val readAlertsStore = remember(context) { ReadAlertsStore.getInstance(context) }
+    val allAlerts by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
+    val readIds by readAlertsStore.readIds.collectAsStateWithLifecycle()
+    val unreadAlertCount = allAlerts.count { it.id !in readIds }
 
     // Real, live connectivity — polled, never assumed (see CLAUDE.md).
     // Hoisted once here since AppShell is the shared chrome for every
@@ -196,7 +201,7 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
 
     fun launchTour() {
         TourState.start(
-            steps = buildTourSteps(navController),
+            steps = buildTourSteps(context, navController),
             onFinished = {
                 AuthSession.username?.let { tourPrefs.markTourSeen(it) }
                 scope.launch { repository.logTourCompleted() }
@@ -210,7 +215,7 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
 
     fun expireSession() {
         if (!AuthSession.isLoggedIn()) return
-        SessionEvents.pendingNotice = "You were signed out after a period of inactivity."
+        SessionEvents.pendingNotice = context.getString(R.string.session_expired_notice)
         scope.launch { repository.logout() }
         navigateToLogin()
     }
@@ -259,7 +264,6 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
         }
 
         composable(Routes.DASHBOARD) {
-            val alertCount by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
             AppShell(
                 connectivityState = connectivityState,
                 title = stringResource(R.string.nav_dashboard),
@@ -267,7 +271,8 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 onTabSelected = { goToTab(it) },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
-                alertCount = alertCount.size,
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
             ) { padding ->
                 DashboardScreen(
                     repository = repository,
@@ -282,7 +287,6 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
         }
 
         composable(Routes.QUEUE) {
-            val alertCount by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
             AppShell(
                 connectivityState = connectivityState,
                 title = stringResource(R.string.nav_queue),
@@ -290,14 +294,14 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 onTabSelected = { goToTab(it) },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
-                alertCount = alertCount.size,
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
             ) { padding ->
                 QueueScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
             }
         }
 
         composable(Routes.HISTORY) {
-            val alertCount by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
             AppShell(
                 connectivityState = connectivityState,
                 title = stringResource(R.string.nav_history),
@@ -305,14 +309,14 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 onTabSelected = { goToTab(it) },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
-                alertCount = alertCount.size,
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
             ) { padding ->
                 HistoryScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
             }
         }
 
         composable(Routes.ALERTS) {
-            val alertCount by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
             AppShell(
                 connectivityState = connectivityState,
                 title = stringResource(R.string.nav_alerts),
@@ -320,14 +324,14 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 onTabSelected = { goToTab(it) },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
-                alertCount = alertCount.size,
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
             ) { padding ->
                 AlertsScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
             }
         }
 
         composable(Routes.MORE) {
-            val alertCount by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
             AppShell(
                 connectivityState = connectivityState,
                 title = stringResource(R.string.nav_more),
@@ -335,7 +339,8 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 onTabSelected = { goToTab(it) },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
-                alertCount = alertCount.size,
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
             ) { padding ->
                 MoreScreen(
                     padding = padding,

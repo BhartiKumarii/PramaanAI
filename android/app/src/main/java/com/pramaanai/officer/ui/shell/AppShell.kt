@@ -1,24 +1,18 @@
 package com.pramaanai.officer.ui.shell
 
-import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.AccentGreen
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.BadgedBox
@@ -40,15 +34,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pramaanai.officer.R
 import com.pramaanai.officer.data.connectivity.ConnectivityState
 import com.pramaanai.officer.ui.components.GridPatternBackground
+import com.pramaanai.officer.ui.components.OfficerAvatar
 import com.pramaanai.officer.ui.components.SystemStatusIndicator
 import com.pramaanai.officer.ui.tour.tourAnchor
 import com.pramaanai.officer.ui.theme.Gray500
-import com.pramaanai.officer.ui.theme.Ink900
 import com.pramaanai.officer.ui.theme.SidebarDark
-import com.pramaanai.officer.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,6 +71,7 @@ fun AppShell(
     onSearchClick: (() -> Unit)? = null,
     onProfileClick: () -> Unit,
     onHelpClick: () -> Unit = {},
+    officerName: String? = null,
     alertCount: Int = 0,
     connectivityState: ConnectivityState = ConnectivityState.OFFLINE,
     content: @Composable (PaddingValues) -> Unit,
@@ -101,12 +96,7 @@ fun AppShell(
                             }
                         }
                         IconButton(onClick = onProfileClick) {
-                            Box(
-                                modifier = Modifier.size(28.dp).background(AccentGreen, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(Icons.Filled.Person, contentDescription = "Officer profile", tint = BackgroundDark, modifier = Modifier.size(16.dp))
-                            }
+                            OfficerAvatar(name = officerName, size = 28.dp, fontSize = 12.sp)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = SidebarDark),
