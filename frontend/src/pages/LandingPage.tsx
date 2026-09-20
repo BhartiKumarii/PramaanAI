@@ -206,7 +206,7 @@ export function LandingPage() {
               <img
                 src={logoIcon}
                 alt="PramaanAI"
-                className="relative h-40 w-40 animate-[spin_20s_linear_infinite] drop-shadow-[0_0_30px_rgba(16,185,129,0.15)] sm:h-52 sm:w-52 lg:h-64 lg:w-64"
+                className="relative h-40 w-40 animate-spiral drop-shadow-[0_0_30px_rgba(16,185,129,0.15)] sm:h-52 sm:w-52 lg:h-64 lg:w-64"
               />
             </div>
           </div>

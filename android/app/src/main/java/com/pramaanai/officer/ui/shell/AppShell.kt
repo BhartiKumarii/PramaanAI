@@ -146,7 +146,7 @@ fun AppShell(
         // Applied once here so every bottom-nav tab shares the same green
         // grid backdrop as the web console/landing page, instead of each
         // screen opting in individually and drifting out of sync.
-        GridPatternBackground(modifier = Modifier.padding(padding)) {
+        GridPatternBackground(modifier = Modifier.padding(padding), animated = true) {
             content(PaddingValues(0.dp))
         }
     }
