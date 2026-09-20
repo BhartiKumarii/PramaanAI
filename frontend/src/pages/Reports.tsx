@@ -210,7 +210,7 @@ export function Reports() {
                             fontSize: 12,
                             borderRadius: 8,
                           }}
-                          formatter={(value: number, name: string) => [value, RISK_LABEL[name] ?? name]}
+                          formatter={(value: unknown, name: unknown) => [String(value), RISK_LABEL[String(name)] ?? String(name)]}
                         />
                       </PieChart>
                     </ResponsiveContainer>

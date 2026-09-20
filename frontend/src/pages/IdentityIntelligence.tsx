@@ -4,7 +4,7 @@ import { searchPersons, listRelationships, expandEntity } from '../api/resources
 import { useAsync } from '../hooks/useAsync'
 import { Card, StatTile } from '../components/StatTile'
 import { NetworkGraphView } from '../components/NetworkGraphView'
-import type { PersonSearchResult, RelationshipListItem, NetworkGraph, GraphNode } from '../api/types'
+import type { PersonSearchResult, NetworkGraph, GraphNode } from '../api/types'
 
 type Tab = 'search' | 'patterns' | 'network'
 
