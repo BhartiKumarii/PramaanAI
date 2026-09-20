@@ -2,11 +2,6 @@ package com.pramaanai.officer.ui.splash
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.foundation.Canvas
@@ -30,20 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pramaanai.officer.R
-import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import kotlinx.coroutines.delay
 import kotlin.math.cos
-import kotlin.math.floor
 import kotlin.math.sin
 
 private val TealGreen = Color(0xFF2DD4A8)
@@ -53,13 +44,11 @@ fun SplashScreen(onFinished: () -> Unit) {
     val logoScale = remember { Animatable(0.3f) }
     val logoAlpha = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
-    val textMeasurer = rememberTextMeasurer()
-    val chars = "█▓▒░"
 
     val time by produceState(0f) {
         while (true) {
-            withInfiniteAnimationFrameMillis { frameTimeMillis ->
-                value = frameTimeMillis / 1000f * 0.03f
+            withInfiniteAnimationFrameMillis { ms ->
+                value = ms / 1000f
             }
         }
     }
@@ -86,7 +75,6 @@ fun SplashScreen(onFinished: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // Grid lines
             val cell = 60.dp.toPx()
             val lineColor = TealGreen.copy(alpha = 0.05f)
             var gx = 0f
@@ -100,39 +88,31 @@ fun SplashScreen(onFinished: () -> Unit) {
                 gy += cell
             }
 
-            // Flowing ASCII wave — same algorithm as website AsciiWave
-            val charW = 8.dp.toPx()
-            val charH = 12.dp.toPx()
-            val cols = (size.width / charW).toInt().coerceAtMost(60)
-            val rows = (size.height / charH).toInt().coerceAtMost(40)
+            val dotSize = 6.dp.toPx()
+            val spacing = 14.dp.toPx()
+            val cols = (size.width / spacing).toInt()
+            val rows = (size.height / spacing).toInt()
+            val t = time
 
             for (row in 0 until rows) {
                 for (col in 0 until cols) {
                     val x = col.toFloat()
                     val y = row.toFloat()
-                    val t = time * 33f
 
-                    val wave1 = sin(x * 0.08f + t) * cos(y * 0.12f + t * 0.5f)
-                    val wave2 = sin(x * 0.05f - t * 0.7f) * sin(y * 0.08f + t * 0.3f)
-                    val wave3 = cos(x * 0.03f + y * 0.03f + t * 0.4f)
+                    val wave1 = sin(x * 0.15f + t * 1.2f) * cos(y * 0.2f + t * 0.8f)
+                    val wave2 = sin(x * 0.1f - t * 0.9f) * sin(y * 0.15f + t * 0.5f)
+                    val wave3 = cos(x * 0.06f + y * 0.06f + t * 0.7f)
 
                     val combined = (wave1 + wave2 + wave3) / 3f
                     val normalized = (combined + 1f) / 2f
 
-                    val charIndex = floor(normalized * (chars.length - 1)).toInt()
-                        .coerceIn(0, chars.length - 1)
-                    if (charIndex < chars.length - 1) {
-                        val alpha = (0.10f + normalized * 0.20f)
-
-                        drawText(
-                            textMeasurer = textMeasurer,
-                            text = chars[charIndex].toString(),
-                            topLeft = Offset(col * charW, row * charH),
-                            style = TextStyle(
-                                color = TealGreen.copy(alpha = alpha),
-                                fontSize = 10.sp,
-                                letterSpacing = 0.sp,
-                            ),
+                    val alpha = normalized * 0.22f
+                    if (alpha > 0.04f) {
+                        val s = dotSize * (0.3f + normalized * 0.7f)
+                        drawRect(
+                            color = TealGreen.copy(alpha = alpha),
+                            topLeft = Offset(col * spacing, row * spacing),
+                            size = Size(s, s),
                         )
                     }
                 }
