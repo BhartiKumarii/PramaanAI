@@ -6,19 +6,28 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import com.pramaanai.officer.ui.theme.AccentGreen
+import androidx.compose.ui.unit.sp
 import com.pramaanai.officer.ui.theme.BackgroundDark
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.sin
+
+private val TealGreen = Color(0xFF2DD4A8)
 
 @Composable
 fun GridPatternBackground(
@@ -26,54 +35,73 @@ fun GridPatternBackground(
     animated: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "grid")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.06f,
-        targetValue = if (animated) 0.10f else 0.06f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "gridPulse",
-    )
-    val glowOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (animated) 1f else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(6000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glowDrift",
-    )
+    val time by produceState(0f) {
+        if (!animated) return@produceState
+        while (true) {
+            withInfiniteAnimationFrameMillis { frameTimeMillis ->
+                value = frameTimeMillis / 1000f * 0.03f
+            }
+        }
+    }
+
+    val textMeasurer = rememberTextMeasurer()
+    val chars = "█▓▒░"
 
     Box(modifier = modifier.fillMaxSize().background(BackgroundDark)) {
         Canvas(modifier = Modifier.fillMaxSize()) {
+            // Grid lines — teal at low opacity, matching website's oklch(0.7 0.18 170 / 0.03)
             val cell = 60.dp.toPx()
-            val lineAlpha = if (animated) pulseAlpha else 0.08f
-            val lineColor = AccentGreen.copy(alpha = lineAlpha)
-            var x = 0f
-            while (x < size.width) {
-                drawLine(lineColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1f)
-                x += cell
+            val lineColor = TealGreen.copy(alpha = 0.05f)
+            var gx = 0f
+            while (gx < size.width) {
+                drawLine(lineColor, Offset(gx, 0f), Offset(gx, size.height), strokeWidth = 1f)
+                gx += cell
             }
-            var y = 0f
-            while (y < size.height) {
-                drawLine(lineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-                y += cell
+            var gy = 0f
+            while (gy < size.height) {
+                drawLine(lineColor, Offset(0f, gy), Offset(size.width, gy), strokeWidth = 1f)
+                gy += cell
             }
 
             if (animated) {
-                val cx = size.width * (0.3f + 0.4f * glowOffset)
-                val cy = size.height * (0.2f + 0.3f * glowOffset)
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(AccentGreen.copy(alpha = 0.06f), Color.Transparent),
-                        center = Offset(cx, cy),
-                        radius = size.width * 0.4f,
-                    ),
-                    radius = size.width * 0.4f,
-                    center = Offset(cx, cy),
-                )
+                val charW = 8.dp.toPx()
+                val charH = 12.dp.toPx()
+                val cols = (size.width / charW).toInt().coerceAtMost(60)
+                val rows = (size.height / charH).toInt().coerceAtMost(40)
+
+                for (row in 0 until rows) {
+                    for (col in 0 until cols) {
+                        val x = col.toFloat()
+                        val y = row.toFloat()
+                        val t = time * 33f
+
+                        val wave1 = sin(x * 0.08f + t) * cos(y * 0.12f + t * 0.5f)
+                        val wave2 = sin(x * 0.05f - t * 0.7f) * sin(y * 0.08f + t * 0.3f)
+                        val wave3 = cos(x * 0.03f + y * 0.03f + t * 0.4f)
+
+                        val combined = (wave1 + wave2 + wave3) / 3f
+                        val normalized = (combined + 1f) / 2f
+
+                        val charIndex = floor(normalized * (chars.length - 1)).toInt()
+                            .coerceIn(0, chars.length - 1)
+                        if (charIndex < chars.length - 1) {
+                            val alpha = (0.08f + normalized * 0.15f)
+                            val hue = 170f + normalized * 30f
+                            val green = TealGreen.copy(alpha = alpha)
+
+                            drawText(
+                                textMeasurer = textMeasurer,
+                                text = chars[charIndex].toString(),
+                                topLeft = Offset(col * charW, row * charH),
+                                style = TextStyle(
+                                    color = green,
+                                    fontSize = 10.sp,
+                                    letterSpacing = 0.sp,
+                                ),
+                            )
+                        }
+                    }
+                }
             }
         }
         content()

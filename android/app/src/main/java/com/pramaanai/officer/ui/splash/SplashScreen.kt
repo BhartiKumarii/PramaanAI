@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,48 +23,46 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.sin
+
+private val TealGreen = Color(0xFF2DD4A8)
 
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     val logoScale = remember { Animatable(0.3f) }
     val logoAlpha = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
+    val textMeasurer = rememberTextMeasurer()
+    val chars = "█▓▒░"
 
-    val infiniteTransition = rememberInfiniteTransition(label = "grid")
-    val gridPulse by infiniteTransition.animateFloat(
-        initialValue = 0.04f,
-        targetValue = 0.10f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "gridPulse",
-    )
-    val glowRadius by infiniteTransition.animateFloat(
-        initialValue = 200f,
-        targetValue = 400f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glowRadius",
-    )
+    val time by produceState(0f) {
+        while (true) {
+            withInfiniteAnimationFrameMillis { frameTimeMillis ->
+                value = frameTimeMillis / 1000f * 0.03f
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         logoScale.animateTo(1f, tween(800, easing = FastOutSlowInEasing))
@@ -86,30 +85,58 @@ fun SplashScreen(onFinished: () -> Unit) {
             .background(BackgroundDark),
         contentAlignment = Alignment.Center,
     ) {
-        // Animated grid
         Canvas(modifier = Modifier.fillMaxSize()) {
+            // Grid lines
             val cell = 60.dp.toPx()
-            val lineColor = AccentGreen.copy(alpha = gridPulse)
-            var x = 0f
-            while (x < size.width) {
-                drawLine(lineColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1f)
-                x += cell
+            val lineColor = TealGreen.copy(alpha = 0.05f)
+            var gx = 0f
+            while (gx < size.width) {
+                drawLine(lineColor, Offset(gx, 0f), Offset(gx, size.height), strokeWidth = 1f)
+                gx += cell
             }
-            var y = 0f
-            while (y < size.height) {
-                drawLine(lineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-                y += cell
+            var gy = 0f
+            while (gy < size.height) {
+                drawLine(lineColor, Offset(0f, gy), Offset(size.width, gy), strokeWidth = 1f)
+                gy += cell
             }
-            // Center glow
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(AccentGreen.copy(alpha = 0.08f), Color.Transparent),
-                    center = Offset(size.width / 2, size.height / 2),
-                    radius = glowRadius,
-                ),
-                radius = glowRadius,
-                center = Offset(size.width / 2, size.height / 2),
-            )
+
+            // Flowing ASCII wave — same algorithm as website AsciiWave
+            val charW = 8.dp.toPx()
+            val charH = 12.dp.toPx()
+            val cols = (size.width / charW).toInt().coerceAtMost(60)
+            val rows = (size.height / charH).toInt().coerceAtMost(40)
+
+            for (row in 0 until rows) {
+                for (col in 0 until cols) {
+                    val x = col.toFloat()
+                    val y = row.toFloat()
+                    val t = time * 33f
+
+                    val wave1 = sin(x * 0.08f + t) * cos(y * 0.12f + t * 0.5f)
+                    val wave2 = sin(x * 0.05f - t * 0.7f) * sin(y * 0.08f + t * 0.3f)
+                    val wave3 = cos(x * 0.03f + y * 0.03f + t * 0.4f)
+
+                    val combined = (wave1 + wave2 + wave3) / 3f
+                    val normalized = (combined + 1f) / 2f
+
+                    val charIndex = floor(normalized * (chars.length - 1)).toInt()
+                        .coerceIn(0, chars.length - 1)
+                    if (charIndex < chars.length - 1) {
+                        val alpha = (0.10f + normalized * 0.20f)
+
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = chars[charIndex].toString(),
+                            topLeft = Offset(col * charW, row * charH),
+                            style = TextStyle(
+                                color = TealGreen.copy(alpha = alpha),
+                                fontSize = 10.sp,
+                                letterSpacing = 0.sp,
+                            ),
+                        )
+                    }
+                }
+            }
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -128,14 +155,14 @@ fun SplashScreen(onFinished: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
                 ),
-                color = AccentGreen,
+                color = TealGreen,
                 modifier = Modifier.alpha(textAlpha.value),
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "Secure · Explainable · Connectivity-Aware",
                 style = MaterialTheme.typography.bodySmall,
-                color = AccentGreen.copy(alpha = 0.6f),
+                color = TealGreen.copy(alpha = 0.6f),
                 modifier = Modifier.alpha(textAlpha.value),
             )
         }
