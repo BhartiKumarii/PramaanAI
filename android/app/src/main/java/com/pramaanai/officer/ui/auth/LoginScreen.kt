@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
 import com.pramaanai.officer.data.remote.CheckpointResponse
+import com.pramaanai.officer.ui.components.GridPatternBackground
 import com.pramaanai.officer.ui.theme.Gray100
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
@@ -123,7 +124,8 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(White)) {
+    GridPatternBackground(animated = true) {
+    Column(modifier = Modifier.fillMaxSize()) {
         // Language selector at the top
         Row(
             modifier = Modifier
@@ -298,6 +300,7 @@ fun LoginScreen(repository: ScreeningRepository, onLoggedIn: () -> Unit) {
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
+    }
     }
 }
 

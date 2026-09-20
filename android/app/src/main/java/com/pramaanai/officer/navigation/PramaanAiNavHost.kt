@@ -50,10 +50,12 @@ import com.google.gson.Gson
 import com.pramaanai.officer.ui.settings.SettingsScreen
 import com.pramaanai.officer.ui.shell.AppShell
 import com.pramaanai.officer.ui.shell.ShellTab
+import com.pramaanai.officer.ui.splash.SplashScreen
 import com.pramaanai.officer.ui.traveler.TravelerProfileScreen
 import com.pramaanai.officer.ui.workflow.WorkflowResultScreen
 
 object Routes {
+    const val SPLASH = "splash"
     const val LOGIN = "login"
     const val DASHBOARD = "dashboard"
     const val QUEUE = "queue"
@@ -222,7 +224,8 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
     // access token — renew it now instead of failing the first real call.
     LaunchedEffect(Unit) { if (AuthSession.isLoggedIn()) repository.refreshSession() }
 
-    val startDestination = remember { if (AuthSession.isLoggedIn()) Routes.DASHBOARD else Routes.LOGIN }
+    val postSplashDestination = remember { if (AuthSession.isLoggedIn()) Routes.DASHBOARD else Routes.LOGIN }
+    val startDestination = Routes.SPLASH
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     SessionTimeoutMonitor(
@@ -231,6 +234,15 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
         onStaySignedIn = { scope.launch { repository.refreshSession() } },
     ) {
     NavHost(navController = navController, startDestination = startDestination) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate(postSplashDestination) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                },
+            )
+        }
         composable(Routes.LOGIN) {
             LoginScreen(
                 repository = repository,
