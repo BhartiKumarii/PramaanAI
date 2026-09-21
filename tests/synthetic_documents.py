@@ -180,17 +180,24 @@ def load_real_document_image(path: str) -> bytes:
 
 
 def crop_passport_photo_region(image_bytes: bytes) -> bytes:
-    """Crop the approximate face-photo region from a standard passport layout.
-    Bhutan TD3 passports print the bearer's photo in the top-left quadrant.
-    Returns the cropped region as PNG bytes for use as a face embedding source."""
+    """Crop the approximate face-photo region from a standard Bhutan TD3 passport.
+    Bearer's photo is in the top-left quadrant."""
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     w, h = img.size
-    # Left ~22% width, top 10% to 60% height — covers the passport photo area
-    left = int(w * 0.02)
-    top = int(h * 0.09)
-    right = int(w * 0.23)
-    bottom = int(h * 0.60)
-    face_crop = img.crop((left, top, right, bottom))
+    face_crop = img.crop((int(w * 0.02), int(h * 0.09), int(w * 0.23), int(h * 0.60)))
+    buffer = io.BytesIO()
+    face_crop.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def crop_driving_license_photo_region(image_bytes: bytes) -> bytes:
+    """Crop the face-photo region from a Bhutan driving license.
+    The bearer photo is on the left side, roughly left 28% of width,
+    top 20% to 90% of height — covers the large portrait area on these cards."""
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    w, h = img.size
+    # Bhutan DL: portrait on the left; crop tightly around the face
+    face_crop = img.crop((int(w * 0.01), int(h * 0.18), int(w * 0.28), int(h * 0.88)))
     buffer = io.BytesIO()
     face_crop.save(buffer, format="PNG")
     return buffer.getvalue()

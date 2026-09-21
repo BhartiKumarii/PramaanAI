@@ -44,6 +44,7 @@ from tests.synthetic_documents import (
     stack_images_vertically,
     load_real_document_image,
     crop_passport_photo_region,
+    crop_driving_license_photo_region,
 )
 
 router = APIRouter(prefix="/testing", tags=["testing"])
@@ -79,6 +80,9 @@ class TestScenario(str, Enum):
     SYSTEM_HEALTH_FAILURE = "system_health_failure"
     BHUTAN_PASSPORT_VALID = "bhutan_passport_valid"
     BHUTAN_PASSPORT_EXPIRED = "bhutan_passport_expired"
+    BHUTAN_DL_KARMA_VALID = "bhutan_dl_karma_valid"
+    BHUTAN_DL_AMIR_VALID = "bhutan_dl_amir_valid"
+    BHUTAN_DL_CROSS_FACE = "bhutan_dl_cross_face"
 
 
 class TestScenarioRequest(BaseModel):
@@ -212,6 +216,27 @@ SCENARIO_DESCRIPTIONS = {
         "Document is stamped SAMPLE. No back-page image supplied; MRZ generated "
         "from the front-page data. Selfie is a face cropped from the document "
         "photo. Expected MEDIUM–HIGH risk: document clearly expired."
+    ),
+    TestScenario.BHUTAN_DL_KARMA_VALID: (
+        "Kingdom of Bhutan Driving License — bearer KARMA DENDUP, CID 10702001841, "
+        "DOB 01/01/1974, License No. T-6101, valid until 06/01/2029. "
+        "Selfie is Karma Dendup's own face cropped from the license. "
+        "No MRZ on driving licenses. Expected LOW–MEDIUM risk: valid document, "
+        "same-person face comparison."
+    ),
+    TestScenario.BHUTAN_DL_AMIR_VALID: (
+        "Kingdom of Bhutan Driving License — bearer AMIR RAI, CID 11301001552, "
+        "DOB 25/04/2000, License No. G-18638, valid until 19/08/2029. "
+        "Selfie is Amir Rai's own face cropped from the license. "
+        "No MRZ on driving licenses. Expected LOW–MEDIUM risk: valid document, "
+        "same-person face comparison."
+    ),
+    TestScenario.BHUTAN_DL_CROSS_FACE: (
+        "Kingdom of Bhutan Driving License — bearer KARMA DENDUP (T-6101), but the "
+        "selfie is AMIR RAI's face (from a different license). This is a deliberate "
+        "cross-document face substitution test: the document belongs to one person "
+        "but the selfie is a different person's face entirely. "
+        "Expected HIGH risk: face mismatch — possible impersonation."
     ),
 }
 
@@ -692,6 +717,75 @@ def _generate_scenario_data(scenario: TestScenario) -> dict:
             "Document expired 27/04/2016 — expired over 9 years ago",
             "Document stamped SAMPLE — verify this is not a specimen copy",
         ]
+
+    elif scenario in (TestScenario.BHUTAN_DL_KARMA_VALID, TestScenario.BHUTAN_DL_AMIR_VALID, TestScenario.BHUTAN_DL_CROSS_FACE):
+        import os
+        karma_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "bhutan_dl_karma_dendup.jpg"))
+        amir_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "bhutan_dl_amir_rai.jpg"))
+
+        karma_img = load_real_document_image(karma_path)
+        amir_img = load_real_document_image(amir_path)
+
+        if scenario == TestScenario.BHUTAN_DL_KARMA_VALID:
+            front_image = karma_img
+            document_image = karma_img
+            # Selfie = Karma's own face from the license
+            selfie_image = crop_driving_license_photo_region(karma_img)
+            ocr_fields = {
+                "name": "KARMA DENDUP",
+                "license_number": "T-6101",
+                "nationality": "BHUTANESE",
+                "date_of_birth": "01/01/1974",
+                "date_of_expiry": "06/01/2029",
+                "cid_number": "10702001841",
+                "blood_group": "O Positive",
+                "issued_date": "08/02/2019",
+                "address": "Chali, Monggar",
+            }
+            expected_risk = "LOW"
+            expected_issues = []
+
+        elif scenario == TestScenario.BHUTAN_DL_AMIR_VALID:
+            front_image = amir_img
+            document_image = amir_img
+            selfie_image = crop_driving_license_photo_region(amir_img)
+            ocr_fields = {
+                "name": "AMIR RAI",
+                "license_number": "G-18638",
+                "nationality": "BHUTANESE",
+                "date_of_birth": "25/04/2000",
+                "date_of_expiry": "19/08/2029",
+                "cid_number": "11301001552",
+                "blood_group": "B Positive",
+                "issued_date": "19/08/2019",
+                "address": "Samtenling, Sarpang",
+            }
+            expected_risk = "LOW"
+            expected_issues = []
+
+        else:  # BHUTAN_DL_CROSS_FACE
+            # Document = Karma Dendup's license, Selfie = Amir Rai's face
+            front_image = karma_img
+            document_image = karma_img
+            selfie_image = crop_driving_license_photo_region(amir_img)
+            ocr_fields = {
+                "name": "KARMA DENDUP",
+                "license_number": "T-6101",
+                "nationality": "BHUTANESE",
+                "date_of_birth": "01/01/1974",
+                "date_of_expiry": "06/01/2029",
+                "cid_number": "10702001841",
+                "blood_group": "O Positive",
+                "issued_date": "08/02/2019",
+                "address": "Chali, Monggar",
+            }
+            expected_risk = "HIGH"
+            expected_issues = [
+                "Face mismatch — selfie does not match document photo (cross-document substitution)",
+                "Possible impersonation: document belongs to KARMA DENDUP, selfie is a different person",
+            ]
 
     if front_image is None:
         front_image = document_image
