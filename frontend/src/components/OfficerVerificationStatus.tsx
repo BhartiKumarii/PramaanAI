@@ -10,226 +10,227 @@ interface OfficerVerificationStatusProps {
   }
 }
 
-function VerificationStatusBadge({ status }: { status: string }) {
-  const config = {
-    'VERIFIED': {
-      class: 'bg-green-100 text-green-800 border-green-200',
-      icon: '✓'
-    },
-    'MANUAL_CHECK_REQUIRED': {
-      class: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      icon: '⚠'
-    },
-    'VERIFICATION_FAILED': {
-      class: 'bg-red-100 text-red-800 border-red-200',
-      icon: '✗'
-    },
-    'RETAKE_REQUIRED': {
-      class: 'bg-blue-100 text-blue-800 border-blue-200',
-      icon: '📷'
-    }
-  }[status] || {
-    class: 'bg-gray-100 text-gray-800 border-gray-200',
-    icon: '?'
+function VerificationStatusBadge({ status, label }: { status: string; label: string }) {
+  const config: Record<string, { cls: string; icon: string }> = {
+    VERIFIED:               { cls: 'bg-status-clear-bg text-status-clear border-status-clear/30',   icon: '✓' },
+    MANUAL_CHECK_REQUIRED:  { cls: 'bg-status-review-bg text-status-review border-status-review/30', icon: '⚠' },
+    VERIFICATION_FAILED:    { cls: 'bg-status-high-bg text-status-high border-status-high/30',       icon: '✕' },
+    RETAKE_REQUIRED:        { cls: 'bg-chart-1/10 text-chart-1 border-chart-1/30',                   icon: '↺' },
   }
-
+  const { cls, icon } = config[status] ?? { cls: 'bg-secondary text-muted-foreground border-border', icon: '?' }
   return (
-    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-lg font-semibold ${config.class}`}>
-      <span className="text-xl">{config.icon}</span>
-      {status.replace(/_/g, ' ')}
+    <div className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${cls}`}>
+      <span className="text-base">{icon}</span>
+      {label}
     </div>
   )
 }
 
-function CheckResultRow({ check }: { check: any }) {
+function CheckResultRow({ check }: { check: ReturnType<typeof translateVerificationSignals>[number] }) {
+  const [expanded, setExpanded] = useState(false)
+  const color =
+    check.status === 'PASS' ? 'text-status-clear' : check.status === 'REVIEW' ? 'text-status-review' : 'text-status-high'
+
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-3">
-        <span className={`text-lg ${
-          check.status === 'PASS' ? 'text-green-600' :
-          check.status === 'REVIEW' ? 'text-yellow-600' :
-          'text-red-600'
-        }`}>
-          {check.icon}
-        </span>
-        <span className="font-medium text-gray-900">{check.label}</span>
-      </div>
-      <span className="text-sm text-gray-600">{check.explanation}</span>
+    <div className="border-b border-border last:border-0">
+      <button
+        className="flex w-full items-start gap-3 py-3 text-left"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+      >
+        <span className={`mt-0.5 shrink-0 text-base font-bold ${color}`}>{check.icon}</span>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-foreground">{check.label}</p>
+          <p className="text-xs text-muted-foreground">{check.explanation}</p>
+        </div>
+        <span className="mt-1 shrink-0 text-xs text-muted-foreground">{expanded ? '▲' : '▼'}</span>
+      </button>
+      {expanded && (
+        <div className="pb-3 pl-7 space-y-1">
+          {check.status !== 'PASS' && (
+            <p className="text-xs font-medium text-foreground">
+              What to do: <span className="font-normal text-muted-foreground">{check.action}</span>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 export function OfficerVerificationStatus({ verification, risk }: OfficerVerificationStatusProps) {
-  const [showTechnical, setShowTechnical] = useState(false)
+  const [showDiagnostics, setShowDiagnostics] = useState(false)
 
   if (!verification) {
     return (
-      <div className="bg-gray-50 rounded-lg p-6">
-        <p className="text-gray-600">No verification data available for this case.</p>
+      <div className="rounded-lg border border-border bg-card p-6">
+        <p className="text-sm text-muted-foreground">No verification data available for this case.</p>
       </div>
     )
   }
 
   const checks = translateVerificationSignals(verification)
-  const status = determineVerificationStatus(checks, risk.level, risk.score)
+  const verificationStatus = determineVerificationStatus(checks, risk.level, risk.score)
   const riskDescription = translateRiskLevel(risk.level, risk.score)
 
+  // Extract readable OCR fields
+  const ocr = verification.ocr?.fields ?? {}
+  const docNumber =
+    ocr.passport_number ?? ocr.license_number ?? ocr.document_number ?? ocr.visa_number ?? ocr.permit_number ?? null
+
   return (
-    <div className="space-y-6">
-      {/* Main Status */}
-      <div className="bg-white rounded-lg border p-6">
-        <div className="text-center space-y-4">
-          <VerificationStatusBadge status={status.status} />
+    <div className="space-y-4">
+      {/* Overall Status */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <VerificationStatusBadge status={verificationStatus.status} label={verificationStatus.label} />
+          <span className={`text-xs font-medium ${
+            risk.level.includes('HIGH') ? 'text-status-high' :
+            risk.level.includes('MEDIUM') ? 'text-status-review' : 'text-status-clear'
+          }`}>
+            {riskDescription}
+          </span>
+        </div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Why?</h3>
-            <p className="text-gray-700">{status.explanation}</p>
-          </div>
+        <p className="mt-3 text-sm text-foreground">{verificationStatus.explanation}</p>
 
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">What should I do?</h3>
-            <ol className="text-left text-gray-700 space-y-1">
-              {status.recommendation.map((step, index) => (
-                <li key={index} className="flex gap-2">
-                  <span className="font-medium text-gray-500">{index + 1}.</span>
+        {verificationStatus.recommendation.length > 0 && (
+          <div className="mt-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended actions</p>
+            <ol className="mt-1.5 space-y-1">
+              {verificationStatus.recommendation.map((step, i) => (
+                <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                  <span className="shrink-0 font-medium text-foreground">{i + 1}.</span>
                   {step}
                 </li>
               ))}
             </ol>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Person Information */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Person</h3>
-        <div className="space-y-2">
-          {verification.ocr?.fields?.name && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Name:</span>
-              <span className="text-gray-900">{verification.ocr.fields.name}</span>
-            </div>
-          )}
-          {verification.ocr?.fields?.nationality && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Nationality:</span>
-              <span className="text-gray-900">{verification.ocr.fields.nationality}</span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-600">Document type:</span>
-            <span className="text-gray-900">{verification.document_type || 'Not specified'}</span>
-          </div>
-          {(verification.ocr?.fields?.passport_number || verification.ocr?.fields?.document_number) && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Document number:</span>
-              <span className="text-gray-900 font-mono">
-                {verification.ocr.fields.passport_number || verification.ocr.fields.document_number}
-              </span>
-            </div>
-          )}
+      {/* Person / document info */}
+      {(ocr.name || ocr.nationality || verification.document_type || docNumber) && (
+        <div className="rounded-lg border border-border bg-card p-5">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Identity Details</p>
+          <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {ocr.name && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Name</dt>
+                <dd className="text-sm font-medium text-foreground">{ocr.name}</dd>
+              </div>
+            )}
+            {ocr.nationality && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Nationality</dt>
+                <dd className="text-sm font-medium text-foreground">{ocr.nationality}</dd>
+              </div>
+            )}
+            {verification.document_type && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Document type</dt>
+                <dd className="text-sm font-medium text-foreground capitalize">{verification.document_type.replace(/_/g, ' ')}</dd>
+              </div>
+            )}
+            {docNumber && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Document number</dt>
+                <dd className="font-mono text-sm font-medium text-foreground">{maskDocNumber(docNumber)}</dd>
+              </div>
+            )}
+            {ocr.date_of_birth && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Date of birth</dt>
+                <dd className="text-sm font-medium text-foreground">{ocr.date_of_birth}</dd>
+              </div>
+            )}
+            {ocr.date_of_expiry && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Document expiry</dt>
+                <dd className="text-sm font-medium text-foreground">{ocr.date_of_expiry}</dd>
+              </div>
+            )}
+          </dl>
         </div>
-      </div>
+      )}
 
-      {/* Check Results */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Check Results</h3>
-        <div className="space-y-1">
-          {checks.map((check, index) => (
-            <CheckResultRow key={index} check={check} />
+      {/* Check results */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Verification Checks</p>
+        <div className="divide-y divide-border">
+          {checks.map((check, i) => (
+            <CheckResultRow key={i} check={check} />
           ))}
         </div>
       </div>
 
-      {/* Risk Level (separate from verification status) */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <div className="flex justify-between items-center">
-          <span className="font-medium text-gray-700">Observed risk level:</span>
-          <span className={`font-semibold ${
-            risk.level === 'LOW' ? 'text-green-700' :
-            risk.level === 'MEDIUM' ? 'text-yellow-700' :
-            'text-red-700'
-          }`}>
-            {riskDescription}
-          </span>
-        </div>
-      </div>
-
-      {/* Technical Evidence (Collapsible) */}
-      <div className="bg-white rounded-lg border p-6">
+      {/* System diagnostics — collapsed, clearly labelled internal */}
+      <div className="rounded-lg border border-border bg-secondary/40 p-4">
         <button
-          onClick={() => setShowTechnical(!showTechnical)}
-          className="flex items-center gap-2 w-full text-left"
+          onClick={() => setShowDiagnostics((v) => !v)}
+          className="flex w-full items-center gap-2 text-left"
         >
-          <span className="text-gray-500">
-            {showTechnical ? '▼' : '▶'}
+          <span className="text-xs text-muted-foreground">{showDiagnostics ? '▲' : '▶'}</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            System Diagnostics — Internal Use Only
           </span>
-          <h3 className="text-lg font-semibold text-gray-900">Technical Evidence</h3>
         </button>
 
-        {showTechnical && (
-          <div className="mt-4 space-y-4 text-sm">
-            <p className="text-gray-600 italic">
-              Technical diagnostic information for administrators and technical review.
-            </p>
+        {showDiagnostics && (
+          <div className="mt-4 space-y-4 text-xs text-muted-foreground">
+            <p className="italic">Raw AI/ML output. Not for use in officer decisions.</p>
 
             {verification.ocr && (
               <div>
-                <h4 className="font-semibold text-gray-800">OCR Analysis</h4>
-                <p className="text-gray-700">Confidence: {Math.round(verification.ocr.ocr_confidence * 100)}%</p>
-                <p className="text-gray-700">Fields extracted: {Object.keys(verification.ocr.fields).length}</p>
+                <p className="font-semibold text-foreground">OCR Analysis</p>
+                <p>Confidence: {Math.round(verification.ocr.ocr_confidence * 100)}%</p>
+                <p>Fields extracted: {Object.keys(verification.ocr.fields).join(', ')}</p>
               </div>
             )}
-
             {verification.tampering && (
               <div>
-                <h4 className="font-semibold text-gray-800">Forensic Analysis (ELA)</h4>
-                <p className="text-gray-700">Tampering risk: {Math.round(verification.tampering.tampering_risk * 100)}%</p>
-                <p className="text-gray-700">Analysis: {verification.tampering.findings[0]?.reason || 'No significant anomalies detected'}</p>
+                <p className="font-semibold text-foreground">Forensic Analysis (ELA)</p>
+                <p>Risk: {Math.round(verification.tampering.tampering_risk * 100)}%</p>
+                {verification.tampering.findings?.[0] && <p>Finding: {verification.tampering.findings[0].reason}</p>}
               </div>
             )}
-
             {verification.face && (
               <div>
-                <h4 className="font-semibold text-gray-800">Face Recognition</h4>
-                <p className="text-gray-700">Cosine similarity: {verification.face.similarity}</p>
-                <p className="text-gray-700">Match threshold: 0.75</p>
-                <p className="text-gray-700">Confidence: {verification.face.confidence}</p>
+                <p className="font-semibold text-foreground">Face Recognition</p>
+                <p>Cosine similarity: {verification.face.similarity}</p>
+                <p>Match threshold: 0.75 | Confidence: {verification.face.confidence}</p>
               </div>
             )}
-
             {verification.liveness && (
               <div>
-                <h4 className="font-semibold text-gray-800">Liveness Detection</h4>
-                <p className="text-gray-700">Status: {verification.liveness.status}</p>
-                <p className="text-gray-700">Score: {verification.liveness.score || 'N/A'}</p>
+                <p className="font-semibold text-foreground">Liveness Detection</p>
+                <p>Status: {verification.liveness.status} | Score: {verification.liveness.score ?? 'N/A'}</p>
               </div>
             )}
-
             {verification.deepfake && (
               <div>
-                <h4 className="font-semibold text-gray-800">Deepfake Analysis</h4>
-                <p className="text-gray-700">Status: {verification.deepfake.status}</p>
-                <p className="text-gray-700">Score: {verification.deepfake.score || 'N/A'}</p>
+                <p className="font-semibold text-foreground">Deepfake Analysis</p>
+                <p>Status: {verification.deepfake.status} | Score: {verification.deepfake.score ?? 'N/A'}</p>
               </div>
             )}
-
             {verification.identity_graph && (
               <div>
-                <h4 className="font-semibold text-gray-800">Identity Graph</h4>
-                <p className="text-gray-700">Status: {verification.identity_graph.status}</p>
-                <p className="text-gray-700">Cluster threshold: 0.75</p>
+                <p className="font-semibold text-foreground">Identity Graph</p>
+                <p>Status: {verification.identity_graph.status} | Cluster size: {verification.identity_graph.cluster_size ?? 1}</p>
               </div>
             )}
-
             <div>
-              <h4 className="font-semibold text-gray-800">Risk Engine</h4>
-              <p className="text-gray-700">Score: {risk.score}/100</p>
-              <p className="text-gray-700">Decision: {risk.decision}</p>
+              <p className="font-semibold text-foreground">Risk Engine</p>
+              <p>Score: {risk.score}/100 | Level: {risk.level} | Decision: {risk.decision}</p>
             </div>
           </div>
         )}
       </div>
     </div>
   )
+}
+
+function maskDocNumber(doc: string): string {
+  if (doc.length <= 6) return doc
+  return doc.slice(0, 3) + '****' + doc.slice(-3)
 }
