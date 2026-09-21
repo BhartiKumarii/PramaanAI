@@ -19,35 +19,6 @@ import type { DecisionValue } from '../api/types'
 
 type Tab = 'evidence' | 'identity' | 'network' | 'timeline'
 
-function SignalRow({
-  label,
-  status,
-  tone,
-  explanation,
-}: {
-  label: string
-  status: string
-  tone: 'clear' | 'review' | 'high' | 'neutral'
-  explanation: string
-}) {
-  const toneClass = {
-    clear: 'text-status-clear',
-    review: 'text-status-review',
-    high: 'text-status-high',
-    neutral: 'text-muted-foreground',
-  }[tone]
-
-  return (
-    <div className="border-b border-border py-3 last:border-0">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        <span className={`text-xs font-semibold uppercase tracking-wide ${toneClass}`}>{status}</span>
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">{explanation}</p>
-    </div>
-  )
-}
-
 export function CaseReview() {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate = useNavigate()
@@ -139,8 +110,8 @@ export function CaseReview() {
           {tab === 'evidence' && (
             <div className="space-y-4">
               {v && <EvidenceImages verificationId={v.id} />}
-              {v && c.risk ? (
-                <OfficerVerificationStatus verification={v} risk={c.risk} />
+              {v ? (
+                <OfficerVerificationStatus verification={v} risk={v.risk} />
               ) : (
                 <Card>
                   <p className="text-sm text-muted-foreground">No verification data available for this case.</p>

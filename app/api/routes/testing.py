@@ -42,6 +42,8 @@ from tests.synthetic_documents import (
     generate_mrz_lines,
     generate_face_like_image,
     stack_images_vertically,
+    load_real_document_image,
+    crop_passport_photo_region,
 )
 
 router = APIRouter(prefix="/testing", tags=["testing"])
@@ -75,6 +77,8 @@ class TestScenario(str, Enum):
     REVOKED_DEVICE = "revoked_device"
     UNUSUAL_OFFICER_ACTIVITY = "unusual_officer_activity"
     SYSTEM_HEALTH_FAILURE = "system_health_failure"
+    BHUTAN_PASSPORT_VALID = "bhutan_passport_valid"
+    BHUTAN_PASSPORT_EXPIRED = "bhutan_passport_expired"
 
 
 class TestScenarioRequest(BaseModel):
@@ -193,6 +197,21 @@ SCENARIO_DESCRIPTIONS = {
     TestScenario.SYSTEM_HEALTH_FAILURE: (
         "Simulated degradation in OCR, face matching, or risk engine "
         "services."
+    ),
+    TestScenario.BHUTAN_PASSPORT_VALID: (
+        "Kingdom of Bhutan TD3 passport — bearer SONAM DEMA, DOB 02/04/1991, "
+        "passport no. G000000 (all-zeros; suspicious but as printed). "
+        "Valid until 10/12/2027. No back-page image supplied; MRZ generated "
+        "from the front-page data. Selfie is a face cropped from the document "
+        "photo itself. Expected LOW–MEDIUM risk: valid document, possible flag "
+        "on unusual all-zero passport number."
+    ),
+    TestScenario.BHUTAN_PASSPORT_EXPIRED: (
+        "Kingdom of Bhutan TD3 passport — bearer SONAM YOUNTEN, DOB 14/03/1987, "
+        "passport no. G030178. EXPIRED 27/04/2016 (over 9 years ago). "
+        "Document is stamped SAMPLE. No back-page image supplied; MRZ generated "
+        "from the front-page data. Selfie is a face cropped from the document "
+        "photo. Expected MEDIUM–HIGH risk: document clearly expired."
     ),
 }
 
@@ -596,6 +615,83 @@ def _generate_scenario_data(scenario: TestScenario) -> dict:
         }
         expected_risk = "MEDIUM"
         expected_issues = ["System health degraded - limited validation"]
+
+    elif scenario == TestScenario.BHUTAN_PASSPORT_VALID:
+        import os
+        img_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "..",
+            "tests", "data", "bhutan_passport_sonam_dema.jpg",
+        )
+        front_image = load_real_document_image(os.path.normpath(img_path))
+        # No back-page photo supplied; generate a clean MRZ from the known fields.
+        line1, line2 = generate_mrz_lines(
+            surname="DEMA",
+            given_names="SONAM",
+            passport_number="G000000",
+            issuing_country="BTN",
+            nationality="BTN",
+            date_of_birth_yymmdd="910402",
+            sex="F",
+            date_of_expiry_yymmdd="271210",
+            personal_number="107010007360",
+        )
+        mrz_text = f"{line1}\n{line2}"
+        document_image = stack_images_vertically(generate_passport_back_image(line1, line2), front_image)
+        # Selfie: crop the bearer's photo from the passport image itself —
+        # we expect a match (face in the document == person presenting it).
+        selfie_image = crop_passport_photo_region(front_image)
+        ocr_fields = {
+            "name": "SONAM DEMA",
+            "passport_number": "G000000",
+            "nationality": "BHUTANESE",
+            "date_of_birth": "02/04/1991",
+            "date_of_expiry": "10/12/2027",
+            "gender": "F",
+            "place_of_birth": "THIMPHU",
+            "issuing_authority": "FOREIGN MINISTRY, THIMPHU",
+        }
+        expected_risk = "MEDIUM"
+        expected_issues = [
+            "Unusual passport number (all zeros — G000000): verify document authenticity",
+        ]
+
+    elif scenario == TestScenario.BHUTAN_PASSPORT_EXPIRED:
+        import os
+        img_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "..",
+            "tests", "data", "bhutan_passport_sonam_younten.jpg",
+        )
+        front_image = load_real_document_image(os.path.normpath(img_path))
+        # No back-page photo supplied; generate MRZ from the known fields.
+        line1, line2 = generate_mrz_lines(
+            surname="YOUNTEN",
+            given_names="SONAM",
+            passport_number="G030178",
+            issuing_country="BTN",
+            nationality="BTN",
+            date_of_birth_yymmdd="870314",
+            sex="M",
+            date_of_expiry_yymmdd="160427",
+            personal_number="105030001180",
+        )
+        mrz_text = f"{line1}\n{line2}"
+        document_image = stack_images_vertically(generate_passport_back_image(line1, line2), front_image)
+        selfie_image = crop_passport_photo_region(front_image)
+        ocr_fields = {
+            "name": "SONAM YOUNTEN",
+            "passport_number": "G030178",
+            "nationality": "BHUTANESE",
+            "date_of_birth": "14/03/1987",
+            "date_of_expiry": "27/04/2016",
+            "gender": "M",
+            "place_of_birth": "THIMPHU",
+            "issuing_authority": "FOREIGN MINISTRY, THIMPHU",
+        }
+        expected_risk = "HIGH"
+        expected_issues = [
+            "Document expired 27/04/2016 — expired over 9 years ago",
+            "Document stamped SAMPLE — verify this is not a specimen copy",
+        ]
 
     if front_image is None:
         front_image = document_image

@@ -166,3 +166,31 @@ def generate_visa_image(
         f"Stay Duration: {stay_duration}",
     ]
     return _render("VISA", lines, height=700)
+
+
+def load_real_document_image(path: str) -> bytes:
+    """Load a real document image from disk and return as PNG bytes.
+    Used only in non-production test scenarios — never for production data."""
+    from pathlib import Path
+    img = Image.open(Path(path))
+    img = img.convert("RGB")
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def crop_passport_photo_region(image_bytes: bytes) -> bytes:
+    """Crop the approximate face-photo region from a standard passport layout.
+    Bhutan TD3 passports print the bearer's photo in the top-left quadrant.
+    Returns the cropped region as PNG bytes for use as a face embedding source."""
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    w, h = img.size
+    # Left ~22% width, top 10% to 60% height — covers the passport photo area
+    left = int(w * 0.02)
+    top = int(h * 0.09)
+    right = int(w * 0.23)
+    bottom = int(h * 0.60)
+    face_crop = img.crop((left, top, right, bottom))
+    buffer = io.BytesIO()
+    face_crop.save(buffer, format="PNG")
+    return buffer.getvalue()

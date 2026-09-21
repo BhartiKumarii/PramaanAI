@@ -257,7 +257,7 @@ export function translateVerificationSignals(verification: any): CheckResult[] {
 export function determineVerificationStatus(
   checks: CheckResult[],
   riskLevel: string,
-  riskScore: number
+  _riskScore: number
 ): VerificationStatus {
   const failedChecks = checks.filter(c => c.status === 'FAIL')
   const reviewChecks = checks.filter(c => c.status === 'REVIEW')
@@ -346,7 +346,7 @@ export function determineVerificationStatus(
 /**
  * Get human-readable risk level description
  */
-export function translateRiskLevel(level: string, score: number): string {
+export function translateRiskLevel(level: string, _score: number): string {
   switch (level) {
     case 'LOW':
       return 'Low observed risk'
