@@ -187,7 +187,7 @@ def submit_case_route(
     if case.status not in (CaseStatus.PENDING, CaseStatus.REVIEW_REQUIRED):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"case is already {case.status.value}, cannot resubmit")
     if payload.note:
-        add_note(db, case_id, user.id, payload.note)
+        add_note(db, case_id, uuid.UUID(user.id), payload.note)
     case = submit_case(db, case)
     log_event(db, case.verification_id, "SENT", user.id, case_id=case.id)
     [summary] = _serialize_list(db, [case])
@@ -231,7 +231,7 @@ def add_note_route(
     user: User = Depends(get_current_user), db: Session = Depends(get_db),
 ) -> CaseNoteResponse:
     _get_case_or_404(db, case_id, user)
-    note = add_note(db, case_id, user.id, payload.note)
+    note = add_note(db, case_id, uuid.UUID(user.id), payload.note)
     return CaseNoteResponse(id=str(note.id), author_username=user.username, note=note.note, created_at=note.created_at.isoformat())
 
 
