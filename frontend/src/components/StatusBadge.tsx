@@ -5,20 +5,24 @@ import type { CaseStatus } from '../api/types'
 // reads correctly for colorblind users or in grayscale printouts.
 const STATUS_CONFIG: Record<CaseStatus, { label: string; icon: string; className: string }> = {
   PENDING_SYNC: { label: 'Pending Sync', icon: '⟳', className: 'bg-secondary text-muted-foreground border-border' },
-  PENDING: { label: 'Pending', icon: '○', className: 'bg-secondary text-muted-foreground border-border' },
-  SENT: { label: 'Sent', icon: '➤', className: 'bg-chart-1/10 text-chart-1 border-chart-1/30' },
+  PENDING: { label: 'Pending Submission', icon: '○', className: 'bg-secondary text-muted-foreground border-border' },
+  SENT: { label: 'Submitted for Review', icon: '➤', className: 'bg-chart-1/10 text-chart-1 border-chart-1/30' },
   REVIEW_REQUIRED: {
-    label: 'Review Required',
+    label: 'Flagged for Review',
     icon: '!',
     className: 'bg-status-review-bg text-status-review border-status-review/30',
   },
-  CLEAR: { label: 'Clear', icon: '✓', className: 'bg-status-clear-bg text-status-clear border-status-clear/30' },
+  CLEAR: { label: 'Verified', icon: '✓', className: 'bg-status-clear-bg text-status-clear border-status-clear/30' },
   SECONDARY_REVIEW: {
-    label: 'Secondary Review',
-    icon: '!',
+    label: 'Re-capture Required',
+    icon: '↺',
     className: 'bg-status-review-bg text-status-review border-status-review/30',
   },
-  HOLD_REFER: { label: 'Hold / Refer', icon: '✕', className: 'bg-status-high-bg text-status-high border-status-high/30' },
+  HOLD_REFER: {
+    label: 'Manual Verification',
+    icon: '⚑',
+    className: 'bg-status-high-bg text-status-high border-status-high/30',
+  },
 }
 
 export function StatusBadge({ status }: { status: CaseStatus }) {

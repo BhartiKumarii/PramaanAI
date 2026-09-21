@@ -3,7 +3,7 @@
 // field names are copied verbatim so a mismatch is a compile error here,
 // not a silent runtime one.
 
-export type Role = 'OFFICER'
+export type Role = 'OFFICER' | 'REVIEWER'
 
 export interface LoginResponse {
   access_token: string

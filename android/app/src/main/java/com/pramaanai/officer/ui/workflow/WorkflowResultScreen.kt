@@ -101,9 +101,6 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
     val scope = rememberCoroutineScope()
     var item by remember { mutableStateOf<ScreeningQueueItem?>(null) }
     var step by remember { mutableStateOf(2) }
-    var showClearDialog by remember { mutableStateOf(false) }
-    var showSecondaryDialog by remember { mutableStateOf(false) }
-    var showHoldDialog by remember { mutableStateOf(false) }
     var showSendDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(screeningId) { item = repository.getById(screeningId) }
@@ -145,18 +142,10 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                         ) { Text(stringResource(R.string.common_next)) }
                         6 -> {
                             Button(
-                                onClick = { showClearDialog = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = BackgroundDark),
+                                onClick = { showSendDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                                 modifier = Modifier.weight(1f),
-                            ) { Text(stringResource(R.string.common_clear), maxLines = 1) }
-                            OutlinedButton(
-                                onClick = { showSecondaryDialog = true },
-                                modifier = Modifier.weight(1f),
-                            ) { Text(stringResource(R.string.common_secondary_review), maxLines = 1) }
-                            OutlinedButton(
-                                onClick = { showHoldDialog = true },
-                                modifier = Modifier.weight(1f),
-                            ) { Text(stringResource(R.string.common_hold_refer), maxLines = 1) }
+                            ) { Text("Submit for Review", maxLines = 1) }
                         }
                         7 -> Button(
                             onClick = onComplete,
@@ -170,85 +159,6 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
     }
 
     val reasons = item?.let { flaggedReasons(context, it) }.orEmpty()
-
-    if (showClearDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearDialog = false },
-            title = { Text(stringResource(R.string.clear_screening_title)) },
-            text = { Text(stringResource(R.string.clear_screening_message)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            try {
-                                repository.decideCaseOnBackend(screeningId, "CLEAR", null)
-                                item = repository.getById(screeningId)
-                                showClearDialog = false
-                                step = 7
-                            } catch (e: Exception) {
-                                showClearDialog = false
-                                Toast.makeText(context, friendlyActionError(context, "clear this screening", e), Toast.LENGTH_LONG).show()
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = BackgroundDark)
-                ) {
-                    Text(stringResource(R.string.common_clear))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) {
-                    Text(stringResource(R.string.common_cancel))
-                }
-            }
-        )
-    }
-
-    if (showSecondaryDialog) {
-        ReasonDialog(
-            title = stringResource(R.string.secondary_review_title),
-            intro = stringResource(R.string.secondary_review_intro),
-            reasons = reasons,
-            confirmLabel = stringResource(R.string.send_secondary_review),
-            onDismiss = { showSecondaryDialog = false },
-            onConfirm = {
-                scope.launch {
-                    try {
-                        repository.decideCaseOnBackend(screeningId, "SECONDARY_REVIEW", reasons.joinToString("; "))
-                        item = repository.getById(screeningId)
-                        showSecondaryDialog = false
-                        step = 7
-                    } catch (e: Exception) {
-                        showSecondaryDialog = false
-                        Toast.makeText(context, friendlyActionError(context, "send for secondary review", e), Toast.LENGTH_LONG).show()
-                    }
-                }
-            },
-        )
-    }
-
-    if (showHoldDialog) {
-        ReasonDialog(
-            title = stringResource(R.string.hold_refer_title),
-            intro = stringResource(R.string.hold_refer_intro),
-            reasons = reasons,
-            confirmLabel = stringResource(R.string.hold_refer_title),
-            onDismiss = { showHoldDialog = false },
-            onConfirm = {
-                scope.launch {
-                    try {
-                        repository.decideCaseOnBackend(screeningId, "HOLD_REFER", reasons.joinToString("; "))
-                        item = repository.getById(screeningId)
-                        showHoldDialog = false
-                        step = 7
-                    } catch (e: Exception) {
-                        showHoldDialog = false
-                        Toast.makeText(context, friendlyActionError(context, "hold/refer this case", e), Toast.LENGTH_LONG).show()
-                    }
-                }
-            },
-        )
-    }
 
     if (showSendDialog) {
         ReasonDialog(
@@ -788,24 +698,26 @@ private fun sourceLabel(signal: String): String = when (signal) {
 fun ReviewStep(item: ScreeningQueueItem) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val reasons = flaggedReasons(context, item)
-    StepCard("Officer Review") {
+    StepCard("Submit for Review") {
         Text(
-            "Decide with your own procedure. If you flag this screening or send it on, the reasons below are recorded automatically — nothing to type.",
+            "Review the information above, then submit this case for admin verification. The admin will review the evidence and make the final decision.",
             style = MaterialTheme.typography.bodySmall,
             color = Gray600,
         )
-        Spacer(Modifier.height(12.dp))
-        Text("Raised on this screening", style = MaterialTheme.typography.labelMedium, color = Gray600)
-        Spacer(Modifier.height(6.dp))
-        reasons.forEach { reason ->
-            Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                Text("•  ", color = AccentGreen, fontWeight = FontWeight.Bold)
-                Text(reason, style = MaterialTheme.typography.bodyMedium)
+        if (reasons.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Text("Findings to be included", style = MaterialTheme.typography.labelMedium, color = Gray600)
+            Spacer(Modifier.height(6.dp))
+            reasons.forEach { reason ->
+                Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                    Text("•  ", color = AccentGreen, fontWeight = FontWeight.Bold)
+                    Text(reason, style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            "A risk alert to support the officer's judgment — not a finding about the traveler.",
+            "The final verification decision is made by an authorised admin — not by this app.",
             style = MaterialTheme.typography.labelSmall,
             color = Gray500,
         )
@@ -814,23 +726,21 @@ fun ReviewStep(item: ScreeningQueueItem) {
 
 @Composable
 fun CompleteStep(item: ScreeningQueueItem) {
-    val (statusColor, statusIcon, statusText) = when (item.status) {
-        ScreeningStatus.CLEARED -> Triple(SuccessGreen, Icons.Filled.CheckCircle, "Cleared")
-        ScreeningStatus.DISPUTED -> Triple(WarningAmber, Icons.Filled.WarningAmber, "Flagged for Review")
-        ScreeningStatus.SENT -> Triple(AccentGreen, Icons.Filled.CheckCircle, "Sent to Immigration")
-        else -> Triple(Gray600, Icons.Filled.CheckCircle, item.status.name)
-    }
-
     StepCard("") {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-            Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(48.dp))
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = AccentGreen, modifier = Modifier.size(48.dp))
             Spacer(Modifier.height(12.dp))
-            Text("Screening complete", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(4.dp))
-            Text("Decision recorded: $statusText", style = MaterialTheme.typography.bodyMedium, color = Gray600)
+            Text("Case submitted for verification", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "The case has been sent to the admin queue. An authorised reviewer will examine the evidence and make the final verification decision.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray600,
+                textAlign = TextAlign.Center,
+            )
             if (!item.officerNotes.isNullOrBlank()) {
                 Spacer(Modifier.height(8.dp))
-                Text("Notes: ${item.officerNotes}", style = MaterialTheme.typography.bodySmall, color = Gray500)
+                Text("Your notes: ${item.officerNotes}", style = MaterialTheme.typography.bodySmall, color = Gray500)
             }
         }
     }

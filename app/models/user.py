@@ -10,8 +10,8 @@ from app.db.base import Base
 
 
 class UserRole(str, enum.Enum):
-    # Single role: officer with full access to scan, review, and manage everything
     OFFICER = "OFFICER"
+    REVIEWER = "REVIEWER"  # Web admin / verifier — can make final case decisions
 
 
 

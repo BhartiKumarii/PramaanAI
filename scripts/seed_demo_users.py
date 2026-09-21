@@ -24,12 +24,13 @@ DEMO_CHECKPOINTS = [
     ("RAX", "Raxaul", "Bihar, India / Nepal border"),
 ]
 
-# (username, checkpoint_code | None)
-DEMO_ACCOUNTS = [
-    ("attari_officer", "ATW"),
-    ("petrapole_officer", "PET"),
-    ("raxaul_officer", "RAX"),
-    ("officer1", None),  # backward compatibility
+# (username, checkpoint_code | None, role)
+DEMO_ACCOUNTS: list[tuple[str, str | None, UserRole]] = [
+    ("attari_officer", "ATW", UserRole.OFFICER),
+    ("petrapole_officer", "PET", UserRole.OFFICER),
+    ("raxaul_officer", "RAX", UserRole.OFFICER),
+    ("officer1", None, UserRole.OFFICER),  # backward compatibility
+    ("admin_reviewer", None, UserRole.REVIEWER),  # web admin / verifier
 ]
 
 
@@ -50,13 +51,10 @@ def seed_demo_users() -> None:
             checkpoints_by_code[code] = checkpoint
             print(f"Created checkpoint '{code}' ({name}).")
 
-        for username, checkpoint_code in DEMO_ACCOUNTS:
+        for username, checkpoint_code, role in DEMO_ACCOUNTS:
             checkpoint_id = checkpoints_by_code[checkpoint_code].id if checkpoint_code else None
             existing = db.query(User).filter(User.username == username).first()
             if existing:
-                # Backfill checkpoint_id for accounts created before that
-                # column existed (the 0009 migration) — never touch role
-                # or password of an existing account.
                 if existing.checkpoint_id is None and checkpoint_id is not None:
                     existing.checkpoint_id = checkpoint_id
                     db.commit()
@@ -67,12 +65,12 @@ def seed_demo_users() -> None:
             user = User(
                 username=username,
                 hashed_password=hash_password(password),
-                role=UserRole.OFFICER,
+                role=role,
                 checkpoint_id=checkpoint_id,
             )
             db.add(user)
             db.commit()
-            print(f"Created OFFICER user '{username}'.")
+            print(f"Created {role.value} user '{username}'.")
     finally:
         db.close()
 

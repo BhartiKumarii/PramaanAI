@@ -7,37 +7,36 @@ import type { CaseStatus } from '../api/types'
 
 const STATUS_FILTERS: { label: string; value: CaseStatus | '' }[] = [
   { label: 'All', value: '' },
-  { label: 'Sent', value: 'SENT' },
-  { label: 'Review Required', value: 'REVIEW_REQUIRED' },
-  { label: 'Clear', value: 'CLEAR' },
-  { label: 'Secondary Review', value: 'SECONDARY_REVIEW' },
-  { label: 'Hold / Refer', value: 'HOLD_REFER' },
+  { label: 'Submitted for Review', value: 'SENT' },
+  { label: 'Flagged for Review', value: 'REVIEW_REQUIRED' },
+  { label: 'Verified', value: 'CLEAR' },
+  { label: 'Re-capture Required', value: 'SECONDARY_REVIEW' },
+  { label: 'Manual Verification', value: 'HOLD_REFER' },
 ]
 
 const ALERT_STATUSES: CaseStatus[] = ['REVIEW_REQUIRED', 'SECONDARY_REVIEW', 'HOLD_REFER']
-// "Screening Requests" — hasn't reached a recorded officer decision yet.
+// "Pending Review" — submitted by officer, awaiting admin decision.
 const REQUEST_STATUSES: CaseStatus[] = ['PENDING_SYNC', 'PENDING', 'SENT', 'REVIEW_REQUIRED']
-// "Screening Results" — a decision has actually been recorded (POST
-// /cases/{id}/decision), matching Case's own "Terminal states" comment.
+// "Decided" — admin has recorded a final decision.
 const RESULT_STATUSES: CaseStatus[] = ['CLEAR', 'SECONDARY_REVIEW', 'HOLD_REFER']
 
 type View = 'all' | 'alerts' | 'requests' | 'results'
 
 const VIEW_CONFIG: Record<View, { title: string; subtitle: string; statuses?: CaseStatus[] }> = {
-  all: { title: 'Cases', subtitle: 'Cases scoped to your role and checkpoint.' },
+  all: { title: 'Cases', subtitle: 'All cases across checkpoints.' },
   alerts: {
-    title: 'Alerts & Review',
-    subtitle: 'Cases flagged for review, secondary review, or hold/refer.',
+    title: 'Needs Attention',
+    subtitle: 'Cases flagged for review or referred for manual verification.',
     statuses: ALERT_STATUSES,
   },
   requests: {
-    title: 'Screening Requests',
-    subtitle: "Cases that haven't reached a recorded officer decision yet.",
+    title: 'Pending Review',
+    subtitle: 'Cases submitted by field officers — awaiting admin decision.',
     statuses: REQUEST_STATUSES,
   },
   results: {
-    title: 'Screening Results',
-    subtitle: 'Cases with a recorded officer decision — clear, secondary review, or hold/refer.',
+    title: 'Decided',
+    subtitle: 'Cases where an admin has recorded a final verification decision.',
     statuses: RESULT_STATUSES,
   },
 }

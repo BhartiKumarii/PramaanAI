@@ -1,9 +1,8 @@
-"""The Case workflow: Officer scans -> Case created (inside
-/documents/screen, see app/api/routes/documents.py) -> submitted to
-review -> decided. Every state change is logged via
-AuditEvent (case_id) so nothing is ever silently cleared.
+"""Case workflow:
+  Officer (OFFICER role) scans → Case created → submitted for review.
+  Reviewer (REVIEWER role) → reviews evidence → makes final decision.
 
-With single OFFICER role, all authenticated users have full access to all cases."""
+Every state change is logged via AuditEvent so nothing is silently changed."""
 import json
 import uuid
 
@@ -14,7 +13,7 @@ from app.core.security import get_current_user, require_role
 from app.db.session import get_db
 from app.models.case import Case, CasePriority, CaseStatus
 from app.models.checkpoint import Checkpoint
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.repositories.audit_repository import list_case_events_with_actor, log_event
 from app.repositories.case_repository import (
     add_note,
@@ -209,10 +208,10 @@ def assign_case_route(
     return summary
 
 
-@router.post("/{case_id}/decision", response_model=CaseDetailResponse, summary="Record the authorised final decision: Clear, Secondary Review, or Hold/Refer")
+@router.post("/{case_id}/decision", response_model=CaseDetailResponse, summary="Record the authorised final decision (REVIEWER role required)")
 def decide_case_route(
     case_id: uuid.UUID, payload: CaseDecisionRequest,
-    user: User = Depends(require_role()),
+    user: User = Depends(require_role(UserRole.REVIEWER)),
     db: Session = Depends(get_db),
 ) -> CaseDetailResponse:
     case = _get_case_or_404(db, case_id, user)
@@ -221,7 +220,7 @@ def decide_case_route(
     if payload.decision != "CLEAR" and not payload.reason:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="reason is required for Secondary Review and Hold/Refer")
 
-    case, _decision = record_decision(db, case, user.id, payload.decision, payload.reason)
+    case, _decision = record_decision(db, case, uuid.UUID(user.id), payload.decision, payload.reason)
     log_event(db, case.verification_id, f"DECISION_{payload.decision}", user.id, reason=payload.reason, case_id=case.id)
     return get_case_route(case_id, user, db)
 
@@ -304,10 +303,10 @@ _EVENT_ACTION_LABELS = {
     "CREATED": "Document scanned — OCR, validation, forensics, and (where a live capture was taken) "
     "face matching, liveness, and identity-graph analysis all completed",
     "VIEWED": "Case opened for review",
-    "SENT": "Case forwarded to Immigration Officer",
-    "DECISION_CLEAR": "Officer decision: Clear",
-    "DECISION_SECONDARY_REVIEW": "Officer decision: Secondary Review",
-    "DECISION_HOLD_REFER": "Officer decision: Hold/Refer",
+    "SENT": "Case submitted for admin review by field officer",
+    "DECISION_CLEAR": "Admin decision: Identity Verified",
+    "DECISION_SECONDARY_REVIEW": "Admin decision: Re-capture Requested",
+    "DECISION_HOLD_REFER": "Admin decision: Referred for Manual Verification",
     "NOTE_ADDED": "Note added",
 }
 
