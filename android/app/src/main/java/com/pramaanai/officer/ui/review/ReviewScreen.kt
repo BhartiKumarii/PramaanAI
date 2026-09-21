@@ -492,19 +492,9 @@ private fun RegistryHitRow(hit: RegistryHit) {
 private fun SignalRow(signal: RiskSignalBreakdown) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(getLocalizedSignalName(signal.signal), fontWeight = FontWeight.SemiBold)
-                Text("${stringResource(R.string.weight_label)} ${"%.2f".format(signal.weight)} · ${stringResource(R.string.contribution_label)} ${"%.3f".format(signal.contribution)}", style = MaterialTheme.typography.labelSmall)
-            }
+            Text(getLocalizedSignalName(signal.signal), fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(4.dp))
             Text(getLocalizedValidationReason(signal.reason), style = MaterialTheme.typography.bodySmall)
-            if (signal.location != null) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "${stringResource(R.string.region_label)}: (${signal.location.x},${signal.location.y}) ${signal.location.width}×${signal.location.height}",
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
         }
     }
 }

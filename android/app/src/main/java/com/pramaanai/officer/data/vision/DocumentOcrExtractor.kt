@@ -184,6 +184,8 @@ object DocumentOcrExtractor {
         "name" to listOf(
             "given name", "surname", "name", "full name",
             "nom", "nombre", "nome", "name:", "given", "surname:",
+            // Bhutan passport specific
+            "name of bearer", "bearer",
             // Hindi/Indian labels
             "नाम", "पूरा नाम", "नाम:", "पिता का नाम", "father", "father name", "father's name",
             // Nepali labels
@@ -210,8 +212,9 @@ object DocumentOcrExtractor {
             "voter id", "voter no", "epic no", "electoral roll", "मतदाता",
             // Nepali citizenship certificate
             "नागरिकता नं", "प्रमाणपत्र नं", "na. pra. no",
-            // Bhutanese CID
+            // Bhutanese CID — Bhutan passports print "CITIZENSHIP ID NO"
             "cid no", "cid number", "citizen identity",
+            "citizenship id no", "citizenship id", "citizenship id number",
         ),
         "nationality" to listOf(
             "nationality", "nationality:", "citizenship", "country",
@@ -249,7 +252,9 @@ object DocumentOcrExtractor {
         ),
     )
 
-    private val DATE_PATTERN = Regex("""(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})""")
+    // Matches DD/MM/YYYY, DD.MM.YYYY, DD-MM-YYYY and also space-separated "DD MM YYYY"
+    // (as used on Bhutan and Nepal passports, e.g. "02 04 1991")
+    private val DATE_PATTERN = Regex("""(\d{1,2})[./\-\s](\d{1,2})[./\-\s](\d{4})""")
     private val MRZ_PATTERN = Pattern.compile("""^[A-Z0-9<]{44}$""")
     private val PASSPORT_MRZ_PATTERN = Pattern.compile("""^P[A-Z0-9<]{43}$""")
     private val ID_CARD_MRZ_PATTERN = Pattern.compile("""^I[A-Z0-9<]{43}$""")
@@ -407,6 +412,7 @@ object DocumentOcrExtractor {
     /** Extract Indian document numbers using regex patterns */
     private fun extractIndianDocumentNumbers(text: String): Map<String, String> {
         val result = mutableMapOf<String, String>()
+        val isPassportDoc = isPassport(text)
 
         findBestAadhaarNumber(text)?.let { aadhaar ->
             result["document_number"] = aadhaar
@@ -418,14 +424,29 @@ object DocumentOcrExtractor {
             result["pan_number"] = match.groupValues[1]
         }
 
-        INDIAN_PASSPORT_PATTERN.find(text)?.let { match ->
-            result["passport_number"] = match.groupValues[1]
-            result["document_number"] = match.groupValues[1]
+        // Run passport-specific extraction first so G000000 / Z1234567 style
+        // numbers are set before the generic [A-Z]\d{7} INDIAN_PASSPORT_PATTERN
+        // can accidentally grab a 7-digit substring from the MRZ.
+        if (isPassportDoc) {
+            extractPassportFields(text, result)
         }
 
-        VOTER_ID_PATTERN.find(text)?.let { match ->
-            result["document_number"] = match.groupValues[1]
-            result["voter_id"] = match.groupValues[1]
+        // Only run the generic single-letter+7-digit pattern if we don't yet
+        // have a passport number — prevents matching BTN9104026 → N9104026.
+        if (!result.containsKey("passport_number")) {
+            INDIAN_PASSPORT_PATTERN.find(text)?.let { match ->
+                result["passport_number"] = match.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = match.groupValues[1]
+            }
+        }
+
+        // Voter-ID pattern must NOT run on passports — VOTER_ID_PATTERN matches
+        // 3-letter country codes like BTN/IND from the MRZ as false positives.
+        if (!isPassportDoc) {
+            VOTER_ID_PATTERN.find(text)?.let { match ->
+                if (!result.containsKey("document_number")) result["document_number"] = match.groupValues[1]
+                result["voter_id"] = match.groupValues[1]
+            }
         }
 
         // DL number extraction
@@ -445,9 +466,7 @@ object DocumentOcrExtractor {
         if (result.containsKey("dl_number") || isDrivingLicence(text)) {
             extractDrivingLicenceFields(text, result)
         }
-        if (isPassport(text)) {
-            extractPassportFields(text, result)
-        }
+        // extractPassportFields already called above for passports
         if (isVisa(text)) {
             extractVisaFields(text, result)
         }
@@ -552,26 +571,56 @@ object DocumentOcrExtractor {
 
     private val VISA_NUMBER_PATTERN = Regex("""(?:Visa\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z0-9]{6,20})""", RegexOption.IGNORE_CASE)
     private val ETA_NUMBER_PATTERN = Regex("""(?:ETA\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z0-9]{6,20})""", RegexOption.IGNORE_CASE)
-    private val BHUTAN_CID_PATTERN = Regex("""(?:CID\s*(?:No\.?|Number)?\s*[:/]?\s*)(\d{11})""", RegexOption.IGNORE_CASE)
+    // Bhutan passports label it "CITIZENSHIP ID NO" not "CID NO"
+    private val BHUTAN_CID_PATTERN = Regex("""(?:(?:CITIZENSHIP\s*ID\s*(?:NO\.?|NUMBER)?|CID\s*(?:No\.?|Number)?)\s*[:/]?\s*)(\d{11})""", RegexOption.IGNORE_CASE)
     private val NEPAL_CITIZENSHIP_PATTERN = Regex("""(?:(?:Citizenship|Na\.?\s*Pra\.?)\s*(?:No\.?|Number)?\s*[:/]?\s*)(\d{2}[-/]\d{2}[-/]\d{2}[-/]\d{4,6})""", RegexOption.IGNORE_CASE)
 
     private fun extractPassportFields(text: String, result: MutableMap<String, String>) {
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
 
-        // Passport number from printed text (not just MRZ)
+        // Passport number from printed text (not just MRZ).
+        // Bhutan passports: "PASSPORT NO  G000000" — label + value on same or next line.
+        // India: Z1234567 (1 letter + 7 digits), Bhutan: G000000 (1 letter + 6 digits).
         if (!result.containsKey("passport_number")) {
             val ppPatterns = listOf(
-                Regex("""(?:Passport\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z]\d{6,8})""", RegexOption.IGNORE_CASE),
-                Regex("""(?:No\.?\s*du\s*passeport|राहदानी\s*नं\.?\s*[:/]?\s*)([A-Z]\d{6,8})""", RegexOption.IGNORE_CASE),
-                Regex("""\b([A-Z]\d{7})\b"""),
+                // Explicit label match — most reliable
+                Regex("""(?:PASSPORT\s*NO\.?|Passport\s*(?:No\.?|Number))\s*[:/]?\s*([A-Z]\d{5,8})""", RegexOption.IGNORE_CASE),
+                Regex("""(?:No\.?\s*du\s*passeport|राहदानी\s*नं\.?\s*[:/]?\s*)([A-Z]\d{5,8})""", RegexOption.IGNORE_CASE),
+                // Label on one line, value on next (Bhutan passport layout)
             )
+            // First try label-based patterns
             for (p in ppPatterns) {
-                p.find(text)?.let {
-                    result["passport_number"] = it.groupValues[1]
-                    if (!result.containsKey("document_number")) result["document_number"] = it.groupValues[1]
-                    return@let
+                val m = p.find(text) ?: continue
+                result["passport_number"] = m.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = m.groupValues[1]
+                break
+            }
+            // If still not found, look for label on its own line then value on next
+            if (!result.containsKey("passport_number")) {
+                val ls = text.lines().map { it.trim() }
+                val ppLabelIdx = ls.indexOfFirst { it.contains("PASSPORT NO", ignoreCase = true) && it.length < 30 }
+                if (ppLabelIdx >= 0) {
+                    val afterLabel = ls[ppLabelIdx].uppercase().substringAfter("PASSPORT NO").trim().trimStart(':', '.', ' ')
+                    val nextLine = ls.getOrNull(ppLabelIdx + 1)?.trim() ?: ""
+                    val candidate = afterLabel.ifBlank { nextLine }
+                    Regex("""([A-Z]\d{5,8})""").find(candidate)?.let { m ->
+                        result["passport_number"] = m.groupValues[1]
+                        if (!result.containsKey("document_number")) result["document_number"] = m.groupValues[1]
+                    }
                 }
-                if (result.containsKey("passport_number")) break
+            }
+        }
+        // Fallback: any [A-Z]\d{5,8} standalone token that isn't from the MRZ
+        if (!result.containsKey("passport_number")) {
+            Regex("""\b([A-Z]\d{5,8})\b""").findAll(text).forEach { m ->
+                val v = m.groupValues[1]
+                // Skip tokens that appear inside the MRZ line (MRZ starts with P<)
+                val inMrz = text.lines().any { it.contains("P<") && it.contains(v) }
+                if (!inMrz) {
+                    result["passport_number"] = v
+                    if (!result.containsKey("document_number")) result["document_number"] = v
+                    return@forEach
+                }
             }
         }
 
@@ -619,7 +668,55 @@ object DocumentOcrExtractor {
 
         // Bhutan passport: CID number
         if (!result.containsKey("cid_number")) {
-            BHUTAN_CID_PATTERN.find(text)?.let { result["cid_number"] = it.groupValues[1] }
+            BHUTAN_CID_PATTERN.find(text)?.let {
+                result["cid_number"] = it.groupValues[1]
+                if (!result.containsKey("document_number")) result["citizenship_id"] = it.groupValues[1]
+            }
+        }
+
+        // Bhutan passport: join "NAME OF BEARER" (given name) + surname on consecutive lines
+        if (!result.containsKey("name")) {
+            val nameOfBearerIdx = lines.indexOfFirst { it.contains("NAME OF BEARER", ignoreCase = true) || it.contains("NAME OF BEAFER", ignoreCase = true) }
+            val surnameIdx = lines.indexOfFirst { it.equals("SURNAME", ignoreCase = true) || it.contains("SURNAME", ignoreCase = true) }
+            val givenName = if (nameOfBearerIdx >= 0 && nameOfBearerIdx + 1 < lines.size) lines[nameOfBearerIdx + 1].trim() else null
+            val surname = if (surnameIdx >= 0 && surnameIdx + 1 < lines.size) lines[surnameIdx + 1].trim() else null
+            when {
+                givenName != null && surname != null && isLikelyPersonName(givenName) && isLikelyPersonName(surname) ->
+                    result["name"] = "$givenName $surname"
+                givenName != null && isLikelyPersonName(givenName) -> result["name"] = givenName
+                surname != null && isLikelyPersonName(surname) -> result["name"] = surname
+            }
+        }
+
+        // Bhutan/Nepal passports: space-separated dates like "02 04 1991"
+        // The DATE_PATTERN already handles this now, but also look for labelled lines
+        val spaceDate = Regex("""(\d{2})\s+(\d{2})\s+(\d{4})""")
+        if (!result.containsKey("date_of_birth")) {
+            val dobLine = lines.indexOfFirst { it.contains("DATE OF BIRTH", ignoreCase = true) }
+            if (dobLine >= 0) {
+                val candidate = lines.getOrNull(dobLine + 1) ?: lines[dobLine]
+                spaceDate.find(candidate)?.let { m ->
+                    result["date_of_birth"] = "${m.groupValues[1]}/${m.groupValues[2]}/${m.groupValues[3]}"
+                }
+            }
+        }
+        if (!result.containsKey("date_of_expiry")) {
+            val expiryLine = lines.indexOfFirst { it.contains("DATE OF EXPIRY", ignoreCase = true) }
+            if (expiryLine >= 0) {
+                val candidate = lines.getOrNull(expiryLine + 1) ?: lines[expiryLine]
+                spaceDate.find(candidate)?.let { m ->
+                    result["date_of_expiry"] = "${m.groupValues[1]}/${m.groupValues[2]}/${m.groupValues[3]}"
+                }
+            }
+        }
+        if (!result.containsKey("date_of_issue")) {
+            val issueLine = lines.indexOfFirst { it.contains("DATE OF ISSUE", ignoreCase = true) }
+            if (issueLine >= 0) {
+                val candidate = lines.getOrNull(issueLine + 1) ?: lines[issueLine]
+                spaceDate.find(candidate)?.let { m ->
+                    result["date_of_issue"] = "${m.groupValues[1]}/${m.groupValues[2]}/${m.groupValues[3]}"
+                }
+            }
         }
 
         // Nepal passport: citizenship reference number
@@ -737,8 +834,8 @@ object DocumentOcrExtractor {
     }
 
     private fun extractCommonFields(text: String, result: MutableMap<String, String>) {
-        // Gender from standalone "Male"/"Female" or Hindi equivalents
         if (!result.containsKey("gender")) {
+            // 1. Full-word match: Male/Female/MALE/FEMALE/Hindi equivalents
             AADHAAR_GENDER_PATTERN.find(text)?.let { match ->
                 val g = match.value.lowercase()
                 result["gender"] = when {
@@ -747,6 +844,39 @@ object DocumentOcrExtractor {
                     else -> match.value
                 }
             }
+        }
+        if (!result.containsKey("gender")) {
+            // 2. "SEX F" or "SEX M" on the same line (e.g. "SEX F DATE OF BIRTH")
+            val sexInlinePattern = Regex("""(?:SEX|GENDER)\s+([MF])\b""", RegexOption.IGNORE_CASE)
+            sexInlinePattern.find(text)?.let { result["gender"] = it.groupValues[1].uppercase() }
+        }
+        if (!result.containsKey("gender")) {
+            // 3. Bhutan/Nepal passports: two-column OCR layout produces
+            //    "F SEX" (value left, label right) OR "SEX\nF" (label line, value next line)
+            val lines = text.lines().map { it.trim() }
+            for ((idx, line) in lines.withIndex()) {
+                val upper = line.uppercase()
+                // "F SEX ..." or "M SEX ..." — value appears BEFORE the label
+                val beforeSex = Regex("""^([MF])\s+(?:SEX|GENDER)\b""").find(upper)
+                if (beforeSex != null) { result["gender"] = beforeSex.groupValues[1]; break }
+                // "SEX\nF" or "SEX\nM" — label on this line, value on next
+                if (upper == "SEX" || upper == "GENDER" || upper.endsWith(" SEX") || upper.endsWith(" GENDER")) {
+                    val next = lines.getOrNull(idx + 1)?.trim()?.uppercase() ?: continue
+                    val code = when {
+                        next.startsWith("F") && (next.length == 1 || next[1].isWhitespace()) -> "F"
+                        next.startsWith("M") && (next.length == 1 || next[1].isWhitespace()) -> "M"
+                        next.startsWith("FEMALE") -> "F"
+                        next.startsWith("MALE") -> "M"
+                        else -> null
+                    }
+                    if (code != null) { result["gender"] = code; break }
+                }
+            }
+        }
+        if (!result.containsKey("gender")) {
+            // 4. "Sex: F" or "Gender: M" with colon/separator on the same line
+            val sexColonPattern = Regex("""(?:SEX|GENDER)\s*[:/]\s*([MF])\b""", RegexOption.IGNORE_CASE)
+            sexColonPattern.find(text)?.let { result["gender"] = it.groupValues[1].uppercase() }
         }
         // DOB from common patterns across document types
         if (!result.containsKey("date_of_birth")) {

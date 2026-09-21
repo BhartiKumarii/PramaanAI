@@ -523,6 +523,57 @@ function AdminDecisionPanel({ caseId, onDecisionRecorded }: { caseId: string; on
   )
 }
 
+// ── Detail field (single-column key-value row) ──────────────────────────
+
+function DetailField({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+  if (!value) return null
+  return (
+    <div className="flex items-baseline justify-between py-1.5 border-b border-border/50 last:border-0">
+      <span className="text-xs text-muted-foreground shrink-0 w-36">{label}</span>
+      <span className={`text-sm text-foreground text-right ${mono ? 'font-mono' : ''} whitespace-pre-line`}>{value}</span>
+    </div>
+  )
+}
+
+// ── Humanize technical reason text ──────────────────────────────────────
+
+function humanizeReason(raw: string | null | undefined): string {
+  if (!raw) return ''
+  let text = raw
+
+  text = text.replace(/Multi-identity cluster detected\s*—?\s*/gi, '')
+  text = text.replace(/\d+\s+face embeddings? directly matched\s*\(similarity\s*>=?\s*[\d.]+\)\s*spanning\s*(\d+)\s*distinct declared name\(s\)\s*and\s*(\d+)\s*distinct document number\(s\)/gi,
+    (_, names, docs) => `Same face matched across ${names} different name(s) and ${docs} different document(s)`)
+  text = text.replace(/cosine similarity\s*[\d.]+\s*vs\s*match threshold\s*[\d.]+:\s*above threshold,?\s*match/gi,
+    'Live photo matches the document photo')
+  text = text.replace(/cosine similarity\s*([\d.]+)\s*vs\s*match threshold\s*[\d.]+:\s*below threshold/gi,
+    (_, sim) => `Live photo does not match document photo (${Math.round(parseFloat(sim) * 100)}% similarity)`)
+  text = text.replace(/Single-frame analysis:\s*sharpness=[\d.]+,\s*uniformity=[\d.]+,\s*screen artifacts=[\d.]+\.?\s*Multi-frame analysis recommended for higher confidence\.?/gi,
+    'Photo quality check completed — multi-angle verification recommended for higher confidence')
+  text = text.replace(/\d+\s+faces? detected in the image \(expected exactly one\)/gi,
+    'Multiple faces detected in the photo — only one person should be visible')
+  text = text.replace(/no date_of_expiry field was extracted from the document/gi,
+    'Expiry date could not be read from the document')
+  text = text.replace(/no date_of_birth field was extracted from the document/gi,
+    'Date of birth could not be read from the document')
+  text = text.replace(/hard override:\s*/gi, '')
+  text = text.replace(/rawRisk/g, 'risk level')
+  text = text.replace(/\bela\b/gi, 'image analysis')
+
+  text = text.replace(/Document checks:\s*expiry:\s*/gi, 'Document expiry: ')
+  text = text.replace(/Identity graph:\s*/gi, 'Identity records: ')
+  text = text.replace(/Face in live capture:\s*/gi, 'Live photo: ')
+  text = text.replace(/Liveness \/ spoof:\s*/gi, 'Liveness check: ')
+  text = text.replace(/Face match:\s*/gi, 'Photo comparison: ')
+
+  text = text.replace(/;\s*Identity records:.*?(?=;|$)/g, (match, offset) => {
+    if (offset > 0 && text.slice(0, offset).includes('Identity records:')) return ''
+    return match
+  })
+
+  return text.trim()
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CaseReview() {
@@ -564,30 +615,56 @@ export function CaseReview() {
     <div className="space-y-4">
       <button onClick={() => navigate(-1)} className="text-xs text-accent hover:underline">← Back to cases</button>
 
-      {/* ── Identity card header ── */}
+      {/* ── Identity card header — single column layout ── */}
       <div className="rounded-lg border border-border bg-card p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Case {c.case_number}</p>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-foreground mt-1">
               {c.traveler_name ?? ocr.name ?? 'Name not extracted'}
             </h1>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {displayDocType && <span>{displayDocType}</span>}
-              {docNumber && <span className="font-mono">{maskDocNumber(docNumber)}</span>}
-              {(c.nationality || ocr.nationality) && <span>{c.nationality || ocr.nationality}</span>}
-              {ocr.date_of_birth && <span>DOB: {ocr.date_of_birth}</span>}
-              {ocr.date_of_expiry && <span>Expires: {ocr.date_of_expiry}</span>}
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-xs text-muted-foreground">
-              <span>Checkpoint: <span className="font-medium text-foreground">{c.checkpoint_code}</span></span>
-              <span>Submitted by: <span className="font-medium text-foreground">{c.field_officer_username}</span></span>
-              <span>{new Date(c.created_at).toLocaleString()}</span>
-            </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end gap-2 shrink-0">
             <StatusBadge status={c.status} />
             <PriorityBadge priority={c.priority} />
+            {v && (
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                v.risk.level === 'HIGH_RISK'
+                  ? 'bg-status-high-bg text-status-high border-status-high/30'
+                  : v.risk.level === 'MEDIUM_RISK'
+                    ? 'bg-status-review-bg text-status-review border-status-review/30'
+                    : 'bg-status-clear-bg text-status-clear border-status-clear/30'
+              }`}>
+                <span aria-hidden="true">{v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'}</span>
+                {v.risk.level === 'HIGH_RISK' ? 'High Risk' : v.risk.level === 'MEDIUM_RISK' ? 'Medium Risk' : 'Low Risk'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Single-column extracted document details */}
+        <div className="grid grid-cols-1 gap-0 border-t border-border pt-3">
+          <DetailField label="Document Type" value={displayDocType} />
+          {docNumber && <DetailField label="Document Number" value={maskDocNumber(docNumber)} mono />}
+          <DetailField label="Nationality" value={c.nationality || ocr.nationality} />
+          {ocr.date_of_birth && <DetailField label="Date of Birth" value={ocr.date_of_birth} />}
+          {ocr.date_of_expiry && <DetailField label="Date of Expiry" value={ocr.date_of_expiry} />}
+          {ocr.date_of_issue && <DetailField label="Date of Issue" value={ocr.date_of_issue} />}
+          {ocr.gender && /^(m|f|male|female|other|transgender)$/i.test(ocr.gender.trim()) && (
+            <DetailField label="Gender" value={ocr.gender.trim().charAt(0).toUpperCase() === 'M' ? 'Male' : ocr.gender.trim().charAt(0).toUpperCase() === 'F' ? 'Female' : ocr.gender.trim()} />
+          )}
+          {ocr.place_of_birth && <DetailField label="Place of Birth" value={ocr.place_of_birth} />}
+          {ocr.place_of_issue && <DetailField label="Place of Issue" value={ocr.place_of_issue} />}
+          {ocr.issuing_authority && <DetailField label="Issuing Authority" value={ocr.issuing_authority} />}
+          {ocr.mrz_line1 && <DetailField label="MRZ" value={`${ocr.mrz_line1}${ocr.mrz_line2 ? '\n' + ocr.mrz_line2 : ''}`} mono />}
+          {ocr.voter_id && <DetailField label="Voter ID" value={ocr.voter_id} mono />}
+          {ocr.aadhaar_number && <DetailField label="Aadhaar" value={ocr.aadhaar_number} mono />}
+          {ocr.father_name && <DetailField label="Father's Name" value={ocr.father_name} />}
+          {ocr.address && <DetailField label="Address" value={ocr.address} />}
+          <div className="border-t border-border mt-2 pt-2">
+            <DetailField label="Checkpoint" value={c.checkpoint_code} />
+            <DetailField label="Submitted by" value={c.field_officer_username} />
+            <DetailField label="Screened at" value={new Date(c.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
           </div>
         </div>
       </div>
@@ -616,7 +693,7 @@ export function CaseReview() {
             <div className="space-y-4">
               {/* Evidence images */}
               {v ? (
-                <EvidenceImages verificationId={v.id} />
+                <EvidenceImages verificationId={v.id} caseCreatedAt={c.created_at} />
               ) : (
                 <Card>
                   <p className="text-sm text-muted-foreground">No document or photo captured for this case.</p>
@@ -677,51 +754,64 @@ export function CaseReview() {
 
           {tab === 'identity' && (
             <Card>
-              {identityHistory.loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+              {identityHistory.loading && <p className="text-sm text-muted-foreground">Loading identity history…</p>}
               {identityHistory.data && identityHistory.data.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No other cases share a similar facial identity with this record. Either no live photo was taken, or no matching records were found.
-                </p>
+                <div className="py-4 text-center space-y-2">
+                  <p className="text-2xl">🪪</p>
+                  <p className="text-sm font-medium text-foreground">No prior crossing records</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    No other cases share a similar facial identity with this record. This appears to be a first-time or new entry — no biometric history available.
+                  </p>
+                </div>
               )}
               {identityHistory.data && identityHistory.data.length > 0 && (
                 <>
-                  <div className="mb-4 rounded-lg border border-status-review/40 bg-status-review-bg px-4 py-3 text-sm text-status-review">
-                    <p className="font-semibold">⚠ Similar identity found in {identityHistory.data.length} other record(s)</p>
+                  <div className="mb-5 rounded-lg border border-status-review/40 bg-status-review-bg px-4 py-3 text-sm text-status-review">
+                    <p className="font-semibold">⚠ {identityHistory.data.length} prior crossing record(s) found</p>
                     <p className="mt-1 text-xs">
-                      The following cases share similar facial characteristics with this person. This may indicate
-                      the same individual has crossed before — possibly with different documents. Review each record carefully.
+                      These cases share similar facial characteristics with this person. Review each entry to confirm consistent identity.
                     </p>
                   </div>
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-                        <th className="py-2 pr-4">Related Case</th>
-                        <th className="py-2 pr-4">Name on Record</th>
-                        <th className="py-2 pr-4">Document</th>
-                        <th className="py-2 pr-4">Checkpoint</th>
-                        <th className="py-2 pr-4">Match Confidence</th>
-                        <th className="py-2 pr-4">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {identityHistory.data.map((r) => (
-                        <tr key={r.record_id} className="border-b border-border">
-                          <td className="py-2.5 pr-4 font-medium text-foreground">{r.case_number ?? '—'}</td>
-                          <td className="py-2.5 pr-4">{r.declared_name}</td>
-                          <td className="py-2.5 pr-4 text-muted-foreground">{r.masked_document_number ?? '—'}</td>
-                          <td className="py-2.5 pr-4 text-muted-foreground">{r.checkpoint_code ?? '—'}</td>
-                          <td className="py-2.5 pr-4">
-                            {r.similarity != null ? (
-                              r.similarity >= 0.75
-                                ? <span className="font-medium text-status-review">⚠ Strong match ({Math.round(r.similarity * 100)}%)</span>
-                                : <span className="text-muted-foreground">Partial similarity ({Math.round(r.similarity * 100)}%)</span>
-                            ) : 'Not directly compared'}
-                          </td>
-                          <td className="py-2.5 pr-4 text-muted-foreground">{r.review_status ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {/* Timeline view */}
+                  <ol className="relative border-l-2 border-border space-y-0">
+                    {[...identityHistory.data]
+                      .sort((a, b) => new Date(b.occurred_at ?? 0).getTime() - new Date(a.occurred_at ?? 0).getTime())
+                      .map((r, i) => {
+                        const isStrong = (r.similarity ?? 0) >= 0.75
+                        return (
+                          <li key={r.record_id ?? i} className="ml-4 pb-6">
+                            <div className="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border-2 border-border bg-card flex items-center justify-center">
+                              <div className={`h-1.5 w-1.5 rounded-full ${isStrong ? 'bg-status-review' : 'bg-muted-foreground'}`} />
+                            </div>
+                            <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <span className="font-mono text-xs font-semibold text-foreground bg-secondary px-2 py-0.5 rounded border border-border">
+                                  {r.case_number ?? '—'}
+                                </span>
+                                {r.similarity != null ? (
+                                  <span className={`text-xs font-medium ${isStrong ? 'text-status-review' : 'text-muted-foreground'}`}>
+                                    {isStrong ? '⚠ Strong match' : 'Partial match'} · {Math.round(r.similarity * 100)}%
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Not directly compared</span>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                <div><span className="text-muted-foreground">Name on record: </span><span className="font-medium text-foreground">{r.declared_name}</span></div>
+                                <div><span className="text-muted-foreground">Document: </span><span className="text-foreground">{r.masked_document_number ?? '—'}</span></div>
+                                <div><span className="text-muted-foreground">Checkpoint: </span><span className="text-foreground">{r.checkpoint_code ?? '—'}</span></div>
+                                <div><span className="text-muted-foreground">Status: </span><span className="text-foreground">{r.review_status ?? '—'}</span></div>
+                              </div>
+                              {r.occurred_at && (
+                                <p className="text-xs text-muted-foreground">
+                                  Screened: {new Date(r.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        )
+                      })}
+                  </ol>
                 </>
               )}
             </Card>
@@ -759,7 +849,9 @@ export function CaseReview() {
                           <p className="text-xs text-muted-foreground">by {event.actor_username}</p>
                         )}
                         {event.detail && (
-                          <p className="mt-1 rounded bg-secondary px-2 py-1 text-xs text-muted-foreground">"{event.detail}"</p>
+                          <p className="mt-1 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
+                            {humanizeReason(event.detail)}
+                          </p>
                         )}
                       </li>
                     )
@@ -806,7 +898,9 @@ export function CaseReview() {
                       Recorded by {d.officer_username ?? 'reviewer'} · {new Date(d.created_at).toLocaleString()}
                     </p>
                     {d.reason && (
-                      <p className="mt-1.5 rounded bg-secondary px-2 py-1 text-xs text-muted-foreground">"{d.reason}"</p>
+                      <p className="mt-1.5 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
+                        {humanizeReason(d.reason)}
+                      </p>
                     )}
                   </li>
                 ))}
@@ -826,9 +920,36 @@ export function CaseReview() {
               ))}
               {c.notes.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
             </ul>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-muted-foreground">Add a note</span>
+              <button
+                onClick={() => {
+                  // Auto-generate a human-readable note from case data
+                  const risk = v?.risk
+                  const checkpoint = c.checkpoint_code ?? 'this checkpoint'
+                  const docType = DOC_TYPE_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type ?? 'document'
+                  const nat = c.nationality ?? ''
+                  const riskLevel = risk?.level === 'HIGH_RISK' ? 'High risk' : risk?.level === 'MEDIUM_RISK' ? 'Medium risk' : 'Low risk'
+                  // Humanise top reason
+                  let reason = humanizeReason(risk?.top_reason ?? '')
+                  if (reason.length > 120) reason = reason.slice(0, 120) + '…'
+                  const actionMap: Record<string, string> = {
+                    HIGH_RISK: 'Entry not recommended without supervisor approval. Refer to senior officer immediately.',
+                    MEDIUM_RISK: 'Secondary review recommended before permitting entry.',
+                    LOW_RISK: 'No issues detected. Document appears valid.',
+                  }
+                  const action = actionMap[risk?.level ?? ''] ?? 'Further review recommended.'
+                  const generated = `Document reviewed at ${checkpoint}. ${riskLevel} — ${docType}${nat ? ` (${nat})` : ''}. ${reason ? reason + '. ' : ''}${action}`
+                  setNoteText(generated)
+                }}
+                className="text-xs text-accent hover:text-accent/80 border border-accent/30 px-2 py-0.5 rounded hover:bg-accent/10 transition-colors"
+              >
+                ✨ Generate note
+              </button>
+            </div>
             <textarea
               className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-ring focus:outline-none"
-              rows={2} placeholder="Add a note…" value={noteText}
+              rows={3} placeholder="Add a note…" value={noteText}
               onChange={(e) => setNoteText(e.target.value)} />
             <button onClick={handleAddNote}
               className="mt-2 w-full rounded-md border border-border py-1.5 text-sm font-medium text-foreground hover:bg-secondary">

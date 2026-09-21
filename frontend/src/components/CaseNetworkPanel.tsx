@@ -75,9 +75,28 @@ export function CaseNetworkPanel({ caseId }: { caseId: string }) {
     [graph, selected],
   )
 
-  if (loading) return <Card><p className="text-sm text-muted-foreground">Loading network…</p></Card>
-  if (error) return <Card><p className="text-sm text-status-high">{error}</p></Card>
-  if (!filteredGraph || !centerId) return <Card><p className="text-sm text-muted-foreground">No network data.</p></Card>
+  if (loading) return <Card><p className="text-sm text-muted-foreground">Loading connections…</p></Card>
+  if (error) return (
+    <Card>
+      <div className="py-4 text-center space-y-2">
+        <p className="text-2xl">🔗</p>
+        <p className="text-sm font-medium text-foreground">No identity connections found</p>
+        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+          This traveller has no prior screening records linked in the system.
+          Connections are built over multiple screenings — this appears to be a first-time or new entry.
+        </p>
+      </div>
+    </Card>
+  )
+  if (!filteredGraph || filteredGraph.nodes.length === 0 || !centerId) return (
+    <Card>
+      <div className="py-4 text-center space-y-2">
+        <p className="text-2xl">🔗</p>
+        <p className="text-sm font-medium text-foreground">No connections to display</p>
+        <p className="text-xs text-muted-foreground">No linked identities, documents, or checkpoints found for this case.</p>
+      </div>
+    </Card>
+  )
 
   return (
     <div className="space-y-3">

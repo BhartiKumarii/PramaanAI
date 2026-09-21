@@ -27,3 +27,11 @@ android/.kotlin/
 android/local.properties
 *.iml
 .idea/
+
+# Uploaded evidence images (generated at runtime, not source)
+images/*.jpg
+images/*.jpeg
+# Test scripts
+test_headless*.js
+node_modules/
+package-lock.json

@@ -1,92 +1,106 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-interface ImageDisplayProps {
-  src: string
-  alt: string
-  title: string
-  className?: string
+function getToken(): string {
+  return localStorage.getItem('bsa_access_token') ?? ''
 }
 
-function ImageDisplay({ src, alt, title, className = "w-full h-40" }: ImageDisplayProps) {
-  const [isLoading, setIsLoading] = useState(true)
+interface AuthImageProps {
+  url: string
+  alt: string
+  title: string
+  timestamp?: string
+  type?: string
+}
+
+function AuthImage({ url, alt, title, timestamp, type }: AuthImageProps) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const prevUrl = useRef<string | null>(null)
 
-  const handleImageLoad = () => {
-    setIsLoading(false)
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
     setHasError(false)
-  }
+    if (prevUrl.current) URL.revokeObjectURL(prevUrl.current)
 
-  const handleImageError = () => {
-    setIsLoading(false)
-    setHasError(true)
-  }
+    fetch(url, { headers: { Authorization: `Bearer ${getToken()}` } })
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.blob()
+      })
+      .then((blob) => {
+        if (cancelled) return
+        const obj = URL.createObjectURL(blob)
+        prevUrl.current = obj
+        setBlobUrl(obj)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!cancelled) { setHasError(true); setLoading(false) }
+      })
+
+    return () => { cancelled = true }
+  }, [url])
 
   return (
     <>
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-foreground">{title}</h4>
-        <div className={`relative ${className} bg-muted rounded border overflow-hidden`}>
-          {/* Loading State */}
-          {isLoading && (
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+          {type && <span className="text-xs text-muted-foreground bg-secondary border border-border px-2 py-0.5 rounded">{type}</span>}
+        </div>
+        <div className="relative w-full h-44 bg-secondary border border-border rounded-lg overflow-hidden">
+          {loading && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent" />
             </div>
           )}
-
-          {/* Error State */}
           {hasError && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <div className="text-2xl mb-2">📷</div>
-              <div className="text-xs text-center px-2">
-                Image not available
-              </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <span className="text-3xl">📷</span>
+              <span className="text-xs">Not available</span>
             </div>
           )}
-
-          {/* Image */}
-          <img
-            src={src}
-            alt={alt}
-            className={`w-full h-full object-cover cursor-pointer transition-opacity ${
-              isLoading || hasError ? 'opacity-0' : 'opacity-100 hover:opacity-90'
-            }`}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            onClick={() => !hasError && setShowModal(true)}
-          />
-
-          {/* Zoom Button Overlay */}
-          {!isLoading && !hasError && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded hover:bg-black/70 transition-colors text-xs"
-              title="Click to enlarge"
-            >
-              🔍
-            </button>
+          {blobUrl && (
+            <>
+              <img
+                src={blobUrl}
+                alt={alt}
+                className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setShowModal(true)}
+              />
+              <button
+                onClick={() => setShowModal(true)}
+                className="absolute top-2 right-2 bg-black/60 text-white rounded px-2 py-1 text-xs hover:bg-black/80 transition-colors"
+              >
+                Enlarge
+              </button>
+            </>
           )}
         </div>
+        {timestamp && (
+          <p className="text-xs text-muted-foreground">
+            Captured: {new Date(timestamp).toLocaleString()}
+          </p>
+        )}
       </div>
 
-      {/* Full Screen Modal */}
-      {showModal && !hasError && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="relative max-w-full max-h-full" onClick={e => e.stopPropagation()}>
+      {showModal && blobUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+          onClick={() => setShowModal(false)}
+        >
+          <div className="relative max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowModal(false)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-lg"
+              className="absolute -top-10 right-0 text-white text-lg hover:text-gray-300"
             >
-              ✕
+              ✕ Close
             </button>
-            <img
-              src={src}
-              alt={alt}
-              className="max-w-full max-h-full object-contain rounded"
-            />
-            <div className="absolute -bottom-10 left-0 text-white text-sm">
-              {title}
-            </div>
+            <img src={blobUrl} alt={alt} className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" />
+            <p className="mt-3 text-center text-white/70 text-sm">{title}</p>
           </div>
         </div>
       )}
@@ -96,32 +110,30 @@ function ImageDisplay({ src, alt, title, className = "w-full h-40" }: ImageDispl
 
 interface EvidenceImagesProps {
   verificationId: string
+  caseCreatedAt?: string
 }
 
-export function EvidenceImages({ verificationId }: EvidenceImagesProps) {
+export function EvidenceImages({ verificationId, caseCreatedAt }: EvidenceImagesProps) {
+  const base = `/api/images/${verificationId}`
   return (
-    <div className="mb-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Evidence Images</h3>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold text-foreground">Evidence Images</h3>
+        <div className="text-xs text-muted-foreground space-x-3">
+          <span>Source: On-device capture</span>
+          {caseCreatedAt && <span>·</span>}
+          {caseCreatedAt && <span>Case opened: {new Date(caseCreatedAt).toLocaleDateString()}</span>}
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ImageDisplay
-          src={`/api/images/${verificationId}/document`}
-          alt="Document front"
-          title="Document Front"
-        />
-        <ImageDisplay
-          src={`/api/images/${verificationId}/document-back`}
-          alt="Document back"
-          title="Document Back"
-        />
-        <ImageDisplay
-          src={`/api/images/${verificationId}/selfie`}
-          alt="Live selfie"
-          title="Live Photo"
-        />
+        <AuthImage url={`${base}/document`}      alt="Document front" title="Document — Front" type="Primary ID" timestamp={caseCreatedAt} />
+        <AuthImage url={`${base}/document-back`} alt="Document back"  title="Document — Back"  type="Reverse"    timestamp={caseCreatedAt} />
+        <AuthImage url={`${base}/selfie`}         alt="Live photo"    title="Live Photo"        type="Biometric"  timestamp={caseCreatedAt} />
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">
-        Click on any image to view full size. Images may not be available if not uploaded during screening.
-      </div>
+      <p className="text-xs text-muted-foreground">
+        Images are stored encrypted on the server and accessible only to authorised reviewers.
+        Click any image to view full size.
+      </p>
     </div>
   )
 }

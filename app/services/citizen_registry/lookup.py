@@ -4,9 +4,14 @@ from app.repositories.citizen_registry_repository import find_by_document_number
 from app.services.citizen_registry.base import CitizenRegistryResult
 
 _NATIONALITY_ALIASES = {
-    "IND": "INDIAN", "INDIAN": "INDIAN",
-    "NPL": "NEPALI", "NEPALI": "NEPALI", "NEPALESE": "NEPALI",
-    "BTN": "BHUTANESE", "BHUTANESE": "BHUTANESE",
+    # ISO 2-letter
+    "IN": "INDIAN", "NP": "NEPALI", "BT": "BHUTANESE",
+    "ES": "SPANISH", "DE": "GERMAN", "SG": "SINGAPOREAN",
+    # ISO 3-letter
+    "IND": "INDIAN", "NPL": "NEPALI", "BTN": "BHUTANESE",
+    # Full names
+    "INDIAN": "INDIAN", "NEPALI": "NEPALI", "NEPALESE": "NEPALI",
+    "BHUTANESE": "BHUTANESE", "SPANISH": "SPANISH", "GERMAN": "GERMAN",
 }
 
 

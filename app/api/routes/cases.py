@@ -68,21 +68,35 @@ def _get_case_or_404(db: Session, case_id: uuid.UUID, user: User) -> Case:
 def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse]:
     if not cases:
         return []
-    checkpoint_ids = {c.checkpoint_id for c in cases}
-    user_ids = {c.field_officer_id for c in cases} | {c.assigned_officer_id for c in cases if c.assigned_officer_id}
+    # Case model stores Uuid; Checkpoint/User models use String(36) PKs — convert before .in_()
+    checkpoint_ids = {str(c.checkpoint_id) for c in cases}
+    user_ids = {str(c.field_officer_id) for c in cases} | {str(c.assigned_officer_id) for c in cases if c.assigned_officer_id}
+    verification_ids = {c.verification_id for c in cases if c.verification_id}
     checkpoints = {cp.id: cp for cp in db.query(Checkpoint).filter(Checkpoint.id.in_(checkpoint_ids))}
     users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids))}
+    from app.models.verification import VerificationRecord
+    verifications = (
+        {str(v.id): v for v in db.query(VerificationRecord).filter(VerificationRecord.id.in_(verification_ids))}
+        if verification_ids else {}
+    )
+
+    def _risk(c: Case, attr: str):
+        if not c.verification_id:
+            return None
+        v = verifications.get(str(c.verification_id))
+        return getattr(v, attr, None) if v else None
+
     return [
         CaseListItemResponse(
             id=str(c.id),
             case_number=c.case_number,
             status=c.status.value,
             priority=c.priority.value,
-            checkpoint_code=checkpoints[c.checkpoint_id].code if c.checkpoint_id in checkpoints else "UNKNOWN",
-            field_officer_username=users[c.field_officer_id].username if c.field_officer_id in users else "unknown",
+            checkpoint_code=checkpoints[str(c.checkpoint_id)].code if str(c.checkpoint_id) in checkpoints else "—",
+            field_officer_username=users[str(c.field_officer_id)].username if str(c.field_officer_id) in users else "—",
             assigned_officer_username=(
-                users[c.assigned_officer_id].username
-                if c.assigned_officer_id and c.assigned_officer_id in users
+                users[str(c.assigned_officer_id)].username
+                if c.assigned_officer_id and str(c.assigned_officer_id) in users
                 else None
             ),
             document_type=c.document_type,
@@ -90,6 +104,8 @@ def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse
             traveler_name=c.traveler_name,
             created_at=c.created_at.isoformat(),
             sent_at=c.sent_at.isoformat() if c.sent_at else None,
+            risk_level=_risk(c, "level"),
+            risk_score=_risk(c, "score"),
         )
         for c in cases
     ]
@@ -281,7 +297,7 @@ def get_case_identity_history_route(
             if member_embedding is not None and member_embedding.case_id is not None
             else None
         )
-        checkpoint = db.get(Checkpoint, related_case.checkpoint_id) if related_case is not None else None
+        checkpoint = db.get(Checkpoint, str(related_case.checkpoint_id)) if related_case is not None else None
 
         records.append(
             IdentityHistoryRecord(

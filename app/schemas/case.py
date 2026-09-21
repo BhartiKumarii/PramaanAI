@@ -20,6 +20,8 @@ class CaseListItemResponse(BaseModel):
     traveler_name: str | None = None
     created_at: str
     sent_at: str | None = None
+    risk_level: str | None = None
+    risk_score: int | None = None
 
 
 class CaseDecisionSummary(BaseModel):

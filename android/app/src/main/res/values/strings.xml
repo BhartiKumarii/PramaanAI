@@ -283,6 +283,7 @@
     <string name="filter_pending">Pending</string>
     <string name="filter_recently_created">Recently created</string>
     <string name="filter_cleared">Cleared</string>
+    <string name="filter_submitted">Submitted</string>
     <string name="filter_disputed">Disputed</string>
     <string name="queue_empty_title">No matching screenings</string>
     <string name="queue_empty_subtitle">Cases will appear here once submitted from a new screening.</string>

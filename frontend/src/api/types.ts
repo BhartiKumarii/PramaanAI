@@ -200,6 +200,8 @@ export interface CaseListItem {
   traveler_name: string | null
   created_at: string
   sent_at: string | null
+  risk_level: string | null
+  risk_score: number | null
 }
 
 export interface CaseDecisionSummary {

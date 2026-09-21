@@ -165,7 +165,7 @@ object RetrofitClient {
     // 30-50s to wake it up. Swap BASE_URL below to switch.
     private const val RENDER_BASE_URL = "https://bordershield-pramaan-api.onrender.com/"
 
-    private const val BASE_URL = RENDER_BASE_URL  // ✅ Using Render cloud backend for live deployment
+    private const val BASE_URL = RENDER_BASE_URL  // ✅ Production — Render deploy
 
     private val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)

@@ -2,32 +2,57 @@ import { useNavigate } from 'react-router-dom'
 import type { CaseListItem } from '../api/types'
 import { StatusBadge, PriorityBadge } from './StatusBadge'
 
-function ageLabel(isoDate: string | null): string {
-  if (!isoDate) return '—'
-  const ms = Date.now() - new Date(isoDate).getTime()
-  const mins = Math.floor(ms / 60000)
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
+function timeAgo(iso: string | null): string {
+  if (!iso) return '—'
+  const ms = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(ms / 60000)
+  if (m < 1) return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  return d === 1 ? 'yesterday' : `${d}d ago`
 }
 
-function isStale(isoDate: string | null): boolean {
-  if (!isoDate) return false
-  return Date.now() - new Date(isoDate).getTime() > 24 * 60 * 60 * 1000
+function isStale(iso: string | null): boolean {
+  if (!iso) return false
+  return Date.now() - new Date(iso).getTime() > 24 * 60 * 60 * 1000
 }
 
 const DOC_LABELS: Record<string, string> = {
   passport: 'Passport',
   national_id: 'National ID',
   visa: 'Visa',
-  driving_licence: 'Licence',
-  driving_license: 'Licence',
+  driving_licence: 'Driving Licence',
+  driving_license: 'Driving Licence',
   aadhaar: 'Aadhaar',
-  pan_card: 'PAN',
+  pan_card: 'PAN Card',
   voter_id: 'Voter ID',
   citizenship_certificate: 'Citizenship',
-  permit: 'Permit',
+  permit: 'Permit / ILP',
+}
+
+const CHECKPOINT_NAMES: Record<string, string> = {
+  ATW: 'Attari-Wagah',
+  PET: 'Petrapole',
+  RAX: 'Raxaul',
+  JAI: 'Jaigaon / Phuentsholing',
+  GEL: 'Gelephu',
+  SMD: 'Samdrup Jongkhar',
+}
+
+function riskColor(level: string | undefined): string {
+  if (!level) return 'text-muted-foreground'
+  if (level === 'HIGH_RISK') return 'text-status-high'
+  if (level === 'MEDIUM_RISK') return 'text-status-review'
+  return 'text-status-clear'
+}
+
+function riskLabel(level: string | undefined): string {
+  if (!level) return '—'
+  if (level === 'HIGH_RISK') return 'High Risk'
+  if (level === 'MEDIUM_RISK') return 'Medium Risk'
+  return 'Low Risk'
 }
 
 export function CaseTable({ cases, showSentAt = false }: { cases: CaseListItem[]; showSentAt?: boolean }) {
@@ -38,77 +63,90 @@ export function CaseTable({ cases, showSentAt = false }: { cases: CaseListItem[]
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[800px] text-left text-sm">
-        <thead>
-          <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-            <th className="py-2 pr-4">Case</th>
-            <th className="py-2 pr-4">Document</th>
-            <th className="py-2 pr-4">Officer · Checkpoint</th>
-            <th className="py-2 pr-4">{showSentAt ? 'Waiting' : 'Submitted'}</th>
-            <th className="py-2 pr-4">Status</th>
-            <th className="py-2 pr-4">Priority</th>
-            <th className="py-2" />
-          </tr>
-        </thead>
-        <tbody>
-          {cases.map((c) => {
-            const stale = showSentAt ? isStale(c.sent_at) : false
-            const docLabel = DOC_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type
-            return (
-              <tr
-                key={c.id}
-                className={`border-b border-border hover:bg-secondary cursor-pointer ${stale ? 'bg-status-high-bg/30' : ''}`}
-                onClick={() => navigate(`/console/cases/${c.id}`)}
+    <div className="divide-y divide-border">
+      {cases.map((c) => {
+        const stale = showSentAt ? isStale(c.sent_at) : false
+        const docLabel = DOC_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type ?? '—'
+        const checkpointName = CHECKPOINT_NAMES[c.checkpoint_code] ?? c.checkpoint_code
+
+        return (
+          <div
+            key={c.id}
+            onClick={() => navigate(`/console/cases/${c.id}`)}
+            className={`group cursor-pointer px-4 py-4 hover:bg-secondary transition-colors ${stale ? 'border-l-2 border-l-status-high' : ''}`}
+          >
+            {/* Row 1: Case number + badges + time */}
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-xs font-semibold text-foreground bg-secondary border border-border px-2 py-0.5 rounded">
+                  {c.case_number}
+                </span>
+                <StatusBadge status={c.status} />
+                <PriorityBadge priority={c.priority} />
+                {stale && (
+                  <span className="text-xs font-medium text-status-high bg-status-high/10 border border-status-high/30 px-2 py-0.5 rounded">
+                    ⚠ Waiting &gt;24h
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                {showSentAt ? timeAgo(c.sent_at) : timeAgo(c.created_at)}
+              </span>
+            </div>
+
+            {/* Row 2: Traveler + doc type + nationality + risk */}
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <span className="text-sm font-semibold text-foreground">
+                {c.traveler_name ?? 'Unknown traveller'}
+              </span>
+              {c.nationality && (
+                <span className="text-xs font-medium text-muted-foreground bg-secondary border border-border px-2 py-0.5 rounded-full">
+                  {c.nationality.toUpperCase()}
+                </span>
+              )}
+              <span className="text-xs font-medium text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full">
+                {docLabel}
+              </span>
+              {c.risk_level && (
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                  c.risk_level === 'HIGH_RISK'
+                    ? 'bg-status-high/10 border-status-high/30 text-status-high'
+                    : c.risk_level === 'MEDIUM_RISK'
+                      ? 'bg-status-review/10 border-status-review/30 text-status-review'
+                      : 'bg-status-clear/10 border-status-clear/30 text-status-clear'
+                }`}>
+                  <span aria-hidden="true">{c.risk_level === 'HIGH_RISK' ? '⚑' : c.risk_level === 'MEDIUM_RISK' ? '⚠' : '✓'}</span>
+                  {riskLabel(c.risk_level)}
+                </span>
+              )}
+            </div>
+
+            {/* Row 3: Officer + checkpoint + action */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent inline-block" />
+                  {c.field_officer_username}
+                </span>
+                <span>·</span>
+                <span>{checkpointName}</span>
+                {c.assigned_officer_username && c.assigned_officer_username !== c.field_officer_username && (
+                  <>
+                    <span>·</span>
+                    <span className="text-accent">Assigned: {c.assigned_officer_username}</span>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/console/cases/${c.id}`) }}
+                className="shrink-0 rounded border border-border px-3 py-1 text-xs font-medium text-foreground hover:bg-card group-hover:border-accent group-hover:text-accent transition-colors"
               >
-                <td className="py-2.5 pr-4">
-                  <p className="font-medium text-foreground">{c.case_number}</p>
-                  {c.traveler_name && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{c.traveler_name}</p>
-                  )}
-                  {c.nationality && (
-                    <p className="text-xs text-muted-foreground">{c.nationality}</p>
-                  )}
-                </td>
-                <td className="py-2.5 pr-4 text-muted-foreground">
-                  {docLabel || '—'}
-                </td>
-                <td className="py-2.5 pr-4">
-                  <p className="text-muted-foreground">{c.field_officer_username}</p>
-                  <p className="text-xs text-muted-foreground">{c.checkpoint_code}</p>
-                </td>
-                <td className="py-2.5 pr-4">
-                  {showSentAt ? (
-                    <span className={`text-xs font-medium ${stale ? 'text-status-high' : 'text-muted-foreground'}`}>
-                      {ageLabel(c.sent_at)}
-                      {stale && <span className="ml-1 text-status-high">⚠</span>}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(c.created_at).toLocaleDateString()}{' '}
-                      <span className="text-muted-foreground/60">{new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </span>
-                  )}
-                </td>
-                <td className="py-2.5 pr-4">
-                  <StatusBadge status={c.status} />
-                </td>
-                <td className="py-2.5 pr-4">
-                  <PriorityBadge priority={c.priority} />
-                </td>
-                <td className="py-2.5">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); navigate(`/console/cases/${c.id}`) }}
-                    className="rounded border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-card whitespace-nowrap"
-                  >
-                    Review →
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                Review →
+              </button>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

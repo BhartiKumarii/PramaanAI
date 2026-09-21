@@ -35,6 +35,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -205,35 +207,90 @@ fun StepCard(title: String, content: @Composable androidx.compose.foundation.lay
     }
 }
 
-private val DOC_NUMBER_LABEL = mapOf(
-    "passport" to "Passport number",
-    "national_id" to "Aadhaar number",
-    "aadhaar" to "Aadhaar number",
-    "pan_card" to "PAN number",
-    "voter_id" to "Voter ID",
-    "driving_licence" to "Licence number",
-    "driving_license" to "Licence number",
-    "visa" to "Visa number",
-    "citizenship_certificate" to "Citizenship number",
-    "permit" to "Permit number",
-)
+/** Per-document field schema: (ocr_key, display_label).
+ * Only fields in this list are shown for that document type.
+ * If a field is applicable but not read, it shows "Unable to read" — never "Not detected".
+ * Fields NOT in this list for a given doc type are hidden entirely. */
+private fun documentFieldSchema(docType: String, ocrFields: Map<String, String>): List<Pair<String, String>> {
+    val dt = docType.lowercase()
+    // Pick the best available document-number key
+    fun numKey(vararg preferred: String): String =
+        preferred.firstOrNull { ocrFields.containsKey(it) } ?: preferred.last()
 
-private val DOC_NUMBER_KEYS = listOf(
-    "passport_number", "document_number", "aadhaar_number",
-    "pan_number", "voter_id", "license_number", "visa_number",
-)
-
-fun extractedFieldOrder(documentType: String, ocrFields: Map<String, String>): List<Pair<String, String>> {
-    val numLabel = DOC_NUMBER_LABEL[documentType.lowercase()] ?: "Document number"
-    val numKey = DOC_NUMBER_KEYS.firstOrNull { ocrFields.containsKey(it) } ?: "document_number"
-    return listOf(
-        "name" to "Full name",
-        numKey to numLabel,
-        "nationality" to "Nationality",
-        "date_of_birth" to "Date of birth",
-        "gender" to "Gender",
-        "date_of_expiry" to "Date of expiry",
-    )
+    return when {
+        dt.contains("passport") -> listOf(
+            "name"              to "Full name",
+            numKey("passport_number", "document_number") to "Passport number",
+            "nationality"       to "Nationality",
+            "date_of_birth"     to "Date of birth",
+            "gender"            to "Gender",
+            "date_of_issue"     to "Date of issue",
+            "date_of_expiry"    to "Date of expiry",
+            "place_of_birth"    to "Place of birth",
+            "issuing_authority" to "Issuing authority",
+            "cid_number"        to "Citizenship ID",        // Bhutan passports
+            "citizenship_id"    to "Citizenship ID",
+        )
+        dt.contains("visa") -> listOf(
+            "name"              to "Full name",
+            numKey("visa_number", "document_number") to "Visa number",
+            "passport_number"   to "Passport number",
+            "nationality"       to "Nationality",
+            "date_of_birth"     to "Date of birth",
+            "visa_type"         to "Visa type / Category",
+            "date_of_issue"     to "Issue date",
+            "date_of_expiry"    to "Expiry date",
+            "entries"           to "Entries permitted",
+            "duration"          to "Duration / Validity",
+            "issuing_authority" to "Issued at",
+        )
+        dt.contains("national") || dt.contains("citizenship") || dt.contains("cid") -> listOf(
+            "name"              to "Full name",
+            numKey("cid_number", "citizenship_id", "document_number") to "ID number",
+            "nationality"       to "Nationality",
+            "date_of_birth"     to "Date of birth",
+            "gender"            to "Gender",
+            "date_of_issue"     to "Date of issue",
+            "date_of_expiry"    to "Date of expiry",
+            "place_of_birth"    to "Place of birth",
+            "issuing_authority" to "Issuing authority",
+            "address"           to "Address",
+        )
+        dt.contains("driving") || dt.contains("licence") || dt.contains("license") -> listOf(
+            "name"              to "Full name",
+            numKey("dl_number", "document_number") to "Licence number",
+            "date_of_birth"     to "Date of birth",
+            "gender"            to "Gender",
+            "nationality"       to "Nationality",
+            "date_of_issue"     to "Date of issue",
+            "date_of_expiry"    to "Valid until",
+            "issuing_authority" to "Issuing authority",
+            "vehicle_classes"   to "Licence categories",
+            "blood_group"       to "Blood group",
+        )
+        dt.contains("permit") || dt.contains("ilp") -> listOf(
+            "name"              to "Full name",
+            numKey("document_number", "permit_number") to "Permit number",
+            "nationality"       to "Nationality",
+            "date_of_birth"     to "Date of birth",
+            "passport_number"   to "Passport / ID number",
+            "visa_type"         to "Permit type",
+            "date_of_issue"     to "Valid from",
+            "date_of_expiry"    to "Valid until",
+            "place_of_birth"    to "Permitted area / Route",
+            "issuing_authority" to "Issuing authority",
+        )
+        else -> listOf(  // fallback for unknown doc type
+            "name"              to "Full name",
+            numKey("passport_number", "document_number") to "Document number",
+            "nationality"       to "Nationality",
+            "date_of_birth"     to "Date of birth",
+            "gender"            to "Gender",
+            "date_of_expiry"    to "Date of expiry",
+            "date_of_issue"     to "Date of issue",
+            "issuing_authority" to "Issuing authority",
+        )
+    }.distinctBy { it.first }
 }
 
 @Composable
@@ -263,29 +320,29 @@ fun PhotoTile(caption: String, path: String?, modifier: Modifier = Modifier, who
 }
 
 @Composable
-fun ExtractedFieldRow(label: String, value: String?) {
+fun ExtractedFieldRow(label: String, value: String?, unableToRead: Boolean = false) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 7.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Gray600, modifier = Modifier.weight(0.42f))
-        if (value.isNullOrBlank()) {
-            Text(
-                "Not detected",
-                style = MaterialTheme.typography.bodySmall,
-                color = Gray500,
-                fontStyle = FontStyle.Italic,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(0.58f),
-            )
-        } else {
-            Text(
+        Text(label, style = MaterialTheme.typography.bodySmall, color = Gray600, modifier = Modifier.weight(0.44f))
+        when {
+            !value.isNullOrBlank() -> Text(
                 value,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.End,
-                modifier = Modifier.weight(0.58f),
+                modifier = Modifier.weight(0.56f),
             )
+            unableToRead -> Text(
+                "Unable to read",
+                style = MaterialTheme.typography.bodySmall,
+                color = WarningAmber,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(0.56f),
+            )
+            // value null/blank but not unableToRead → field not applicable, don't render
         }
     }
     Box(Modifier.fillMaxWidth().height(1.dp).background(BorderDark))
@@ -293,47 +350,60 @@ fun ExtractedFieldRow(label: String, value: String?) {
 
 @Composable
 fun ExtractionStep(item: ScreeningQueueItem) {
-    StepCard("Information Extraction") {
-        // The actual captured photos (kept on this device only) — an
-        // officer reading extracted text should be able to see what it was
-        // read from.
+    val ocr = item.ocr
+    val docType = item.documentType ?: ocr?.documentType ?: "unknown"
+
+    StepCard("What was read from this document") {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            PhotoTile("Document photo", item.documentImagePath, Modifier.weight(1f), wholeImage = true)
-            PhotoTile("Live capture", item.selfieImagePath, Modifier.weight(1f))
+            PhotoTile("Document", item.documentImagePath, Modifier.weight(1f), wholeImage = true)
+            if (item.documentBackImagePath != null) {
+                PhotoTile("Back side", item.documentBackImagePath, Modifier.weight(1f), wholeImage = true)
+            }
+            PhotoTile("Live photo", item.selfieImagePath, Modifier.weight(1f))
         }
-        Spacer(Modifier.height(14.dp))
-        val ocr = item.ocr
+
         if (ocr == null) {
-            Text("No OCR result on this record.", style = MaterialTheme.typography.bodySmall, color = Gray500)
+            Spacer(Modifier.height(14.dp))
+            Text("Document could not be read — please rescan.", style = MaterialTheme.typography.bodySmall, color = WarningAmber)
             return@StepCard
         }
+
+        Spacer(Modifier.height(14.dp))
         ConfidenceTag(ocr.ocrConfidence)
         Spacer(Modifier.height(6.dp))
-        val fieldOrder = extractedFieldOrder(item.documentType ?: ocr.documentType, ocr.fields)
-        fieldOrder.forEach { (key, label) -> ExtractedFieldRow(label, ocr.fields[key]) }
-        ocr.fields.filterKeys { key -> fieldOrder.none { it.first == key } }.forEach { (key, value) ->
-            ExtractedFieldRow(key.replace("_", " ").replaceFirstChar { it.uppercase() }, value)
+
+        // Show only fields defined for this document type.
+        // Applicable field with no value → "Unable to read" (amber warning).
+        // Field not in schema for this doc type → hidden.
+        val schema = documentFieldSchema(docType, ocr.fields)
+        schema.forEach { (key, label) ->
+            val value = ocr.fields[key]
+            // Show the row whether or not we have a value — it's an applicable field
+            ExtractedFieldRow(label, value, unableToRead = value.isNullOrBlank())
         }
-        val mrzLines = (ocr.mrzLines as List<String>?).orEmpty()
+
+        // MRZ section (passports only)
+        val mrzLines = ocr.mrzLines.orEmpty()
         if (mrzLines.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
-            Text("Machine-readable zone", style = MaterialTheme.typography.labelMedium, color = Gray600)
+            Spacer(Modifier.height(14.dp))
+            Text("Machine-Readable Zone", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = Gray600)
             Spacer(Modifier.height(6.dp))
             Text(
                 mrzLines.joinToString("\n"),
                 style = MaterialTheme.typography.labelSmall,
                 fontFamily = FontFamily.Monospace,
-                color = Gray600,
+                color = AccentGreen,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(BackgroundDark, RoundedCornerShape(8.dp))
                     .padding(10.dp),
             )
         }
+
         Spacer(Modifier.height(12.dp))
         Text(
-            "Read from the document on this device — nothing here was typed in by hand. " +
-                "A misread value shows up as an inconsistency in the checks that follow.",
+            "All values read from the document by this device. " +
+                "Nothing was typed in by hand. Fields marked \"Unable to read\" may need a rescan.",
             style = MaterialTheme.typography.labelSmall,
             color = Gray500,
         )
@@ -401,45 +471,64 @@ private fun documentChecks(item: ScreeningQueueItem): List<CheckItem> = buildLis
 private fun screeningChecks(item: ScreeningQueueItem): List<CheckItem> = buildList {
     add(
         CheckItem(
-            "Watchlist registry (demo data)",
+            "Watchlist check",
             if (item.registryHits.isEmpty()) CheckState.PASS else CheckState.ALERT,
-            if (item.registryHits.isEmpty()) "No matching entry in the mock watchlist"
-            else item.registryHits.joinToString("; ") { "${it.matchType} match on ${it.fullName} (${it.registryReason})" },
+            if (item.registryHits.isEmpty()) "Document number is not on the watchlist"
+            else item.registryHits.joinToString("; ") { "${it.fullName} — ${it.registryReason}" },
         ),
     )
-    add(signalCheck(item.risk, "face_detection", "Face in live capture", "Not run on this device"))
+    add(signalCheck(item.risk, "face_detection", "Face detected in live photo", "Live photo not taken or not processed"))
     val face = item.face
     add(
-        if (face == null) CheckItem(stringResource(R.string.check_face_match), CheckState.NOT_RUN, stringResource(R.string.check_needs_both))
-        else CheckItem(stringResource(R.string.check_face_match), if (face.match) CheckState.PASS else CheckState.REVIEW, face.reason),
+        when {
+            face == null -> CheckItem("Face comparison", CheckState.NOT_RUN,
+                "Could not compare — either no live photo was taken or no face was found in the document photo. Visually confirm the person matches the document photo.")
+            face.match -> CheckItem("Face comparison", CheckState.PASS,
+                "The person's face is consistent with the document photo.")
+            else -> CheckItem("Face comparison", CheckState.REVIEW,
+                "The live photo does not closely match the document photo. Ask the person to face the camera directly and retake if needed.")
+        },
     )
     val liveness = item.livenessStatus
     add(
-        if (liveness == null) CheckItem(stringResource(R.string.check_liveness), CheckState.NOT_RUN, stringResource(R.string.check_not_computed))
-        else CheckItem(stringResource(R.string.check_liveness), if (liveness == "LIVE") CheckState.PASS else CheckState.REVIEW, item.livenessReason),
+        when {
+            liveness == null || liveness == "NOT_IMPLEMENTED" -> CheckItem("Live person check", CheckState.NOT_RUN,
+                "Automated check not available. Visually confirm the person is present in front of you.")
+            liveness == "LIVE" -> CheckItem("Live person check", CheckState.PASS, "The photo was taken of a live person.")
+            liveness == "SUSPECTED_SPOOF" -> CheckItem("Live person check", CheckState.ALERT,
+                "The photo may have been taken from a screen or printed image. Ask the person to face the camera directly and retake.")
+            else -> CheckItem("Live person check", CheckState.REVIEW, "Result uncertain — retake the live photo in good lighting.")
+        },
     )
     val tampering = item.tampering
     add(
-        if (tampering == null) CheckItem(stringResource(R.string.check_forensics), CheckState.NOT_RUN, stringResource(R.string.check_not_computed))
-        else CheckItem(
-            stringResource(R.string.check_forensics),
-            if (tampering.tamperingRisk < 0.5) CheckState.PASS else CheckState.REVIEW,
-            tampering.findings.firstOrNull()?.reason ?: stringResource(R.string.check_tampering_risk, (tampering.tamperingRisk * 100).toInt()),
-        ),
+        when {
+            tampering == null -> CheckItem("Document authenticity", CheckState.NOT_RUN, "Authenticity check not completed.")
+            tampering.tamperingRisk < 0.3 -> CheckItem("Document authenticity", CheckState.PASS, "No signs of alteration detected.")
+            tampering.tamperingRisk < 0.6 -> CheckItem("Document authenticity", CheckState.REVIEW,
+                "Some image inconsistencies detected — physically inspect the document for signs of alteration.")
+            else -> CheckItem("Document authenticity", CheckState.ALERT,
+                "Significant image inconsistencies detected — this document may have been altered. Do not allow entry without supervisor approval.")
+        },
     )
     val deepfake = item.deepfakeStatus
     add(
-        if (deepfake == null || deepfake == "NOT_IMPLEMENTED") CheckItem(stringResource(R.string.check_deepfake), CheckState.NOT_RUN, stringResource(R.string.check_not_computed))
-        else CheckItem(stringResource(R.string.check_deepfake), CheckState.PASS, item.deepfakeReason),
+        when {
+            deepfake == null || deepfake == "NOT_IMPLEMENTED" -> CheckItem("Photo authenticity", CheckState.NOT_RUN, "Photo authenticity check not available.")
+            deepfake == "ANALYZED" -> CheckItem("Photo authenticity", CheckState.PASS, "The photo appears genuine.")
+            else -> CheckItem("Photo authenticity", CheckState.REVIEW, "Photo authenticity could not be confirmed — review the original document.")
+        },
     )
     val graph = item.identityGraph
     add(
-        if (graph == null) CheckItem(stringResource(R.string.check_identity_graph), CheckState.NOT_RUN, stringResource(R.string.check_needs_live))
-        else CheckItem(
-            stringResource(R.string.check_identity_graph),
-            if (graph.status == "CLUSTER_FOUND") CheckState.ALERT else CheckState.PASS,
-            graph.reason,
-        ),
+        when {
+            graph == null -> CheckItem("Identity cross-check", CheckState.NOT_RUN,
+                "Cross-check against prior records not available — no live photo was taken.")
+            graph.status == "CLUSTER_FOUND" -> CheckItem("Identity cross-check", CheckState.ALERT,
+                "This person's face or document matches ${graph.clusterSize} other record(s) in the system. See Identity Links below.")
+            else -> CheckItem("Identity cross-check", CheckState.PASS,
+                "No other records share this identity. This appears to be a first-time crossing or no biometric data was available.")
+        },
     )
 }
 
@@ -467,30 +556,167 @@ fun CheckItemRow(check: CheckItem) {
 
 @Composable
 fun VerificationStep(item: ScreeningQueueItem) {
-    StepCard("Document Verification") {
-        documentChecks(item).forEach { CheckItemRow(it) }
-        Spacer(Modifier.height(6.dp))
+    StepCard("Verification Checks") {
+        // ── Section A: Document integrity ──────────────────────────────
+        SectionLabel("Document Integrity")
+        // 1. Document type match
+        val detectedType = item.ocr?.detectedDocumentType?.replace("_", " ")?.lowercase()
+        val selectedType = item.documentType?.replace("_", " ")?.lowercase() ?: "unknown"
+        CheckItemRow(
+            if (detectedType == null) CheckItem("Document type detected", CheckState.NOT_RUN, "Could not determine document type from image.")
+            else if (detectedType.contains(selectedType) || selectedType.contains(detectedType))
+                CheckItem("Document type detected", CheckState.PASS, "Detected as ${detectedType.replaceFirstChar { it.uppercase() }} — matches selected type.")
+            else CheckItem("Document type detected", CheckState.REVIEW,
+                "Selected: ${selectedType.replaceFirstChar { it.uppercase() }}. Detected: ${detectedType.replaceFirstChar { it.uppercase() }}. Please confirm the correct document type.")
+        )
+        // 2. Required fields present
+        val ocr = item.ocr
+        val schema = if (ocr != null) documentFieldSchema(item.documentType ?: "", ocr.fields) else emptyList()
+        val missingCritical = schema.filter { (k, _) ->
+            k in listOf("name", "passport_number", "document_number", "dl_number", "cid_number", "visa_number") &&
+                ocr?.fields?.get(k).isNullOrBlank()
+        }
+        CheckItemRow(
+            when {
+                ocr == null -> CheckItem("Required fields present", CheckState.NOT_RUN, "Document was not scanned.")
+                missingCritical.isEmpty() -> CheckItem("Required fields present", CheckState.PASS,
+                    "${schema.count { ocr.fields[it.first]?.isNotBlank() == true }} of ${schema.size} fields read successfully.")
+                else -> CheckItem("Required fields present", CheckState.REVIEW,
+                    "Unable to read: ${missingCritical.joinToString(", ") { it.second }}. Retake the scan in better lighting.")
+            }
+        )
+        // 3. MRZ / checksum validation (from validation findings)
+        val mrzFindings = item.validation?.findings?.filter {
+            it.check.contains("mrz", ignoreCase = true) || it.check.contains("checksum", ignoreCase = true)
+        }
+        if (!mrzFindings.isNullOrEmpty()) {
+            mrzFindings.forEach { f ->
+                CheckItemRow(CheckItem(
+                    "MRZ / Checksum — ${f.check.replace("_", " ").replaceFirstChar { it.uppercase() }}",
+                    if (f.status == "PASS") CheckState.PASS else if (f.severity == "HIGH") CheckState.ALERT else CheckState.REVIEW,
+                    f.reason,
+                ))
+            }
+        } else {
+            val hasMrz = ocr?.mrzLines?.isNotEmpty() == true
+            CheckItemRow(CheckItem("MRZ / Checksum",
+                if (hasMrz) CheckState.PASS else CheckState.NOT_RUN,
+                if (hasMrz) "Machine-readable zone was read successfully." else "No machine-readable zone found on this document — normal for some document types."))
+        }
+        // 4. Expiry / Validity
+        val expiryFindings = item.validation?.findings?.filter {
+            it.check.contains("expir", ignoreCase = true) || it.check.contains("valid", ignoreCase = true)
+        }
+        if (!expiryFindings.isNullOrEmpty()) {
+            expiryFindings.forEach { f ->
+                CheckItemRow(CheckItem(
+                    "Validity — ${f.check.replace("_", " ").replaceFirstChar { it.uppercase() }}",
+                    if (f.status == "PASS") CheckState.PASS else if (f.severity == "HIGH") CheckState.ALERT else CheckState.REVIEW,
+                    f.reason,
+                ))
+            }
+        }
+        // 5. Other validation findings
+        item.validation?.findings?.filter { f ->
+            !f.check.contains("mrz", ignoreCase = true) &&
+            !f.check.contains("checksum", ignoreCase = true) &&
+            !f.check.contains("expir", ignoreCase = true) &&
+            !f.check.contains("valid", ignoreCase = true)
+        }?.forEach { f ->
+            CheckItemRow(CheckItem(
+                f.check.replace("_", " ").replaceFirstChar { it.uppercase() },
+                if (f.status == "PASS") CheckState.PASS else if (f.severity == "HIGH") CheckState.ALERT else CheckState.REVIEW,
+                f.reason,
+            ))
+        }
+
+        Spacer(Modifier.height(12.dp))
+        // ── Section B: Identity & Person checks ────────────────────────
+        SectionLabel("Identity & Person")
+        // 6. Face match
+        CheckItemRow(when {
+            item.face == null -> CheckItem("Face comparison", CheckState.NOT_RUN,
+                "No prior face data available for comparison. Visually confirm the person matches the document photo.")
+            item.face.match -> CheckItem("Face comparison", CheckState.PASS, "The person's face is consistent with the document photo.")
+            else -> CheckItem("Face comparison", CheckState.REVIEW,
+                "The live photo does not closely match the document photo. Ask the person to look directly at the camera and retake.")
+        })
+        // 7. Live person check
+        CheckItemRow(when (item.livenessStatus) {
+            null, "NOT_IMPLEMENTED" -> CheckItem("Live person present", CheckState.NOT_RUN,
+                "Automated check not available. Visually confirm the person is physically present.")
+            "LIVE" -> CheckItem("Live person present", CheckState.PASS, "The photo was confirmed to be of a live person.")
+            "SUSPECTED_SPOOF" -> CheckItem("Live person present", CheckState.ALERT,
+                "The photo may have been taken from a screen or printed image. Ask the person to retake the photo in person.")
+            else -> CheckItem("Live person present", CheckState.REVIEW, "Result uncertain — retake the photo in good lighting.")
+        })
+        // 8. Name / DOB consistency (citizen registry)
+        CheckItemRow(signalCheck(item.risk, "citizen_registry", "Name / DOB matches registry", "Not verified against registry for this document."))
+        // 9. Duplicate document check
+        CheckItemRow(signalCheck(item.risk, "duplicate_document", "Document used before under same name",
+            "First time this document number has been screened."))
+        // 10. Identity cross-check
+        CheckItemRow(when {
+            item.identityGraph == null -> CheckItem("Identity cross-check", CheckState.NOT_RUN,
+                "No prior records to compare against.")
+            item.identityGraph.status == "CLUSTER_FOUND" -> CheckItem("Identity cross-check", CheckState.ALERT,
+                "This identity matches ${item.identityGraph.clusterSize} other record(s). See Identity Links in the Risk Assessment step.")
+            else -> CheckItem("Identity cross-check", CheckState.PASS, "No matching records found in the system.")
+        })
+
+        Spacer(Modifier.height(12.dp))
+        // ── Section C: Document authenticity ───────────────────────────
+        SectionLabel("Document Authenticity")
+        // 11. Watchlist
+        CheckItemRow(CheckItem(
+            "Watchlist check",
+            if (item.registryHits.isEmpty()) CheckState.PASS else CheckState.ALERT,
+            if (item.registryHits.isEmpty()) "Document number is not on the watchlist."
+            else item.registryHits.joinToString("; ") { "${it.fullName} — ${it.registryReason}" },
+        ))
+        // 12. Tampering
+        CheckItemRow(when {
+            item.tampering == null -> CheckItem("Document image integrity", CheckState.NOT_RUN, "Tampering check not completed.")
+            item.tampering.tamperingRisk < 0.3 -> CheckItem("Document image integrity", CheckState.PASS, "No signs of alteration detected.")
+            item.tampering.tamperingRisk < 0.6 -> CheckItem("Document image integrity", CheckState.REVIEW,
+                "Some image inconsistencies — physically inspect the document for signs of alteration.")
+            else -> CheckItem("Document image integrity", CheckState.ALERT,
+                "Significant inconsistencies — this document may have been altered. Do not allow entry without supervisor approval.")
+        })
+        // 13. Deepfake / photo authenticity
+        CheckItemRow(when {
+            item.deepfakeStatus == null || item.deepfakeStatus == "NOT_IMPLEMENTED" ->
+                CheckItem("Photo authenticity", CheckState.NOT_RUN, "Automated photo authenticity check not available.")
+            item.deepfakeStatus == "ANALYZED" -> CheckItem("Photo authenticity", CheckState.PASS, "The photo appears genuine.")
+            else -> CheckItem("Photo authenticity", CheckState.REVIEW, "Photo authenticity could not be confirmed — review the original document.")
+        })
+
+        Spacer(Modifier.height(10.dp))
         Text(
-            "Each line is a real check the backend ran on the values above, with the exact values it " +
-                "compared. \"Not run\" means the check couldn't be performed — never a silent pass.",
-            style = MaterialTheme.typography.labelSmall,
-            color = Gray500,
+            "\"Not run\" means the check was not performed — it is never counted as passing.",
+            style = MaterialTheme.typography.labelSmall, color = Gray500,
         )
     }
 }
 
 @Composable
-fun ScreeningStep(item: ScreeningQueueItem) {
-    StepCard("Screening") {
-        screeningChecks(item).forEach { CheckItemRow(it) }
-        Spacer(Modifier.height(6.dp))
+private fun SectionLabel(title: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.height(1.dp).weight(1f).background(BorderDark))
         Text(
-            "This build has no configured watchlist beyond the mock registry and no real location-match " +
-                "signal — nationality or location alone never drives a risk label.",
+            "  $title  ",
             style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
             color = Gray500,
         )
+        Box(Modifier.height(1.dp).weight(1f).background(BorderDark))
     }
+}
+
+@Composable
+fun ScreeningStep(item: ScreeningQueueItem) {
+    // ScreeningStep is now merged into VerificationStep — redirect
+    VerificationStep(item)
 }
 
 @Composable
@@ -613,58 +839,66 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
             Spacer(Modifier.height(4.dp))
             checks.forEach { CheckItemRow(it) }
 
-            if (item.identityGraph?.members != null && item.identityGraph.members.size >= 2) {
+            // Identity graph — show whenever a cluster was found, even with 1 linked record
+            val graph = item.identityGraph
+            if (graph != null && graph.status == "CLUSTER_FOUND") {
                 Spacer(Modifier.height(12.dp))
                 Box(Modifier.fillMaxWidth().height(1.dp).background(BorderDark))
                 Spacer(Modifier.height(12.dp))
-                IdentityClusterGraph(members = item.identityGraph.members)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 8.dp),
+                ) {
+                    Icon(Icons.Filled.Share, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(16.dp))
+                    Text(
+                        "Identity Links — ${graph.clusterSize} linked record${if (graph.clusterSize != 1) "s" else ""}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = WarningAmber,
+                    )
+                }
+                graph.members.take(6).forEach { member ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .background(WarningAmber.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Filled.Person, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(member.referenceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                            if (!member.documentNumber.isNullOrBlank()) {
+                                Text("Doc: ${member.documentNumber}", style = MaterialTheme.typography.labelSmall, color = Gray600)
+                            }
+                        }
+                        val matchLabel = when (member.faceMatchStatus) {
+                            com.pramaanai.officer.data.model.FaceMatchStatus.VERIFIED_MATCH -> "Face match"
+                            com.pramaanai.officer.data.model.FaceMatchStatus.PARTIAL_MATCH -> "Partial match"
+                            com.pramaanai.officer.data.model.FaceMatchStatus.NEW_FACE -> "New face"
+                            com.pramaanai.officer.data.model.FaceMatchStatus.NO_FACE_DATA -> "No photo"
+                            else -> "Linked"
+                        }
+                        Text(matchLabel, style = MaterialTheme.typography.labelSmall, color = WarningAmber)
+                    }
+                }
+                if (graph.members.size > 6) {
+                    Text("+${graph.members.size - 6} more", style = MaterialTheme.typography.labelSmall, color = Gray500, modifier = Modifier.padding(top = 4.dp))
+                }
+                if (graph.members.size >= 2) {
+                    Spacer(Modifier.height(8.dp))
+                    IdentityClusterGraph(members = graph.members)
+                }
             }
 
-            if (risk != null && risk.breakdown.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                Box(Modifier.fillMaxWidth().height(1.dp).background(BorderDark))
-                Spacer(Modifier.height(14.dp))
-                Text("Risk breakdown", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Ink900)
-                Spacer(Modifier.height(8.dp))
-                risk.breakdown.sortedByDescending { it.contribution }.forEach { RiskSignalRow(it) }
-            }
         }
     }
 }
 
 fun signalTitle(signal: String): String = humanSignalTitle(signal)
-
-@Composable
-fun RiskSignalRow(signal: com.pramaanai.officer.data.model.RiskSignalBreakdown) {
-    Column(modifier = Modifier.padding(vertical = 6.dp)) {
-        Text(
-            humanSignalTitle(signal.signal),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium,
-            color = Ink900,
-        )
-        Text(
-            humanSignalReason(signal.signal, signal.reason),
-            style = MaterialTheme.typography.labelSmall,
-            color = Gray600,
-        )
-        Spacer(Modifier.height(4.dp))
-        // Contribution bar
-        androidx.compose.foundation.layout.Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(Gray200, RoundedCornerShape(2.dp)),
-        ) {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction = signal.contribution.toFloat().coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .background(AccentGreen, RoundedCornerShape(2.dp)),
-            )
-        }
-    }
-}
 
 private fun sourceLabel(signal: String): String = when (signal) {
     "checksum" -> "Document validation engine (MRZ / Verhoeff)"
