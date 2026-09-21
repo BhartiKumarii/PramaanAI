@@ -27,7 +27,7 @@ from app.services.face.embedding import cosine_similarity, extract_embedding
 # clusters. Still a classical descriptor's real ceiling, not a validated
 # production biometric threshold — see embedding.py and this module's
 # docstring.
-_MATCH_THRESHOLD = 0.45
+_MATCH_THRESHOLD = 0.75
 
 
 def match_from_embeddings(document_embedding: list[float], presented_embedding: list[float]) -> FaceMatchResult:

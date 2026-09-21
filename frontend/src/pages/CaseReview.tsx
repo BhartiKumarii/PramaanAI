@@ -13,6 +13,8 @@ import { Card } from '../components/StatTile'
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CaseNetworkPanel } from '../components/CaseNetworkPanel'
+import { OfficerVerificationStatus } from '../components/OfficerVerificationStatus'
+import { EvidenceImages } from '../components/EvidenceImages'
 import type { DecisionValue } from '../api/types'
 
 type Tab = 'evidence' | 'identity' | 'network' | 'timeline'
@@ -135,183 +137,16 @@ export function CaseReview() {
           </div>
 
           {tab === 'evidence' && (
-            <Card>
-              {/* Display document and selfie images if available */}
-              {v && (
-                <div className="mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-foreground">Document Front</h4>
-                      <img
-                        src={`/api/images/${v.id}/document`}
-                        alt="Document front"
-                        className="w-full h-32 object-cover rounded border"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling!.classList.remove('hidden');
-                        }}
-                      />
-                      <div className="hidden h-32 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
-                        Image not available
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-foreground">Document Back</h4>
-                      <img
-                        src={`/api/images/${v.id}/document-back`}
-                        alt="Document back"
-                        className="w-full h-32 object-cover rounded border"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling!.classList.remove('hidden');
-                        }}
-                      />
-                      <div className="hidden h-32 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
-                        Image not available
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-foreground">Selfie</h4>
-                      <img
-                        src={`/api/images/${v.id}/selfie`}
-                        alt="Live selfie"
-                        className="w-full h-32 object-cover rounded border"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling!.classList.remove('hidden');
-                        }}
-                      />
-                      <div className="hidden h-32 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
-                        Image not available
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-b border-border mb-4"></div>
-                </div>
+            <div className="space-y-4">
+              {v && <EvidenceImages verificationId={v.id} />}
+              {v && c.risk ? (
+                <OfficerVerificationStatus verification={v} risk={c.risk} />
+              ) : (
+                <Card>
+                  <p className="text-sm text-muted-foreground">No verification data available for this case.</p>
+                </Card>
               )}
-              {!v && <p className="text-sm text-muted-foreground">No verification evidence attached to this case.</p>}
-              {v && (
-                <>
-                  {v.ocr ? (
-                    <SignalRow
-                      label="OCR Extraction"
-                      status={`${Math.round(v.ocr.ocr_confidence * 100)}% confidence`}
-                      tone="neutral"
-                      explanation={Object.entries(v.ocr.fields)
-                        .map(([k, val]) => `${k}: ${val}`)
-                        .join(' · ')}
-                    />
-                  ) : (
-                    <SignalRow label="OCR Extraction" status="NOT COMPUTED" tone="neutral" explanation="No OCR data was extracted for this screening." />
-                  )}
-                  {v.validation ? (
-                    <SignalRow
-                      label="Document Validation (MRZ / Verhoeff)"
-                      status={v.validation.status}
-                      tone={v.validation.status === 'PASS' ? 'clear' : 'high'}
-                      explanation={v.validation.findings.map((f) => f.reason).join(' · ') || 'No findings.'}
-                    />
-                  ) : (
-                    <SignalRow label="Document Validation (MRZ / Verhoeff)" status="NOT COMPUTED" tone="neutral" explanation="Validation was not executed — no MRZ or Aadhaar number provided." />
-                  )}
-                  {v.tampering ? (
-                    <SignalRow
-                      label="Document Forensics (ELA)"
-                      status={`${Math.round(v.tampering.tampering_risk * 100)}% anomaly risk`}
-                      tone={v.tampering.tampering_risk > 0.5 ? 'high' : v.tampering.tampering_risk > 0.25 ? 'review' : 'clear'}
-                      explanation={v.tampering.findings[0]?.reason ?? 'No anomalies above baseline.'}
-                    />
-                  ) : (
-                    <SignalRow label="Document Forensics (ELA)" status="NOT COMPUTED" tone="neutral" explanation="Tampering analysis requires raw image bytes — not available in this screening mode." />
-                  )}
-                  {v.deepfake ? (
-                    <SignalRow
-                      label="Deepfake Heuristic"
-                      status={v.deepfake.status}
-                      tone={v.deepfake.status !== 'ANALYZED' ? 'neutral' : (v.deepfake.score ?? 0) > 0.5 ? 'high' : 'clear'}
-                      explanation={v.deepfake.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Deepfake Heuristic" status="NOT COMPUTED" tone="neutral" explanation="Deepfake analysis requires raw image bytes — not available in this screening mode." />
-                  )}
-                  {v.face ? (
-                    <SignalRow
-                      label="Face Match"
-                      status={v.face.match ? 'MATCH' : 'NO MATCH'}
-                      tone={v.face.match ? 'clear' : 'high'}
-                      explanation={v.face.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Face Match" status="NOT COMPUTED" tone="neutral" explanation="Face match requires both document face and live selfie embeddings — one or both were not provided." />
-                  )}
-                  {v.liveness ? (
-                    <SignalRow
-                      label="Liveness Check"
-                      status={v.liveness.status}
-                      tone={v.liveness.status === 'LIVE' ? 'clear' : v.liveness.status === 'SUSPECTED_SPOOF' ? 'high' : 'neutral'}
-                      explanation={v.liveness.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Liveness Check" status="NOT COMPUTED" tone="neutral" explanation="Liveness check requires live capture image — not available in this screening mode." />
-                  )}
-                  {v.face_detection ? (
-                    <SignalRow
-                      label="Face Detection (Live Capture)"
-                      status={v.face_detection.status.replace(/_/g, ' ')}
-                      tone={v.face_detection.status === 'SINGLE_FACE' ? 'clear' : v.face_detection.status === 'MULTIPLE_FACES' ? 'review' : 'high'}
-                      explanation={v.face_detection.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Face Detection (Live Capture)" status="NOT COMPUTED" tone="neutral" explanation="Face detection requires live capture image — not available in this screening mode." />
-                  )}
-                  {v.identity_graph ? (
-                    <SignalRow
-                      label="Identity Graph"
-                      status={v.identity_graph.status.replace('_', ' ')}
-                      tone={v.identity_graph.status === 'CLUSTER_FOUND' ? 'review' : 'clear'}
-                      explanation={v.identity_graph.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Identity Graph" status="NOT COMPUTED" tone="neutral" explanation="Identity graph requires a live face embedding to compare across cases." />
-                  )}
-                  {v.registry ? (
-                    <SignalRow
-                      label="Blacklist / Registry Lookup"
-                      status={v.registry.status}
-                      tone={v.registry.status === 'HIT' ? 'high' : 'clear'}
-                      explanation={
-                        v.registry.hits.map((h) => `${h.match_type}: ${h.explanation}`).join(' · ') || 'No hits.'
-                      }
-                    />
-                  ) : (
-                    <SignalRow label="Blacklist / Registry Lookup" status="NOT COMPUTED" tone="neutral" explanation="No document number or name available for registry lookup." />
-                  )}
-                  {v.citizen_registry ? (
-                    <SignalRow
-                      label="Citizen Registry Verification"
-                      status={v.citizen_registry.status.replace(/_/g, ' ')}
-                      tone={v.citizen_registry.status === 'MATCH' ? 'clear' : v.citizen_registry.status === 'MISMATCH' ? 'high' : 'neutral'}
-                      explanation={v.citizen_registry.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Citizen Registry Verification" status="NOT COMPUTED" tone="neutral" explanation="No document number available for citizen registry lookup." />
-                  )}
-                  {v.duplicate_document ? (
-                    <SignalRow
-                      label="Duplicate Document Check"
-                      status={v.duplicate_document.status.replace(/_/g, ' ')}
-                      tone={v.duplicate_document.status === 'DIFFERENT_IDENTITY_REUSE' ? 'high' : v.duplicate_document.status === 'SAME_IDENTITY_REUSE' ? 'review' : 'clear'}
-                      explanation={v.duplicate_document.reason}
-                    />
-                  ) : (
-                    <SignalRow label="Duplicate Document Check" status="NOT COMPUTED" tone="neutral" explanation="No document number available for duplicate check." />
-                  )}
-                </>
-              )}
-            </Card>
+            </div>
           )}
 
           {tab === 'identity' && (

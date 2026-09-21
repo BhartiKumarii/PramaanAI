@@ -59,6 +59,8 @@ from app.services.liveness.advanced_provider import AdvancedLivenessProvider
 from app.services.liveness.heuristic_provider import HeuristicLivenessProvider
 from app.services.tampering.forensics_provider import ComprehensiveForensicsProvider
 from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
+from app.services.visa.nepal_visa_handler import NepalVisaHandler
+from app.services.language.multilingual_handler import MultilingualDocumentHandler
 
 
 @dataclass
@@ -120,9 +122,11 @@ class ComprehensiveVerificationEngine:
         self.liveness_fallback = HeuristicLivenessProvider()
         self.tampering_provider = ComprehensiveForensicsProvider()
         self.deepfake_provider = AdvancedDeepfakeProvider()
+        self.nepal_visa_handler = NepalVisaHandler()
+        self.multilingual_handler = MultilingualDocumentHandler()
 
-        # Verification thresholds
-        self.face_match_threshold = 0.78
+        # Verification thresholds (aligned with face providers)
+        self.face_match_threshold = 0.75
         self.spoof_detection_threshold = 0.6
         self.tampering_threshold = 0.5
 
@@ -141,6 +145,12 @@ class ComprehensiveVerificationEngine:
         officer_recommendations = []
         required_actions = []
 
+        # 0. MULTILINGUAL DOCUMENT PROCESSING
+        multilingual_conditions = self._verify_multilingual_conditions(
+            document_image_bytes, document_type, nationality
+        )
+        all_conditions.extend(multilingual_conditions)
+
         # 1. DOCUMENT VERIFICATION CONDITIONS
         doc_conditions = self._verify_document_conditions(
             ocr_fields, document_type, nationality, aadhaar_number
@@ -150,6 +160,13 @@ class ComprehensiveVerificationEngine:
         # 2. TAMPERING DETECTION CONDITIONS
         tampering_conditions = self._verify_tampering_conditions(document_image_bytes)
         all_conditions.extend(tampering_conditions)
+
+        # 2.5. NEPAL VISA SPECIFIC VERIFICATION (if applicable)
+        if document_type.lower() == 'visa' and nationality.lower() == 'nepal':
+            nepal_visa_conditions = self._verify_nepal_visa_conditions(
+                document_image_bytes, ocr_fields
+            )
+            all_conditions.extend(nepal_visa_conditions)
 
         # 3. FACE VERIFICATION CONDITIONS
         face_conditions = self._verify_face_conditions(
@@ -1243,3 +1260,264 @@ class ComprehensiveVerificationEngine:
                 score=None,
                 reason=f"Both advanced and heuristic liveness analysis failed: {str(e)}"
             )
+
+    def _verify_nepal_visa_conditions(
+        self,
+        document_image_bytes: bytes,
+        ocr_fields: Dict[str, str]
+    ) -> List[VerificationCondition]:
+        """Verify Nepal visa specific conditions"""
+        conditions = []
+
+        try:
+            print(f"[DEBUG] Starting Nepal visa verification...")
+
+            # Extract passport data from OCR fields if available
+            passport_data = {}
+            for key, value in ocr_fields.items():
+                if 'passport' in key.lower() and value:
+                    passport_data['passport_number'] = value
+                    break
+
+            # Run Nepal visa verification
+            nepal_result = self.nepal_visa_handler.verify_nepal_visa(
+                document_image_bytes,
+                passport_data if passport_data else None
+            )
+
+            # Convert Nepal visa results to verification conditions
+
+            # 1. Visa Format Detection
+            if nepal_result.format_detected.confidence >= 0.6:
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_FORMAT_DETECTED",
+                    status="PASS",
+                    severity="LOW",
+                    message=f"Nepal {nepal_result.format_detected.format_type} format detected with good confidence",
+                    details={
+                        'format_type': nepal_result.format_detected.format_type,
+                        'confidence': nepal_result.format_detected.confidence
+                    },
+                    officer_action_required=False
+                ))
+            elif nepal_result.format_detected.confidence >= 0.3:
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_FORMAT_UNCERTAIN",
+                    status="WARNING",
+                    severity="MEDIUM",
+                    message=f"Visa format detected but with low confidence ({nepal_result.format_detected.confidence:.2f})",
+                    details={
+                        'format_type': nepal_result.format_detected.format_type,
+                        'confidence': nepal_result.format_detected.confidence
+                    },
+                    officer_action_required=True
+                ))
+            else:
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_FORMAT_UNKNOWN",
+                    status="FAIL",
+                    severity="HIGH",
+                    message="Nepal visa format could not be confidently identified",
+                    details={
+                        'confidence': nepal_result.format_detected.confidence
+                    },
+                    officer_action_required=True
+                ))
+
+            # 2. Date Validation
+            if nepal_result.date_validation.status == "VALID":
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_DATES_VALID",
+                    status="PASS",
+                    severity="LOW",
+                    message="Visa dates are consistent and currently valid",
+                    details={
+                        'current_validity': nepal_result.date_validation.current_validity,
+                        'validity_end': nepal_result.date_validation.validity_end.isoformat() if nepal_result.date_validation.validity_end else None
+                    },
+                    officer_action_required=False
+                ))
+            elif nepal_result.date_validation.status == "EXPIRED":
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_EXPIRED",
+                    status="FAIL",
+                    severity="HIGH",
+                    message=f"Visa has expired. {nepal_result.date_validation.explanation}",
+                    details={
+                        'current_validity': nepal_result.date_validation.current_validity,
+                        'validity_end': nepal_result.date_validation.validity_end.isoformat() if nepal_result.date_validation.validity_end else None
+                    },
+                    officer_action_required=True
+                ))
+            else:
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_DATE_ISSUES",
+                    status="WARNING",
+                    severity="MEDIUM",
+                    message=f"Visa date issues detected. {nepal_result.date_validation.explanation}",
+                    details={
+                        'status': nepal_result.date_validation.status,
+                        'explanation': nepal_result.date_validation.explanation
+                    },
+                    officer_action_required=True
+                ))
+
+            # 3. Passport Link Check
+            if nepal_result.passport_link.status == "MATCH":
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_PASSPORT_MATCH",
+                    status="PASS",
+                    severity="LOW",
+                    message="Visa passport number matches the provided passport",
+                    details={
+                        'visa_passport': nepal_result.passport_link.visa_passport_number,
+                        'document_passport': nepal_result.passport_link.document_passport_number
+                    },
+                    officer_action_required=False
+                ))
+            elif nepal_result.passport_link.status == "MISMATCH":
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_PASSPORT_MISMATCH",
+                    status="FAIL",
+                    severity="HIGH",
+                    message="Visa passport number does not match the provided passport",
+                    details={
+                        'visa_passport': nepal_result.passport_link.visa_passport_number,
+                        'document_passport': nepal_result.passport_link.document_passport_number,
+                        'explanation': nepal_result.passport_link.explanation
+                    },
+                    officer_action_required=True
+                ))
+            else:
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_PASSPORT_UNAVAILABLE",
+                    status="WARNING",
+                    severity="LOW",
+                    message="Passport number cross-validation unavailable",
+                    details={
+                        'explanation': nepal_result.passport_link.explanation
+                    },
+                    officer_action_required=False
+                ))
+
+            # 4. QR/Barcode Check
+            if nepal_result.qr_barcode.status == "READABLE":
+                if nepal_result.qr_barcode.validation_status == "MATCHES":
+                    conditions.append(VerificationCondition(
+                        condition_type="NEPAL_VISA_QR_VALID",
+                        status="PASS",
+                        severity="LOW",
+                        message="QR code is readable and information matches visa details",
+                        details={
+                            'qr_status': nepal_result.qr_barcode.status,
+                            'validation': nepal_result.qr_barcode.validation_status
+                        },
+                        officer_action_required=False
+                    ))
+                else:
+                    conditions.append(VerificationCondition(
+                        condition_type="NEPAL_VISA_QR_MISMATCH",
+                        status="WARNING",
+                        severity="MEDIUM",
+                        message="QR code readable but information differs from visa details",
+                        details={
+                            'qr_status': nepal_result.qr_barcode.status,
+                            'validation': nepal_result.qr_barcode.validation_status,
+                            'explanation': nepal_result.qr_barcode.explanation
+                        },
+                        officer_action_required=True
+                    ))
+            elif nepal_result.qr_barcode.status == "NOT_FOUND":
+                conditions.append(VerificationCondition(
+                    condition_type="NEPAL_VISA_NO_QR",
+                    status="PASS",
+                    severity="LOW",
+                    message="No QR code detected (acceptable for older visa formats)",
+                    details={
+                        'qr_status': nepal_result.qr_barcode.status
+                    },
+                    officer_action_required=False
+                ))
+
+            print(f"[DEBUG] Nepal visa verification completed with {len(conditions)} conditions")
+
+        except Exception as e:
+            print(f"[DEBUG] Nepal visa verification failed: {str(e)}")
+            conditions.append(VerificationCondition(
+                condition_type="NEPAL_VISA_VERIFICATION_ERROR",
+                status="WARNING",
+                severity="MEDIUM",
+                message=f"Nepal visa verification could not be completed: {str(e)}",
+                details={'error': str(e)},
+                officer_action_required=True
+            ))
+
+        return conditions
+
+    def _verify_multilingual_conditions(
+        self,
+        document_image_bytes: bytes,
+        document_type: str,
+        country: str
+    ) -> List[VerificationCondition]:
+        """Verify multilingual document processing conditions"""
+        conditions = []
+
+        try:
+            print(f"[DEBUG] Starting multilingual document processing...")
+
+            # Run multilingual document processing
+            multilingual_result = self.multilingual_handler.process_multilingual_document(
+                document_image_bytes,
+                document_type,
+                country
+            )
+
+            # Convert multilingual results to verification conditions
+
+            # 1. Script Detection
+            script_confidence = multilingual_result.script_detection.confidence
+            if script_confidence >= 0.7:
+                conditions.append(VerificationCondition(
+                    condition_type="DOCUMENT_SCRIPT_DETECTED",
+                    status="PASS",
+                    severity="LOW",
+                    message=f"Document script detected: {multilingual_result.officer_display.get('script', 'unknown')}",
+                    details={
+                        'primary_script': multilingual_result.script_detection.primary_script.value,
+                        'confidence': script_confidence,
+                        'detected_scripts': [s.value for s in multilingual_result.script_detection.detected_scripts]
+                    },
+                    officer_action_required=False
+                ))
+
+            # 2. Language Detection
+            language_confidence = multilingual_result.language_detection.confidence
+            if language_confidence >= 0.7:
+                conditions.append(VerificationCondition(
+                    condition_type="DOCUMENT_LANGUAGE_DETECTED",
+                    status="PASS",
+                    severity="LOW",
+                    message=f"Document language: {multilingual_result.officer_display.get('primary_language', 'unknown')}",
+                    details={
+                        'primary_language': multilingual_result.language_detection.primary_language.value,
+                        'confidence': language_confidence,
+                        'detection_method': multilingual_result.language_detection.detection_method
+                    },
+                    officer_action_required=False
+                ))
+
+            print(f"[DEBUG] Multilingual processing completed with {len(conditions)} conditions")
+
+        except Exception as e:
+            print(f"[DEBUG] Multilingual processing failed: {str(e)}")
+            conditions.append(VerificationCondition(
+                condition_type="MULTILINGUAL_PROCESSING_ERROR",
+                status="WARNING",
+                severity="LOW",
+                message=f"Multilingual processing encountered an error: {str(e)}",
+                details={'error': str(e)},
+                officer_action_required=False
+            ))
+
+        return conditions

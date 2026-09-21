@@ -63,14 +63,16 @@ class EnhancedFaceDetector(FaceDetector):
                 if not face_cascade.empty():
                     return face_cascade
 
-            # Method 2: Use a simple contour-based face detector as fallback
-            print("Using fallback contour-based face detector")
-            return "contour_based"
+            # Method 2: If no proper face detector available, return None
+            # This will cause face verification to fail gracefully rather than
+            # using fake contour-based detection that can match non-faces
+            print("WARNING: No proper face detector available. Face detection will be unavailable.")
+            return None
 
         except Exception as e:
             print(f"Face detector loading failed: {e}")
-            # Return fallback detector
-            return "contour_based"
+            # Return None instead of fake detector
+            return None
 
     def detect(self, image_bytes: bytes) -> FaceDetectionResult:
         """Detect faces with comprehensive quality and spoof assessment"""
@@ -90,56 +92,56 @@ class EnhancedFaceDetector(FaceDetector):
 
             if self.net is not None:
                 print(f"[DEBUG] Face detector type: {type(self.net)} - {self.net}")
-                if self.net == "contour_based":
-                    # Use contour-based face detection for document images
-                    print(f"[DEBUG] Using contour-based face detection...")
-                    faces = self._detect_faces_contour_based(gray)
-                    print(f"[DEBUG] Contour-based detected {len(faces)} faces")
-                else:
-                    # Use Haar cascade for face detection
-                    print(f"[DEBUG] Using Haar cascade face detection...")
-                    # Try multiple parameter sets for better detection on document photos
-                    faces = []
-
-                    # Try different parameter combinations optimized for document photos
-                    param_sets = [
-                        # (scaleFactor, minNeighbors, minSize, maxSize)
-                        (1.1, 3, (80, 80), (400, 400)),  # Document photo size
-                        (1.05, 3, (60, 60), (500, 500)), # Slightly smaller
-                        (1.3, 4, (100, 100), (350, 350)),# Larger faces only
-                        (1.1, 4, (50, 50), (300, 300)),  # Fallback
-                        (1.05, 2, (40, 40), (600, 600)), # Very permissive fallback
-                    ]
-
-                    for i, (scale, neighbors, min_size, max_size) in enumerate(param_sets):
-                        print(f"[DEBUG] Trying parameter set {i+1}: scale={scale}, neighbors={neighbors}, minSize={min_size}")
-                        if max_size:
-                            detected = self.net.detectMultiScale(
-                                gray, scaleFactor=scale, minNeighbors=neighbors,
-                                minSize=min_size, maxSize=max_size
-                            )
-                        else:
-                            detected = self.net.detectMultiScale(
-                                gray, scaleFactor=scale, minNeighbors=neighbors,
-                                minSize=min_size
-                            )
-
-                        print(f"[DEBUG] Parameter set {i+1} detected {len(detected)} faces")
-                        if len(detected) > 0:
-                            faces = detected
-                            print(f"[DEBUG] Using faces from parameter set {i+1}")
-                            break
-
-                    print(f"[DEBUG] Haar cascade final result: {len(faces)} faces")
-            else:
-                print(f"[DEBUG] No face detector available!")
+                # Use Haar cascade for face detection
+                print(f"[DEBUG] Using Haar cascade face detection...")
+                # Try multiple parameter sets for better detection on document photos
                 faces = []
 
-            # Process detected faces (regardless of detection method)
+                # Try different parameter combinations optimized for document photos
+                param_sets = [
+                    # (scaleFactor, minNeighbors, minSize, maxSize)
+                    (1.1, 3, (80, 80), (400, 400)),  # Document photo size
+                    (1.05, 3, (60, 60), (500, 500)), # Slightly smaller
+                    (1.3, 4, (100, 100), (350, 350)),# Larger faces only
+                    (1.1, 4, (50, 50), (300, 300)),  # Fallback
+                    (1.05, 2, (40, 40), (600, 600)), # Very permissive fallback
+                ]
+
+                for i, (scale, neighbors, min_size, max_size) in enumerate(param_sets):
+                    print(f"[DEBUG] Trying parameter set {i+1}: scale={scale}, neighbors={neighbors}, minSize={min_size}")
+                    if max_size:
+                        detected = self.net.detectMultiScale(
+                            gray, scaleFactor=scale, minNeighbors=neighbors,
+                            minSize=min_size, maxSize=max_size
+                        )
+                    else:
+                        detected = self.net.detectMultiScale(
+                            gray, scaleFactor=scale, minNeighbors=neighbors,
+                            minSize=min_size
+                        )
+
+                    print(f"[DEBUG] Parameter set {i+1} detected {len(detected)} faces")
+                    if len(detected) > 0:
+                        faces = detected
+                        print(f"[DEBUG] Using faces from parameter set {i+1}")
+                        break
+
+                print(f"[DEBUG] Haar cascade final result: {len(faces)} faces")
+            else:
+                print(f"[DEBUG] No proper face detector available - cannot detect faces")
+                faces = []
+
+            # Process and validate detected faces
             print(f"[DEBUG] Processing {len(faces)} detected faces...")
             for i, face_rect in enumerate(faces):
                 x, y, w, h = map(int, face_rect)
                 print(f"[DEBUG] Face {i}: ({x}, {y}) {w}x{h}")
+
+                # Validate that this is likely a real face
+                if not self._validate_face_detection(gray, x, y, w, h):
+                    print(f"[DEBUG] Face {i}: failed validation - likely not a face")
+                    continue
+
                 # Check if face touches image edges
                 touches_edge = (
                     x <= 5 or y <= 5 or
@@ -163,11 +165,16 @@ class EnhancedFaceDetector(FaceDetector):
                     confidence = 0.3  # Too small or too large
                     print(f"[DEBUG] Face {i}: size ratio BAD ({size_ratio:.4f}), confidence={confidence:.3f}")
 
-                detected_faces.append(DetectedFace(
-                    location={"x": int(x), "y": int(y), "width": int(w), "height": int(h)},
-                    confidence=confidence,
-                    touches_edge=touches_edge
-                ))
+                # Only accept faces with reasonable confidence
+                if confidence >= 0.4:
+                    detected_faces.append(DetectedFace(
+                        location={"x": int(x), "y": int(y), "width": int(w), "height": int(h)},
+                        confidence=confidence,
+                        touches_edge=touches_edge
+                    ))
+                    print(f"[DEBUG] Face {i}: accepted with confidence {confidence:.3f}")
+                else:
+                    print(f"[DEBUG] Face {i}: rejected due to low confidence {confidence:.3f}")
 
             print(f"[DEBUG] Final detected_faces count: {len(detected_faces)}")
 
@@ -351,106 +358,41 @@ class EnhancedFaceDetector(FaceDetector):
                 overall_spoof_probability=0.0
             )
 
-    def _detect_faces_contour_based(self, gray: np.ndarray) -> List[Tuple[int, int, int, int]]:
-        """Contour-based face detection for document images"""
+    def _validate_face_detection(self, gray: np.ndarray, x: int, y: int, w: int, h: int) -> bool:
+        """Validate that a detected region likely contains a real face using image analysis"""
         try:
-            # This method looks for rectangular regions that might contain faces in documents
-            height, width = gray.shape
+            # Extract the detected region
+            region = gray[y:y+h, x:x+w]
 
-            # Apply CLAHE for better contrast
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            enhanced = clahe.apply(gray)
+            # Basic size and aspect ratio checks
+            if w < 40 or h < 40 or w > 800 or h > 800:
+                return False
 
-            # Find edges
-            edges = cv2.Canny(enhanced, 50, 150)
+            aspect_ratio = w / h
+            if aspect_ratio < 0.5 or aspect_ratio > 2.0:
+                return False
 
-            # Find contours
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # Variance check - faces should have moderate texture variance
+            variance = np.var(region.astype(np.float64))
+            if variance < 100 or variance > 5000:
+                return False
 
-            faces = []
-            for contour in contours:
-                # Get bounding rectangle
-                x, y, w, h = map(int, cv2.boundingRect(contour))
+            # Edge density check - faces should have reasonable edge structure
+            edges = cv2.Canny(region, 30, 100) if hasattr(cv2, 'Canny') else region * 0
+            edge_density = np.sum(edges) / (w * h * 255) if hasattr(cv2, 'Canny') else 0.2
+            if edge_density < 0.05 or edge_density > 0.6:
+                return False
 
-                # More restrictive filters for passport/ID photos
-                if (60 < w < 250 and 70 < h < 300 and  # Stricter size limits
-                    0.8 < w/h < 1.3 and  # More restrictive aspect ratio
-                    w * h > 4000 and  # Higher minimum area
-                    w * h < 50000):  # Maximum area to avoid full document detection
+            # Brightness check - faces shouldn't be completely dark or bright
+            mean_brightness = np.mean(region)
+            if mean_brightness < 20 or mean_brightness > 235:
+                return False
 
-                    # Additional quality checks
-                    region = gray[y:y+h, x:x+w]
-                    variance = np.var(region)
-
-                    # Face regions should have moderate variance (not blank, not too noisy)
-                    if 300 < variance < 3000:
-                        faces.append((x, y, w, h))
-
-            # Limit to maximum 3 faces to prevent false positives
-            faces = faces[:3]
-
-            # If no contour-based faces found, try region-based approach
-            if len(faces) == 0:
-                faces = self._detect_faces_region_based(enhanced)
-
-            return faces
+            return True
 
         except Exception as e:
-            print(f"Contour-based detection failed: {e}")
-            return []
-
-    def _detect_faces_region_based(self, gray: np.ndarray) -> List[Tuple[int, int, int, int]]:
-        """Region-based face detection - looks for typical document photo locations"""
-        try:
-            height, width = gray.shape
-
-            # Aadhaar cards typically have photos in specific regions
-            # Try common locations where photos appear on ID documents
-
-            potential_regions = []
-
-            # Left side photo (common in many ID cards)
-            left_region = (10, height//6, width//3, height*2//3)
-            potential_regions.append(left_region)
-
-            # Right side photo
-            right_region = (width*2//3, height//6, width//3, height*2//3)
-            potential_regions.append(right_region)
-
-            # Top left corner
-            top_left_region = (10, 10, width//2, height//2)
-            potential_regions.append(top_left_region)
-
-            faces = []
-            for x, y, w, h in potential_regions:
-                # Extract region
-                if x + w <= width and y + h <= height:
-                    region = gray[y:y+h, x:x+w]
-
-                    # Check if this region likely contains a face
-                    # by analyzing variance and edge density
-                    variance = np.var(region)
-                    edges = cv2.Canny(region, 30, 100)
-                    edge_density = np.sum(edges) / (w * h * 255)
-
-                    # Heuristic: faces have moderate variance and edge density
-                    if (variance > 200 and variance < 2000 and  # Not too uniform, not too noisy
-                        0.1 < edge_density < 0.4):  # Moderate edge density
-
-                        # Add some padding and constraints
-                        face_x = max(0, x + 10)
-                        face_y = max(0, y + 10)
-                        face_w = min(w - 20, width - face_x)
-                        face_h = min(h - 20, height - face_y)
-
-                        if face_w > 80 and face_h > 100:  # Minimum size
-                            faces.append((face_x, face_y, face_w, face_h))
-
-            return faces
-
-        except Exception as e:
-            print(f"Region-based detection failed: {e}")
-            return []
+            print(f"Face validation failed: {e}")
+            return False
 
 
 class EnhancedFaceProvider(FaceProvider):
@@ -458,8 +400,8 @@ class EnhancedFaceProvider(FaceProvider):
 
     def __init__(self):
         self.detector = EnhancedFaceDetector()
-        # Improved thresholds based on comprehensive analysis
-        self.match_threshold = 0.78  # Slightly higher than original for better precision
+        # Aligned with ClassicalFaceProvider threshold for consistency
+        self.match_threshold = 0.75  # Matches calibrated threshold from AT&T/Olivetti dataset
         self.quality_threshold = 0.4  # Minimum quality score
         self.spoof_threshold = 0.6    # Maximum spoof probability
 
