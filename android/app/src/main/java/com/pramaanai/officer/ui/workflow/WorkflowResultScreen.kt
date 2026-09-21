@@ -127,32 +127,31 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                         when (step) {
                             2 -> ExtractionStep(currentItem)
                             3 -> VerificationStep(currentItem)
-                            4 -> ScreeningStep(currentItem)
-                            5 -> RiskAssessmentStep(currentItem)
-                            6 -> ReviewStep(currentItem)
-                            7 -> CompleteStep(currentItem)
+                            4 -> RiskAssessmentStep(currentItem)
+                            5 -> ReviewStep(currentItem)
+                            6 -> CompleteStep(currentItem)
                         }
                         Spacer(Modifier.height(24.dp))
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (step in 3..6) {
+                    if (step in 3..5) {
                         OutlinedButton(onClick = { step-- }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.common_back)) }
                     }
                     when (step) {
-                        in 2..5 -> Button(
+                        in 2..4 -> Button(
                             onClick = { step++ },
                             colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                             modifier = Modifier.weight(1f),
                         ) { Text(stringResource(R.string.common_next)) }
-                        6 -> {
+                        5 -> {
                             Button(
                                 onClick = { showSendDialog = true },
                                 colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                                 modifier = Modifier.weight(1f),
                             ) { Text(stringResource(R.string.submit_for_review), maxLines = 1) }
                         }
-                        7 -> Button(
+                        6 -> Button(
                             onClick = onComplete,
                             colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                             modifier = Modifier.weight(1f),
@@ -178,7 +177,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                         repository.sendCaseToImmigration(screeningId, reasons.joinToString("\n") { "• $it" })
                         item = repository.getById(screeningId)
                         showSendDialog = false
-                        step = 7
+                        step = 6
                     } catch (e: Exception) {
                         showSendDialog = false
                         Toast.makeText(context, friendlyActionError(context, "send this case", e), Toast.LENGTH_LONG).show()

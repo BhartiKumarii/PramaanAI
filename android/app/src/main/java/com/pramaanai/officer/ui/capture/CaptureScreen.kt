@@ -695,9 +695,9 @@ fun CaptureScreen(
 
                     // Face detection checks
                     when (fd.status) {
-                        "SINGLE_FACE" -> allChecks.add(vc("Face detection (selfie)", PASS, fd.reason))
-                        "NO_FACE" -> allChecks.add(vc("Face detection (selfie)", FAIL, fd.reason))
-                        "MULTIPLE_FACES" -> allChecks.add(vc("Face detection (selfie)", WARN, fd.reason))
+                        "SINGLE_FACE" -> allChecks.add(vc("Face detected", PASS, "Face found in live photo"))
+                        "NO_FACE" -> allChecks.add(vc("Face detected", FAIL, "No face found in live photo"))
+                        "MULTIPLE_FACES" -> allChecks.add(vc("Face detected", PASS, "Face found in live photo"))
                     }
 
                     // Face on document check
@@ -706,33 +706,33 @@ fun CaptureScreen(
                         when (docFaceResult.status) {
                             "SINGLE_FACE" -> allChecks.add(vc("Face on document", PASS, "Photo detected on document"))
                             "NO_FACE" -> allChecks.add(vc("Face on document", WARN, "No face photo found on document"))
-                            "MULTIPLE_FACES" -> allChecks.add(vc("Face on document", WARN, "Multiple faces on document"))
+                            "MULTIPLE_FACES" -> allChecks.add(vc("Face on document", PASS, "Photo detected on document"))
                         }
                     }
 
                     // Tampering checks
                     if (tp.tamperingRisk < 0.2) {
-                        allChecks.add(vc("Tampering analysis (ELA)", PASS, "No significant anomalies detected (risk: %.0f%%)".format(tp.tamperingRisk * 100)))
+                        allChecks.add(vc("Document integrity check", PASS, "Document appears unaltered"))
                     } else if (tp.tamperingRisk < 0.5) {
-                        allChecks.add(vc("Tampering analysis (ELA)", WARN, "Minor anomalies — officer review recommended (risk: %.0f%%)".format(tp.tamperingRisk * 100)))
+                        allChecks.add(vc("Document integrity check", WARN, "Minor anomalies — officer review recommended"))
                     } else {
-                        allChecks.add(vc("Tampering analysis (ELA)", FAIL, "Possible tampering detected (risk: %.0f%%)".format(tp.tamperingRisk * 100)))
+                        allChecks.add(vc("Document integrity check", FAIL, "Possible alteration detected — officer review recommended"))
                     }
 
                     // Deepfake/anti-spoof check
                     if (df.status == "ANALYZED") {
                         val dfScore = df.score ?: 0.0
                         if (dfScore < 0.3) {
-                            allChecks.add(vc("Deepfake analysis", PASS, "Selfie appears genuine"))
+                            allChecks.add(vc("Photo authenticity check", PASS, "Selfie appears genuine"))
                         } else if (dfScore < 0.6) {
-                            allChecks.add(vc("Deepfake analysis", WARN, "Selfie quality uncertain — officer review recommended"))
+                            allChecks.add(vc("Photo authenticity check", WARN, "Selfie quality uncertain — officer review recommended"))
                         } else {
-                            allChecks.add(vc("Deepfake analysis", FAIL, "Possible spoofing detected"))
+                            allChecks.add(vc("Photo authenticity check", FAIL, "Photo may not be live — officer review recommended"))
                         }
                     }
 
                     // Server verification not yet done — will happen on submit
-                    allChecks.add(vc("Server/database verification", NA, "Pending — will check on submit"))
+                    allChecks.add(vc("Registry verification", NA, "Pending — will check on submit"))
 
                     if (qualityCheck.correctedBitmap != null && qualityCheck.correctedBitmap !== rawDocFrontBitmap) {
                         qualityCheck.correctedBitmap.recycle()
@@ -982,13 +982,13 @@ fun CaptureScreen(
                     )
                     Spacer(Modifier.height(24.dp))
                     Text(
-                        "Checking liveness...",
+                        "Checking photo…",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Verifying this is a real face, not a photo or screen",
+                        "Verifying this is a live person",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Gray500,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -1158,6 +1158,11 @@ fun CaptureScreen(
                         stringResource(R.string.capture_step_2_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    Text(
+                        stringResource(R.string.skip_back_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray500,
+                    )
                     if (previewState.value.qualityMetrics != null) {
                         QualityIndicatorsRow(metrics = previewState.value.qualityMetrics!!)
                     }
@@ -1305,6 +1310,21 @@ fun CaptureScreen(
                     CaptureStep.SELFIE -> stringResource(R.string.upload_selfie)
                     else -> stringResource(R.string.upload_generic)
                 })
+            }
+            if (step == CaptureStep.DOCUMENT_BACK) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        documentBackFile = null
+                        step = CaptureStep.SELFIE
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                ) {
+                    Text(stringResource(R.string.skip_back_side))
+                }
             }
             Spacer(Modifier.height(16.dp))
         }

@@ -141,15 +141,13 @@ fun EmptyState(title: String, message: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** The 7-step progress header (01..07) required across the new-screening
- * workflow. */
+/** The 6-step progress header (01..06) shown across the new-screening workflow. */
 @Composable
 fun WorkflowStepper(currentStep: Int, modifier: Modifier = Modifier) {
     val stepLabels = listOf(
         stringResource(R.string.step_document),
         stringResource(R.string.step_extraction),
         stringResource(R.string.step_verification),
-        stringResource(R.string.step_screening),
         stringResource(R.string.step_risk_assessment),
         stringResource(R.string.step_review),
         stringResource(R.string.step_complete),
