@@ -506,8 +506,15 @@
     <string name="cd_replay_tour">Replay guided tour</string>
     <string name="cd_officer_profile">Officer profile</string>
 
-    <!-- Splash -->
-    <string name="splash_tagline">Secure · Explainable · Connectivity-Aware</string>
+    <!-- Workflow — submit for review (replaces old Clear/Secondary/Hold-Refer officer buttons) -->
+    <string name="submit_for_review">Submit for Review</string>
+    <string name="submit_for_review_step_title">Submit for Review</string>
+    <string name="submit_for_review_instructions">Review the information above, then submit this case for admin verification. The admin will review the evidence and make the final decision.</string>
+    <string name="submit_for_review_findings_title">Findings to be included</string>
+    <string name="submit_for_review_disclaimer">The final verification decision is made by an authorised admin — not by this app.</string>
+    <string name="case_submitted_title">Case submitted for verification</string>
+    <string name="case_submitted_body">The case has been sent to the admin queue. An authorised reviewer will examine the evidence and make the final verification decision.</string>
+    <string name="case_submitted_notes">Your notes: %s</string>
 
     <!-- Actions for error messages -->
     <string name="action_flag_screening">flag this screening</string>

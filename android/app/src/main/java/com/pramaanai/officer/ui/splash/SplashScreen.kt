@@ -138,13 +138,6 @@ fun SplashScreen(onFinished: () -> Unit) {
                 color = TealGreen,
                 modifier = Modifier.alpha(textAlpha.value),
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Secure · Explainable · Connectivity-Aware",
-                style = MaterialTheme.typography.bodySmall,
-                color = TealGreen.copy(alpha = 0.6f),
-                modifier = Modifier.alpha(textAlpha.value),
-            )
         }
     }
 }

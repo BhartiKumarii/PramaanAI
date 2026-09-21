@@ -145,7 +145,7 @@ fun WorkflowResultScreen(repository: ScreeningRepository, screeningId: String, o
                                 onClick = { showSendDialog = true },
                                 colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
                                 modifier = Modifier.weight(1f),
-                            ) { Text("Submit for Review", maxLines = 1) }
+                            ) { Text(stringResource(R.string.submit_for_review), maxLines = 1) }
                         }
                         7 -> Button(
                             onClick = onComplete,
@@ -698,15 +698,15 @@ private fun sourceLabel(signal: String): String = when (signal) {
 fun ReviewStep(item: ScreeningQueueItem) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val reasons = flaggedReasons(context, item)
-    StepCard("Submit for Review") {
+    StepCard(stringResource(R.string.submit_for_review_step_title)) {
         Text(
-            "Review the information above, then submit this case for admin verification. The admin will review the evidence and make the final decision.",
+            stringResource(R.string.submit_for_review_instructions),
             style = MaterialTheme.typography.bodySmall,
             color = Gray600,
         )
         if (reasons.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
-            Text("Findings to be included", style = MaterialTheme.typography.labelMedium, color = Gray600)
+            Text(stringResource(R.string.submit_for_review_findings_title), style = MaterialTheme.typography.labelMedium, color = Gray600)
             Spacer(Modifier.height(6.dp))
             reasons.forEach { reason ->
                 Row(modifier = Modifier.padding(vertical = 4.dp)) {
@@ -717,7 +717,7 @@ fun ReviewStep(item: ScreeningQueueItem) {
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            "The final verification decision is made by an authorised admin — not by this app.",
+            stringResource(R.string.submit_for_review_disclaimer),
             style = MaterialTheme.typography.labelSmall,
             color = Gray500,
         )
@@ -730,17 +730,17 @@ fun CompleteStep(item: ScreeningQueueItem) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
             Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = AccentGreen, modifier = Modifier.size(48.dp))
             Spacer(Modifier.height(12.dp))
-            Text("Case submitted for verification", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.case_submitted_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             Text(
-                "The case has been sent to the admin queue. An authorised reviewer will examine the evidence and make the final verification decision.",
+                stringResource(R.string.case_submitted_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = Gray600,
                 textAlign = TextAlign.Center,
             )
             if (!item.officerNotes.isNullOrBlank()) {
                 Spacer(Modifier.height(8.dp))
-                Text("Your notes: ${item.officerNotes}", style = MaterialTheme.typography.bodySmall, color = Gray500)
+                Text(stringResource(R.string.case_submitted_notes, item.officerNotes!!), style = MaterialTheme.typography.bodySmall, color = Gray500)
             }
         }
     }
