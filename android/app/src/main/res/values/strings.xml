@@ -79,11 +79,11 @@
     <string name="doc_type_permit">Permit / ILP</string>
 
     <!-- Document type subtitles -->
-    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ checked on-device</string>
-    <string name="doc_type_visa_sub">Sticker · e-Visa / ETA · Entry permit</string>
-    <string name="doc_type_national_id_sub">Citizenship card · Aadhaar · NID</string>
-    <string name="doc_type_driving_licence_sub">Indian state DL · Bhutan DL · Nepal DL</string>
-    <string name="doc_type_permit_sub">Inner Line Permit · Restricted Area Permit</string>
+    <string name="doc_type_passport_sub">Scan passport bio page</string>
+    <string name="doc_type_visa_sub">Scan visa sticker or e-Visa</string>
+    <string name="doc_type_national_id_sub">Scan citizenship or national ID card</string>
+    <string name="doc_type_driving_licence_sub">Scan driving licence</string>
+    <string name="doc_type_permit_sub">Scan travel permit</string>
     <string name="checkpoint_label">Checkpoint</string>
     <string name="traveler_name">Traveler Name</string>
     <string name="document_type_label">Document Type</string>

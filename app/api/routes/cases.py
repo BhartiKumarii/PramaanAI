@@ -68,17 +68,30 @@ def _get_case_or_404(db: Session, case_id: uuid.UUID, user: User) -> Case:
 def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse]:
     if not cases:
         return []
-    # Case model stores Uuid; Checkpoint/User models use String(36) PKs — convert before .in_()
-    checkpoint_ids = {str(c.checkpoint_id) for c in cases}
-    user_ids = {str(c.field_officer_id) for c in cases} | {str(c.assigned_officer_id) for c in cases if c.assigned_officer_id}
+    # Case model stores Uuid; Checkpoint/User models use String(36) PKs.
+    # On PostgreSQL the types differ (native UUID vs varchar) so .in_() silently
+    # returns 0 rows. Use db.get() per unique ID — it handles type coercion and
+    # is cached by the Session identity map so repeated IDs are free.
+    checkpoints: dict[str, Checkpoint | None] = {}
+    users: dict[str, User | None] = {}
+    for c in cases:
+        cp_key = str(c.checkpoint_id)
+        if cp_key not in checkpoints:
+            checkpoints[cp_key] = db.get(Checkpoint, cp_key)
+        off_key = str(c.field_officer_id)
+        if off_key not in users:
+            users[off_key] = db.get(User, off_key)
+        if c.assigned_officer_id:
+            ao_key = str(c.assigned_officer_id)
+            if ao_key not in users:
+                users[ao_key] = db.get(User, ao_key)
     verification_ids = {c.verification_id for c in cases if c.verification_id}
-    checkpoints = {cp.id: cp for cp in db.query(Checkpoint).filter(Checkpoint.id.in_(checkpoint_ids))}
-    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids))}
     from app.models.verification import VerificationRecord
-    verifications = (
-        {str(v.id): v for v in db.query(VerificationRecord).filter(VerificationRecord.id.in_(verification_ids))}
-        if verification_ids else {}
-    )
+    verifications: dict[str, VerificationRecord | None] = {}
+    for vid in verification_ids:
+        v = db.get(VerificationRecord, str(vid))
+        if v:
+            verifications[str(v.id)] = v
 
     def _risk(c: Case, attr: str):
         if not c.verification_id:
@@ -92,12 +105,10 @@ def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse
             case_number=c.case_number,
             status=c.status.value,
             priority=c.priority.value,
-            checkpoint_code=checkpoints[str(c.checkpoint_id)].code if str(c.checkpoint_id) in checkpoints else "—",
-            field_officer_username=users[str(c.field_officer_id)].username if str(c.field_officer_id) in users else "—",
+            checkpoint_code=cp.code if (cp := checkpoints.get(str(c.checkpoint_id))) else "—",
+            field_officer_username=u.username if (u := users.get(str(c.field_officer_id))) else "—",
             assigned_officer_username=(
-                users[str(c.assigned_officer_id)].username
-                if c.assigned_officer_id and str(c.assigned_officer_id) in users
-                else None
+                ao.username if c.assigned_officer_id and (ao := users.get(str(c.assigned_officer_id))) else None
             ),
             document_type=c.document_type,
             nationality=c.nationality,
