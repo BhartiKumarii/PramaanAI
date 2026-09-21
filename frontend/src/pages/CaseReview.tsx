@@ -286,14 +286,21 @@ function translateRawReason(signal: string, reason: string): string {
 
 function signalToFinding(signal: string, rawRisk: number, reason: string): FindingCard {
   const label = SIGNAL_LABELS[signal] ?? signal.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-  const tone: FindingTone = rawRisk >= 0.5 ? 'alert' : rawRisk >= 0.08 ? 'review' : 'clear'
+  // More realistic thresholds: only flag genuine issues, not every minor anomaly
+  const tone: FindingTone = rawRisk >= 0.7 ? 'alert' : rawRisk >= 0.4 ? 'review' : 'clear'
   const s = SUMMARIES[signal]
   const a = ACTIONS[signal]
   const summary = s ? s[tone] : tone === 'clear' ? 'Check passed.' : tone === 'review' ? 'Requires review.' : 'Issue detected.'
   const action = a ? a[tone] : 'Consult your supervisor.'
   const translatedDetail = translateRawReason(signal, reason)
 
-  return { label, tone, summary, action, detail: translatedDetail }
+  // Include actual risk score in detail for transparency
+  const riskPercent = Math.round(rawRisk * 100)
+  const detailWithScore = rawRisk > 0 && tone !== 'clear'
+    ? `${translatedDetail} (${riskPercent}% risk score)`
+    : translatedDetail
+
+  return { label, tone, summary, action, detail: detailWithScore }
 }
 
 function buildFindings(v: VerificationRecordResponse): FindingCard[] {
@@ -637,6 +644,7 @@ export function CaseReview() {
               }`}>
                 <span aria-hidden="true">{v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'}</span>
                 {v.risk.level === 'HIGH_RISK' ? 'High Risk' : v.risk.level === 'MEDIUM_RISK' ? 'Medium Risk' : 'Low Risk'}
+                {v.risk.score != null && <span className="ml-1 opacity-75">({Math.round(v.risk.score * 100)}%)</span>}
               </span>
             )}
           </div>

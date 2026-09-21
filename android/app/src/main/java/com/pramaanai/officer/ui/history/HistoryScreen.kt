@@ -259,9 +259,8 @@ private fun HistoryCard(item: ScreeningQueueItem, onClick: () -> Unit) {
             fields["date_of_expiry"]?.let { DetailRow("Expiry", it) }
             fields["gender"]?.let { DetailRow("Gender", it.replaceFirstChar { c -> c.uppercase() }) }
 
-            // OCR confidence
             item.ocr?.ocrConfidence?.takeIf { it > 0 }?.let {
-                DetailRow("OCR Confidence", "${(it * 100).toInt()}%")
+                DetailRow("Text Read Quality", "${(it * 100).toInt()}%")
             }
 
             // Validation findings summary

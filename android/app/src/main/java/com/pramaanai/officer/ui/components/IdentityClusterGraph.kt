@@ -47,7 +47,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
@@ -156,7 +159,25 @@ fun IdentityClusterGraph(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Graph canvas — bigger, more spread out
+                val nodeBitmaps = remember(nodes) {
+                    nodes.associate { node ->
+                        node.id to node.imagePath?.let { path ->
+                            try {
+                                val f = java.io.File(path)
+                                if (f.exists()) {
+                                    val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = 4 }
+                                    android.graphics.BitmapFactory.decodeFile(path, opts)?.let { bmp ->
+                                        val size = minOf(bmp.width, bmp.height)
+                                        val x = (bmp.width - size) / 2
+                                        val y = (bmp.height - size) / 2
+                                        android.graphics.Bitmap.createBitmap(bmp, x, y, size, size)
+                                    }
+                                } else null
+                            } catch (_: Exception) { null }
+                        }
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -265,25 +286,34 @@ fun IdentityClusterGraph(
                                 )
                             }
 
-                            // Main circle
-                            drawCircle(color = nodeColor, radius = radius, center = Offset(nx, ny))
-
-                            // White icon background
-                            drawCircle(color = Color.White, radius = radius * 0.55f, center = Offset(nx, ny))
-
-                            // Type icon letter (drawn bigger)
-                            val iconChar = node.type.badge
-                            val iconSize = if (node.isCenter) 28f else 24f
-                            drawContext.canvas.nativeCanvas.drawText(
-                                iconChar, nx, ny + iconSize * 0.35f,
-                                android.graphics.Paint().apply {
-                                    color = node.type.color
-                                    textSize = iconSize
-                                    textAlign = android.graphics.Paint.Align.CENTER
-                                    typeface = Typeface.DEFAULT_BOLD
-                                    isAntiAlias = true
-                                },
-                            )
+                            val nodeBmp = nodeBitmaps[node.id]
+                            if (nodeBmp != null) {
+                                drawCircle(color = nodeColor, radius = radius, center = Offset(nx, ny))
+                                val canvas = drawContext.canvas.nativeCanvas
+                                canvas.save()
+                                val clipPath = android.graphics.Path().apply {
+                                    addCircle(nx, ny, radius - 2f, android.graphics.Path.Direction.CW)
+                                }
+                                canvas.clipPath(clipPath)
+                                val dst = android.graphics.RectF(nx - radius + 2, ny - radius + 2, nx + radius - 2, ny + radius - 2)
+                                canvas.drawBitmap(nodeBmp, null, dst, android.graphics.Paint().apply { isAntiAlias = true })
+                                canvas.restore()
+                            } else {
+                                drawCircle(color = nodeColor, radius = radius, center = Offset(nx, ny))
+                                drawCircle(color = Color.White, radius = radius * 0.55f, center = Offset(nx, ny))
+                                val iconChar = node.type.badge
+                                val iconSize = if (node.isCenter) 28f else 24f
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    iconChar, nx, ny + iconSize * 0.35f,
+                                    android.graphics.Paint().apply {
+                                        color = node.type.color
+                                        textSize = iconSize
+                                        textAlign = android.graphics.Paint.Align.CENTER
+                                        typeface = Typeface.DEFAULT_BOLD
+                                        isAntiAlias = true
+                                    },
+                                )
+                            }
 
                             // Encounter count badge
                             val pe = node.previousEncounters ?: 0
@@ -355,19 +385,32 @@ fun IdentityClusterGraph(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                val nodeType = inferNodeType(member)
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .background(Color(nodeType.color).copy(alpha = 0.2f), CircleShape),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        nodeType.icon,
-                                        contentDescription = null,
-                                        tint = Color(nodeType.color),
-                                        modifier = Modifier.size(20.dp),
+                                val memberBmp = member.imagePath?.let { path ->
+                                    remember(path) {
+                                        try { android.graphics.BitmapFactory.decodeFile(path) } catch (_: Exception) { null }
+                                    }
+                                }
+                                if (memberBmp != null) {
+                                    MemberImage(
+                                        bitmap = memberBmp,
+                                        name = member.referenceName,
+                                        borderColor = getStatusColor(member.faceMatchStatus).copy(alpha = 0.5f),
                                     )
+                                } else {
+                                    val nodeType = inferNodeType(member)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(Color(nodeType.color).copy(alpha = 0.2f), CircleShape),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            nodeType.icon,
+                                            contentDescription = null,
+                                            tint = Color(nodeType.color),
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
                                 }
                                 Spacer(Modifier.width(10.dp))
                                 Column {
@@ -416,7 +459,7 @@ fun IdentityClusterGraph(
                                     conf >= 0.6 -> WarningAmber
                                     else -> DestructiveRed
                                 }
-                                InfoChip("${(conf * 100).toInt()}% confidence", confColor)
+                                InfoChip("${(conf * 100).toInt()}% match strength", confColor)
                             }
 
                             val enc = member.previousEncounters ?: 0
@@ -486,6 +529,19 @@ private fun LegendChip(label: String, color: Color, icon: ImageVector) {
     }
 }
 
+@Composable
+private fun MemberImage(bitmap: android.graphics.Bitmap, name: String, borderColor: Color) {
+    androidx.compose.foundation.Image(
+        bitmap = bitmap.asImageBitmap(),
+        contentDescription = name,
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .border(2.dp, borderColor, CircleShape),
+        contentScale = ContentScale.Crop,
+    )
+}
+
 private fun getStatusColor(status: FaceMatchStatus?): Color = when (status) {
     FaceMatchStatus.VERIFIED_MATCH -> SuccessGreen
     FaceMatchStatus.PARTIAL_MATCH -> WarningAmber
@@ -515,6 +571,7 @@ private data class GraphNode(
     val faceConfidence: Double? = 0.0,
     val previousEncounters: Int? = 0,
     val relationshipType: String? = "IDENTITY_MATCH",
+    val imagePath: String? = null,
 )
 
 private enum class NodeType(val badge: String, val color: Int, val icon: ImageVector) {
@@ -550,6 +607,7 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
         faceConfidence = center.faceConfidence,
         previousEncounters = center.previousEncounters,
         relationshipType = center.relationshipType,
+        imagePath = center.imagePath,
     ))
 
     val others = members.drop(1)
@@ -573,6 +631,7 @@ private fun layoutNodes(members: List<IdentityClusterMember>): List<GraphNode> {
             faceConfidence = member.faceConfidence,
             previousEncounters = member.previousEncounters,
             relationshipType = member.relationshipType,
+            imagePath = member.imagePath,
         ))
     }
     return result

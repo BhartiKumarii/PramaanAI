@@ -481,7 +481,7 @@ private fun RegistryHitRow(hit: RegistryHit) {
             Column(Modifier.weight(1f)) {
                 Text(hit.fullName, fontWeight = FontWeight.SemiBold)
                 Text(hit.registryReason, style = MaterialTheme.typography.bodySmall)
-                Text("Doc #${hit.documentNumber} · confidence ${"%.2f".format(hit.confidence)}", style = MaterialTheme.typography.labelSmall)
+                Text("Doc #${hit.documentNumber} · match strength ${"%.0f".format(hit.confidence * 100)}%", style = MaterialTheme.typography.labelSmall)
             }
             MatchTypeTag(hit.matchType)
         }

@@ -9,13 +9,33 @@
 <p align="center">
   <a href="https://pramaanai-703j.onrender.com">Live Website</a> &bull;
   <a href="https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0">Download APK</a> &bull;
-  <a href="#screenshots">Screenshots</a> &bull;
-  <a href="#demo-credentials">Demo Login</a>
+  <a href="#screenshots">Screenshots</a>
 </p>
 
 ---
 
-## Quick Access
+## Quick Start — Try It Now
+
+> **Demo Credentials (works on both website and Android app)**
+>
+> | Role | Username | Password |
+> |------|----------|----------|
+> | IT Admin (full access) | `officer1` | `BorderShield123` |
+> | Field Officer | `attari_officer` | `BorderShield123` |
+>
+> **Live Dashboard:** [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com)
+> **API Docs:** [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs)
+> **Android APK:** [Download from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0)
+>
+> *Note: Render free tier spins down after inactivity — first load may take 30-60 seconds.*
+
+### Judge's Quick Start
+
+1. **Web Dashboard** — Open [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com), log in with `officer1` / `BorderShield123`. Explore cases, alerts, identity network, and audit logs.
+
+2. **Android App** — Download the [APK](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0), install on an Android device (8.0+), log in with `attari_officer` / `BorderShield123`. Scan a document to see on-device OCR, MRZ validation, and verification evidence.
+
+3. **API** — Visit [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs) for the full Swagger UI. Authenticate via `POST /auth/login`.
 
 | Resource | Link |
 |----------|------|
@@ -133,18 +153,22 @@ A three-component system:
 
 ---
 
-## Mobile Application Workflow
+## End-to-End Workflow
 
-1. **Capture** — Officer photographs document front, back (optional), and takes a live selfie
-2. **Quality Gate** — Image quality check (blur, glare, lighting) with real-time guidance
-3. **On-Device Extraction** — OCR, MRZ parsing, document type detection, QR/barcode scan
-4. **Local Verification** — MRZ check digits, field consistency, face detection, tampering analysis
-5. **Review** — Officer reviews extracted fields, verification evidence, and mismatch warnings
-6. **Server Verification** — Encoded data sent to backend for registry lookup and risk scoring
-7. **Result** — Explainable outcome: Verified / Not Verified / Review Required — with specific reasons
-8. **Decision** — Officer makes the final call using their own judgment and procedure
+| Stage | Process | Output |
+|-------|---------|--------|
+| 1. Capture | Document front, back (optional), and live selfie | Raw images |
+| 2. On-device processing | OCR, MRZ parsing, quality checks, face detection, tampering analysis | Structured fields + evidence |
+| 3. Local cache check | Check for previously verified record | Cache hit / miss |
+| 4. Connectivity check | Live health check — online, weak, or offline | Routing decision |
+| 5a. Online | Send encoded data (never raw images) securely | Verification request |
+| 5b. Offline | Encrypt and queue case locally | Pending case |
+| 6. Server verification | Registry match, identity graph, face comparison, risk scoring | Structured result |
+| 7. Explainable result | Verified / Review Required / Flagged with reasons | Officer evidence |
+| 8. Officer decision | Human reviews evidence and takes authorized action | Case decision |
+| 9. Synchronization | Pending cases sync when connectivity returns | Centralized record |
 
-The app assists decisions — it never blocks entry, declares guilt, or overrides the officer.
+The system assists decisions — it never blocks entry, declares guilt, or overrides the officer.
 
 ---
 
@@ -215,9 +239,9 @@ The `ID_DOCUMENT_DATASET/` directory contains sample documents for testing:
 | QR/barcode scan | PASS / NOT_AVAILABLE | Code detection and cross-check |
 | Face detection (selfie) | PASS / FAIL / WARNING | Single face verification |
 | Face on document | PASS / WARNING | Photo presence on document |
-| Tampering analysis (ELA) | PASS / WARNING / FAIL | Error Level Analysis |
-| Deepfake analysis | PASS / WARNING / FAIL | Selfie authenticity check |
-| Server/database verification | PASS / FAIL / NOT_AVAILABLE | Registry lookup and risk scoring |
+| Document integrity check | PASS / WARNING / FAIL | Alteration detection |
+| Photo authenticity check | PASS / WARNING / FAIL | Selfie genuineness check |
+| Registry verification | PASS / FAIL / NOT_AVAILABLE | Registry lookup and risk scoring |
 
 ---
 
@@ -244,44 +268,6 @@ The `ID_DOCUMENT_DATASET/` directory contains sample documents for testing:
 ### Mobile App
 
 *Add screenshots of the Android app to `Screenshots/Mobile/` — document capture, field review, verification evidence, screening result.*
-
----
-
-## Demo Credentials
-
-| Role | Username | Password |
-|------|----------|----------|
-| IT Admin | `officer1` | `BorderShield123` |
-| Field Officer | `attari_officer` | `BorderShield123` |
-
-**Live Dashboard:** [https://pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com)  
-**API Docs:** [https://bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs)
-
-> Note: The Render free tier spins down after inactivity. First load may take 30-60 seconds.
-
----
-
-## Judge's Quick Start
-
-1. **Web Dashboard** — Open [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com), log in with `officer1` / `BorderShield123`. Explore cases, alerts, identity network, and audit logs.
-
-2. **Android App** — Download the [APK from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0), install on an Android device (8.0+), log in with the same credentials. Scan a document to see on-device OCR, MRZ validation, and verification evidence.
-
-3. **API** — Visit [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs) for the full Swagger UI. Authenticate via `POST /auth/login` to test endpoints directly.
-
----
-
-## Project Resources
-
-| Resource | Access |
-|----------|--------|
-| Live Website | [Open Website](https://pramaanai-703j.onrender.com) |
-| GitHub Repository | [Open Repository](https://github.com/BhartiKumarii/PramaanAI) |
-| Demo APK | [Download APK](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0) |
-| Prototype Video | [ADD VIDEO LINK] |
-| Project Report | [View Report](Documentation/PramaanAI-Report.pdf) |
-| Presentation | [View Presentation](Documentation/PramaanAI-Presentation.pdf) |
-| API Documentation | [View API Docs](https://bordershield-pramaan-api.onrender.com/docs) |
 
 ---
 

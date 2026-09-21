@@ -2,6 +2,7 @@ package com.pramaanai.officer.ui.workflow
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
@@ -62,6 +63,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -838,8 +841,14 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
             Spacer(Modifier.height(4.dp))
             checks.forEach { CheckItemRow(it) }
 
-            // Identity graph — show whenever a cluster was found, even with 1 linked record
-            val graph = item.identityGraph
+            val graph = item.identityGraph?.let { g ->
+                if (g.members.isNotEmpty() && item.selfieImagePath != null) {
+                    val enriched = g.members.mapIndexed { i, m ->
+                        if (i == 0) m.copy(imagePath = item.selfieImagePath) else m
+                    }
+                    g.copy(members = enriched)
+                } else g
+            }
             if (graph != null && graph.status == "CLUSTER_FOUND") {
                 Spacer(Modifier.height(12.dp))
                 Box(Modifier.fillMaxWidth().height(1.dp).background(BorderDark))
@@ -867,7 +876,24 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Filled.Person, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(14.dp))
+                        val imgPath = member.imagePath
+                        if (imgPath != null && java.io.File(imgPath).exists()) {
+                            val bmp = remember(imgPath) {
+                                android.graphics.BitmapFactory.decodeFile(imgPath)
+                            }
+                            if (bmp != null) {
+                                Image(
+                                    bitmap = bmp.asImageBitmap(),
+                                    contentDescription = member.referenceName,
+                                    modifier = Modifier.size(32.dp).clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            } else {
+                                Icon(Icons.Filled.Person, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(14.dp))
+                            }
+                        } else {
+                            Icon(Icons.Filled.Person, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(14.dp))
+                        }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(member.referenceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
                             if (!member.documentNumber.isNullOrBlank()) {

@@ -111,15 +111,12 @@ fun SystemStatusIndicator(state: ConnectivityState, modifier: Modifier = Modifie
     }
 }
 
-/** A single overall OCR confidence applies per extracted field — the
- * backend doesn't return per-field confidence, so this doesn't fabricate
- * one. */
 @Composable
 fun ConfidenceTag(confidence: Double, modifier: Modifier = Modifier) {
     val label = when {
-        confidence >= 0.85 -> "High confidence"
-        confidence >= 0.6 -> "Medium confidence"
-        else -> "Low confidence"
+        confidence >= 0.85 -> "Good read"
+        confidence >= 0.6 -> "Fair read"
+        else -> "Weak read"
     }
     Text(
         "$label · ${(confidence * 100).toInt()}%",

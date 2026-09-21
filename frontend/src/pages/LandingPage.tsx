@@ -77,12 +77,15 @@ const VERIFICATION_SIGNALS = [
 ]
 
 const WORKFLOW_STEPS = [
-  { step: '01', title: 'Capture', desc: 'The officer captures the identity or travel document through the mobile application.' },
-  { step: '02', title: 'On-Device Processing', desc: 'Initial image processing and required preprocessing take place on the officer’s device before transmission.' },
-  { step: '03', title: 'Secure Verification', desc: 'Required information is securely transmitted to the central verification system when connectivity is available.' },
-  { step: '04', title: 'Multi-Level Analysis', desc: 'PramaanAI performs document validation, tampering analysis, identity matching, face comparison, and other configured checks.' },
-  { step: '05', title: 'Explainable Result', desc: 'The system presents a clear verification status together with the signals that contributed to it.' },
-  { step: '06', title: 'Human Decision', desc: 'The officer remains responsible for the final action. PramaanAI supports the decision; it does not replace the officer.' },
+  { step: ‘01’, title: ‘Capture’, desc: ‘Officer photographs the document front, back (optional), and takes a live selfie through the mobile app.’ },
+  { step: ‘02’, title: ‘On-Device Processing’, desc: ‘OCR, MRZ parsing, image quality checks, face detection and preliminary analysis happen entirely on the device.’ },
+  { step: ‘03’, title: ‘Local Cache Check’, desc: ‘The app checks if this document or identity has been verified before, showing cached results with age and freshness.’ },
+  { step: ‘04’, title: ‘Connectivity Check’, desc: ‘A live health check determines online, weak, or offline status — never assumed, always measured in the moment.’ },
+  { step: ‘05’, title: ‘Secure Transmission’, desc: ‘Only encoded data (OCR fields, MRZ string, face embedding) is sent — raw images never leave the device.’ },
+  { step: ‘06’, title: ‘Server Verification’, desc: ‘Registry matching, identity graph analysis, document validation, risk scoring and cross-field checks run centrally.’ },
+  { step: ‘07’, title: ‘Explainable Result’, desc: ‘The system shows Verified / Review Required / Flagged with the exact checks that triggered each finding.’ },
+  { step: ‘08’, title: ‘Officer Decision’, desc: ‘The officer reviews evidence and makes the final call using their own judgment and procedure — the system assists, never decides.’ },
+  { step: ‘09’, title: ‘Sync & Audit’, desc: ‘Offline cases sync automatically when connectivity returns. Every action is logged in a tamper-evident audit trail.’ },
 ]
 
 const RISK_LEVELS = [

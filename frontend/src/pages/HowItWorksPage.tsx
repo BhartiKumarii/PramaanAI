@@ -8,38 +8,48 @@ import { Footer } from '../components/Footer'
 const WORKFLOW_STEPS = [
   {
     number: '01',
-    title: 'Capture document details',
-    description: 'Officer scans the document and, where applicable, a live photo',
+    title: 'Capture',
+    description: 'Officer photographs the document front, back (optional), and takes a live selfie through the Android app.',
   },
   {
     number: '02',
-    title: 'Extract and validate information',
-    description: 'OCR, MRZ parsing, and checksum validation happen on the device itself',
+    title: 'On-device processing',
+    description: 'OCR, MRZ parsing, document type detection, image quality checks, face detection and preliminary analysis all happen on the device — no network required.',
   },
   {
     number: '03',
-    title: 'Check mock registry',
-    description: 'Encoded data only (never a raw image) reaches the server for matching',
+    title: 'Local cache check',
+    description: 'The app checks if this document or identity has been verified before, showing the cached result with its age and a "refresh recommended" flag if stale.',
   },
   {
     number: '04',
-    title: 'Generate explainable result',
-    description: 'The system shows exactly which field or check triggered a flag',
+    title: 'Connectivity check',
+    description: 'A live health check determines whether the server is reachable right now — online, weak, or offline. Never assumed, always measured.',
   },
   {
     number: '05',
-    title: 'Show risk level',
-    description: 'Verified, Review Required, or Supervisor Review, never a bare score',
+    title: 'Secure data transmission',
+    description: 'Only encoded data (OCR fields, MRZ string, face embedding vector) is sent encrypted to the server. Raw document and selfie images never leave the device.',
   },
   {
     number: '06',
-    title: 'Send flagged cases to supervisor',
-    description: 'High-risk results route to a human, automatically',
+    title: 'Server verification',
+    description: 'Registry matching, identity graph analysis, cross-field validation, tampering indicators, face comparison and risk scoring run on the central server.',
   },
   {
     number: '07',
-    title: 'Authorized officer makes the final decision',
-    description: 'The system assists; it never decides',
+    title: 'Explainable result',
+    description: 'The system returns Verified, Review Required, or Flagged — along with the exact checks and fields that triggered each finding. No bare score, no mystery number.',
+  },
+  {
+    number: '08',
+    title: 'Officer decision',
+    description: 'The officer reviews the evidence and makes the final operational decision using their own judgment and procedure. The system assists — it never declares guilt or denies entry.',
+  },
+  {
+    number: '09',
+    title: 'Synchronization and audit',
+    description: 'If offline, encrypted cases queue locally and sync automatically when connectivity returns. Every action is recorded in a tamper-evident audit trail.',
   },
 ]
 

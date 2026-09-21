@@ -110,6 +110,7 @@ export function CaseTable({ cases, showSentAt = false }: { cases: CaseListItem[]
                 }`}>
                   <span aria-hidden="true">{c.risk_level === 'HIGH_RISK' ? '⚑' : c.risk_level === 'MEDIUM_RISK' ? '⚠' : '✓'}</span>
                   {riskLabel(c.risk_level)}
+                  {c.risk_score != null && <span className="ml-1 opacity-75">({Math.round(c.risk_score * 100)}%)</span>}
                 </span>
               )}
             </div>

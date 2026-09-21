@@ -89,18 +89,19 @@ data class IdentityClusterMember(
     val recordId: String,
     val referenceName: String,
     val documentNumber: String?,
-    val entityType: String? = "PERSON", // PERSON | CHECKPOINT | DOCUMENT | VEHICLE | TRAVEL_EVENT
+    val entityType: String? = "PERSON",
     val faceMatchStatus: FaceMatchStatus? = FaceMatchStatus.UNKNOWN,
     val faceConfidence: Double? = 0.0,
     val previousEncounters: Int? = 0,
     val lastSeen: String? = null,
-    val relationshipType: String? = "IDENTITY_MATCH", // FACE_VERIFIED | FACE_SIMILAR | DOCUMENT_LINKED | IDENTITY_MATCH
+    val relationshipType: String? = "IDENTITY_MATCH",
+    val imagePath: String? = null,
 )
 
 enum class FaceMatchStatus {
     NEW_FACE,           // First time seeing this person
-    VERIFIED_MATCH,     // High confidence face match with previous encounter
-    PARTIAL_MATCH,      // Lower confidence match - needs officer review
+    VERIFIED_MATCH,     // Strong face match with previous encounter
+    PARTIAL_MATCH,      // Weaker match - needs officer review
     NO_FACE_DATA,       // No biometric data available
     UNKNOWN             // Status not determined
 }

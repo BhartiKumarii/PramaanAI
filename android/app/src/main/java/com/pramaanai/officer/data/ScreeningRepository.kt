@@ -406,15 +406,10 @@ class ScreeningRepository(
         return item
     }
 
-    /** Forwards this device's case to the Immigration Officer's queue on
-     * the web console (POST /cases/{caseId}/submit) — the actual Clear /
-     * Secondary Review / Hold-Refer decision happens there, not on this
-     * device (see CLAUDE.md: a Field Officer sends cases, an Immigration
-     * Officer decides them). Throws on failure — including for the
-     * Phase-2 mock queue items, which have no real caseId. */
     suspend fun sendCaseToImmigration(id: String, note: String?) {
         val queueItem = store.getById(id) ?: error("Unknown screening: $id")
-        val caseId = queueItem.caseId ?: error("This screening has no backend case to forward (mock/offline item).")
+        val caseId = queueItem.caseId
+            ?: error("This is a demo record — only real screenings captured on this device can be forwarded.")
         api.submitCase(AuthSession.bearerHeader(), caseId, CaseSubmitRequest(note))
         store.upsert(queueItem.copy(status = ScreeningStatus.SENT, officerNotes = note ?: queueItem.officerNotes))
         logAudit(action = "Case forwarded to Immigration Officer", record = id, result = note?.let { "notes=\"$it\"" } ?: "no notes")
@@ -456,7 +451,7 @@ class ScreeningRepository(
      * This is the preferred method over the older verification-level clear/dispute. */
     suspend fun decideCaseOnBackend(id: String, decision: String, reason: String?) {
         val queueItem = store.getById(id) ?: error("Unknown screening: $id")
-        val caseId = queueItem.caseId ?: error("This screening has no backend case to decide (mock/offline item).")
+        val caseId = queueItem.caseId ?: error("This is a demo record — only real screenings captured on this device can be decided.")
 
         api.decideCase(
             AuthSession.bearerHeader(),
