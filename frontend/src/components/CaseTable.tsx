@@ -41,13 +41,6 @@ const CHECKPOINT_NAMES: Record<string, string> = {
   SMD: 'Samdrup Jongkhar',
 }
 
-function riskColor(level: string | undefined): string {
-  if (!level) return 'text-muted-foreground'
-  if (level === 'HIGH_RISK') return 'text-status-high'
-  if (level === 'MEDIUM_RISK') return 'text-status-review'
-  return 'text-status-clear'
-}
-
 function riskLabel(level: string | undefined): string {
   if (!level) return '—'
   if (level === 'HIGH_RISK') return 'High Risk'
