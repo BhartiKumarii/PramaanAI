@@ -36,6 +36,8 @@ import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.remote.CheckpointResponse
 import com.pramaanai.officer.ui.components.GridPatternBackground
+import com.pramaanai.officer.ui.theme.AccentGreen
+import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Gray600
 import com.pramaanai.officer.ui.theme.Ink900
 
@@ -49,11 +51,6 @@ private val DOCUMENT_TYPE_OPTIONS = listOf(
     DocumentTypeOption(DocumentType.PERMIT, Icons.Filled.CreditCard),
 )
 
-// One document at a time: pick the type here, scan it on the next screen,
-// then review the on-device OCR result — never a blank form to fill in by
-// hand before a single photo has been taken. Scanning a second document
-// for the same traveler (e.g. a driving licence alongside a passport) is
-// just returning to this screen and picking another type.
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun NewScreeningScreen(
@@ -66,55 +63,83 @@ fun NewScreeningScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
-            Text(
-                "What document are you scanning?",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Pick one document at a time. You'll scan it, then review what was actually read off it — nothing is typed in by hand first.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Gray600,
-            )
-            if (selectedCheckpoint != null) {
+                Text(
+                    stringResource(R.string.new_screening_select_prompt),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "${stringResource(R.string.checkpoint_label)}: ${selectedCheckpoint.name} (${selectedCheckpoint.code})",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Ink900,
-                    fontWeight = FontWeight.Medium,
+                    stringResource(R.string.new_screening_select_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Gray600,
                 )
-            }
-            Spacer(Modifier.height(20.dp))
+                if (selectedCheckpoint != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${stringResource(R.string.checkpoint_label)}: ${selectedCheckpoint.name} (${selectedCheckpoint.code})",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Ink900,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Spacer(Modifier.height(20.dp))
 
-            DOCUMENT_TYPE_OPTIONS.forEach { option ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp)
-                        .clickable {
-                            onContinue(ScreeningData(documentType = option.type, checkpointCode = selectedCheckpoint?.code))
-                        },
-                    colors = CardDefaults.cardColors(),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                DOCUMENT_TYPE_OPTIONS.forEach { option ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                            .clickable {
+                                onContinue(
+                                    ScreeningData(
+                                        documentType = option.type,
+                                        checkpointCode = selectedCheckpoint?.code,
+                                    )
+                                )
+                            },
+                        colors = CardDefaults.cardColors(),
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(option.icon, contentDescription = null, modifier = Modifier.size(28.dp))
-                            Spacer(Modifier.width(16.dp))
-                            Text(option.type.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    option.icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = AccentGreen,
+                                )
+                                Spacer(Modifier.width(14.dp))
+                                Column {
+                                    Text(
+                                        stringResource(option.type.labelRes),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Ink900,
+                                    )
+                                    Text(
+                                        stringResource(option.type.subtitleRes),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Gray500,
+                                    )
+                                }
+                            }
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = stringResource(R.string.title_capture),
+                                tint = AccentGreen,
+                            )
                         }
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Scan")
                     }
                 }
             }
         }
-    }
     }
 }

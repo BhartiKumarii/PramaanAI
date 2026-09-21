@@ -68,6 +68,22 @@
     <!-- New Screening Screen -->
     <string name="new_screening_title">New Screening</string>
     <string name="new_screening_subtitle">Enter traveler details for document verification</string>
+    <string name="new_screening_select_prompt">What document are you scanning?</string>
+    <string name="new_screening_select_desc">Pick one document at a time. Scan it, then review what was actually read — nothing is typed in by hand first.</string>
+
+    <!-- Document type display names -->
+    <string name="doc_type_passport">Passport</string>
+    <string name="doc_type_visa">Visa</string>
+    <string name="doc_type_national_id">National ID / Citizenship Card</string>
+    <string name="doc_type_driving_licence">Driving Licence</string>
+    <string name="doc_type_permit">Permit / ILP</string>
+
+    <!-- Document type subtitles -->
+    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ checked on-device</string>
+    <string name="doc_type_visa_sub">Sticker · e-Visa / ETA · Entry permit</string>
+    <string name="doc_type_national_id_sub">Citizenship card · Aadhaar · NID</string>
+    <string name="doc_type_driving_licence_sub">Indian state DL · Bhutan DL · Nepal DL</string>
+    <string name="doc_type_permit_sub">Inner Line Permit · Restricted Area Permit</string>
     <string name="checkpoint_label">Checkpoint</string>
     <string name="traveler_name">Traveler Name</string>
     <string name="document_type_label">Document Type</string>

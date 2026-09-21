@@ -1,22 +1,40 @@
 package com.pramaanai.officer.ui.newscreening
 
+import androidx.annotation.StringRes
+import com.pramaanai.officer.R
+
 enum class DocumentType(
     val value: String,
-    val displayName: String,
+    @StringRes val labelRes: Int,
+    @StringRes val subtitleRes: Int,
 ) {
-    PASSPORT("passport", "Passport"),
-    NATIONAL_ID("national_id", "National ID"),
-    VISA("visa", "Visa"),
-    DRIVING_LICENCE("driving_licence", "Driving Licence"),
-    PERMIT("permit", "Permit"),
+    PASSPORT(
+        "passport",
+        R.string.doc_type_passport,
+        R.string.doc_type_passport_sub,
+    ),
+    VISA(
+        "visa",
+        R.string.doc_type_visa,
+        R.string.doc_type_visa_sub,
+    ),
+    NATIONAL_ID(
+        "national_id",
+        R.string.doc_type_national_id,
+        R.string.doc_type_national_id_sub,
+    ),
+    DRIVING_LICENCE(
+        "driving_licence",
+        R.string.doc_type_driving_licence,
+        R.string.doc_type_driving_licence_sub,
+    ),
+    PERMIT(
+        "permit",
+        R.string.doc_type_permit,
+        R.string.doc_type_permit_sub,
+    ),
 }
 
-// Only the document type is known before scanning — every other field
-// (name, document number, DOB, expiry, nationality) comes from on-device
-// OCR after capture. The officer may correct an obviously-wrong OCR
-// value, but nothing is forced — a field the scan couldn't read just
-// flows through as-is, never a hand-typed stand-in for real OCR (see
-// CaptureScreen.kt's submit()).
 data class ScreeningData(
     val documentType: DocumentType,
     val checkpointCode: String?,

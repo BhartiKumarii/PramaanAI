@@ -509,4 +509,18 @@
     <string name="action_secondary_review">द्वितीयक समीक्षाका लागि पठाउनुहोस्</string>
     <string name="action_hold_refer">यो मामला रोक्नुहोस्/रेफर गर्नुहोस्</string>
     <string name="alerts_mark_all_read">सबै पढिएको चिह्नित गर्नुहोस्</string>
+
+    <!-- Document type screen strings -->
+    <string name="new_screening_select_prompt">तपाईं कुन कागजात स्क्यान गर्दै हुनुहुन्छ?</string>
+    <string name="new_screening_select_desc">एकपटकमा एउटा कागजात छान्नुहोस्। स्क्यान गर्नुहोस्, त्यसपछि वास्तवमा पढिएको समीक्षा गर्नुहोस्।</string>
+    <string name="doc_type_passport">राहदानी</string>
+    <string name="doc_type_visa">भिसा</string>
+    <string name="doc_type_national_id">राष्ट्रिय पहिचान / नागरिकता कार्ड</string>
+    <string name="doc_type_driving_licence">सवारी चालक अनुमतिपत्र</string>
+    <string name="doc_type_permit">अनुमतिपत्र / ILP</string>
+    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ डिभाइसमा जाँचिन्छ</string>
+    <string name="doc_type_visa_sub">स्टिकर · ई-भिसा / ETA · प्रवेश अनुमति</string>
+    <string name="doc_type_national_id_sub">नागरिकता कार्ड · आधार · राष्ट्रिय पहिचान</string>
+    <string name="doc_type_driving_licence_sub">भारतीय DL · भूटानी DL · नेपाली DL</string>
+    <string name="doc_type_permit_sub">इनर लाइन परमिट · प्रतिबन्धित क्षेत्र परमिट</string>
 </resources>

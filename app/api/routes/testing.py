@@ -83,6 +83,15 @@ class TestScenario(str, Enum):
     BHUTAN_DL_KARMA_VALID = "bhutan_dl_karma_valid"
     BHUTAN_DL_AMIR_VALID = "bhutan_dl_amir_valid"
     BHUTAN_DL_CROSS_FACE = "bhutan_dl_cross_face"
+    # All 5 document types — real dataset
+    BHUTAN_CID_PHUNTSHO = "bhutan_cid_phuntsho"
+    NEPAL_TOURIST_VISA = "nepal_tourist_visa"
+    INDIA_EVISA = "india_evisa"
+    INDIA_DL_EXPIRED_BLACKLISTED = "india_dl_expired_blacklisted"
+    INDIA_PASSPORT_SAMPLE = "india_passport_sample"
+    INDIA_VISA_EXPIRED_BLACKLISTED = "india_visa_expired_blacklisted"
+    NEPAL_CITIZENSHIP_NOTABLE = "nepal_citizenship_notable"
+    ILP_FORGED = "ilp_forged"
 
 
 class TestScenarioRequest(BaseModel):
@@ -233,10 +242,55 @@ SCENARIO_DESCRIPTIONS = {
     ),
     TestScenario.BHUTAN_DL_CROSS_FACE: (
         "Kingdom of Bhutan Driving License — bearer KARMA DENDUP (T-6101), but the "
-        "selfie is AMIR RAI's face (from a different license). This is a deliberate "
-        "cross-document face substitution test: the document belongs to one person "
-        "but the selfie is a different person's face entirely. "
+        "selfie is AMIR RAI's face. Cross-document face substitution. "
         "Expected HIGH risk: face mismatch — possible impersonation."
+    ),
+    TestScenario.BHUTAN_CID_PHUNTSHO: (
+        "Kingdom of Bhutan Citizenship Card — PHUNTSHO TASHI, CID 10712002883, "
+        "DOB 26/12/2000, Male. National ID document type. No MRZ. "
+        "Selfie cropped from card photo. Expected LOW–MEDIUM risk: valid ID."
+    ),
+    TestScenario.NEPAL_TOURIST_VISA: (
+        "Government of Nepal Tourist Visa sticker — Visa No T220281095, "
+        "issued 10/10/2022, validity 15 days, expired 24/10/2022. "
+        "Issued at Tribhuvan International Airport. "
+        "Expected MEDIUM risk: visa expired."
+    ),
+    TestScenario.INDIA_EVISA: (
+        "Indian e-Visa (Electronic Travel Authorization) — eTourist Visa, "
+        "Nationality SPAIN, Double entry, issued 30/09/2019, expired 29/10/2019. "
+        "Expected MEDIUM risk: e-Visa expired."
+    ),
+    TestScenario.INDIA_DL_EXPIRED_BLACKLISTED: (
+        "India Gujarat State Driving Licence — CHETAN CHAUHAN, "
+        "DL No GJ05-19940112841, DOB 02/01/1974, expired 01/01/2024. "
+        "Document number is in the watchlist (reported stolen after expiry). "
+        "Expected HIGH risk: expired + blacklisted."
+    ),
+    TestScenario.INDIA_PASSPORT_SAMPLE: (
+        "India passport sample — RAMADUGULA SITA MAHA LAKSHMI, "
+        "Passport J8369854, DOB 23/09/1959, Female, Indian. "
+        "Expired 10/10/2021. SAMPLE document from public source. "
+        "MRZ: P<INDRAMADUGULA<<SITA<MAHA<LAKSHMI. "
+        "Expected MEDIUM risk: expired passport."
+    ),
+    TestScenario.INDIA_VISA_EXPIRED_BLACKLISTED: (
+        "India Tourist Visa — Visa No AF713645, TV type, issued 22/08/2008, "
+        "expired 22/02/2009, Munich consulate. Document number is in watchlist "
+        "(reported fraudulent use 4 months after expiry). "
+        "Expected HIGH risk: expired + blacklisted."
+    ),
+    TestScenario.NEPAL_CITIZENSHIP_NOTABLE: (
+        "Nepal Citizenship Card — PUSHPA KAMAL DAHAL, No 16378-256, "
+        "DOB 25/08/1954, Male, Chitwan. Notable person — former PM of Nepal. "
+        "Expected MEDIUM risk: valid document, notable individual flagged for "
+        "enhanced manual review."
+    ),
+    TestScenario.ILP_FORGED: (
+        "Arunachal Pradesh Inner Line Permit — ILP-AR-2024-0091. "
+        "Document number is in watchlist (forged permit — seal does not match "
+        "issuing authority records). "
+        "Expected HIGH risk: forged permit, blacklisted."
     ),
 }
 
@@ -786,6 +840,187 @@ def _generate_scenario_data(scenario: TestScenario) -> dict:
                 "Face mismatch — selfie does not match document photo (cross-document substitution)",
                 "Possible impersonation: document belongs to KARMA DENDUP, selfie is a different person",
             ]
+
+    elif scenario == TestScenario.BHUTAN_CID_PHUNTSHO:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "bhutan", "citizenship_phuntsho_tashi.jpg"))
+        front_image = load_real_document_image(img_path)
+        document_image = front_image
+        selfie_image = crop_driving_license_photo_region(front_image)
+        ocr_fields = {
+            "name": "PHUNTSHO TASHI",
+            "document_number": "10712002883",
+            "nationality": "BHUTANESE",
+            "date_of_birth": "26/12/2000",
+            "gender": "M",
+            "document_type_label": "Citizenship Card",
+        }
+        expected_risk = "LOW"
+        expected_issues = []
+
+    elif scenario == TestScenario.NEPAL_TOURIST_VISA:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "nepal", "visa_t220281095.png"))
+        front_image = load_real_document_image(img_path)
+        document_image = front_image
+        selfie_image = generate_face_like_image(7)
+        ocr_fields = {
+            "visa_number": "T220281095",
+            "visa_type": "TOURIST",
+            "entry_validity": "SINGLE",
+            "stay_duration": "15 DAYS",
+            "date_of_expiry": "24/10/2022",
+            "issued_date": "10/10/2022",
+            "issued_at": "Tribhuvan International Airport (TIA)",
+        }
+        mrz_text = None
+        expected_risk = "MEDIUM"
+        expected_issues = ["Nepal tourist visa expired 24/10/2022"]
+
+    elif scenario == TestScenario.INDIA_EVISA:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "india", "evisa_spain.jpg"))
+        front_image = load_real_document_image(img_path)
+        document_image = front_image
+        selfie_image = generate_face_like_image(8)
+        ocr_fields = {
+            "visa_number": "ETA-DEMO-SPAIN-2019",
+            "visa_type": "eTOURIST",
+            "nationality": "SPANISH",
+            "entry_validity": "DOUBLE",
+            "stay_duration": "30 DAYS",
+            "date_of_expiry": "29/10/2019",
+            "issued_date": "30/09/2019",
+        }
+        mrz_text = None
+        expected_risk = "MEDIUM"
+        expected_issues = ["Indian e-Visa expired 29/10/2019"]
+
+    elif scenario == TestScenario.INDIA_DL_EXPIRED_BLACKLISTED:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "india", "dl_gj05_chetan_expired.jpg"))
+        front_image = load_real_document_image(img_path)
+        document_image = front_image
+        selfie_image = crop_driving_license_photo_region(front_image)
+        ocr_fields = {
+            "name": "CHETAN CHAUHAN",
+            "license_number": "GJ0519940112841",
+            "nationality": "INDIAN",
+            "date_of_birth": "02/01/1974",
+            "date_of_expiry": "01/01/2024",
+            "issued_date": "16/08/1994",
+            "blood_group": "O+",
+            "address": "28, Parixit Society, Surat 395007",
+        }
+        mrz_text = None
+        expected_risk = "HIGH"
+        expected_issues = [
+            "Driving licence expired 01/01/2024",
+            "Document number GJ0519940112841 found in watchlist — reported stolen after expiry",
+        ]
+
+    elif scenario == TestScenario.INDIA_PASSPORT_SAMPLE:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "india", "passport_ramadugula_sample.jpg"))
+        front_image = load_real_document_image(img_path)
+        # Generate MRZ from the known passport data
+        line1, line2 = generate_mrz_lines(
+            surname="RAMADUGULA",
+            given_names="SITA MAHA LAKSHMI",
+            passport_number="J8369854",
+            issuing_country="IND",
+            nationality="IND",
+            date_of_birth_yymmdd="590923",
+            sex="F",
+            date_of_expiry_yymmdd="211010",
+        )
+        mrz_text = f"{line1}\n{line2}"
+        document_image = stack_images_vertically(generate_passport_back_image(line1, line2), front_image)
+        selfie_image = crop_passport_photo_region(front_image)
+        ocr_fields = {
+            "name": "RAMADUGULA SITA MAHA LAKSHMI",
+            "passport_number": "J8369854",
+            "nationality": "INDIAN",
+            "date_of_birth": "23/09/1959",
+            "date_of_expiry": "10/10/2021",
+            "gender": "F",
+            "place_of_birth": "GUNDUGOLANU",
+        }
+        expected_risk = "MEDIUM"
+        expected_issues = ["Passport expired 10/10/2021"]
+
+    elif scenario == TestScenario.INDIA_VISA_EXPIRED_BLACKLISTED:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "india", "visa_af713645_expired.jpg"))
+        front_image = load_real_document_image(img_path)
+        document_image = front_image
+        selfie_image = generate_face_like_image(9)
+        ocr_fields = {
+            "visa_number": "AF713645",
+            "visa_type": "TV",
+            "entry_validity": "MULTIPLE",
+            "date_of_expiry": "22/02/2009",
+            "issued_date": "22/08/2008",
+            "issued_at": "Munich",
+        }
+        mrz_text = None
+        expected_risk = "HIGH"
+        expected_issues = [
+            "India visa expired 22/02/2009",
+            "Visa number AF713645 flagged in watchlist — reported fraudulent use after expiry",
+        ]
+
+    elif scenario == TestScenario.NEPAL_CITIZENSHIP_NOTABLE:
+        import os
+        img_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "tests", "data", "nepal", "citizenship_pushpa_dahal.jpg"))
+        front_image = load_real_document_image(img_path)
+        document_image = front_image
+        selfie_image = crop_driving_license_photo_region(front_image)
+        ocr_fields = {
+            "name": "PUSHPA KAMAL DAHAL",
+            "document_number": "16378-256",
+            "nationality": "NEPALI",
+            "date_of_birth": "25/08/1954",
+            "gender": "M",
+            "address": "Chitwan, Nepal",
+        }
+        mrz_text = None
+        expected_risk = "MEDIUM"
+        expected_issues = [
+            "Document holder is a notable public figure — enhanced manual review recommended",
+        ]
+
+    elif scenario == TestScenario.ILP_FORGED:
+        document_image = generate_passport_image(
+            name="RAHUL FORGED PERMIT",
+            passport_number="ILP-AR-2024-0091",
+            nationality="INDIAN",
+            date_of_birth="17/03/1995",
+            date_of_expiry="17/03/2025",
+        )
+        front_image = document_image
+        selfie_image = generate_face_like_image(10)
+        ocr_fields = {
+            "name": "RAHUL SINGH THAKUR",
+            "permit_number": "ILP-AR-2024-0091",
+            "nationality": "INDIAN",
+            "date_of_birth": "17/03/1995",
+            "date_of_expiry": "17/03/2025",
+            "issued_by": "Deputy Commissioner, Arunachal Pradesh",
+            "permit_type": "Inner Line Permit",
+        }
+        mrz_text = None
+        expected_risk = "HIGH"
+        expected_issues = [
+            "Permit number ILP-AR-2024-0091 found in watchlist — forged permit, seal mismatch",
+        ]
 
     if front_image is None:
         front_image = document_image

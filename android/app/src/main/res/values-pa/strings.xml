@@ -509,4 +509,18 @@
     <string name="action_secondary_review">ਦੂਜੀ ਸਮੀਖਿਆ ਲਈ ਭੇਜੋ</string>
     <string name="action_hold_refer">ਇਹ ਕੇਸ ਰੋਕੋ/ਰੈਫਰ ਕਰੋ</string>
     <string name="alerts_mark_all_read">ਸਭ ਪੜ੍ਹਿਆ ਚਿੰਨ੍ਹਿਤ ਕਰੋ</string>
+
+    <!-- Document type screen strings -->
+    <string name="new_screening_select_prompt">ਤੁਸੀਂ ਕਿਹੜਾ ਦਸਤਾਵੇਜ਼ ਸਕੈਨ ਕਰ ਰਹੇ ਹੋ?</string>
+    <string name="new_screening_select_desc">ਇੱਕ ਵਾਰ ਵਿੱਚ ਇੱਕ ਦਸਤਾਵੇਜ਼ ਚੁਣੋ। ਸਕੈਨ ਕਰੋ, ਫਿਰ ਜੋ ਅਸਲ ਵਿੱਚ ਪੜ੍ਹਿਆ ਗਿਆ ਉਹ ਦੇਖੋ।</string>
+    <string name="doc_type_passport">ਪਾਸਪੋਰਟ</string>
+    <string name="doc_type_visa">ਵੀਜ਼ਾ</string>
+    <string name="doc_type_national_id">ਰਾਸ਼ਟਰੀ ਆਈਡੀ / ਨਾਗਰਿਕਤਾ ਕਾਰਡ</string>
+    <string name="doc_type_driving_licence">ਡ੍ਰਾਈਵਿੰਗ ਲਾਈਸੈਂਸ</string>
+    <string name="doc_type_permit">ਪਰਮਿਟ / ILP</string>
+    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ ਡਿਵਾਈਸ ਤੇ ਜਾਂਚੀ ਜਾਂਦੀ ਹੈ</string>
+    <string name="doc_type_visa_sub">ਸਟਿਕਰ · ਈ-ਵੀਜ਼ਾ / ETA · ਦਾਖਲਾ ਪਰਮਿਟ</string>
+    <string name="doc_type_national_id_sub">ਨਾਗਰਿਕਤਾ ਕਾਰਡ · ਆਧਾਰ · ਰਾਸ਼ਟਰੀ ਪਛਾਣ</string>
+    <string name="doc_type_driving_licence_sub">ਭਾਰਤੀ DL · ਭੂਟਾਨੀ DL · ਨੇਪਾਲੀ DL</string>
+    <string name="doc_type_permit_sub">ਇਨਰ ਲਾਈਨ ਪਰਮਿਟ · ਪ੍ਰਤਿਬੰਧਿਤ ਖੇਤਰ ਪਰਮਿਟ</string>
 </resources>

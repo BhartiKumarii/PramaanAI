@@ -509,4 +509,18 @@
     <string name="action_clear_screening">यह स्क्रीनिंग क्लियर करें</string>
     <string name="action_secondary_review">द्वितीयक समीक्षा के लिए भेजें</string>
     <string name="action_hold_refer">इस मामले को रोकें/भेजें</string>
+
+    <!-- Document type screen strings -->
+    <string name="new_screening_select_prompt">आप कौन सा दस्तावेज़ स्कैन कर रहे हैं?</string>
+    <string name="new_screening_select_desc">एक बार में एक दस्तावेज़ चुनें। स्कैन करें, फिर जो वास्तव में पढ़ा गया वह देखें।</string>
+    <string name="doc_type_passport">पासपोर्ट</string>
+    <string name="doc_type_visa">वीज़ा</string>
+    <string name="doc_type_national_id">राष्ट्रीय पहचान / नागरिकता कार्ड</string>
+    <string name="doc_type_driving_licence">ड्राइविंग लाइसेंस</string>
+    <string name="doc_type_permit">परमिट / आईएलपी</string>
+    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ डिवाइस पर जाँची जाती है</string>
+    <string name="doc_type_visa_sub">स्टिकर · ई-वीज़ा / ETA · प्रवेश परमिट</string>
+    <string name="doc_type_national_id_sub">नागरिकता कार्ड · आधार · राष्ट्रीय पहचान</string>
+    <string name="doc_type_driving_licence_sub">भारतीय DL · भूटानी DL · नेपाली DL</string>
+    <string name="doc_type_permit_sub">इनर लाइन परमिट · प्रतिबंधित क्षेत्र परमिट</string>
 </resources>

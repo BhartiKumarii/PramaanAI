@@ -509,4 +509,18 @@
     <string name="action_secondary_review">দ্বিতীয় পৰ্যালোচনাৰ বাবে পঠাওক</string>
     <string name="action_hold_refer">এই গোচৰ ৰাখক/পঠাওক</string>
     <string name="alerts_mark_all_read">সকলো পঢ়া হৈছে চিহ্নিত কৰক</string>
+
+    <!-- Document type screen strings -->
+    <string name="new_screening_select_prompt">আপুনি কোন নথি স্কেন কৰিছেন?</string>
+    <string name="new_screening_select_desc">এবাৰত এটা নথি বাছনি কৰক। স্কেন কৰক, তাৰপিছত আচলতে কি পঢ়া হৈছে চাওক।</string>
+    <string name="doc_type_passport">পাসপোৰ্ট</string>
+    <string name="doc_type_visa">ভিছা</string>
+    <string name="doc_type_national_id">জাতীয় পৰিচয় / নাগৰিকত্ব কাৰ্ড</string>
+    <string name="doc_type_driving_licence">ড্ৰাইভিং লাইচেন্স</string>
+    <string name="doc_type_permit">পাৰমিট / ILP</string>
+    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ ডিভাইচত পৰীক্ষা কৰা হয়</string>
+    <string name="doc_type_visa_sub">ষ্টিকাৰ · ই-ভিছা / ETA · প্ৰৱেশ অনুমতি</string>
+    <string name="doc_type_national_id_sub">নাগৰিকত্ব কাৰ্ড · আধাৰ · জাতীয় পৰিচয়</string>
+    <string name="doc_type_driving_licence_sub">ভাৰতীয় DL · ভূটানী DL · নেপালী DL</string>
+    <string name="doc_type_permit_sub">ইনাৰ লাইন পাৰমিট · সীমাবদ্ধ অঞ্চল পাৰমিট</string>
 </resources>

@@ -310,4 +310,18 @@
     <string name="action_secondary_review">ཐེངས་གཉིས་པའི་ཞིབ་དཔྱད་ལུ་བཏང།</string>
     <string name="action_hold_refer">གཞི་གཏན་འདི་བཀག། / གཞན་ལུ་བཏང།</string>
     <string name="alerts_mark_all_read">ཐམས་ཅད་ལྷུག་མི་བཀོད།</string>
+
+    <!-- Document type screen strings -->
+    <string name="new_screening_select_prompt">ཁྱོད་གིས་ཡིག་ཆ་ག་ཅི་ལྷུག་བཞིན་ཡོདཔ?</string>
+    <string name="new_screening_select_desc">ཐེངས་གཅིག་ལུ་ཡིག་ཆ་གཅིག་གདམ། ལྷུག་འབད། ལྷུག་ཡོད་མི་ཞིབ་དཔྱད་འབད།</string>
+    <string name="doc_type_passport">ལམ་ཡིག།</string>
+    <string name="doc_type_visa">བཙུགས་ཆོག</string>
+    <string name="doc_type_national_id">རྒྱལ་ཡོངས་ངོ་རྟགས།</string>
+    <string name="doc_type_driving_licence">འཁོར་ལམ་ལག་ཁྱེར།</string>
+    <string name="doc_type_permit">ཆོག་མཆན། / ILP</string>
+    <string name="doc_type_passport_sub">TD3 / TD1 · MRZ ཆས་ལུ་ཞིབ་དཔྱད།</string>
+    <string name="doc_type_visa_sub">ཟས་གཏགས། · ই-ভিছা / ETA</string>
+    <string name="doc_type_national_id_sub">མི་སེར་ལག་ཁྱེར། · আধার</string>
+    <string name="doc_type_driving_licence_sub">རྒྱ་གར་DL · འབྲུག་DL · བལ་ཡུལ་DL</string>
+    <string name="doc_type_permit_sub">ILP · ཆེད་ཡུལ་ཆོག་མཆན།</string>
 </resources>
