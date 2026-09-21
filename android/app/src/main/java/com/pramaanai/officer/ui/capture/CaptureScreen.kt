@@ -1,5 +1,6 @@
 package com.pramaanai.officer.ui.capture
 
+import com.pramaanai.officer.ui.theme.DestructiveRed
 import com.pramaanai.officer.ui.theme.WarningAmber
 import com.pramaanai.officer.ui.theme.Gray600
 import com.pramaanai.officer.ui.theme.Gray500
@@ -37,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FlashOn
@@ -86,6 +88,7 @@ import com.pramaanai.officer.data.model.ScreeningStatus
 import com.pramaanai.officer.data.sync.PendingSubmissionWorker
 import com.pramaanai.officer.data.vision.AntiSpoofDetector
 import com.pramaanai.officer.data.vision.DeepfakeAnalyzer
+import com.pramaanai.officer.data.vision.DocumentBarcodeScanner
 import com.pramaanai.officer.data.vision.DocumentOcrExtractor
 import com.pramaanai.officer.data.vision.FaceAligner
 import com.pramaanai.officer.data.vision.FaceDetectionAnalyzer
@@ -468,6 +471,9 @@ private data class ExtractionBundle(
     val faceDetection: com.pramaanai.officer.data.model.FaceDetectionResult,
     val tampering: com.pramaanai.officer.data.model.TamperingResult,
     val deepfake: com.pramaanai.officer.data.remote.DeepfakeResult,
+    val barcode: DocumentBarcodeScanner.BarcodeResult? = null,
+    val qualityIssues: List<String> = emptyList(),
+    val allChecks: List<DocumentOcrExtractor.VerificationCheck> = emptyList(),
 )
 
 data class DocumentPreviewState(
@@ -558,6 +564,8 @@ fun CaptureScreen(
     var livenessResult by remember { mutableStateOf<com.pramaanai.officer.data.vision.LivenessAnalysisResult?>(null) }
     var tamperingResultState by remember { mutableStateOf<com.pramaanai.officer.data.model.TamperingResult?>(null) }
     var deepfakeResultState by remember { mutableStateOf<com.pramaanai.officer.data.remote.DeepfakeResult?>(null) }
+    var verificationChecks by remember { mutableStateOf<List<DocumentOcrExtractor.VerificationCheck>>(emptyList()) }
+    var extraFields by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var fields by remember { mutableStateOf(ExtractedFields()) }
     LaunchedEffect(step) {
         if (step == CaptureStep.DOCUMENT_FRONT || step == CaptureStep.DOCUMENT_BACK || step == CaptureStep.SELFIE) {
@@ -586,7 +594,15 @@ fun CaptureScreen(
                     if (qualityCheck.issues.isNotEmpty()) {
                         Log.w("CaptureScreen", "Quality issues: ${qualityCheck.issues}")
                     }
-                    val docFrontBitmap = qualityCheck.correctedBitmap ?: rawDocFrontBitmap
+                    val corrected = qualityCheck.correctedBitmap
+                    val docFrontBitmap = if (corrected != null) {
+                        val rawArea = rawDocFrontBitmap.width.toLong() * rawDocFrontBitmap.height
+                        val corrArea = corrected.width.toLong() * corrected.height
+                        if (corrArea < rawArea * 0.4) {
+                            Log.w("CaptureScreen", "Corrected bitmap too small (${corrArea} vs ${rawArea}), using raw for OCR")
+                            rawDocFrontBitmap
+                        } else corrected
+                    } else rawDocFrontBitmap
 
                     val docBackBitmap = docBack?.let {
                         BitmapFactory.decodeFile(it.path)
@@ -639,11 +655,90 @@ fun CaptureScreen(
                     val tp = TamperingAnalyzer.analyze(docFrontBitmap)
                     val df = DeepfakeAnalyzer.analyze(selfieBitmap)
 
+                    // QR/barcode scan
+                    val barcode = try {
+                        DocumentBarcodeScanner.scan(docFrontBitmap)
+                    } catch (e: Exception) {
+                        Log.w("CaptureScreen", "Barcode scan failed", e)
+                        null
+                    }
+
+                    // Build comprehensive verification evidence
+                    val allChecks = mutableListOf<DocumentOcrExtractor.VerificationCheck>()
+                    fun vc(name: String, status: DocumentOcrExtractor.CheckStatus, detail: String) =
+                        DocumentOcrExtractor.VerificationCheck(name, status, detail)
+                    val PASS = DocumentOcrExtractor.CheckStatus.PASS
+                    val WARN = DocumentOcrExtractor.CheckStatus.WARNING
+                    val FAIL = DocumentOcrExtractor.CheckStatus.FAIL
+                    val NA = DocumentOcrExtractor.CheckStatus.NOT_AVAILABLE
+
+                    // Image quality checks
+                    if (qualityCheck.issues.isEmpty()) {
+                        allChecks.add(vc("Image quality", PASS, "Document image clear and well-lit"))
+                    } else {
+                        for (issue in qualityCheck.issues) {
+                            allChecks.add(vc("Image quality", WARN, issue))
+                        }
+                    }
+
+                    // OCR-generated checks (MRZ checksums, field completeness, expiry, etc.)
+                    allChecks.addAll(ocr.verificationChecks)
+
+                    // QR/barcode checks
+                    if (barcode != null && barcode.found) {
+                        allChecks.add(vc("QR/Barcode detected", PASS,
+                            "${barcode.codes.size} code(s): ${barcode.codes.joinToString { it.format }}"))
+                        allChecks.addAll(DocumentBarcodeScanner.crossCheckFields(barcode.fieldsFromCode, ocr.fields))
+                    } else {
+                        allChecks.add(vc("QR/Barcode scan", NA, "No machine-readable code found on document"))
+                    }
+
+                    // Face detection checks
+                    when (fd.status) {
+                        "SINGLE_FACE" -> allChecks.add(vc("Face detection (selfie)", PASS, fd.reason))
+                        "NO_FACE" -> allChecks.add(vc("Face detection (selfie)", FAIL, fd.reason))
+                        "MULTIPLE_FACES" -> allChecks.add(vc("Face detection (selfie)", WARN, fd.reason))
+                    }
+
+                    // Face on document check
+                    val docFaceResult = try { FaceDetectionAnalyzer.detect(docFrontBitmap) } catch (_: Exception) { null }
+                    if (docFaceResult != null) {
+                        when (docFaceResult.status) {
+                            "SINGLE_FACE" -> allChecks.add(vc("Face on document", PASS, "Photo detected on document"))
+                            "NO_FACE" -> allChecks.add(vc("Face on document", WARN, "No face photo found on document"))
+                            "MULTIPLE_FACES" -> allChecks.add(vc("Face on document", WARN, "Multiple faces on document"))
+                        }
+                    }
+
+                    // Tampering checks
+                    if (tp.tamperingRisk < 0.2) {
+                        allChecks.add(vc("Tampering analysis (ELA)", PASS, "No significant anomalies detected (risk: %.0f%%)".format(tp.tamperingRisk * 100)))
+                    } else if (tp.tamperingRisk < 0.5) {
+                        allChecks.add(vc("Tampering analysis (ELA)", WARN, "Minor anomalies — officer review recommended (risk: %.0f%%)".format(tp.tamperingRisk * 100)))
+                    } else {
+                        allChecks.add(vc("Tampering analysis (ELA)", FAIL, "Possible tampering detected (risk: %.0f%%)".format(tp.tamperingRisk * 100)))
+                    }
+
+                    // Deepfake/anti-spoof check
+                    if (df.status == "ANALYZED") {
+                        val dfScore = df.score ?: 0.0
+                        if (dfScore < 0.3) {
+                            allChecks.add(vc("Deepfake analysis", PASS, "Selfie appears genuine"))
+                        } else if (dfScore < 0.6) {
+                            allChecks.add(vc("Deepfake analysis", WARN, "Selfie quality uncertain — officer review recommended"))
+                        } else {
+                            allChecks.add(vc("Deepfake analysis", FAIL, "Possible spoofing detected"))
+                        }
+                    }
+
+                    // Server verification not yet done — will happen on submit
+                    allChecks.add(vc("Server/database verification", NA, "Pending — will check on submit"))
+
                     if (qualityCheck.correctedBitmap != null && qualityCheck.correctedBitmap !== rawDocFrontBitmap) {
                         qualityCheck.correctedBitmap.recycle()
                     }
 
-                    ExtractionBundle(ocr, de, le, fd, tp, df)
+                    ExtractionBundle(ocr, de, le, fd, tp, df, barcode, qualityCheck.issues, allChecks)
                 }
                 val ocrResult = bundle.ocr
                 fields = ExtractedFields(
@@ -666,6 +761,10 @@ fun CaptureScreen(
                 faceDetectionResult = bundle.faceDetection
                 tamperingResultState = bundle.tampering
                 deepfakeResultState = bundle.deepfake
+                verificationChecks = bundle.allChecks
+                // Extra fields beyond the core 6 — doc-type-specific
+                val coreKeys = setOf("name", "passport_number", "document_number", "nationality", "date_of_birth", "date_of_expiry", "gender")
+                extraFields = ocrResult.fields.filterKeys { it !in coreKeys && !it.startsWith("qr_") }
                 step = CaptureStep.REVIEW_FIELDS
             } catch (e: Exception) {
                 errorMessage = "On-device extraction failed: ${e.message ?: e.toString()}"
@@ -931,12 +1030,37 @@ fun CaptureScreen(
                     Spacer(Modifier.height(12.dp))
                     ConfidenceTag(confidence = extractionConfidence.toDouble())
                     Spacer(Modifier.height(4.dp))
+
+                    // Document type mismatch warning
+                    val mismatchMessage = detectDocTypeMismatch(documentType, detectedDocType)
+                    if (mismatchMessage != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            mismatchMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = DestructiveRed,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(DestructiveRed.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+
                     ExtractedFieldRow(stringResource(R.string.field_full_name), fields.name)
                     ExtractedFieldRow(stringResource(R.string.field_document_number), fields.passportNumber)
                     ExtractedFieldRow(stringResource(R.string.field_nationality), fields.nationality)
                     ExtractedFieldRow(stringResource(R.string.field_date_of_birth), fields.dateOfBirth)
                     ExtractedFieldRow(stringResource(R.string.field_gender), fields.gender)
                     ExtractedFieldRow(stringResource(R.string.field_date_of_expiry), fields.dateOfExpiry)
+                    // Document-type-specific extra fields
+                    if (extraFields.isNotEmpty()) {
+                        for ((key, value) in extraFields) {
+                            val label = key.replace("_", " ").replaceFirstChar { it.uppercase() }
+                            ExtractedFieldRow(label, value)
+                        }
+                    }
+
                     if (listOf(fields.name, fields.passportNumber, fields.nationality, fields.dateOfBirth, fields.dateOfExpiry).all { it.isBlank() }) {
                         Spacer(Modifier.height(12.dp))
                         Text(
@@ -949,6 +1073,12 @@ fun CaptureScreen(
                                 .padding(12.dp),
                         )
                     }
+                    // Verification evidence section
+                    if (verificationChecks.isNotEmpty()) {
+                        Spacer(Modifier.height(16.dp))
+                        VerificationEvidenceSection(verificationChecks)
+                    }
+
                     Spacer(Modifier.height(12.dp))
                     Text(
                         stringResource(R.string.capture_verify_explanation),
@@ -1180,4 +1310,156 @@ fun CaptureScreen(
         }
     }
 }
+}
+
+private val DOC_TYPE_DISPLAY_NAMES = mapOf(
+    "NATIONAL_ID" to "National ID / Aadhaar",
+    "DRIVING_LICENCE" to "Driving Licence",
+    "PASSPORT" to "Passport",
+    "VISA" to "Visa",
+    "PERMIT" to "Permit",
+    "PAN_CARD" to "PAN Card",
+    "VOTER_ID" to "Voter ID",
+    "CITIZENSHIP_CERTIFICATE" to "Citizenship Certificate",
+)
+
+private val SELECTED_TO_DETECTED = mapOf(
+    "national_id" to setOf("NATIONAL_ID"),
+    "passport" to setOf("PASSPORT"),
+    "driving_licence" to setOf("DRIVING_LICENCE"),
+    "visa" to setOf("VISA"),
+    "permit" to setOf("PERMIT"),
+)
+
+private fun detectDocTypeMismatch(selectedType: String, detectedType: String?): String? {
+    if (detectedType == null) return null
+    val expectedSet = SELECTED_TO_DETECTED[selectedType.lowercase()] ?: return null
+    if (detectedType.uppercase() in expectedSet) return null
+    val detectedName = DOC_TYPE_DISPLAY_NAMES[detectedType.uppercase()] ?: detectedType
+    val selectedName = DOC_TYPE_DISPLAY_NAMES[expectedSet.first()] ?: selectedType
+    return "Document mismatch: This looks like a $detectedName, but you selected $selectedName. " +
+            "Go back and select the correct document type for better results."
+}
+
+@Composable
+private fun VerificationEvidenceSection(checks: List<DocumentOcrExtractor.VerificationCheck>) {
+    val passCount = checks.count { it.status == DocumentOcrExtractor.CheckStatus.PASS }
+    val warnCount = checks.count { it.status == DocumentOcrExtractor.CheckStatus.WARNING }
+    val failCount = checks.count { it.status == DocumentOcrExtractor.CheckStatus.FAIL }
+    val naCount = checks.count { it.status == DocumentOcrExtractor.CheckStatus.NOT_AVAILABLE }
+
+    val overallColor = when {
+        failCount > 0 -> DestructiveRed
+        warnCount > 0 -> WarningAmber
+        else -> AccentGreen
+    }
+    val overallLabel = when {
+        failCount > 0 -> "REVIEW REQUIRED"
+        warnCount > 0 -> "CAUTION"
+        else -> "CHECKS PASSED"
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Summary header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(overallColor.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                "On-device verification",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                overallLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = overallColor,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        // Counts row
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            CheckCountChip(passCount, "Pass", AccentGreen)
+            CheckCountChip(warnCount, "Warn", WarningAmber)
+            CheckCountChip(failCount, "Fail", DestructiveRed)
+            if (naCount > 0) CheckCountChip(naCount, "N/A", Gray500)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // Individual checks — show FAIL and WARNING first, then PASS, then NOT_AVAILABLE
+        val sorted = checks.sortedBy { check ->
+            when (check.status) {
+                DocumentOcrExtractor.CheckStatus.FAIL -> 0
+                DocumentOcrExtractor.CheckStatus.WARNING -> 1
+                DocumentOcrExtractor.CheckStatus.PASS -> 2
+                DocumentOcrExtractor.CheckStatus.NOT_AVAILABLE -> 3
+            }
+        }
+        for (check in sorted) {
+            VerificationCheckRow(check)
+        }
+    }
+}
+
+@Composable
+private fun CheckCountChip(count: Int, label: String, color: androidx.compose.ui.graphics.Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(color, CircleShape),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            "$count $label",
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+        )
+    }
+}
+
+@Composable
+private fun VerificationCheckRow(check: DocumentOcrExtractor.VerificationCheck) {
+    val (icon, color) = when (check.status) {
+        DocumentOcrExtractor.CheckStatus.PASS -> "✓" to AccentGreen
+        DocumentOcrExtractor.CheckStatus.WARNING -> "⚠" to WarningAmber
+        DocumentOcrExtractor.CheckStatus.FAIL -> "✗" to DestructiveRed
+        DocumentOcrExtractor.CheckStatus.NOT_AVAILABLE -> "—" to Gray500
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            icon,
+            color = color,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.width(20.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                check.name,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                check.detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = Gray600,
+            )
+        }
+    }
 }

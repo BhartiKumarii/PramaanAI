@@ -87,6 +87,11 @@ dependencies {
     // app/services/face/base.py FaceDetectionResult).
     implementation("com.google.mlkit:face-detection:16.1.7")
 
+    // On-device barcode/QR scanning for documents that embed machine-readable
+    // codes (e.g., Aadhaar QR, e-Visa barcodes). Decoded content is compared
+    // against OCR-extracted fields as an independent verification signal.
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
     // Offline submission queue. Plain WorkManager (no Room integration)
     // needs no annotation processor, so it doesn't hit the same AGP
     // 9.x + KSP2 bug that ruled out Room for LocalScreeningStore.

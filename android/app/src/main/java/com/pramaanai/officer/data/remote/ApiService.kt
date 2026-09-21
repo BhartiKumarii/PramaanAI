@@ -8,10 +8,14 @@ import com.pramaanai.officer.data.model.RegistryHit
 import com.pramaanai.officer.data.model.RiskResult
 import com.pramaanai.officer.data.model.TamperingResult
 import com.pramaanai.officer.data.model.ValidationResult
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -97,6 +101,16 @@ interface ApiService {
     // dropdown before the officer has a token.
     @GET("checkpoints")
     suspend fun listCheckpoints(): List<CheckpointResponse>
+
+    @Multipart
+    @POST("images/{verification_id}/upload")
+    suspend fun uploadImages(
+        @Header("Authorization") authorization: String,
+        @Path("verification_id") verificationId: String,
+        @Part documentFront: MultipartBody.Part,
+        @Part documentBack: MultipartBody.Part? = null,
+        @Part selfie: MultipartBody.Part? = null,
+    ): Map<String, Any>
 
     // Public liveness check (GET /health at the app root, not
     // /system/health which is IT_ADMIN-only) — used by

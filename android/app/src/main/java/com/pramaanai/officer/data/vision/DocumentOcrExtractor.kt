@@ -28,6 +28,23 @@ import java.util.regex.Pattern
  * before submitting, never treat this as guaranteed-accurate. */
 object DocumentOcrExtractor {
 
+    enum class CheckStatus { PASS, WARNING, FAIL, NOT_AVAILABLE }
+
+    data class VerificationCheck(
+        val name: String,
+        val status: CheckStatus,
+        val detail: String,
+    )
+
+    data class MrzCheckDigitResult(
+        val passportNumber: CheckStatus,
+        val dateOfBirth: CheckStatus,
+        val dateOfExpiry: CheckStatus,
+        val personalNumber: CheckStatus,
+        val composite: CheckStatus,
+        val checks: List<VerificationCheck>,
+    )
+
     data class ExtractionResult(
         val fields: Map<String, String>,
         val rawText: String,
@@ -44,6 +61,10 @@ object DocumentOcrExtractor {
         val mrzText: String?,
         /** Document type detected from text patterns */
         val detectedDocumentType: String?,
+        /** On-device MRZ check-digit validation results (null if no MRZ found) */
+        val mrzCheckDigits: MrzCheckDigitResult? = null,
+        /** On-device verification checks gathered during extraction */
+        val verificationChecks: List<VerificationCheck> = emptyList(),
     )
 
     private const val TAG = "DocumentOcrExtractor"
@@ -110,7 +131,43 @@ object DocumentOcrExtractor {
         val mrzLines = mrz?.lines ?: emptyList()
         val docType = detectDocumentType(combinedText)
         val confidence = calculateConfidence(fields, mrzLines, docType)
-        Log.d(TAG, "Extraction: ${fields.size} fields, confidence=$confidence, docType=$docType")
+
+        // Build on-device verification checks
+        val checks = mutableListOf<VerificationCheck>()
+        // MRZ check-digit results
+        mrz?.checkDigits?.checks?.let { checks.addAll(it) }
+        // MRZ ↔ printed-field consistency
+        if (mrz != null) {
+            checks.addAll(mrzFieldConsistencyChecks(mrz.fields, fields))
+        }
+        // Document type detection check
+        if (docType != null) {
+            checks.add(VerificationCheck("Document type detection", CheckStatus.PASS, "Detected as ${docType.replace("_", " ")}"))
+        } else {
+            checks.add(VerificationCheck("Document type detection", CheckStatus.WARNING, "Could not determine document type from text patterns"))
+        }
+        // Field completeness check
+        val criticalFields = listOf("name", "date_of_birth")
+        val missingCritical = criticalFields.filter { !fields.containsKey(it) || fields[it].isNullOrBlank() }
+        if (missingCritical.isEmpty()) {
+            checks.add(VerificationCheck("Critical field extraction", CheckStatus.PASS, "Name and date of birth extracted"))
+        } else {
+            checks.add(VerificationCheck("Critical field extraction", CheckStatus.WARNING, "Missing: ${missingCritical.joinToString(", ").replace("_", " ")}"))
+        }
+        // Document number presence
+        val hasDocNum = fields.keys.any { it in setOf("passport_number", "document_number", "aadhaar_number", "pan_number", "voter_id", "dl_number", "visa_number") }
+        if (hasDocNum) {
+            checks.add(VerificationCheck("Document number extraction", CheckStatus.PASS, "Document number found"))
+        } else {
+            checks.add(VerificationCheck("Document number extraction", CheckStatus.WARNING, "No document number detected"))
+        }
+        // Expiry check
+        fields["date_of_expiry"]?.let { expStr ->
+            val expCheck = checkExpiry(expStr)
+            if (expCheck != null) checks.add(expCheck)
+        }
+
+        Log.d(TAG, "Extraction: ${fields.size} fields, confidence=$confidence, docType=$docType, checks=${checks.size}")
         return ExtractionResult(
             fields = fields,
             rawText = text,
@@ -118,6 +175,8 @@ object DocumentOcrExtractor {
             mrzLines = mrzLines,
             mrzText = mrz?.lines?.takeIf { it.isNotEmpty() }?.joinToString("\n"),
             detectedDocumentType = docType,
+            mrzCheckDigits = mrz?.checkDigits,
+            verificationChecks = checks,
         )
     }
 
@@ -200,6 +259,55 @@ object DocumentOcrExtractor {
     private val PAN_PATTERN = Regex("""([A-Z]{5}\d{4}[A-Z])""") // 5 letters + 4 digits + 1 letter
     private val INDIAN_PASSPORT_PATTERN = Regex("""([A-Z]\d{7})""") // 1 letter + 7 digits
     private val VOTER_ID_PATTERN = Regex("""([A-Z]{3}\d{7})""") // 3 letters + 7 digits
+    // Indian DL number: state code (2 letters) + RTO code (2 digits) + space/dash + year (4 digits) + space/dash + serial (7 digits)
+    // e.g., KA01 2015 0001234, DL-0520190001234, MH12 20210001234
+    private val DL_NUMBER_PATTERN = Regex("""([A-Z]{2}[\s\-]?\d{2}[\s\-]?\d{4}[\s\-]?\d{7})""")
+
+    // Verhoeff checksum for on-device Aadhaar number validation — picks
+    // the correct 12-digit candidate when OCR finds multiple on the card.
+    private val VERHOEFF_D = arrayOf(
+        intArrayOf(0,1,2,3,4,5,6,7,8,9), intArrayOf(1,2,3,4,0,6,7,8,9,5),
+        intArrayOf(2,3,4,0,1,7,8,9,5,6), intArrayOf(3,4,0,1,2,8,9,5,6,7),
+        intArrayOf(4,0,1,2,3,9,5,6,7,8), intArrayOf(5,9,8,7,6,0,4,3,2,1),
+        intArrayOf(6,5,9,8,7,1,0,4,3,2), intArrayOf(7,6,5,9,8,2,1,0,4,3),
+        intArrayOf(8,7,6,5,9,3,2,1,0,4), intArrayOf(9,8,7,6,5,4,3,2,1,0),
+    )
+    private val VERHOEFF_P = arrayOf(
+        intArrayOf(0,1,2,3,4,5,6,7,8,9), intArrayOf(1,5,7,6,2,8,3,0,9,4),
+        intArrayOf(5,8,0,3,7,9,6,1,4,2), intArrayOf(8,9,1,6,0,4,3,5,2,7),
+        intArrayOf(9,4,5,3,1,2,6,8,7,0), intArrayOf(4,2,8,6,5,7,3,9,0,1),
+        intArrayOf(2,7,9,3,8,0,6,4,1,5), intArrayOf(7,0,4,6,9,1,3,2,5,8),
+    )
+
+    private fun verhoeffCheck(number: String): Boolean {
+        if (number.length != 12 || !number.all { it.isDigit() }) return false
+        var c = 0
+        val digits = number.reversed().map { it - '0' }
+        for (i in digits.indices) {
+            c = VERHOEFF_D[c][VERHOEFF_P[i % 8][digits[i]]]
+        }
+        return c == 0
+    }
+
+    private fun findBestAadhaarNumber(text: String): String? {
+        val candidates = mutableListOf<String>()
+        var match = AADHAAR_PATTERN.find(text)
+        while (match != null) {
+            val raw = match.groupValues[1].replace("\\s".toRegex(), "")
+            if (raw.length == 12) {
+                val before = if (match.range.first > 0) text[match.range.first - 1] else ' '
+                val afterIdx = match.range.last + 1
+                val after = if (afterIdx < text.length) text[afterIdx] else ' '
+                if (!before.isDigit() && !after.isDigit()) {
+                    candidates.add(raw)
+                }
+            }
+            match = match.next()
+        }
+        if (candidates.isEmpty()) return null
+        Log.d(TAG, "Aadhaar candidates: $candidates, Verhoeff: ${candidates.map { verhoeffCheck(it) }}")
+        return candidates.firstOrNull { verhoeffCheck(it) } ?: candidates.last()
+    }
 
     /** Calculate confidence based on fields found, MRZ lines, and document type detection */
     private fun calculateConfidence(
@@ -222,55 +330,87 @@ object DocumentOcrExtractor {
         return score.coerceIn(0f, 1f)
     }
 
-    /** Detect document type from text patterns */
+    /** Detect document type from text patterns — uses a scoring system
+     * so that a document with multiple signals wins over an ambiguous one. */
     private fun detectDocumentType(text: String): String? {
         val lower = text.lowercase()
-        return when {
-            // Indian documents
-            lower.contains("aadhaar") || lower.contains("aadhar") || lower.contains("आधार")
-                || lower.contains("unique identification") -> "NATIONAL_ID"
-            PAN_PATTERN.find(text) != null || lower.contains("permanent account number")
-                || lower.contains("income tax") || lower.contains("pan card") -> "PAN_CARD"
-            lower.contains("voter") || lower.contains("epic") || lower.contains("electoral")
-                || lower.contains("election commission") || lower.contains("निर्वाचन") -> "VOTER_ID"
-            lower.contains("driving licence") || lower.contains("driving license")
-                || lower.contains("motor vehicle") || lower.contains("transport")
-                || lower.contains("सारथी") || lower.contains("अनुज्ञापत्र") -> "DRIVING_LICENCE"
+        val scores = mutableMapOf<String, Int>()
 
-            // Passport (Indian, Nepali, Bhutanese)
-            INDIAN_PASSPORT_PATTERN.find(text) != null && lower.contains("passport") -> "PASSPORT"
-            lower.contains("passport") || lower.contains("पासपोर्ट") || lower.contains("राहदानी") -> "PASSPORT"
+        // --- Driving Licence signals (strong) ---
+        if (lower.contains("driving licence") || lower.contains("driving license")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 10
+        if (lower.contains("motor vehicle")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (Regex("""\bRTO\b""", RegexOption.IGNORE_CASE).containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (Regex("""\bRTA\b""", RegexOption.IGNORE_CASE).containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (lower.contains("transport department") || lower.contains("transport authority")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (lower.contains("vehicle class") || lower.contains("vehicle classes")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (Regex("""\bLMV\b""").containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 6
+        if (Regex("""\bMCWG\b""").containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 6
+        if (lower.contains("licencing authority") || lower.contains("licensing authority")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (lower.contains("blood group")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 5
+        if (lower.contains("सारथी") || lower.contains("अनुज्ञापत्र")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (DL_NUMBER_PATTERN.containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 6
+        if (lower.contains("rsta") || lower.contains("road safety")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        // "transport" alone (without "department") is weaker — could appear in visa text
+        if (lower.contains("transport") && !lower.contains("visa") && !lower.contains("passport")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 3
 
-            // Visa
-            lower.contains("visa") || lower.contains("वीसा") || lower.contains("वीजा") -> "VISA"
+        // --- National ID / Aadhaar signals ---
+        if (lower.contains("aadhaar") || lower.contains("aadhar") || lower.contains("आधार")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 10
+        if (lower.contains("unique identification")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 10
+        if (lower.contains("uidai")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 10
+        if (lower.contains("enrol") && lower.contains("no")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 5
+        if (lower.contains("citizen identity") || lower.contains("cid")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 7
+        if (lower.contains("bhutan") && lower.contains("identity")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 8
+        if (lower.contains("identity card") || lower.contains("id card")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 4
 
-            // Permit
-            lower.contains("permit") || lower.contains("अनुमति") -> "PERMIT"
+        // --- PAN Card signals ---
+        if (PAN_PATTERN.find(text) != null) scores["PAN_CARD"] = (scores["PAN_CARD"] ?: 0) + 6
+        if (lower.contains("permanent account number")) scores["PAN_CARD"] = (scores["PAN_CARD"] ?: 0) + 10
+        if (lower.contains("income tax")) scores["PAN_CARD"] = (scores["PAN_CARD"] ?: 0) + 8
+        if (lower.contains("pan card")) scores["PAN_CARD"] = (scores["PAN_CARD"] ?: 0) + 10
 
-            // Nepal
-            lower.contains("नागरिकता") || lower.contains("citizenship certificate")
-                || lower.contains("nepal") && lower.contains("citizenship") -> "CITIZENSHIP_CERTIFICATE"
+        // --- Voter ID signals ---
+        if (lower.contains("voter") || lower.contains("epic")) scores["VOTER_ID"] = (scores["VOTER_ID"] ?: 0) + 8
+        if (lower.contains("electoral") || lower.contains("election commission")) scores["VOTER_ID"] = (scores["VOTER_ID"] ?: 0) + 9
+        if (lower.contains("निर्वाचन")) scores["VOTER_ID"] = (scores["VOTER_ID"] ?: 0) + 9
 
-            // Bhutan
-            lower.contains("citizen identity") || lower.contains("cid")
-                || lower.contains("bhutan") && lower.contains("identity") -> "NATIONAL_ID"
+        // --- Passport signals ---
+        if (lower.contains("passport")) scores["PASSPORT"] = (scores["PASSPORT"] ?: 0) + 8
+        if (lower.contains("पासपोर्ट") || lower.contains("राहदानी")) scores["PASSPORT"] = (scores["PASSPORT"] ?: 0) + 9
+        if (lower.contains("republic of india") && lower.contains("type") && lower.contains("country code")) scores["PASSPORT"] = (scores["PASSPORT"] ?: 0) + 8
+        if (Regex("""P<[A-Z]{3}""").containsMatchIn(text)) scores["PASSPORT"] = (scores["PASSPORT"] ?: 0) + 10
 
-            lower.contains("identity card") || lower.contains("id card") -> "NATIONAL_ID"
+        // --- Visa signals ---
+        if (lower.contains("visa") && !lower.contains("driving")) scores["VISA"] = (scores["VISA"] ?: 0) + 7
+        if (lower.contains("e-visa") || lower.contains("evisa")) scores["VISA"] = (scores["VISA"] ?: 0) + 10
+        if (lower.contains("electronic travel authorization")) scores["VISA"] = (scores["VISA"] ?: 0) + 10
+        if (lower.contains("tourist visa")) scores["VISA"] = (scores["VISA"] ?: 0) + 10
+        if (lower.contains("visa no") || lower.contains("visa type") || lower.contains("eta number")) scores["VISA"] = (scores["VISA"] ?: 0) + 7
+        if (lower.contains("bureau of immigration")) scores["VISA"] = (scores["VISA"] ?: 0) + 8
+        if (lower.contains("वीसा") || lower.contains("वीजा")) scores["VISA"] = (scores["VISA"] ?: 0) + 8
 
-            else -> null
-        }
+        // --- Permit signals ---
+        if (lower.contains("permit") && !lower.contains("driving")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 6
+        if (lower.contains("अनुमति")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 8
+        if (lower.contains("inner line permit") || lower.contains("ilp")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+
+        // --- Nepal citizenship ---
+        if (lower.contains("नागरिकता")) scores["CITIZENSHIP_CERTIFICATE"] = (scores["CITIZENSHIP_CERTIFICATE"] ?: 0) + 10
+        if (lower.contains("citizenship certificate")) scores["CITIZENSHIP_CERTIFICATE"] = (scores["CITIZENSHIP_CERTIFICATE"] ?: 0) + 10
+        if (lower.contains("nepal") && lower.contains("citizenship")) scores["CITIZENSHIP_CERTIFICATE"] = (scores["CITIZENSHIP_CERTIFICATE"] ?: 0) + 9
+
+        // Pick the highest-scoring type; require a minimum threshold
+        val best = scores.maxByOrNull { it.value }
+        Log.d(TAG, "Document type scores: $scores → ${best?.key}")
+        return if (best != null && best.value >= 6) best.key else null
     }
 
     /** Extract Indian document numbers using regex patterns */
     private fun extractIndianDocumentNumbers(text: String): Map<String, String> {
         val result = mutableMapOf<String, String>()
 
-        AADHAAR_PATTERN.find(text)?.let { match ->
-            val aadhaar = match.groupValues[1].replace("\\s".toRegex(), "")
-            if (aadhaar.length == 12) {
-                result["document_number"] = aadhaar
-                result["aadhaar_number"] = aadhaar
-            }
+        findBestAadhaarNumber(text)?.let { aadhaar ->
+            result["document_number"] = aadhaar
+            result["aadhaar_number"] = aadhaar
         }
 
         PAN_PATTERN.find(text)?.let { match ->
@@ -288,6 +428,13 @@ object DocumentOcrExtractor {
             result["voter_id"] = match.groupValues[1]
         }
 
+        // DL number extraction
+        DL_NUMBER_PATTERN.find(text)?.let { match ->
+            val dlNum = match.groupValues[1].replace(Regex("[\\s\\-]"), "")
+            if (!result.containsKey("document_number")) result["document_number"] = dlNum
+            result["dl_number"] = dlNum
+        }
+
         // Document-type-specific field extraction
         if (result.containsKey("aadhaar_number")) {
             extractAadhaarFields(text, result)
@@ -295,9 +442,275 @@ object DocumentOcrExtractor {
         if (result.containsKey("pan_number")) {
             extractPanFields(text, result)
         }
+        if (result.containsKey("dl_number") || isDrivingLicence(text)) {
+            extractDrivingLicenceFields(text, result)
+        }
+        if (isPassport(text)) {
+            extractPassportFields(text, result)
+        }
+        if (isVisa(text)) {
+            extractVisaFields(text, result)
+        }
         extractCommonFields(text, result)
 
         return result
+    }
+
+    private fun isDrivingLicence(text: String): Boolean {
+        val lower = text.lowercase()
+        return lower.contains("driving licence") || lower.contains("driving license")
+            || lower.contains("motor vehicle") || lower.contains("transport department")
+            || Regex("""\bRTO\b|\bRTA\b""", RegexOption.IGNORE_CASE).containsMatchIn(text)
+    }
+
+    private fun extractDrivingLicenceFields(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // DOB — look for "DOB" label or date_of_birth pattern
+        if (!result.containsKey("date_of_birth")) {
+            val dobPattern = Regex("""(?:DOB|D\.?O\.?B\.?|Date\s*of\s*Birth|जन्म\s*(?:तिथि|दिनांक))\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            dobPattern.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_birth"] = it }
+            }
+        }
+
+        // Blood group
+        if (!result.containsKey("blood_group")) {
+            val bgPattern = Regex("""(?:Blood\s*Group|रक्त\s*समूह)\s*[:/]?\s*([ABO]{1,2}[\s]?[+-]?\s*(?:Positive|Negative|positive|negative)?)\b""", RegexOption.IGNORE_CASE)
+            bgPattern.find(text)?.let { result["blood_group"] = it.groupValues[1].trim() }
+        }
+
+        // Vehicle classes — LMV, MCWG, MCWOG, HMV, etc.
+        if (!result.containsKey("vehicle_classes")) {
+            val vcPattern = Regex("""\b(LMV|MCWG|MCWOG|HMV|HGV|LTV|MGV|HPMV|TRANS)\b""")
+            val classes = vcPattern.findAll(text).map { it.value }.toSet()
+            if (classes.isNotEmpty()) result["vehicle_classes"] = classes.joinToString(", ")
+        }
+
+        // Validity / Date of Expiry
+        if (!result.containsKey("date_of_expiry")) {
+            val validPattern = Regex("""(?:Valid|Validity|Date\s*of\s*Expiry|NT|Non[\s\-]?Transport)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            validPattern.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_expiry"] = it }
+            }
+        }
+
+        // Issued date
+        if (!result.containsKey("date_of_issue")) {
+            val issuePattern = Regex("""(?:Issued?\s*(?:On|Date)?|Date\s*of\s*Issue)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            issuePattern.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_issue"] = it }
+            }
+        }
+
+        // Name — person name on DL is usually after the DL number line
+        if (!result.containsKey("name")) {
+            for (line in lines) {
+                if (isLikelyPersonName(line)) {
+                    val lower = line.lowercase()
+                    if (!lower.contains("transport") && !lower.contains("motor") &&
+                        !lower.contains("union") && !lower.contains("state") &&
+                        !lower.contains("kingdom") && !lower.contains("bhutan") &&
+                        !lower.contains("driving")) {
+                        result["name"] = line.trim()
+                        break
+                    }
+                }
+            }
+        }
+
+        // CID for Bhutan DL
+        if (!result.containsKey("document_number")) {
+            val cidPattern = Regex("""CID\s*[:/]?\s*(\d{11})""", RegexOption.IGNORE_CASE)
+            cidPattern.find(text)?.let { result["document_number"] = it.groupValues[1] }
+        }
+
+        // Nationality inference
+        if (!result.containsKey("nationality")) {
+            val lower = text.lowercase()
+            result["nationality"] = when {
+                lower.contains("bhutan") || lower.contains("kingdom of bhutan") -> "BHUTANESE"
+                lower.contains("nepal") -> "NEPALI"
+                else -> "INDIAN"
+            }
+        }
+    }
+
+    private fun isPassport(text: String): Boolean {
+        val lower = text.lowercase()
+        return lower.contains("passport") || lower.contains("पासपोर्ट")
+            || lower.contains("राहदानी") || Regex("""P<[A-Z]{3}""").containsMatchIn(text)
+    }
+
+    private fun isVisa(text: String): Boolean {
+        val lower = text.lowercase()
+        return (lower.contains("visa") && !lower.contains("driving"))
+            || lower.contains("e-visa") || lower.contains("tourist visa")
+            || lower.contains("electronic travel authorization")
+            || lower.contains("bureau of immigration")
+    }
+
+    private val VISA_NUMBER_PATTERN = Regex("""(?:Visa\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z0-9]{6,20})""", RegexOption.IGNORE_CASE)
+    private val ETA_NUMBER_PATTERN = Regex("""(?:ETA\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z0-9]{6,20})""", RegexOption.IGNORE_CASE)
+    private val BHUTAN_CID_PATTERN = Regex("""(?:CID\s*(?:No\.?|Number)?\s*[:/]?\s*)(\d{11})""", RegexOption.IGNORE_CASE)
+    private val NEPAL_CITIZENSHIP_PATTERN = Regex("""(?:(?:Citizenship|Na\.?\s*Pra\.?)\s*(?:No\.?|Number)?\s*[:/]?\s*)(\d{2}[-/]\d{2}[-/]\d{2}[-/]\d{4,6})""", RegexOption.IGNORE_CASE)
+
+    private fun extractPassportFields(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // Passport number from printed text (not just MRZ)
+        if (!result.containsKey("passport_number")) {
+            val ppPatterns = listOf(
+                Regex("""(?:Passport\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z]\d{6,8})""", RegexOption.IGNORE_CASE),
+                Regex("""(?:No\.?\s*du\s*passeport|राहदानी\s*नं\.?\s*[:/]?\s*)([A-Z]\d{6,8})""", RegexOption.IGNORE_CASE),
+                Regex("""\b([A-Z]\d{7})\b"""),
+            )
+            for (p in ppPatterns) {
+                p.find(text)?.let {
+                    result["passport_number"] = it.groupValues[1]
+                    if (!result.containsKey("document_number")) result["document_number"] = it.groupValues[1]
+                    return@let
+                }
+                if (result.containsKey("passport_number")) break
+            }
+        }
+
+        // Place of birth
+        if (!result.containsKey("place_of_birth")) {
+            val pobPatterns = listOf(
+                Regex("""(?:Place\s*of\s*Birth|POB|जन्म\s*स्थान)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE),
+            )
+            for (p in pobPatterns) {
+                p.find(text)?.let {
+                    val place = it.groupValues[1].trim().take(50)
+                    if (place.length >= 2) result["place_of_birth"] = place
+                }
+                if (result.containsKey("place_of_birth")) break
+            }
+        }
+
+        // Place of issue
+        if (!result.containsKey("place_of_issue")) {
+            val poiPatterns = listOf(
+                Regex("""(?:Place\s*of\s*Issue|जारी\s*स्थान)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE),
+            )
+            for (p in poiPatterns) {
+                p.find(text)?.let {
+                    val place = it.groupValues[1].trim().take(50)
+                    if (place.length >= 2) result["place_of_issue"] = place
+                }
+                if (result.containsKey("place_of_issue")) break
+            }
+        }
+
+        // Issuing authority
+        if (!result.containsKey("issuing_authority")) {
+            val authPatterns = listOf(
+                Regex("""(?:(?:Issuing\s*)?Authority|Issued\s*by)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE),
+            )
+            for (p in authPatterns) {
+                p.find(text)?.let {
+                    val auth = it.groupValues[1].trim().take(60)
+                    if (auth.length >= 3 && !auth.lowercase().contains("signature")) result["issuing_authority"] = auth
+                }
+                if (result.containsKey("issuing_authority")) break
+            }
+        }
+
+        // Bhutan passport: CID number
+        if (!result.containsKey("cid_number")) {
+            BHUTAN_CID_PATTERN.find(text)?.let { result["cid_number"] = it.groupValues[1] }
+        }
+
+        // Nepal passport: citizenship reference number
+        if (!result.containsKey("citizenship_number")) {
+            NEPAL_CITIZENSHIP_PATTERN.find(text)?.let { result["citizenship_number"] = it.groupValues[1] }
+        }
+
+        // Nationality inference from passport text
+        if (!result.containsKey("nationality")) {
+            val lower = text.lowercase()
+            result["nationality"] = when {
+                lower.contains("kingdom of bhutan") || lower.contains("bhutan") -> "BHUTANESE"
+                lower.contains("government of nepal") || lower.contains("nepal") || lower.contains("नेपाल") -> "NEPALI"
+                lower.contains("republic of india") || lower.contains("india") || lower.contains("भारत") -> "INDIAN"
+                lower.contains("bangladesh") -> "BANGLADESHI"
+                else -> "UNKNOWN"
+            }
+        }
+    }
+
+    private fun extractVisaFields(text: String, result: MutableMap<String, String>) {
+        // Visa number
+        if (!result.containsKey("visa_number")) {
+            VISA_NUMBER_PATTERN.find(text)?.let {
+                result["visa_number"] = it.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = it.groupValues[1]
+            }
+        }
+        if (!result.containsKey("visa_number")) {
+            ETA_NUMBER_PATTERN.find(text)?.let {
+                result["visa_number"] = it.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = it.groupValues[1]
+            }
+        }
+
+        // Visa type
+        if (!result.containsKey("visa_type")) {
+            val typePatterns = listOf(
+                Regex("""(?:Visa\s*(?:Type|Category)|Type\s*of\s*Visa)\s*[:/]?\s*([A-Za-z\s\-]+)""", RegexOption.IGNORE_CASE),
+                Regex("""(?:Category)\s*[:/]?\s*(Tourist|Business|Employment|Student|Transit|Diplomatic|Official|Medical|Conference|Entry)""", RegexOption.IGNORE_CASE),
+            )
+            for (p in typePatterns) {
+                p.find(text)?.let {
+                    result["visa_type"] = it.groupValues[1].trim().take(30)
+                }
+                if (result.containsKey("visa_type")) break
+            }
+        }
+
+        // Number of entries
+        if (!result.containsKey("entries")) {
+            val entryPattern = Regex("""(?:(?:No\.?\s*of\s*)?Entries|Entry)\s*[:/]?\s*(Single|Multiple|Double|\d+)""", RegexOption.IGNORE_CASE)
+            entryPattern.find(text)?.let { result["entries"] = it.groupValues[1].trim() }
+        }
+
+        // Port of entry / arrival
+        if (!result.containsKey("port_of_entry")) {
+            val portPattern = Regex("""(?:Port\s*of\s*(?:Entry|Arrival)|POE)\s*[:/]?\s*([A-Za-z\s]+)""", RegexOption.IGNORE_CASE)
+            portPattern.find(text)?.let {
+                val port = it.groupValues[1].trim().take(40)
+                if (port.length >= 2) result["port_of_entry"] = port
+            }
+        }
+
+        // Passport number referenced in visa
+        if (!result.containsKey("passport_number")) {
+            val ppRef = Regex("""(?:Passport\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z]\d{6,8})""", RegexOption.IGNORE_CASE)
+            ppRef.find(text)?.let { result["passport_number"] = it.groupValues[1] }
+        }
+
+        // Validity dates
+        if (!result.containsKey("date_of_issue")) {
+            val issueP = Regex("""(?:(?:Date\s*of\s*)?Issue(?:d)?|Valid\s*From|From)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            issueP.find(text)?.let { normalizeDate(it.groupValues[1])?.let { d -> result["date_of_issue"] = d } }
+        }
+        if (!result.containsKey("date_of_expiry")) {
+            val expiryP = Regex("""(?:(?:Date\s*of\s*)?Expiry|Valid\s*(?:Until|Till)|Until|To)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            expiryP.find(text)?.let { normalizeDate(it.groupValues[1])?.let { d -> result["date_of_expiry"] = d } }
+        }
+
+        // Nationality inference from visa
+        if (!result.containsKey("nationality")) {
+            val lower = text.lowercase()
+            result["nationality"] = when {
+                lower.contains("nepal") || lower.contains("nepali") || lower.contains("नेपाल") -> "NEPALI"
+                lower.contains("bhutan") || lower.contains("bhutanese") -> "BHUTANESE"
+                lower.contains("india") || lower.contains("indian") || lower.contains("भारत") -> "INDIAN"
+                lower.contains("bangladesh") || lower.contains("bangladeshi") -> "BANGLADESHI"
+                else -> "UNKNOWN"
+            }
+        }
     }
 
     private fun extractPanFields(text: String, result: MutableMap<String, String>) {
@@ -343,9 +756,32 @@ object DocumentOcrExtractor {
         }
     }
 
-    private val AADHAAR_DOB_PATTERN = Regex("""(?:DOB|D\.O\.B\.?|जन्म\s*तिथि)\s*[:/]\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+    private val AADHAAR_DOB_PATTERN = Regex("""(?:DOB|D\.O\.B\.?|जन्म\s*तिथि)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
     private val AADHAAR_GENDER_PATTERN = Regex("""(?:Male|Female|पुरुष|महिला|MALE|FEMALE)""")
-    private val AADHAAR_NAME_LINE_PATTERN = Regex("""^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$""")
+    private val AADHAAR_NAME_EXCLUDE = setOf(
+        "government", "india", "unique", "identification", "authority",
+        "aadhaar", "aadhar", "enrolment", "enrollment", "resident",
+        "address", "proof", "identity", "download", "uidai",
+        "income", "tax", "department", "republic", "ministry",
+        "male", "female", "birth", "validity", "issue", "help",
+        "driving", "licence", "license", "motor", "vehicle", "transport",
+        "union", "state", "kingdom", "bhutan", "nepal", "passport",
+        "visa", "tourist", "immigration", "bureau", "electronic",
+        "blood", "group", "class", "offence", "signature",
+    )
+
+    private fun isLikelyPersonName(line: String): Boolean {
+        val trimmed = line.trim()
+        if (trimmed.length < 3 || trimmed.length > 60) return false
+        val words = trimmed.split(Regex("\\s+"))
+        if (words.isEmpty()) return false
+        if (!words.all { w -> w.length >= 2 && w.all { it.isLetter() } }) return false
+        val allCaps = words.all { w -> w.all { it.isUpperCase() } }
+        val titleCase = words.all { w -> w[0].isUpperCase() && w.drop(1).all { it.isLowerCase() } }
+        if (!allCaps && !titleCase) return false
+        val lower = trimmed.lowercase()
+        return AADHAAR_NAME_EXCLUDE.none { lower.contains(it) }
+    }
 
     private fun extractAadhaarFields(text: String, result: MutableMap<String, String>) {
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
@@ -369,16 +805,10 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Name: look for a line that matches "Firstname Lastname" in English
-        // (typically the line right after the Hindi name on Aadhaar)
         if (!result.containsKey("name")) {
             for (line in lines) {
-                if (AADHAAR_NAME_LINE_PATTERN.matches(line) &&
-                    !line.contains("Government", true) &&
-                    !line.contains("India", true) &&
-                    !line.contains("Aadhaar", true) &&
-                    !line.contains("proof", true)) {
-                    result["name"] = line
+                if (isLikelyPersonName(line)) {
+                    result["name"] = line.trim()
                     break
                 }
             }
@@ -388,6 +818,57 @@ object DocumentOcrExtractor {
         if (!result.containsKey("nationality")) {
             result["nationality"] = "INDIAN"
         }
+    }
+
+    private fun mrzFieldConsistencyChecks(mrzFields: Map<String, String>, printedFields: Map<String, String>): List<VerificationCheck> {
+        val checks = mutableListOf<VerificationCheck>()
+        fun compare(fieldKey: String, label: String) {
+            val mrzVal = mrzFields[fieldKey]?.uppercase()?.trim()
+            val printedVal = printedFields[fieldKey]?.uppercase()?.trim()
+            if (mrzVal == null || printedVal == null) return
+            if (mrzVal == printedVal) {
+                checks.add(VerificationCheck("MRZ ↔ printed $label", CheckStatus.PASS, "Match: $printedVal"))
+            } else {
+                val mrzNorm = mrzVal.replace(Regex("[\\s\\-/.]"), "")
+                val printedNorm = printedVal.replace(Regex("[\\s\\-/.]"), "")
+                if (mrzNorm == printedNorm) {
+                    checks.add(VerificationCheck("MRZ ↔ printed $label", CheckStatus.PASS, "Match after normalization"))
+                } else {
+                    checks.add(VerificationCheck("MRZ ↔ printed $label", CheckStatus.WARNING,
+                        "MRZ reads \"$mrzVal\" but printed text reads \"$printedVal\""))
+                }
+            }
+        }
+        compare("name", "name")
+        compare("date_of_birth", "date of birth")
+        compare("date_of_expiry", "date of expiry")
+        compare("nationality", "nationality")
+        compare("gender", "gender")
+        return checks
+    }
+
+    private fun checkExpiry(dateStr: String): VerificationCheck? {
+        return try {
+            val parts = dateStr.split("/")
+            if (parts.size != 3) return null
+            val day = parts[0].toInt()
+            val month = parts[1].toInt()
+            val year = parts[2].toInt()
+            val cal = java.util.Calendar.getInstance()
+            val expiryCalendar = java.util.Calendar.getInstance().apply {
+                set(year, month - 1, day)
+            }
+            if (expiryCalendar.before(cal)) {
+                VerificationCheck("Document expiry", CheckStatus.FAIL, "Document expired on $dateStr")
+            } else {
+                val daysLeft = ((expiryCalendar.timeInMillis - cal.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
+                if (daysLeft < 90) {
+                    VerificationCheck("Document expiry", CheckStatus.WARNING, "Expires in $daysLeft days ($dateStr)")
+                } else {
+                    VerificationCheck("Document expiry", CheckStatus.PASS, "Valid until $dateStr")
+                }
+            }
+        } catch (_: Exception) { null }
     }
 
     /** Best-effort line-based heuristic: for each target field, scan
@@ -444,7 +925,7 @@ object DocumentOcrExtractor {
         return "$given $surname".uppercase().replace(Regex("\\s+"), " ")
     }
 
-    private data class MrzParse(val lines: List<String>, val fields: Map<String, String>)
+    private data class MrzParse(val lines: List<String>, val fields: Map<String, String>, val checkDigits: MrzCheckDigitResult? = null)
 
     // ICAO 3-letter codes → the demonym the backend's cross-check and
     // registries use (see app/services/validation/cross_check.py). Unknown
@@ -477,6 +958,70 @@ object DocumentOcrExtractor {
         // A birth year ahead of "now" is last century; passports expire in this one.
         val year = if (isBirth && yy > currentYY) 1900 + yy else 2000 + yy
         return "%02d/%02d/%04d".format(dd, mm, year)
+    }
+
+    // ICAO 9303 check-digit weights cycle 7-3-1
+    private val MRZ_WEIGHTS = intArrayOf(7, 3, 1)
+    private fun mrzCharValue(c: Char): Int = when {
+        c == '<' -> 0
+        c in '0'..'9' -> c - '0'
+        c in 'A'..'Z' -> c - 'A' + 10
+        else -> 0
+    }
+
+    private fun mrzCheckDigit(field: String): Int {
+        var sum = 0
+        for (i in field.indices) {
+            sum += mrzCharValue(field[i]) * MRZ_WEIGHTS[i % 3]
+        }
+        return sum % 10
+    }
+
+    private fun validateMrzCheckDigits(l2: String): MrzCheckDigitResult {
+        val checks = mutableListOf<VerificationCheck>()
+        // TD3 line 2 layout (ICAO 9303 Part 4):
+        // [0-8]   passport number
+        // [9]     passport number check digit
+        // [10-12] nationality
+        // [13-18] date of birth YYMMDD
+        // [19]    DOB check digit
+        // [20]    sex
+        // [21-26] date of expiry YYMMDD
+        // [27]    expiry check digit
+        // [28-41] personal number / optional data
+        // [42]    personal number check digit
+        // [43]    composite check digit over positions 0-9, 13-19, 21-42
+
+        fun fieldCheck(name: String, field: String, expectedDigit: Char): CheckStatus {
+            val computed = mrzCheckDigit(field)
+            val expected = if (expectedDigit.isDigit()) expectedDigit - '0' else -1
+            return if (expected == computed) {
+                checks.add(VerificationCheck(name, CheckStatus.PASS, "Check digit $expected verified (field: ${field.take(9)})"))
+                CheckStatus.PASS
+            } else {
+                checks.add(VerificationCheck(name, CheckStatus.FAIL, "Expected check digit $computed but MRZ has $expectedDigit"))
+                CheckStatus.FAIL
+            }
+        }
+
+        val passportNum = if (l2.length >= 10) fieldCheck("MRZ passport number checksum", l2.substring(0, 9), l2[9])
+            else CheckStatus.NOT_AVAILABLE.also { checks.add(VerificationCheck("MRZ passport number checksum", it, "MRZ line too short")) }
+
+        val dob = if (l2.length >= 20) fieldCheck("MRZ date of birth checksum", l2.substring(13, 19), l2[19])
+            else CheckStatus.NOT_AVAILABLE.also { checks.add(VerificationCheck("MRZ date of birth checksum", it, "MRZ line too short")) }
+
+        val expiry = if (l2.length >= 28) fieldCheck("MRZ date of expiry checksum", l2.substring(21, 27), l2[27])
+            else CheckStatus.NOT_AVAILABLE.also { checks.add(VerificationCheck("MRZ date of expiry checksum", it, "MRZ line too short")) }
+
+        val personal = if (l2.length >= 43) fieldCheck("MRZ personal number checksum", l2.substring(28, 42), l2[42])
+            else CheckStatus.NOT_AVAILABLE.also { checks.add(VerificationCheck("MRZ personal number checksum", it, "MRZ line too short")) }
+
+        val composite = if (l2.length >= 44) {
+            val compositeField = l2.substring(0, 10) + l2.substring(13, 20) + l2.substring(21, 43)
+            fieldCheck("MRZ composite checksum", compositeField, l2[43])
+        } else CheckStatus.NOT_AVAILABLE.also { checks.add(VerificationCheck("MRZ composite checksum", it, "MRZ line too short")) }
+
+        return MrzCheckDigitResult(passportNum, dob, expiry, personal, composite, checks)
     }
 
     /** Finds a TD3 (passport / MRV-A visa, 2 × 44 chars) MRZ pair anywhere in
@@ -518,7 +1063,8 @@ object DocumentOcrExtractor {
             // backend's check-digit validation fail on OCR loss, not on the
             // document, and would be shown as if it were the real MRZ.
             val complete = rawL1.length == 44 && l2.length == 44
-            return MrzParse(if (complete) listOf(l1, l2) else emptyList(), fields)
+            val checkDigits = if (l2.length >= 44) validateMrzCheckDigits(l2) else null
+            return MrzParse(if (complete) listOf(l1, l2) else emptyList(), fields, checkDigits)
         }
         return null
     }

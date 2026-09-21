@@ -21,16 +21,23 @@ import com.pramaanai.officer.data.remote.CaseSubmitRequest
 import com.pramaanai.officer.data.remote.DisputeRequest
 import com.pramaanai.officer.data.remote.LoginRequest
 import com.pramaanai.officer.data.remote.ScreeningSubmissionRequest
+import android.util.Log
 import java.io.File
 import java.io.IOException
 import java.time.OffsetDateTime
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 
 /** Local-cache-backed repository, plus the boundary to the real FastAPI
@@ -49,6 +56,7 @@ class ScreeningRepository(
     private val checkpoint: String,
     private val pendingQueue: PendingSubmissionQueue,
 ) {
+    private val uploadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     // Prefers the real, server-assigned checkpoint (populated at login —
     // see login() below) over the constructor default, which only ever
     // applies pre-login or if /auth/me returned none.
@@ -385,6 +393,10 @@ class ScreeningRepository(
             response, travelerName, documentType, nationality, effectiveCheckpoint, persistedImagePath, persistedBackImagePath, persistedSelfiePath, mrzText,
         )
         store.upsert(item)
+
+        // Upload images to backend for web dashboard viewing (non-blocking)
+        uploadImagesInBackground(response.verificationId, documentImageFile, documentBackImageFile, selfieImageFile)
+
         logAudit(action = "Document scanned", record = item.id, result = "on-device OCR + MRZ + embedding extraction, server-side validation + risk assessment completed")
         logAudit(
             action = "Risk assessment generated",
@@ -484,6 +496,53 @@ class ScreeningRepository(
 
     suspend fun logTourCompleted() {
         logAudit(action = "Guided tour completed", record = null, result = "SUCCESS")
+    }
+
+    /** Upload images to backend for web dashboard viewing. Runs in background —
+     * failure doesn't affect the screening result, which was already processed successfully. */
+    private fun uploadImagesInBackground(
+        verificationId: String,
+        documentImageFile: File?,
+        documentBackImageFile: File?,
+        selfieImageFile: File?,
+    ) {
+        if (documentImageFile == null && selfieImageFile == null) return
+
+        uploadScope.launch {
+            try {
+                val parts = mutableListOf<MultipartBody.Part>()
+
+                documentImageFile?.let { file ->
+                    val requestBody = file.asRequestBody("image/jpeg".toMediaType())
+                    parts.add(MultipartBody.Part.createFormData("document_front", file.name, requestBody))
+                }
+
+                documentBackImageFile?.let { file ->
+                    val requestBody = file.asRequestBody("image/jpeg".toMediaType())
+                    parts.add(MultipartBody.Part.createFormData("document_back", file.name, requestBody))
+                }
+
+                selfieImageFile?.let { file ->
+                    val requestBody = file.asRequestBody("image/jpeg".toMediaType())
+                    parts.add(MultipartBody.Part.createFormData("selfie", file.name, requestBody))
+                }
+
+                if (parts.isNotEmpty()) {
+                    // Note: API expects at least document_front, so we need to handle the case properly
+                    val docFront = parts.find { it.headers?.get("Content-Disposition")?.contains("document_front") == true }
+                    val docBack = parts.find { it.headers?.get("Content-Disposition")?.contains("document_back") == true }
+                    val selfie = parts.find { it.headers?.get("Content-Disposition")?.contains("selfie") == true }
+
+                    if (docFront != null) {
+                        api.uploadImages(AuthSession.bearerHeader(), verificationId, docFront, docBack, selfie)
+                        Log.d("ScreeningRepository", "Images uploaded for verification $verificationId")
+                    }
+                }
+            } catch (e: Exception) {
+                // Non-fatal - screening already succeeded, this is just for web dashboard convenience
+                Log.w("ScreeningRepository", "Image upload failed for verification $verificationId", e)
+            }
+        }
     }
 
     private suspend fun logAudit(action: String, record: String?, result: String, officerOverride: String? = null) {

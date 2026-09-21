@@ -12,6 +12,15 @@ dist/
 build/
 .DS_Store
 
+# Debug APK
+*.apk
+
+# Temp scripts
+fix_sqlite_migration.py
+seed_devices.py
+test_local_screening.py
+test_render_screening.py
+
 # Android / Gradle / IDE
 android/.gradle/
 android/.kotlin/
