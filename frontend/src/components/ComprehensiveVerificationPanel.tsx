@@ -171,7 +171,7 @@ export function ComprehensiveVerificationPanel({ result, documentType, nationali
               {result.riskLevel} RISK
             </div>
             <div className="text-xs text-muted-foreground">
-              Confidence: {Math.round(result.confidenceScore * 100)}%
+              Certainty: {Math.round(result.confidenceScore * 100)}%
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { Footer } from '../components/Footer'
 const SECURITY_ITEMS = [
   {
     title: 'Data minimization',
-    description: 'Raw document and selfie images stay on the capturing device wherever the workflow supports it; only small encoded data (OCR fields, MRZ string, face embedding) ever reaches the server.',
+    description: 'Raw document and selfie images stay on the capturing device wherever the workflow supports it; only small encoded data (text fields, MRZ string, face data) ever reaches the server.',
   },
   {
     title: 'HTTPS/TLS',

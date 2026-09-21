@@ -189,7 +189,7 @@ export function OfficerVerificationStatus({ verification, risk }: OfficerVerific
             )}
             {verification.tampering && (
               <div>
-                <p className="font-semibold text-foreground">Forensic Analysis (ELA)</p>
+                <p className="font-semibold text-foreground">Document Integrity</p>
                 <p>Risk: {Math.round(verification.tampering.tampering_risk * 100)}%</p>
                 {verification.tampering.findings?.[0] && <p>Finding: {verification.tampering.findings[0].reason}</p>}
               </div>
@@ -197,19 +197,19 @@ export function OfficerVerificationStatus({ verification, risk }: OfficerVerific
             {verification.face && (
               <div>
                 <p className="font-semibold text-foreground">Face Recognition</p>
-                <p>Cosine similarity: {verification.face.similarity}</p>
-                <p>Match threshold: 0.75 | Confidence: {verification.face.confidence}</p>
+                <p>Match strength: {Math.round((verification.face.similarity ?? 0) * 100)}%</p>
+                <p>Result: {(verification.face.similarity ?? 0) >= 0.75 ? 'Match' : 'No match'}</p>
               </div>
             )}
             {verification.liveness && (
               <div>
-                <p className="font-semibold text-foreground">Liveness Detection</p>
-                <p>Status: {verification.liveness.status} | Score: {verification.liveness.score ?? 'N/A'}</p>
+                <p className="font-semibold text-foreground">Live Photo Check</p>
+                <p>Result: {verification.liveness.status === 'LIVE' ? 'Confirmed live' : verification.liveness.status === 'SUSPECTED_SPOOF' ? 'Possible non-live image' : 'Not checked'}</p>
               </div>
             )}
             {verification.deepfake && (
               <div>
-                <p className="font-semibold text-foreground">Deepfake Analysis</p>
+                <p className="font-semibold text-foreground">Photo Authenticity</p>
                 <p>Status: {verification.deepfake.status} | Score: {verification.deepfake.score ?? 'N/A'}</p>
               </div>
             )}

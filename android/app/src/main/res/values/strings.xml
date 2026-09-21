@@ -325,7 +325,7 @@
     <string name="settings_high_risk_only">Only notify for high-risk cases</string>
     <string name="settings_local_only_notice">Stored on this device only — not synced to the backend in this build.</string>
     <string name="settings_risk_config">Screening Rules &amp; Risk Configuration</string>
-    <string name="settings_risk_signals_desc">Signals combined into the risk score: document checksum/MRZ validation, forensics (ELA), deepfake heuristic, blacklist/registry lookup, face match, identity graph, and liveness heuristic.</string>
+    <string name="settings_risk_signals_desc">Signals combined into the risk score: document validation, document integrity check, photo authenticity, watchlist lookup, face match, identity cross-check, and live photo verification.</string>
     <string name="settings_risk_weights_desc">Weights and thresholds are configured and enforced server-side by the scoring engine only — this app cannot read or set them, and no UI path here can ever submit a manually chosen score.</string>
     <string name="settings_document">Document Settings</string>
     <string name="settings_accepted_types">Accepted document types</string>
@@ -428,10 +428,10 @@
     <string name="check_not_run_device">Not run on this device</string>
     <string name="check_face_match">Face match</string>
     <string name="check_needs_both">Needs both a document photo and a live capture</string>
-    <string name="check_liveness">Liveness / spoof check</string>
+    <string name="check_liveness">Live photo verification</string>
     <string name="check_not_computed">Not computed on this device</string>
-    <string name="check_forensics">Document forensics (ELA)</string>
-    <string name="check_deepfake">Deepfake heuristic</string>
+    <string name="check_forensics">Document integrity check</string>
+    <string name="check_deepfake">Photo authenticity check</string>
     <string name="check_identity_graph">Identity graph</string>
     <string name="check_needs_live">Needs a live capture to compare against earlier records</string>
     <string name="check_passed">Passed</string>
@@ -479,7 +479,7 @@
     <string name="check_tampering_risk">Tampering risk %d%%</string>
     <string name="check_watchlist_hit">%1$s match on %2$s (%3$s)</string>
     <string name="complete_notes">Notes: %s</string>
-    <string name="signal_liveness">Liveness / spoof</string>
+    <string name="signal_liveness">Live photo verification</string>
     <string name="signal_citizen_registry_label">Citizen registry</string>
     <string name="signal_duplicate_doc">Duplicate / reused document</string>
 

@@ -439,8 +439,8 @@ function NetworkGraphTab({ initialPersonId, initialPersonName }: { initialPerson
       {!graph && !loadingGraph && !error && (
         <Card>
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Pick a declared identity to see its network — same document number or same face
-            embedding cluster across other cases. Each edge is an observation with evidence
+            Pick a declared identity to see connections — same document number or same face
+            matched across other cases. Each link is an observation with evidence
             attached, never a conclusion.
           </p>
         </Card>

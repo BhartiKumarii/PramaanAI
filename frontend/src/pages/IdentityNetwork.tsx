@@ -58,8 +58,8 @@ export function IdentityNetwork() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">Identity Network</h1>
         <p className="text-sm text-muted-foreground">
-          Pick a declared identity to see its network — same document number or same face embedding
-          cluster across other cases. Each edge is an observation with evidence attached, never a
+          Pick a declared identity to see connections — same document number or same face
+          matched across other cases. Each link is an observation with evidence attached, never a
           conclusion.
         </p>
       </div>
