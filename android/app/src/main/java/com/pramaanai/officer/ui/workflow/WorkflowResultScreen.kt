@@ -76,6 +76,9 @@ import com.pramaanai.officer.ui.components.WorkflowStepper
 import com.pramaanai.officer.ui.review.ReasonDialog
 import com.pramaanai.officer.ui.review.flaggedReasons
 import com.pramaanai.officer.ui.review.friendlyActionError
+import com.pramaanai.officer.data.humanSignalTitle
+import com.pramaanai.officer.data.humanSignalReason
+import com.pramaanai.officer.data.humanTopReason
 import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.Gray100
@@ -502,10 +505,10 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
     val riskScore = risk?.score ?: 0
 
     val (riskColor, riskIcon, riskLabel) = when (riskLevel) {
-        "HIGH_RISK" -> Triple(DestructiveRed, Icons.Filled.Error, "HIGH RISK")
-        "MEDIUM_RISK" -> Triple(WarningAmber, Icons.Filled.WarningAmber, "MEDIUM RISK")
-        "LOW_RISK" -> Triple(SuccessGreen, Icons.Filled.CheckCircle, "LOW RISK")
-        else -> Triple(Gray600, Icons.Filled.Circle, "PENDING")
+        "HIGH_RISK"   -> Triple(DestructiveRed, Icons.Filled.Error, "Review Required")
+        "MEDIUM_RISK" -> Triple(WarningAmber, Icons.Filled.WarningAmber, "Review Recommended")
+        "LOW_RISK"    -> Triple(SuccessGreen, Icons.Filled.CheckCircle, "No Issues Detected")
+        else          -> Triple(Gray600, Icons.Filled.Circle, "Analysis Pending")
     }
     val checks = documentChecks(item) + screeningChecks(item)
     val passed = checks.count { it.state == CheckState.PASS }
@@ -575,14 +578,18 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
             }
             Spacer(Modifier.height(10.dp))
             Text(
-                if (risk?.decision == "MANUAL_REVIEW") "Officer review recommended" else "No review flags raised",
+                if (risk?.decision == "MANUAL_REVIEW") "Review recommended — check findings below" else "No issues detected",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = Ink900,
             )
             if (!risk?.topReason.isNullOrBlank()) {
                 Spacer(Modifier.height(4.dp))
-                Text(risk!!.topReason, style = MaterialTheme.typography.bodySmall, color = Gray600)
+                Text(
+                    humanTopReason(risk!!.topReason),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Gray600,
+                )
             }
             Spacer(Modifier.height(6.dp))
             Text(
@@ -625,43 +632,19 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
     }
 }
 
-fun signalTitle(signal: String): String = when (signal) {
-    "checksum" -> "Document checks"
-    "forensics" -> "Document forensics (ELA)"
-    "deepfake" -> "Deepfake heuristic"
-    "liveness" -> "Liveness / spoof"
-    "blacklist" -> "Watchlist registry"
-    "face_match" -> "Face match"
-    "face_detection" -> "Face in live capture"
-    "identity_graph" -> "Identity graph"
-    "duplicate_document" -> "Duplicate / reused document"
-    "citizen_registry" -> "Citizen registry"
-    else -> signal.replace("_", " ").replaceFirstChar { it.uppercase() }
-}
+fun signalTitle(signal: String): String = humanSignalTitle(signal)
 
 @Composable
 fun RiskSignalRow(signal: com.pramaanai.officer.data.model.RiskSignalBreakdown) {
-    val contributionPct = (signal.contribution * 100).toInt()
     Column(modifier = Modifier.padding(vertical = 6.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                signalTitle(signal.signal),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                color = Ink900,
-            )
-            Text(
-                "+$contributionPct%",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = AccentGreen,
-            )
-        }
         Text(
-            signal.reason,
+            humanSignalTitle(signal.signal),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = Ink900,
+        )
+        Text(
+            humanSignalReason(signal.signal, signal.reason),
             style = MaterialTheme.typography.labelSmall,
             color = Gray600,
         )

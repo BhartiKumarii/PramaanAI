@@ -103,31 +103,16 @@ fun SettingsScreen(repository: ScreeningRepository, onBack: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
             }
             item {
-                SettingsSection(stringResource(R.string.settings_risk_config)) {
-                    Text(
-                        stringResource(R.string.settings_risk_signals_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        stringResource(R.string.settings_risk_weights_desc),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Gray600,
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-            item {
-                SettingsSection(stringResource(R.string.settings_document)) {
-                    SettingsInfoRow(stringResource(R.string.settings_accepted_types), stringResource(R.string.settings_accepted_types_value))
-                    SettingsInfoRow(stringResource(R.string.settings_cross_validation), stringResource(R.string.settings_enabled))
+                SettingsSection("Verification Settings") {
+                    SettingsInfoRow("Accepted document types", "Passport, Visa, National ID, Driving Licence, Permit")
+                    SettingsInfoRow("Front/back comparison", "Enabled")
+                    SettingsInfoRow("Risk thresholds", "Managed by server — contact admin to change")
                 }
                 Spacer(Modifier.height(12.dp))
             }
             item {
                 SettingsSection(stringResource(R.string.settings_system_prefs)) {
                     SettingsInfoRow(stringResource(R.string.settings_theme), stringResource(R.string.settings_theme_value))
-                    SettingsInfoRow(stringResource(R.string.settings_backend), "http://127.0.0.1:8000 (via adb reverse)")
                 }
             }
         }

@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
+import com.pramaanai.officer.data.humanLabel
+import com.pramaanai.officer.data.humanTopReason
 import com.pramaanai.officer.data.computeAnalytics
 import com.pramaanai.officer.data.dailyActivity
 import com.pramaanai.officer.data.hourlyActivity
@@ -322,8 +324,9 @@ private fun RecentRow(item: ScreeningQueueItem, onClick: () -> Unit) {
     ) {
         Column(Modifier.weight(1f)) {
             Text(item.travelerName, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+            val docLabel = item.documentType.replace("_", " ").replaceFirstChar { it.uppercase() }
             Text(
-                "${item.nationality} · ${item.documentType.replace("_", " ")} · ${item.status.name}",
+                "${item.nationality} · $docLabel · ${item.status.humanLabel()}",
                 style = MaterialTheme.typography.labelSmall,
                 color = Gray500,
             )

@@ -38,6 +38,8 @@ import com.pramaanai.officer.ui.components.EmptyState
 import com.pramaanai.officer.ui.components.RiskBadge
 import androidx.compose.ui.res.stringResource
 import com.pramaanai.officer.R
+import com.pramaanai.officer.data.humanLabel
+import com.pramaanai.officer.data.humanTopReason
 import com.pramaanai.officer.ui.theme.Gray200
 import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Gray600
@@ -116,14 +118,14 @@ private fun QueueRow(item: ScreeningQueueItem, onClick: () -> Unit) {
             }
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(item.risk?.topReason ?: stringResource(R.string.queue_awaiting_decision), style = MaterialTheme.typography.labelSmall, color = Gray500, modifier = Modifier.weight(1f))
+                Text(humanTopReason(item.risk?.topReason) ?: stringResource(R.string.queue_awaiting_decision), style = MaterialTheme.typography.labelSmall, color = Gray500, modifier = Modifier.weight(1f))
                 Text(timeAgo(item.submittedAt, androidx.compose.ui.platform.LocalContext.current.resources), style = MaterialTheme.typography.labelSmall, color = Gray500)
             }
             Spacer(Modifier.height(4.dp))
             // Built-in sample records (ids "mock-N") are synthetic — say so on the card,
             // not just in the id, so they are never mistaken for a real screening.
-            val demoTag = if (item.id.startsWith("mock-")) " · DEMO DATA (synthetic)" else ""
-            Text("${stringResource(R.string.queue_status_prefix)}${item.status.name} · ID ${item.id.take(8)}$demoTag", style = MaterialTheme.typography.labelSmall, color = Gray500)
+            val demoTag = if (item.id.startsWith("mock-")) " · Demo data" else ""
+            Text("${item.status.humanLabel()} · ${item.id.take(8)}$demoTag", style = MaterialTheme.typography.labelSmall, color = Gray500)
         }
     }
 }

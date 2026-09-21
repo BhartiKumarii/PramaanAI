@@ -20,12 +20,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pramaanai.officer.R
+import com.pramaanai.officer.data.humanSignalTitle
+import com.pramaanai.officer.data.humanSignalReason
+import com.pramaanai.officer.data.humanTopReason
 import com.pramaanai.officer.data.model.ScreeningQueueItem
 import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.Gray500
 import com.pramaanai.officer.ui.theme.Gray600
-import com.pramaanai.officer.ui.workflow.signalTitle
 
 // Shared by the Screening Review screen and the workflow's Officer Review
 // step: a flag or hand-off records what the system itself found, so an
@@ -39,8 +41,11 @@ fun flaggedReasons(ctx: Context, item: ScreeningQueueItem): List<String> {
     val fromSignals = risk?.breakdown.orEmpty()
         .filter { it.rawRisk > 0.0001 }
         .sortedByDescending { it.contribution }
-        .map { "${signalTitle(it.signal)}: ${it.reason}" }
-    val head = risk?.topReason?.takeIf { it.startsWith("hard override") }?.let { listOf(it.removePrefix("hard override: ").replaceFirstChar { c -> c.uppercase() }) }.orEmpty()
+        .map { "${humanSignalTitle(it.signal)}: ${humanSignalReason(it.signal, it.reason)}" }
+    val head = risk?.topReason
+        ?.takeIf { it.startsWith("hard override") }
+        ?.let { listOf(humanTopReason(it)) }
+        .orEmpty()
     val all = (head.filter { h -> fromSignals.none { it.contains(h, ignoreCase = true) } } + fromSignals).distinct().take(6)
     return all.ifEmpty { listOf(ctx.getString(R.string.flag_officer_initiated)) }
 }
