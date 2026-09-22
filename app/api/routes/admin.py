@@ -163,7 +163,11 @@ def reset_screening_data(
     for t in tables:
         try:
             count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
-            db.execute(text(f"DELETE FROM {t}"))
+            try:
+                db.execute(text(f"TRUNCATE TABLE {t} CASCADE"))
+            except Exception:
+                db.rollback()
+                db.execute(text(f"DELETE FROM {t}"))
             db.commit()
             deleted[t] = count
         except Exception:
