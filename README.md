@@ -99,6 +99,7 @@ A three-component system:
 - **Perspective Correction** — Automatic document edge detection and crop
 - **Verification Evidence** — Per-check PASS/WARNING/FAIL/NOT_AVAILABLE display with reasons
 - **Offline Operation** — Full local extraction + encrypted queue with automatic sync via WorkManager
+- **7 Languages** — Full UI localization: English, Hindi, Nepali, Bengali, Assamese, Punjabi, Dzongkha (434 strings each)
 
 ### Document Support
 | Country | Documents |
@@ -288,7 +289,7 @@ The `ID_DOCUMENT_DATASET/` directory contains sample documents for testing:
 - Production-grade deep learning models for face recognition and deepfake detection
 - Multi-frame liveness detection with challenge-response
 - Edge deployment for Border Out Posts with limited connectivity
-- Multi-language UI (Hindi, Nepali, Dzongkha, Bengali)
+- Multi-language UI expanded (currently English, Hindi, Nepali, Bengali, Assamese, Punjabi, Dzongkha — all 434 strings)
 - Biometric integration (fingerprint, iris) where hardware is available
 - Real-time inter-checkpoint communication network
 - Progressive Web App for the dashboard
