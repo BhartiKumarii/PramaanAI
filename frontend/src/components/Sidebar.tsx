@@ -1,10 +1,8 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
-  FolderOpen,
-  Inbox,
-  ClipboardCheck,
-  AlertTriangle,
+  ShieldCheck,
+  FileSearch,
   Fingerprint,
   ScanText,
   MapPin,
@@ -25,10 +23,8 @@ import logoIcon from '../assets/logo-icon.png'
 
 const NAV_ICON: Record<string, LucideIcon> = {
   Overview: LayoutDashboard,
-  'Screening Requests': Inbox,
-  'Screening Results': ClipboardCheck,
-  'Case Management': FolderOpen,
-  'Risk & Alerts': AlertTriangle,
+  'Verification Desk': ShieldCheck,
+  'Case Intelligence': FileSearch,
   'Identity Intelligence': Fingerprint,
   'Document Intelligence': ScanText,
   Checkpoints: MapPin,
@@ -41,18 +37,17 @@ const NAV_ICON: Record<string, LucideIcon> = {
   'Admin Settings': Settings,
 }
 
-const NAV_ITEMS: { label: string; to: string }[] = [
+interface NavItem { label: string; to: string; dividerAfter?: boolean }
+
+const NAV_ITEMS: NavItem[] = [
   { label: 'Overview', to: '/console' },
-  { label: 'Screening Requests', to: '/console/requests' },
-  { label: 'Screening Results', to: '/console/results' },
-  { label: 'Case Management', to: '/console/cases' },
-  { label: 'Risk & Alerts', to: '/console/alerts' },
+  { label: 'Verification Desk', to: '/console/verification', dividerAfter: true },
   { label: 'Identity Intelligence', to: '/console/identity' },
   { label: 'Document Intelligence', to: '/console/document-intelligence' },
   { label: 'Checkpoints', to: '/console/checkpoints' },
   { label: 'Area Monitoring', to: '/console/area-monitoring' },
   { label: 'Officers Monitoring', to: '/console/officers' },
-  { label: 'Device Management', to: '/console/devices' },
+  { label: 'Device Management', to: '/console/devices', dividerAfter: true },
   { label: 'Users', to: '/console/admin/users' },
   { label: 'Analytics & Reports', to: '/console/analytics' },
   { label: 'Audit Trail', to: '/console/admin/audit-logs' },
@@ -87,49 +82,53 @@ export function Sidebar({
         </span>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         {NAV_ITEMS.map((item) => {
           const Icon = NAV_ICON[item.label] ?? LayoutDashboard
-          const badge = item.label === 'Risk & Alerts' ? alertsCount : null
+          const badge = item.label === 'Verification Desk' ? alertsCount : null
           return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/console'}
-              className={({ isActive }) =>
-                cn(
-                  'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && <span className="absolute left-0 h-6 w-1 rounded-r-full bg-accent" />}
-                  <Icon
-                    className={cn(
-                      'h-4.5 w-4.5 shrink-0 transition-transform',
-                      isActive ? 'text-accent' : 'group-hover:scale-110',
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      'flex flex-1 items-center justify-between overflow-hidden whitespace-nowrap transition-all duration-300',
-                      collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100',
-                    )}
-                  >
-                    {item.label}
-                    {!!badge && (
-                      <span className="ml-2 rounded-full bg-status-high px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                        {badge}
-                      </span>
-                    )}
-                  </span>
-                </>
+            <div key={item.to}>
+              <NavLink
+                to={item.to}
+                end={item.to === '/console'}
+                className={({ isActive }) =>
+                  cn(
+                    'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && <span className="absolute left-0 h-6 w-1 rounded-r-full bg-accent" />}
+                    <Icon
+                      className={cn(
+                        'h-4.5 w-4.5 shrink-0 transition-transform',
+                        isActive ? 'text-accent' : 'group-hover:scale-110',
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'flex flex-1 items-center justify-between overflow-hidden whitespace-nowrap transition-all duration-300',
+                        collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100',
+                      )}
+                    >
+                      {item.label}
+                      {!!badge && badge > 0 && (
+                        <span className="ml-2 rounded-full bg-status-high px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                          {badge}
+                        </span>
+                      )}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+              {item.dividerAfter && (
+                <div className={cn('my-2 border-t border-sidebar-border', collapsed ? 'mx-2' : 'mx-3')} />
               )}
-            </NavLink>
+            </div>
           )
         })}
       </nav>

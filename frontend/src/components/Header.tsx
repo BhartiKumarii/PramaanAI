@@ -1,29 +1,22 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Wifi, WifiOff, LogOut } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
-import { useHealthPing } from '../hooks/useHealthPing'
+import { useHealthPing, type HealthState } from '../hooks/useHealthPing'
 
 const TITLE_BY_PATH: { test: (p: string) => boolean; label: string }[] = [
   { test: (p) => p === '/console', label: 'Overview' },
-  { test: (p) => p.startsWith('/console/requests'), label: 'Screening Requests' },
-  { test: (p) => p.startsWith('/console/results'), label: 'Screening Results' },
-  { test: (p) => p.startsWith('/console/cases'), label: 'Case Management' },
-  { test: (p) => p.startsWith('/console/alerts'), label: 'Risk & Alerts' },
-  { test: (p) => p.startsWith('/console/person-search'), label: 'Person Search' },
-  { test: (p) => p.startsWith('/console/identity-patterns'), label: 'Identity & Pattern Analysis' },
-  { test: (p) => p.startsWith('/console/identity-network'), label: 'Identity Network' },
+  { test: (p) => /^\/console\/cases\//.test(p), label: 'Case Intelligence' },
+  { test: (p) => p.startsWith('/console/verification'), label: 'Verification Desk' },
+  { test: (p) => p.startsWith('/console/cases'), label: 'Verification Desk' },
+  { test: (p) => p.startsWith('/console/identity'), label: 'Identity Intelligence' },
   { test: (p) => p.startsWith('/console/document-intelligence'), label: 'Document Intelligence' },
   { test: (p) => p.startsWith('/console/checkpoints'), label: 'Checkpoints' },
   { test: (p) => p.startsWith('/console/area-monitoring'), label: 'Area Monitoring' },
   { test: (p) => p.startsWith('/console/officers'), label: 'Officers Monitoring' },
-  { test: (p) => p.startsWith('/console/devices/flagged'), label: 'Flagged Devices' },
-  { test: (p) => p.startsWith('/console/devices/revoked'), label: 'Revoked Devices' },
+  { test: (p) => p.startsWith('/console/devices'), label: 'Device Management' },
   { test: (p) => p.startsWith('/console/admin/users'), label: 'User Management' },
-  { test: (p) => p.startsWith('/console/admin/devices'), label: 'Devices Monitoring' },
-  { test: (p) => p.startsWith('/console/admin/registry'), label: 'Registry' },
-  { test: (p) => p.startsWith('/console/admin/system'), label: 'System Health' },
   { test: (p) => p.startsWith('/console/admin/audit-logs'), label: 'Audit Trail' },
-  { test: (p) => p.startsWith('/console/reports'), label: 'Reports & Analytics' },
+  { test: (p) => p.startsWith('/console/analytics'), label: 'Analytics & Reports' },
   { test: (p) => p.startsWith('/console/settings'), label: 'Admin Settings' },
 ]
 
@@ -35,7 +28,7 @@ export function Header() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const health = useHealthPing()
+  const { state: health, everConnected } = useHealthPing()
 
   if (!user) return null
 
@@ -44,11 +37,13 @@ export function Header() {
     navigate('/login')
   }
 
+  const showTag = health !== 'online' && (health !== 'offline' || everConnected)
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-sm">
       <h1 className="text-lg font-semibold text-foreground">{sectionTitle(location.pathname)}</h1>
       <div className="flex items-center gap-4 text-sm">
-        {health !== 'online' && (
+        {showTag && (
           <span
             className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${
               health === 'checking'

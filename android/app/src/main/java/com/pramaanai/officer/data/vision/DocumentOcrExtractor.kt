@@ -1083,19 +1083,6 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Nepal passport: personal number
-        if (!result.containsKey("personal_number")) {
-            val pnIdx = lines.indexOfFirst {
-                it.contains("PERSONAL NO", ignoreCase = true) || it.contains("व्यक्तिगत नं", ignoreCase = false)
-            }
-            if (pnIdx >= 0) {
-                val candidate = lines.getOrNull(pnIdx)?.let {
-                    Regex("""(?:PERSONAL\s*NO\.?|व्यक्तिगत\s*नं\.?)\s*[:/]?\s*(\d{3,10})""", RegexOption.IGNORE_CASE).find(it)?.groupValues?.get(1)
-                } ?: lines.getOrNull(pnIdx + 1)?.trim()?.takeIf { Regex("""^\d{3,10}$""").matches(it) }
-                candidate?.let { result["personal_number"] = it }
-            }
-        }
-
         // Nepal passport: citizenship reference number
         if (!result.containsKey("citizenship_number")) {
             NEPAL_CITIZENSHIP_PATTERN.find(text)?.let { result["citizenship_number"] = it.groupValues[1] }

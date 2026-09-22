@@ -200,7 +200,7 @@ export function Dashboard() {
       {immigration.status === 'ok' && immigration.data &&
         (immigration.data.pending_review > 0 || immigration.data.high_priority > 0) && (
         <button
-          onClick={() => navigate('/console/requests')}
+          onClick={() => navigate('/console/verification')}
           className="flex w-full items-center justify-between rounded-xl border border-status-review/40 bg-status-review-bg px-5 py-4 text-left hover:border-status-review/60 transition-colors"
         >
           <div className="flex items-center gap-3">

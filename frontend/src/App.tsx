@@ -8,7 +8,7 @@ import { HowItWorksPage } from './pages/HowItWorksPage'
 import { SecurityPage } from './pages/SecurityPage'
 import { AboutPage } from './pages/AboutPage'
 import { Dashboard } from './pages/Dashboard'
-import { CasesList } from './pages/CasesList'
+import { VerificationDesk } from './pages/VerificationDesk'
 import { CaseReview } from './pages/CaseReview'
 import { AdminUsers } from './pages/AdminUsers'
 import { IdentityIntelligence } from './pages/IdentityIntelligence'
@@ -39,11 +39,13 @@ function AppRoutes() {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/cases" element={<CasesList view="all" />} />
+                <Route path="/verification" element={<VerificationDesk />} />
+                <Route path="/cases" element={<VerificationDesk />} />
                 <Route path="/cases/:caseId" element={<CaseReview />} />
-                <Route path="/requests" element={<CasesList view="requests" />} />
-                <Route path="/results" element={<CasesList view="results" />} />
-                <Route path="/alerts" element={<CasesList view="alerts" />} />
+                {/* Legacy routes redirect to new structure */}
+                <Route path="/requests" element={<Navigate to="/console/verification" replace />} />
+                <Route path="/results" element={<Navigate to="/console/verification" replace />} />
+                <Route path="/alerts" element={<Navigate to="/console/verification" replace />} />
                 <Route path="/identity" element={<IdentityIntelligence />} />
                 <Route path="/document-intelligence" element={<DocumentIntelligence />} />
                 <Route path="/checkpoints" element={<Checkpoints />} />
