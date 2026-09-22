@@ -102,7 +102,7 @@ private fun humaniseSimilarityReason(raw: String): String {
     return if (sim != null) {
         val pct = (sim * 100).toInt()
         when {
-            pct >= 75 -> "Photo matches document ($pct% confidence)"
+            pct >= 75 -> "Photo matches document ($pct% match strength)"
             pct >= 50 -> "Partial photo match ($pct%) — manual check recommended"
             else      -> "Photo does not match document ($pct% similarity)"
         }

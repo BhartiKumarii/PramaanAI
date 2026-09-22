@@ -41,7 +41,6 @@ from app.schemas.case import (
 )
 from app.schemas.network import IdentityHistoryRecord
 from app.schemas.verification import VerificationRecordResponse
-from app.services.identity_graph.graph import build_graph, find_multi_identity_cluster
 from app.utils.masking import mask_document_number
 from app.services.citizen_registry.base import CitizenRegistryResult
 from app.services.deepfake.base import DeepfakeResult
@@ -283,43 +282,45 @@ def get_case_audit_route(case_id: uuid.UUID, user: User = Depends(get_current_us
 def get_case_identity_history_route(
     case_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> list[IdentityHistoryRecord]:
+    from app.services.face.embedding import cosine_similarity
+    from app.services.identity_graph.graph import DEFAULT_MATCH_THRESHOLD
+
     case = _get_case_or_404(db, case_id, user)
     embedding = get_by_case_id(db, case_id)
     if embedding is None:
-        # No live capture was taken during this case's screening, so
-        # there's nothing to compare — an honest empty result, not a
-        # fabricated "no history" claim.
         return []
 
-    graph = build_graph(list_all(db))
-    cluster = find_multi_identity_cluster(graph, str(embedding.id))
+    target_vec = json.loads(embedding.embedding_json)
+    all_records = list_all(db)
 
     records: list[IdentityHistoryRecord] = []
-    for member in cluster.members:
-        if member.record_id == str(embedding.id):
+    for other in all_records:
+        if str(other.id) == str(embedding.id):
             continue
-        similarity = None
-        if graph.has_edge(str(embedding.id), member.record_id):
-            similarity = graph.edges[str(embedding.id), member.record_id]["similarity"]
+        other_vec = json.loads(other.embedding_json)
+        if len(other_vec) != len(target_vec):
+            continue
+        sim = cosine_similarity(target_vec, other_vec)
+        if sim < DEFAULT_MATCH_THRESHOLD:
+            continue
 
-        member_embedding = get_embedding(db, uuid.UUID(member.record_id))
         related_case = (
-            get_case(db, member_embedding.case_id)
-            if member_embedding is not None and member_embedding.case_id is not None
+            get_case(db, other.case_id)
+            if other.case_id is not None
             else None
         )
         checkpoint = db.get(Checkpoint, str(related_case.checkpoint_id)) if related_case is not None else None
 
         records.append(
             IdentityHistoryRecord(
-                record_id=member.record_id,
+                record_id=str(other.id),
                 case_id=str(related_case.id) if related_case else None,
                 case_number=related_case.case_number if related_case else None,
                 checkpoint_code=checkpoint.code if checkpoint else None,
-                declared_name=member.reference_name,
-                masked_document_number=mask_document_number(member.document_number) if member.document_number else None,
+                declared_name=other.reference_name,
+                masked_document_number=mask_document_number(other.document_number) if other.document_number else None,
                 occurred_at=related_case.created_at.isoformat() if related_case else None,
-                similarity=similarity,
+                similarity=sim,
                 review_status=related_case.status.value if related_case else None,
             )
         )

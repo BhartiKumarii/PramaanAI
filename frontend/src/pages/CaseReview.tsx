@@ -678,7 +678,7 @@ export function CaseReview() {
               }`}>
                 <span aria-hidden="true">{v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'}</span>
                 {v.risk.level === 'HIGH_RISK' ? 'High Risk' : v.risk.level === 'MEDIUM_RISK' ? 'Medium Risk' : 'Low Risk'}
-                {v.risk.score != null && <span className="ml-1 opacity-75">({Math.round(v.risk.score * 100)}%)</span>}
+                {v.risk.score != null && <span className="ml-1 opacity-75">({Math.round(v.risk.score)}%)</span>}
               </span>
             )}
           </div>

@@ -51,7 +51,6 @@ enum class ShellTab(val labelRes: Int, val icon: ImageVector) {
     DASHBOARD(R.string.nav_dashboard, Icons.Filled.Dashboard),
     QUEUE(R.string.nav_queue, Icons.Filled.ViewList),
     HISTORY(R.string.nav_history, Icons.Filled.History),
-    ALERTS(R.string.nav_alerts, Icons.Filled.Notifications),
     MORE(R.string.nav_more, Icons.Filled.MoreHoriz),
 }
 

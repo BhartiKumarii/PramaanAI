@@ -5,7 +5,7 @@ import axios from 'axios'
 // VITE_API_BASE_URL to point straight at the deployed backend.
 export const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
-export const apiClient = axios.create({ baseURL })
+export const apiClient = axios.create({ baseURL, timeout: 30000 })
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('bsa_access_token')
