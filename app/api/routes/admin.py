@@ -160,9 +160,13 @@ def reset_screening_data(
     tables = ["case_notes", "officer_decisions", "audit_events", "stored_images", "cases", "verifications", "sync_queue_items"]
     deleted = {}
     for t in tables:
-        count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
-        db.execute(text(f"DELETE FROM {t}"))
-        deleted[t] = count
+        try:
+            count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
+            db.execute(text(f"DELETE FROM {t}"))
+            deleted[t] = count
+        except Exception:
+            db.rollback()
+            deleted[t] = "skipped"
     db.commit()
     return {"deleted": deleted}
 
