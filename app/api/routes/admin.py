@@ -2,7 +2,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core.security import require_role
@@ -151,6 +151,20 @@ def reactivate_device_route(
     device = reactivate_device(db, device)
     log_event(db, None, "DEVICE_REACTIVATED", user.id)
     return _device_response(db, device)
+
+
+@router.delete("/reset-screening", summary="Delete all screening cases, verifications, and audit data")
+def reset_screening_data(
+    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+) -> dict:
+    tables = ["case_notes", "officer_decisions", "audit_events", "stored_images", "cases", "verifications", "sync_queue_items"]
+    deleted = {}
+    for t in tables:
+        count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
+        db.execute(text(f"DELETE FROM {t}"))
+        deleted[t] = count
+    db.commit()
+    return {"deleted": deleted}
 
 
 @router.get("/checkpoints", response_model=list[CheckpointResponse], summary="List all checkpoints")
