@@ -201,3 +201,39 @@ private fun extractClusterSize(raw: String): String {
     val n = Regex("""(\d+)\s+face""").find(raw)?.groupValues?.getOrNull(1)
     return n ?: "multiple"
 }
+
+// ── Validation finding reason → plain language ──────────────────────────────
+
+fun humanValidationReason(check: String, raw: String?): String {
+    if (raw.isNullOrBlank()) return "Check complete"
+    val lower = raw.lowercase()
+    return when {
+        lower.contains("expir") && lower.contains("expired") -> extractExpiryReason(raw)
+        lower.contains("check digit") && lower.contains("fail") -> "Document data check failed — a digit does not match"
+        lower.contains("mrz") && lower.contains("fail") -> "Machine-readable zone check failed"
+        lower.contains("mrz") && lower.contains("pass") -> "Machine-readable zone verified"
+        lower.contains("checksum") && lower.contains("fail") -> "Document data integrity check failed"
+        lower.contains("checksum") && lower.contains("pass") -> "Document data integrity verified"
+        lower.contains("mismatch") -> "Document field does not match expected value"
+        lower.contains("match") && !lower.contains("mis") -> "Document field matches records"
+        lower.contains("valid") && lower.contains("pass") -> "Document validity confirmed"
+        lower.contains("revoked") || lower.contains("cancel") -> "Document has been cancelled or revoked"
+        else -> shortenRawReason(raw)
+    }
+}
+
+// ── Source label → plain language ────────────────────────────────────────────
+
+fun humanSourceLabel(signal: String): String = when (signal) {
+    "checksum" -> "Document Validity Check"
+    "forensics" -> "Document Appearance Analysis"
+    "deepfake" -> "Photo Authenticity Check"
+    "liveness" -> "Live Person Verification"
+    "blacklist" -> "Security Records Database"
+    "face_match" -> "Photo Comparison Service"
+    "identity_graph" -> "Identity Records Analysis"
+    "face_detection" -> "Photo Quality Check"
+    "citizen_registry" -> "Identity Database Lookup"
+    "duplicate_document" -> "Document History Check"
+    else -> signal.replace("_", " ").replaceFirstChar { it.uppercase() }
+}

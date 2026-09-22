@@ -158,6 +158,11 @@ class ScreeningRepository(
     suspend fun hydrateFullDetail(id: String) {
         val record = api.getVerification(AuthSession.bearerHeader(), id)
         val existing = store.getById(id) ?: return
+
+        val docPath = existing.documentImagePath ?: downloadImage(id, "document", "${id}.jpg")
+        val backPath = existing.documentBackImagePath ?: downloadImage(id, "document-back", "${id}_back.jpg")
+        val selfiePath = existing.selfieImagePath ?: downloadImage(id, "selfie", "${id}_selfie.jpg")
+
         store.upsert(
             existing.copy(
                 travelerName = record.travelerName ?: existing.travelerName,
@@ -172,8 +177,30 @@ class ScreeningRepository(
                 tampering = record.tampering ?: existing.tampering,
                 face = record.face ?: existing.face,
                 identityGraph = record.identityGraph ?: existing.identityGraph,
+                documentImagePath = docPath,
+                documentBackImagePath = backPath,
+                selfieImagePath = selfiePath,
             ),
         )
+    }
+
+    private suspend fun downloadImage(verificationId: String, type: String, filename: String): String? {
+        return try {
+            val body = when (type) {
+                "document" -> api.downloadDocumentImage(AuthSession.bearerHeader(), verificationId)
+                "document-back" -> api.downloadDocumentBackImage(AuthSession.bearerHeader(), verificationId)
+                "selfie" -> api.downloadSelfieImage(AuthSession.bearerHeader(), verificationId)
+                else -> return null
+            }
+            withContext(Dispatchers.IO) {
+                val dest = File(imagesDir, filename)
+                imagesDir.mkdirs()
+                dest.outputStream().use { out -> body.byteStream().copyTo(out) }
+                dest.absolutePath
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /** Real backend lifecycle trail for this record (CREATED/VIEWED/

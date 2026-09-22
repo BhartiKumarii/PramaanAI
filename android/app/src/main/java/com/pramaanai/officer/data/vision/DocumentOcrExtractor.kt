@@ -674,17 +674,55 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Bhutan passport: join "NAME OF BEARER" (given name) + surname on consecutive lines
+        // Bhutan passport: "NAME OF BEARER" and "SURNAME" are on separate
+        // lines with their respective values on the NEXT non-label line.
+        // OCR may read: "SURNAME\nDOE\nNAME OF BEARER\nJOHN" or vice versa.
+        // Skip any line that IS a label when looking for the value.
         if (!result.containsKey("name")) {
-            val nameOfBearerIdx = lines.indexOfFirst { it.contains("NAME OF BEARER", ignoreCase = true) || it.contains("NAME OF BEAFER", ignoreCase = true) }
-            val surnameIdx = lines.indexOfFirst { it.equals("SURNAME", ignoreCase = true) || it.contains("SURNAME", ignoreCase = true) }
-            val givenName = if (nameOfBearerIdx >= 0 && nameOfBearerIdx + 1 < lines.size) lines[nameOfBearerIdx + 1].trim() else null
-            val surname = if (surnameIdx >= 0 && surnameIdx + 1 < lines.size) lines[surnameIdx + 1].trim() else null
+            val labelLines = setOf("surname", "name of bearer", "name of beafer", "nationality",
+                "sex", "date of birth", "date of expiry", "date of issue",
+                "place of birth", "place of issue", "passport no", "type",
+                "country code", "citizenship id no", "authority", "issuing authority")
+
+            fun valueAfterLabel(labelIdx: Int): String? {
+                if (labelIdx < 0) return null
+                // First check text after label on the same line
+                val sameLine = lines[labelIdx]
+                val labelText = sameLine.trim()
+                // If the label line also contains a value (e.g. "PASSPORT NO G000000")
+                val afterColon = sameLine.substringAfter(":", "").trim()
+                    .ifBlank { sameLine.substringAfterLast("  ", "").trim() }
+                if (afterColon.isNotBlank() && !labelLines.contains(afterColon.lowercase())) {
+                    return afterColon
+                }
+                // Look at following lines, skip any that are themselves labels
+                for (offset in 1..3) {
+                    val nextIdx = labelIdx + offset
+                    if (nextIdx >= lines.size) break
+                    val nextLine = lines[nextIdx].trim()
+                    val nextLower = nextLine.lowercase()
+                    if (labelLines.any { nextLower == it || nextLower.startsWith("$it ") }) continue
+                    if (nextLine.isBlank()) continue
+                    return nextLine
+                }
+                return null
+            }
+
+            val nameOfBearerIdx = lines.indexOfFirst {
+                it.contains("NAME OF BEARER", ignoreCase = true) ||
+                it.contains("NAME OF BEAFER", ignoreCase = true) ||
+                it.contains("GIVEN NAME", ignoreCase = true)
+            }
+            val surnameIdx = lines.indexOfFirst {
+                val upper = it.trim().uppercase()
+                upper == "SURNAME" || upper.startsWith("SURNAME ")
+            }
+            val givenName = valueAfterLabel(nameOfBearerIdx)?.takeIf { isLikelyPersonName(it) }
+            val surname = valueAfterLabel(surnameIdx)?.takeIf { isLikelyPersonName(it) }
             when {
-                givenName != null && surname != null && isLikelyPersonName(givenName) && isLikelyPersonName(surname) ->
-                    result["name"] = "$givenName $surname"
-                givenName != null && isLikelyPersonName(givenName) -> result["name"] = givenName
-                surname != null && isLikelyPersonName(surname) -> result["name"] = surname
+                givenName != null && surname != null -> result["name"] = "$givenName $surname"
+                givenName != null -> result["name"] = givenName
+                surname != null -> result["name"] = surname
             }
         }
 
@@ -1027,7 +1065,9 @@ object DocumentOcrExtractor {
                     .removePrefix("/").removePrefix(":").removePrefix("-").removePrefix("=")
                     .trim()
                 val candidate = afterSeparator.ifBlank {
-                    lines.getOrNull(index + 1)?.takeIf { !containsAnyLabel(it) }.orEmpty()
+                    // Look at the next line, but skip it if it IS itself a known label
+                    val nextLine = lines.getOrNull(index + 1)
+                    if (nextLine != null && !containsAnyLabel(nextLine) && !isLabelOnlyLine(nextLine)) nextLine else ""
                 }
                 if (candidate.isBlank()) continue
 
@@ -1261,6 +1301,18 @@ object DocumentOcrExtractor {
     private fun containsAnyLabel(line: String): Boolean {
         val lower = line.lowercase()
         return LABELS.values.any { labels -> labels.any { lower.contains(it) } }
+    }
+
+    private val LABEL_ONLY_PATTERNS = setOf(
+        "surname", "name of bearer", "name of beafer", "given name", "given names",
+        "nationality", "sex", "date of birth", "date of expiry", "date of issue",
+        "place of birth", "place of issue", "passport no", "passport number",
+        "type", "country code", "citizenship id no", "authority", "issuing authority",
+    )
+
+    private fun isLabelOnlyLine(line: String): Boolean {
+        val trimmed = line.trim().lowercase()
+        return LABEL_ONLY_PATTERNS.any { trimmed == it || trimmed.startsWith("$it ") || trimmed.startsWith("$it:") }
     }
 
     private fun normalizeDate(text: String): String? {

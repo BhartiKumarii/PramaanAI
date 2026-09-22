@@ -83,7 +83,9 @@ import com.pramaanai.officer.ui.review.flaggedReasons
 import com.pramaanai.officer.ui.review.friendlyActionError
 import com.pramaanai.officer.data.humanSignalTitle
 import com.pramaanai.officer.data.humanSignalReason
+import com.pramaanai.officer.data.humanSourceLabel
 import com.pramaanai.officer.data.humanTopReason
+import com.pramaanai.officer.data.humanValidationReason
 import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.Gray100
@@ -431,7 +433,7 @@ private fun signalCheck(risk: RiskResult?, signal: String, label: String, notRun
         s.rawRisk >= 0.7 -> CheckState.ALERT
         else -> CheckState.REVIEW
     }
-    return CheckItem(label, state, s.reason)
+    return CheckItem(label, state, humanSignalReason(signal, s.reason))
 }
 
 private fun prettyCheck(check: String) = check.replace("_", " ").replaceFirstChar { it.uppercase() }
@@ -460,7 +462,7 @@ private fun documentChecks(item: ScreeningQueueItem): List<CheckItem> = buildLis
                         f.severity == "HIGH" -> CheckState.ALERT
                         else -> CheckState.REVIEW
                     },
-                    f.reason,
+                    humanValidationReason(f.check, f.reason),
                 ),
             )
         }
@@ -596,7 +598,7 @@ fun VerificationStep(item: ScreeningQueueItem) {
                 CheckItemRow(CheckItem(
                     "MRZ / Checksum — ${f.check.replace("_", " ").replaceFirstChar { it.uppercase() }}",
                     if (f.status == "PASS") CheckState.PASS else if (f.severity == "HIGH") CheckState.ALERT else CheckState.REVIEW,
-                    f.reason,
+                    humanValidationReason(f.check, f.reason),
                 ))
             }
         } else {
@@ -614,7 +616,7 @@ fun VerificationStep(item: ScreeningQueueItem) {
                 CheckItemRow(CheckItem(
                     "Validity — ${f.check.replace("_", " ").replaceFirstChar { it.uppercase() }}",
                     if (f.status == "PASS") CheckState.PASS else if (f.severity == "HIGH") CheckState.ALERT else CheckState.REVIEW,
-                    f.reason,
+                    humanValidationReason(f.check, f.reason),
                 ))
             }
         }
@@ -628,7 +630,7 @@ fun VerificationStep(item: ScreeningQueueItem) {
             CheckItemRow(CheckItem(
                 f.check.replace("_", " ").replaceFirstChar { it.uppercase() },
                 if (f.status == "PASS") CheckState.PASS else if (f.severity == "HIGH") CheckState.ALERT else CheckState.REVIEW,
-                f.reason,
+                humanValidationReason(f.check, f.reason),
             ))
         }
 
@@ -925,16 +927,7 @@ fun VerificationResultCard(item: ScreeningQueueItem) {
 
 fun signalTitle(signal: String): String = humanSignalTitle(signal)
 
-private fun sourceLabel(signal: String): String = when (signal) {
-    "checksum" -> "Document validation engine (MRZ / Verhoeff)"
-    "forensics" -> "Forensics engine (ELA)"
-    "deepfake" -> "Deepfake heuristic"
-    "liveness" -> "Liveness heuristic"
-    "blacklist" -> "mock_central_registry lookup"
-    "face_match" -> "Face match service"
-    "identity_graph" -> "Identity graph"
-    else -> signal
-}
+private fun sourceLabel(signal: String): String = humanSourceLabel(signal)
 
 @Composable
 fun ReviewStep(item: ScreeningQueueItem) {

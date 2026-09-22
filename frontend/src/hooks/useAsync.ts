@@ -33,8 +33,8 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncSt
         }
       } catch (err) {
         if (cancelled) return
-        if (isNetworkError(err) && retries < 2) {
-          await new Promise((r) => setTimeout(r, (retries + 1) * 2000))
+        if (isNetworkError(err) && retries < 3) {
+          await new Promise((r) => setTimeout(r, (retries + 1) * 3000))
           if (!cancelled) await attempt(retries + 1)
           return
         }

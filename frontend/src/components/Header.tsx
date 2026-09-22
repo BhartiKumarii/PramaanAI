@@ -54,12 +54,14 @@ export function Header() {
         >
           {health === 'online' ? (
             <Wifi className="h-3.5 w-3.5 text-status-clear" />
+          ) : health === 'weak' ? (
+            <Wifi className="h-3.5 w-3.5 text-status-review" />
           ) : health === 'checking' ? (
             <Wifi className="h-3.5 w-3.5 animate-pulse text-muted-foreground" />
           ) : (
             <WifiOff className="h-3.5 w-3.5 text-status-high" />
           )}
-          {health === 'online' ? 'Online' : health === 'checking' ? 'Checking…' : 'Offline'}
+          {health === 'online' ? 'Online' : health === 'weak' ? 'Slow' : health === 'checking' ? 'Waking server…' : 'Offline'}
         </span>
         <span className="hidden text-muted-foreground sm:inline">Officer</span>
         <span className="font-medium text-foreground">{user.username}</span>

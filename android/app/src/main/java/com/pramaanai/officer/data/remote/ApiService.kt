@@ -124,6 +124,24 @@ interface ApiService {
         @Part selfie: MultipartBody.Part? = null,
     ): Map<String, Any>
 
+    @GET("images/{verification_id}/document")
+    suspend fun downloadDocumentImage(
+        @Header("Authorization") authorization: String,
+        @Path("verification_id") verificationId: String,
+    ): okhttp3.ResponseBody
+
+    @GET("images/{verification_id}/document-back")
+    suspend fun downloadDocumentBackImage(
+        @Header("Authorization") authorization: String,
+        @Path("verification_id") verificationId: String,
+    ): okhttp3.ResponseBody
+
+    @GET("images/{verification_id}/selfie")
+    suspend fun downloadSelfieImage(
+        @Header("Authorization") authorization: String,
+        @Path("verification_id") verificationId: String,
+    ): okhttp3.ResponseBody
+
     // Public liveness check (GET /health at the app root, not
     // /system/health which is IT_ADMIN-only) — used by
     // ConnectivityMonitor for the real Online/Weak/Offline check.

@@ -324,6 +324,245 @@
     <string name="doc_type_national_id_sub">མི་སེར་ལག་ཁྱེར། · আধার</string>
     <string name="doc_type_driving_licence_sub">རྒྱ་གར་DL · འབྲུག་DL · བལ་ཡུལ་DL</string>
     <string name="doc_type_permit_sub">ILP · ཆེད་ཡུལ་ཆོག་མཆན།</string>
-    <string name="skip_back_side">Skip — no back side</string>
-    <string name="skip_back_hint">If this document has no back side, you can skip this step.</string>
+    <string name="skip_back_side">བམ — རྒྱབ་ངོས་མེད།</string>
+    <string name="skip_back_hint">ཡིག་ཆ་འདི་ལུ་རྒྱབ་ངོས་མེད་པ་ཅིན། གོ་རིམ་འདི་བམ་ཆོག</string>
+
+    <!-- Alerts -->
+    <string name="alert_document_review">ཡིག་ཆ་ལྟ་ཞིབ་དགོས</string>
+    <string name="alert_risk_review">ཉེན་ཁ་གཏན་འབེབས་ལྟ་ཞིབ་དགོས</string>
+    <string name="alert_duplicate">ཐོ་འགོད་གཉིས་པ</string>
+    <string name="alert_incomplete">བརྡ་དོན་ཚང་མ་མེད</string>
+    <string name="alert_verification">བདེན་བཤེར་དགོས</string>
+    <string name="alerts_empty_title">ད་ལྟ་ཐུལ་ཤར་མེད</string>
+    <string name="alerts_empty_subtitle">འགོ་དཔོན་གྱི་ཞིབ་བཤེར་དགོས་པའི་གཞི་གཏན་ཚུ་འདིར་མཐོང་འོང།</string>
+
+    <!-- Analytics -->
+    <string name="analytics_volume">ཚད</string>
+    <string name="analytics_total_screenings">ཡོངས་རྫོགས་ཞིབ་བཤེར</string>
+    <string name="analytics_this_period">དུས་ཚོད་འདི</string>
+    <string name="analytics_risk_distribution">ཉེན་ཁ་བགོ་བཤའ</string>
+    <string name="analytics_low_risk">ཉེན་ཁ་ཆུང་ཀུ</string>
+    <string name="analytics_medium_risk">ཉེན་ཁ་བར་མ</string>
+    <string name="analytics_high_risk">ཉེན་ཁ་མཐོ་བ</string>
+    <string name="analytics_case_status">གཞི་གཏན་གནས་ཚུལ</string>
+    <string name="analytics_pending_cases">བསྒུག་བཞིན་པའི་གཞི་གཏན</string>
+    <string name="analytics_completed_cases">ཚར་བའི་གཞི་གཏན</string>
+    <string name="analytics_review_rate">ལྟ་ཞིབ་ཚད (རྩོད་པ / ཐག་གཅོད)</string>
+    <string name="analytics_notes">ཐོ་འགོད</string>
+    <string name="analytics_notes_text">འདི་འཛུགས་སྐྲུན་ནང་ཆ་སྙོམས་ བཀོད་དུས་དང་ས་གནས་མཐུན་པའི་ཐོ་ཡིག་མེད། — དུས་ཚོད་ཀྱི་ཐོ་འགོད་ དང་ས་གནས་མཐུན་པའི་བརྡ་རྟགས་མེད། དེ་འབད་ཅིན་ ཚོད་དཔག་གི་ཚབ་ལུ་བཞག་ཡོད།</string>
+
+    <!-- Audit -->
+    <string name="audit_empty_title">ད་ལྟ་ཞིབ་བཤེར་ཐོ་འགོད་མེད</string>
+    <string name="audit_empty_subtitle">འགོ་དཔོན་ནང་འཛུལ། ཞིབ་བཤེར། ཐག་གཅོད་ཚུ་འདི་ནང་ཐོ་བཀོད་འབདཝ་ཨིན།</string>
+    <string name="audit_officer_prefix">འགོ་དཔོན: </string>
+
+    <!-- Capture extras -->
+    <string name="capture_generic">འཛིན་པ</string>
+    <string name="capture_label_back">ཡིག་ཆའི་རྒྱབ་ངོས</string>
+    <string name="capture_label_document">ཡིག་ཆའི་པར</string>
+    <string name="capture_label_front">ཡིག་ཆའི་མདུན་ངོས</string>
+    <string name="capture_label_live">དངོས་གནས་འཛིན་པ</string>
+    <string name="capture_nothing_read">པར་འདི་ལས་ག་ཅི་ཡང་ཀློག་མ་ཚུགས། ཡིག་ཆའི་གཞི་གནས་ཤོག་ལེབ་འོད་ལེགས་ཤོས་ནང་བསྐྱར་ལྷུག།</string>
+    <string name="capture_verify_explanation">ཐོ་འགོད་ལུ་བདེན་བཤེར་དང་ཡིག་ཆ་བརྟག་དཔྱད་འབདཝ་ཨིན། མི་མཐུན་པ་ཡོད་པ་ཅིན་ ཁྱོད་ཀྱི་ལྟ་ཞིབ་ལུ་ཚད་མཚོན་འབད་འོང།</string>
+    <string name="capture_submitting">ཞིབ་བཤེར་རྒྱབ་ཕྱོགས་ལུ་བཏང་བཞིན…</string>
+    <string name="capture_submission_failed">ཞིབ་བཤེར་བཏང་བ་ཕམ</string>
+    <string name="capture_retry">བསྐྱར་ཚོད</string>
+    <string name="capture_step_1_desc_manual">ཁྱོད་རའི་ཡིག་ཆའི་མདུན་ངོས་ཕེམ་ནང་སྒྲིག། འཛིན་པ་གནོན།</string>
+    <string name="capture_step_2_desc_manual">ད་ཁྱོད་རའི་ཡིག་ཆའི་རྒྱབ་ངོས་འཛིན་པ་རེད། གྲ་སྒྲིག་ཚར་བ་ཅིན་འཛིན་པ་གནོན།</string>
+
+    <!-- Charts -->
+    <string name="chart_today">ད་རིས</string>
+    <string name="chart_weekly">བདུན་ཕྲག</string>
+    <string name="chart_monthly">ཟླ་རེ</string>
+
+    <!-- Checks -->
+    <string name="check_alert">ཐུལ་ཤར</string>
+    <string name="check_citizen_registry">མི་སེར་ཐོ་ཡིག་མཐུན</string>
+    <string name="check_deepfake">པར་བདེན་བཤེར</string>
+    <string name="check_document_read">ཡིག་ཆ་ཀློགས་པ</string>
+    <string name="check_document_validation">ཡིག་ཆ་བདེན་བཤེར</string>
+    <string name="check_duplicate_document">ས་འདྲ / ཡང་བསྐྱར་ཕྱགས་ཡིག་ཆ</string>
+    <string name="check_expiry">དུས་ཚོད</string>
+    <string name="check_face_in_capture">དངོས་གནས་འཛིན་པ་ནང་ཞལ</string>
+    <string name="check_face_match">ཞལ་པར་མཐུན</string>
+    <string name="check_forensics">ཡིག་ཆ་ཡང་དག་ཞིབ</string>
+    <string name="check_identity_graph">ངོ་བོ་ཐིག་ལེ</string>
+    <string name="check_liveness">དངོས་གནས་མི་བདེན་བཤེར</string>
+    <string name="check_needs_both">ཡིག་ཆ་པར་དང་དངོས་གནས་འཛིན་པ་གཉིས་ཆ་ར་དགོས</string>
+    <string name="check_needs_live">སྔོན་གྱི་ཐོ་འགོད་ལུ་ཁ་རྒྱབ་བལྟ་ལུ་དངོས་གནས་འཛིན་པ་དགོས</string>
+    <string name="check_no_evidence">ཞིབ་བཤེར་གཞི་རྟགས་ ཡང་ན་ ཁ་རྒྱབ་ཞིབ་བཤེར་གྱི་རྒྱུ་མཚན་མེད</string>
+    <string name="check_not_computed">འདི་ཡོ་བྱད་ཐོག་ཚོད་མ་རྩིས</string>
+    <string name="check_not_evaluated">ཞིབ་བཤེར་འདི་ལུ་བརྟག་མ་འབད</string>
+    <string name="check_not_run">བརྟག་མ་འབད</string>
+    <string name="check_not_run_device">ཡོ་བྱད་འདིའི་ཐོག་བརྟག་མ་འབད</string>
+    <string name="check_no_watchlist_match">བལྟ་ཐོ་ནང་མཐུན་པ་མེད</string>
+    <string name="check_passed">ཕམ་མ་བྱུང</string>
+    <string name="check_review">ལྟ་ཞིབ</string>
+    <string name="check_watchlist">བལྟ་ཐོ་ (སྦྱོང་བརྡར་གཞི་གནས)</string>
+
+    <!-- Complete -->
+    <string name="complete_cleared">གཙང་མ</string>
+    <string name="complete_decision">ཐག་གཅོད་ཐོ་བཀོད: %s</string>
+    <string name="complete_flagged">ལྟ་ཞིབ་ལུ་ཚད་མཚོན</string>
+    <string name="complete_sent">སྐྱེལ་འདྲེན་འགོ་དཔོན་ལུ་བཏང</string>
+    <string name="complete_title">ཞིབ་བཤེར་ཚར</string>
+
+    <!-- Dashboard extras -->
+    <string name="dashboard_documents_scanned">ཡིག་ཆ་ལྷུག་པ</string>
+    <string name="dashboard_high_risk_cases">ཉེན་ཁ་མཐོ་བའི་གཞི་གཏན</string>
+    <string name="dashboard_more_section">ཁ་སྐོང</string>
+    <string name="dashboard_needs_attention">ཞིབ་བཤེར་དགོས</string>
+    <string name="dashboard_pending_reviews">བསྒུག་བཞིན་པའི་ལྟ་ཞིབ</string>
+    <string name="dashboard_risk_overview">ཉེན་ཁ་བརྗོད་བསྡུས</string>
+    <string name="dashboard_view_analytics">དཔྱད་གཞི་ལྟ</string>
+    <string name="dashboard_view_history">ལོ་རྒྱུས་ལྟ</string>
+
+    <!-- Extraction -->
+    <string name="extraction_disclaimer">ཡོ་བྱད་ཐོག་ཡིག་ཆ་ལས་ཀློགས་པ — ལག་པ་གིས་བཀོད་མི་མེད། ནོར་འཁྲུལ་ཡོད་པ་ཅིན་ རྗེས་ཀྱི་ཞིབ་བཤེར་ནང་མཐོང་འོང།</string>
+    <string name="extraction_mrz">འཕྲུལ་གྱིས་ཀློག་ཚུགས་པའི་ས</string>
+    <string name="extraction_no_ocr">ཐོ་འདིའི་ཐོག་ OCR གྲུབ་འབྲས་མེད།</string>
+
+    <!-- Fields -->
+    <string name="field_date_of_birth">སྐྱེས་ཚེས</string>
+    <string name="field_date_of_expiry">དུས་ཚོད་ཚེས</string>
+    <string name="field_document_number">ཡིག་ཆ་ཨང</string>
+    <string name="field_full_name">མིང་ཡོངས་རྫོགས</string>
+    <string name="field_gender">ཕོ་མོ</string>
+    <string name="field_nationality">མི་རིགས</string>
+    <string name="field_not_detected">ངོས་འཛིན་མ་འབད</string>
+
+    <!-- Filters -->
+    <string name="filter_all">ཡོངས་རྫོགས</string>
+    <string name="filter_cleared">གཙང་མ</string>
+    <string name="filter_disputed">རྩོད་པ</string>
+    <string name="filter_high_priority">གལ་ཆེན་མཐོ་བ</string>
+    <string name="filter_pending">བསྒུག་བཞིན</string>
+    <string name="filter_recently_created">ཉེ་ཆར་བཟོས་པ</string>
+    <string name="filter_submitted">བཏང་ཚར</string>
+
+    <!-- History -->
+    <string name="history_empty_subtitle">ཁྱོད་ཀྱི་བཤར་འབྱེད་ ཡང་ན་ ཚགས་མའི་ཞིབ་བཤེར་ལོ་རྒྱུས་མཐུན་པ་མེད།</string>
+    <string name="history_empty_title">གྲུབ་འབྲས་མེད</string>
+    <string name="history_search_placeholder">འགྲུལ་མི། མི་རིགས། ཡང་ན་ ཞིབ་བཤེར་ ID བཤར</string>
+
+    <!-- Languages -->
+    <string name="language_assamese">অসমীয়া (Assamese)</string>
+    <string name="language_bengali">বাংলা (Bengali)</string>
+    <string name="language_punjabi">ਪੰਜਾਬੀ (Punjabi)</string>
+
+    <!-- Liveness -->
+    <string name="liveness_blink">ཐེངས་གཉིས་མིག་མཛེར</string>
+    <string name="liveness_hold_still">པར་ཆས་ལུ་ཐད་ཀར་བལྟ་ སྡོད</string>
+    <string name="liveness_nod">ཐེངས་གཅིག་མགོ་གུག</string>
+    <string name="liveness_turn_left">གཡོན་ཕྱོགས་ལུ་དལ་བ་སྟེ་མགོ་བསྒྱུར</string>
+    <string name="liveness_turn_right">གཡས་ཕྱོགས་ལུ་དལ་བ་སྟེ་མགོ་བསྒྱུར</string>
+
+    <!-- More menu -->
+    <string name="more_analytics">དཔྱད་གཞི</string>
+    <string name="more_audit_log">ཞིབ་བཤེར་ཐོ</string>
+    <string name="more_logout">ཐོན་འགྱུར</string>
+    <string name="more_officer_profile">འགོ་དཔོན་རྣམ་ཐར</string>
+    <string name="more_settings">སྒྲིག་བཀོད</string>
+
+    <!-- Profile -->
+    <string name="profile_account_settings">ཐོ་འགོད་སྒྲིག་བཀོད</string>
+    <string name="profile_account_settings_desc">སྐད་ཡིག། བརྡ་ཐོ། རིམ་ལུགས་སྒྲིག་བཀོད</string>
+    <string name="profile_account_status">ཐོ་འགོད་གནས་ཚུལ</string>
+    <string name="profile_active">ལཱ་བཞིན</string>
+    <string name="profile_activity">ལས་དོན</string>
+    <string name="profile_checkpoint">ཞིབ་བཤེར་ས</string>
+    <string name="profile_failed_logins">ནང་འཛུལ་ཕམ་པ</string>
+    <string name="profile_failed_logins_value">%d ཐོ་བཀོད</string>
+    <string name="profile_field_officer">ཞིང་སྡེ་འགོ་དཔོན</string>
+    <string name="profile_idle_timeout">བཀར་མི་མེད་དུས་ཚོད</string>
+    <string name="profile_idle_timeout_value">སྐར་མ ༥ མ་འཁོར་བ་ཅིན་ཐུལ་ཤར། སྐར་ཆ ༣༠ ཤུལ་ཐོན་འགྱུར</string>
+    <string name="profile_last_login">ཐ་མའི་ནང་འཛུལ</string>
+    <string name="profile_officer_id">འགོ་དཔོན ID</string>
+    <string name="profile_personal_info">སྒེར་གྱི་བརྡ་དོན</string>
+    <string name="profile_role">འགན</string>
+    <string name="profile_secure_session">བདེ་འཇགས་དུས་ཚོད</string>
+    <string name="profile_security">ཉེན་སྲུང</string>
+    <string name="profile_session_token">དུས་ཚོད་ངོས་འཛིན</string>
+    <string name="profile_session_token_value">ཨེབ་གྲུབ་དུས་ཚོད་འདི་གི་དོན་ལས་ཡིད་ཤེས་ནང་བཞག</string>
+
+    <!-- Quality -->
+    <string name="quality_blur">མཐོང་མི་གསལ</string>
+    <string name="quality_glare">འོད་ཟེར</string>
+    <string name="quality_lighting">འོད་སྣང</string>
+    <string name="quality_shadows">གྲིབ་མ</string>
+
+    <!-- Queue -->
+    <string name="queue_awaiting_decision">ཐག་གཅོད་བསྒུག་བཞིན</string>
+    <string name="queue_empty_subtitle">ཞིབ་བཤེར་གསར་པ་ལས་བཏང་ཚར་བ་ཅིན་འདིར་མཐོང་འོང།</string>
+    <string name="queue_empty_title">མཐུན་པའི་ཞིབ་བཤེར་མེད</string>
+    <string name="queue_status_prefix">གནས་ཚུལ: </string>
+
+    <!-- Review -->
+    <string name="review_instructions">ཁྱོད་རའི་ལམ་ལུགས་གིས་ཐག་གཅོད་འབད། ཚད་མཚོན་ ཡང་ན་ བཏང་བ་ཅིན་ འོག་གི་རྒྱུ་མཚན་རང་བཞིན་གིས་ཐོ་བཀོད་འབད།</string>
+    <string name="review_officer_title">འགོ་དཔོན་ལྟ་ཞིབ</string>
+    <string name="review_raised_title">ཞིབ་བཤེར་འདིའི་ཐོག་ཐོན་པ</string>
+    <string name="review_step_subtitle">ལག་པ་གིས་བཀོད་མི་མེད། ཡིག་ཆ་ལས་ཡོ་བྱད་ཐོག་ཀློགས་པ་ཨིན།</string>
+
+    <!-- Risk -->
+    <string name="risk_breakdown">ཉེན་ཁ་དབྱེ་བ</string>
+    <string name="risk_checks_summary">%1$d ཕམ་མ་བྱུང · %2$d ལྟ་ཞིབ · %3$d བརྟག་མ་འབད</string>
+    <string name="risk_checks_title">བརྟག་དཔྱད</string>
+    <string name="risk_disclaimer">འགོ་དཔོན་གྱི་ཐག་གཅོད་ལུ་རྒྱབ་སྐྱོར་ — འགྲུལ་མི་གི་སྐོར་ལས་ཐག་གཅོད་མ་ཨིན།</string>
+    <string name="risk_name_missing">ཡིག་ཆ་ལས་མིང་ཀློག་མ་ཚུགས</string>
+    <string name="risk_no_flags">ལྟ་ཞིབ་ཚད་མཚོན་མེད</string>
+    <string name="risk_officer_review">འགོ་དཔོན་ལྟ་ཞིབ་བསམ་འཆར</string>
+
+    <!-- Screening -->
+    <string name="screening_disclaimer">འདི་འཛུགས་སྐྲུན་ནང་སྦྱོང་བརྡར་ཐོ་ཡིག་མ་གཏོགས་བལྟ་ཐོ་སྒྲིག་བཀོད་མེད། མི་རིགས་ ཡང་ན་ ས་གནས་གཅིག་པུ་གིས་ཉེན་ཁ་ཚད་མཚོན་མ་ཨིན།</string>
+
+    <!-- Send to immigration -->
+    <string name="send_to_immigration_intro">གཞི་གཏན་འདི་སྐྱེལ་འདྲེན་འགོ་དཔོན་གྱི་གྲལ་ཐིག་ལུ་གཏོང། ཁོང་གིས་ཐ་མའི་ཐག་གཅོད་འབད་འོང།</string>
+    <string name="send_to_immigration_label">སྐྱེལ་འདྲེན་ལུ་བཏང</string>
+    <string name="send_to_immigration_title">སྐྱེལ་འདྲེན་འགོ་དཔོན་ལུ་བཏང</string>
+
+    <!-- Settings -->
+    <string name="settings_accepted_types">འཐུ་བའི་ཡིག་ཆ་རིགས</string>
+    <string name="settings_accepted_types_value">ལམ་ཡིག། རྒྱལ་ཡོངས་ངོ་རྟགས། བཙུགས་ཆོག</string>
+    <string name="settings_account">ཐོ་འགོད་སྒྲིག་བཀོད</string>
+    <string name="settings_backend">རྒྱབ་ཕྱོགས</string>
+    <string name="settings_checkpoint_label">ཞིབ་བཤེར་ས</string>
+    <string name="settings_cross_validation">མདུན/རྒྱབ་ཁ་རྒྱབ་བདེན་བཤེར</string>
+    <string name="settings_document">ཡིག་ཆ་སྒྲིག་བཀོད</string>
+    <string name="settings_enabled">ལག་ལེན་ནང</string>
+    <string name="settings_high_risk_only">ཉེན་ཁ་མཐོ་བའི་གཞི་གཏན་ལུ་རྐྱངམ་གཅིག་བརྡ་ཐོ</string>
+    <string name="settings_local_only_notice">ཡོ་བྱད་འདི་གི་ཐོག་རྐྱངམ་གཅིག་བཞག — འདི་འཛུགས་སྐྲུན་ནང་རྒྱབ་ཕྱོགས་ལུ་སྦྱོར་མེད།</string>
+    <string name="settings_notifications">བརྡ་ཐོ་སྒྲིག་བཀོད</string>
+    <string name="settings_officer_id">འགོ་དཔོན ID</string>
+    <string name="settings_push_notifications">ཐུལ་ཤར་གསར་པའི་བརྡ་ཐོ</string>
+    <string name="settings_risk_config">ཞིབ་བཤེར་སྒྲིག་ཁྲིམས་ དང་ ཉེན་ཁ་སྒྲིག་བཀོད</string>
+    <string name="settings_risk_signals_desc">ཉེན་ཁ་ཚད་ནང་མཉམ་བསྡུས་བརྡ་རྟགས: ཡིག་ཆ་བདེན་བཤེར། ཡིག་ཆ་ཡང་དག་ཞིབ། པར་བདེན་བཤེར། བལྟ་ཐོ། ཞལ་པར་མཐུན། ངོ་བོ་ཁ་རྒྱབ། དངོས་གནས་པར་བདེན་བཤེར།</string>
+    <string name="settings_risk_weights_desc">ལྗིད་ཚད་དང་མཐའ་ཚད་ སར་ཝར་ཕྱོགས་ཀྱི་ཚད་རྩིས་ཆས་གིས་སྒྲིག་བཀོད་འབད། ཨེབ་གྲུབ་འདིས་ཀློག་ ཡང་ན་ སྒྲིག་མི་ཚུགས།</string>
+    <string name="settings_role">འགན</string>
+    <string name="settings_select">གདམ</string>
+    <string name="settings_selected">གདམ་ཚར</string>
+    <string name="settings_system_prefs">རིམ་ལུགས་སྒྲིག་བཀོད</string>
+    <string name="settings_theme">བཟོ་ལྟ</string>
+    <string name="settings_theme_value">རིམ་ལུགས་འོད/མུན་སྒྲིག་བཀོད་དང་མཐུན</string>
+
+    <!-- Signals -->
+    <string name="signal_document_checks">ཡིག་ཆ་བརྟག་དཔྱད</string>
+    <string name="signal_face_in_capture">དངོས་གནས་འཛིན་པ་ནང་ཞལ</string>
+    <string name="signal_identity_graph_label">ངོ་བོ་ཐིག་ལེ</string>
+    <string name="signal_watchlist_registry">བལྟ་ཐོ</string>
+
+    <!-- Steps -->
+    <string name="step_doc_verification">ཡིག་ཆ་བདེན་བཤེར</string>
+    <string name="step_info_extraction">བརྡ་དོན་འདོན་པ</string>
+    <string name="step_screening_title">ཞིབ་བཤེར</string>
+
+    <!-- Time -->
+    <string name="time_hours_ago">ཆུ་ཚོད %d སྔོན</string>
+    <string name="time_just_now">ད་ལྟ</string>
+    <string name="time_minutes_ago">སྐར་མ %d སྔོན</string>
+
+    <!-- Upload -->
+    <string name="upload_generic">དེའི་ཚབ་ཏུ་པར་ཡར་འདེགས</string>
+
+    <!-- Verification -->
+    <string name="verification_explanation">གོ་རིམ་རེ་རེ་བཞིན་རྒྱབ་ཕྱོགས་ཀྱིས་ཐད་ཀར་བརྟག་དཔྱད་འབད་པའི་གྲུབ་འབྲས་ཨིན། \"བརྟག་མ་འབད\" ཟེར་མི་ བརྟག་དཔྱད་འབད་མ་ཚུགས་པའི་དོན — སྟོང་པ་ཕམ་མ་ཨིན།</string>
 </resources>
