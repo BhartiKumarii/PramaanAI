@@ -85,7 +85,6 @@ private val SHELL_TAB_ROUTES = mapOf(
     ShellTab.DASHBOARD to Routes.DASHBOARD,
     ShellTab.QUEUE to Routes.QUEUE,
     ShellTab.HISTORY to Routes.HISTORY,
-    ShellTab.ALERTS to Routes.ALERTS,
     ShellTab.MORE to Routes.MORE,
 )
 
@@ -313,21 +312,6 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 alertCount = unreadAlertCount,
             ) { padding ->
                 HistoryScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
-            }
-        }
-
-        composable(Routes.ALERTS) {
-            AppShell(
-                connectivityState = connectivityState,
-                title = stringResource(R.string.nav_alerts),
-                selectedTab = ShellTab.ALERTS,
-                onTabSelected = { goToTab(it) },
-                onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
-                onHelpClick = { launchTour() },
-                officerName = AuthSession.username,
-                alertCount = unreadAlertCount,
-            ) { padding ->
-                AlertsScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
             }
         }
 

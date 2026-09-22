@@ -89,7 +89,7 @@ fun AppShell(
                         IconButton(onClick = onHelpClick) {
                             Icon(Icons.Filled.HelpOutline, contentDescription = "Replay guided tour")
                         }
-                        IconButton(onClick = { onTabSelected(ShellTab.ALERTS) }) {
+                        IconButton(onClick = { onTabSelected(ShellTab.QUEUE) }) {
                             BadgedBox(badge = { if (alertCount > 0) Badge { Text("$alertCount") } }) {
                                 Icon(Icons.Filled.Notifications, contentDescription = "Alerts")
                             }

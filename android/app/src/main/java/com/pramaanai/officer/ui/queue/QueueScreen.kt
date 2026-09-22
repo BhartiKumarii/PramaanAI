@@ -72,6 +72,7 @@ import java.util.Locale
 
 private enum class QueueFilter(val labelRes: Int) {
     ALL(R.string.filter_all),
+    ALERTS(R.string.nav_alerts),
     HIGH_PRIORITY(R.string.filter_high_priority),
     PENDING(R.string.filter_pending),
     RECENT(R.string.filter_recently_created),
@@ -87,6 +88,7 @@ fun QueueScreen(repository: ScreeningRepository, padding: PaddingValues, onOpenS
         val hourAgo = System.currentTimeMillis() - 60 * 60 * 1000
         when (filter) {
             QueueFilter.ALL -> items.sortedByDescending { (if (it.risk?.level == "HIGH_RISK") 3 else if (it.status == ScreeningStatus.PENDING) 2 else 1) * 1_000_000_000L + it.submittedAt }
+            QueueFilter.ALERTS -> items.filter { it.risk?.level == "HIGH_RISK" || it.risk?.level == "MEDIUM_RISK" || it.registryHits.isNotEmpty() || it.identityGraph?.status == "CLUSTER_FOUND" }.sortedByDescending { it.submittedAt }
             QueueFilter.HIGH_PRIORITY -> items.filter { it.risk?.level == "HIGH_RISK" }.sortedByDescending { it.submittedAt }
             QueueFilter.PENDING -> items.filter { it.status == ScreeningStatus.PENDING }.sortedByDescending { it.submittedAt }
             QueueFilter.RECENT -> items.filter { it.submittedAt >= hourAgo }.sortedByDescending { it.submittedAt }
