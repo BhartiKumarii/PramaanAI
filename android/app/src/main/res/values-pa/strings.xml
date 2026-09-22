@@ -2,7 +2,7 @@
     <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ਡੈਸ਼ਬੋਰਡ</string>
-    <string name="nav_queue">ਕਤਾਰ</string>
+    <string name="nav_queue">ਸਮੀਖਿਆ</string>
     <string name="nav_history">ਇਤਿਹਾਸ</string>
     <string name="nav_alerts">ਚੇਤਾਵਨੀਆਂ</string>
     <string name="nav_more">ਹੋਰ</string>
@@ -236,11 +236,11 @@
     <!-- Signal Names -->
     <string name="signal_checksum">ਚੈਕਸਮ ਤਸਦੀਕ</string>
     <string name="signal_face_match">ਚਿਹਰਾ ਮਿਲਾਨ</string>
-    <string name="signal_forensics">ਫੋਰੈਂਸਿਕ ਵਿਸ਼ਲੇਸ਼ਣ</string>
+    <string name="signal_forensics">ਦਸਤਾਵੇਜ਼ ਅਖੰਡਤਾ</string>
     <string name="signal_blacklist">ਵਾਚਲਿਸਟ ਜਾਂਚ</string>
     <string name="signal_identity_graph">ਪਛਾਣ ਗ੍ਰਾਫ਼ ਵਿਸ਼ਲੇਸ਼ਣ</string>
     <string name="signal_mrz">MRZ ਤਸਦੀਕ</string>
-    <string name="signal_tampering">ਛੇੜਛਾੜ ਸਨਾਖ਼ਤ</string>
+    <string name="signal_tampering">ਤਬਦੀਲੀ ਸਨਾਖ਼ਤ</string>
 
     <!-- Decision Types -->
     <string name="decision_clear">ਕਲੀਅਰ</string>
@@ -523,4 +523,6 @@
     <string name="doc_type_national_id_sub">ਨਾਗਰਿਕਤਾ ਕਾਰਡ · ਆਧਾਰ · ਰਾਸ਼ਟਰੀ ਪਛਾਣ</string>
     <string name="doc_type_driving_licence_sub">ਭਾਰਤੀ DL · ਭੂਟਾਨੀ DL · ਨੇਪਾਲੀ DL</string>
     <string name="doc_type_permit_sub">ਇਨਰ ਲਾਈਨ ਪਰਮਿਟ · ਪ੍ਰਤਿਬੰਧਿਤ ਖੇਤਰ ਪਰਮਿਟ</string>
+    <string name="skip_back_side">ਛੱਡੋ — ਕੋਈ ਪਿਛਲਾ ਪਾਸਾ ਨਹੀਂ</string>
+    <string name="skip_back_hint">ਜੇਕਰ ਇਸ ਦਸਤਾਵੇਜ਼ ਦਾ ਪਿਛਲਾ ਪਾਸਾ ਨਹੀਂ ਹੈ, ਤਾਂ ਤੁਸੀਂ ਇਹ ਕਦਮ ਛੱਡ ਸਕਦੇ ਹੋ।</string>
 </resources>

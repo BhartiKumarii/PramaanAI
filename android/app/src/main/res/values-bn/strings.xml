@@ -2,7 +2,7 @@
     <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ড্যাশবোর্ড</string>
-    <string name="nav_queue">সারি</string>
+    <string name="nav_queue">পর্যালোচনা</string>
     <string name="nav_history">ইতিহাস</string>
     <string name="nav_alerts">সতর্কতা</string>
     <string name="nav_more">আরও</string>
@@ -236,11 +236,11 @@
     <!-- Signal Names -->
     <string name="signal_checksum">চেকসাম যাচাই</string>
     <string name="signal_face_match">মুখ মিলান</string>
-    <string name="signal_forensics">ফরেনসিক বিশ্লেষণ</string>
+    <string name="signal_forensics">নথি অখণ্ডতা</string>
     <string name="signal_blacklist">ওয়াচলিস্ট পরীক্ষা</string>
     <string name="signal_identity_graph">পরিচয় গ্রাফ বিশ্লেষণ</string>
     <string name="signal_mrz">MRZ যাচাই</string>
-    <string name="signal_tampering">জালিয়াতি সনাক্তকরণ</string>
+    <string name="signal_tampering">পরিবর্তন সনাক্তকরণ</string>
 
     <!-- Decision Types -->
     <string name="decision_clear">ক্লিয়ার</string>
@@ -523,4 +523,6 @@
     <string name="doc_type_national_id_sub">নাগরিকত্ব কার্ড · আধার · জাতীয় পরিচয়</string>
     <string name="doc_type_driving_licence_sub">ভারতীয় DL · ভুটানের DL · নেপালি DL</string>
     <string name="doc_type_permit_sub">ইনার লাইন পারমিট · সীমাবদ্ধ এলাকা পারমিট</string>
+    <string name="skip_back_side">এড়িয়ে যান — পিছনের দিক নেই</string>
+    <string name="skip_back_hint">যদি এই নথির পিছনের দিক না থাকে, আপনি এই ধাপটি এড়িয়ে যেতে পারেন।</string>
 </resources>

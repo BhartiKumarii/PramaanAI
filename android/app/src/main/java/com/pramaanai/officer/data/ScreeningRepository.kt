@@ -249,6 +249,19 @@ class ScreeningRepository(
             AuthSession.persist()
             SessionEvents.pendingNotice = null
             logAudit(action = "Officer logged in", record = null, result = "SUCCESS")
+
+            try {
+                @Suppress("DEPRECATION")
+                val serial = try { android.os.Build.SERIAL.takeLast(6) } catch (_: Exception) { "000000" }
+                val deviceId = android.os.Build.MODEL.replace(" ", "_") + "_" + serial
+                api.registerDevice(
+                    AuthSession.bearerHeader(),
+                    com.pramaanai.officer.data.remote.DeviceRegisterRequest(
+                        device_identifier = deviceId,
+                        app_version = "1.0.0",
+                    ),
+                )
+            } catch (_: Exception) { /* non-critical */ }
         } catch (e: Exception) {
             logAudit(action = "Officer login attempt", record = null, result = "FAILED: ${e.message}", officerOverride = username)
             throw e

@@ -2,7 +2,7 @@
     <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ডেশ্ববৰ্ড</string>
-    <string name="nav_queue">শাৰী</string>
+    <string name="nav_queue">পৰ্যালোচনা</string>
     <string name="nav_history">ইতিহাস</string>
     <string name="nav_alerts">সতৰ্কবাণী</string>
     <string name="nav_more">অধিক</string>
@@ -236,11 +236,11 @@
     <!-- Signal Names -->
     <string name="signal_checksum">চেকচাম সত্যাপন</string>
     <string name="signal_face_match">মুখ মিলান</string>
-    <string name="signal_forensics">ফৰেন্সিক বিশ্লেষণ</string>
+    <string name="signal_forensics">নথি অখণ্ডতা</string>
     <string name="signal_blacklist">ৱাচলিষ্ট পৰীক্ষা</string>
     <string name="signal_identity_graph">পৰিচয় গ্ৰাফ বিশ্লেষণ</string>
     <string name="signal_mrz">MRZ সত্যাপন</string>
-    <string name="signal_tampering">কাৰচাজি চিনাক্তকৰণ</string>
+    <string name="signal_tampering">পৰিবৰ্তন চিনাক্তকৰণ</string>
 
     <!-- Decision Types -->
     <string name="decision_clear">ক্লিয়াৰ</string>
@@ -523,4 +523,6 @@
     <string name="doc_type_national_id_sub">নাগৰিকত্ব কাৰ্ড · আধাৰ · জাতীয় পৰিচয়</string>
     <string name="doc_type_driving_licence_sub">ভাৰতীয় DL · ভূটানী DL · নেপালী DL</string>
     <string name="doc_type_permit_sub">ইনাৰ লাইন পাৰমিট · সীমাবদ্ধ অঞ্চল পাৰমিট</string>
+    <string name="skip_back_side">এৰি যাওক — পিছফালৰ অংশ নাই</string>
+    <string name="skip_back_hint">যদি এই নথিৰ পিছফালৰ অংশ নাই, আপুনি এই পদক্ষেপ এৰি যাব পাৰে।</string>
 </resources>

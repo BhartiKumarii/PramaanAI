@@ -2,7 +2,7 @@
     <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">ड्यासबोर्ड</string>
-    <string name="nav_queue">पालो</string>
+    <string name="nav_queue">समीक्षा</string>
     <string name="nav_history">इतिहास</string>
     <string name="nav_alerts">अलर्ट</string>
     <string name="nav_more">थप</string>
@@ -236,11 +236,11 @@
     <!-- Signal Names -->
     <string name="signal_checksum">चेकसम सत्यापन</string>
     <string name="signal_face_match">अनुहार मिलान</string>
-    <string name="signal_forensics">फोरेन्सिक विश्लेषण</string>
+    <string name="signal_forensics">कागजात अखण्डता</string>
     <string name="signal_blacklist">वाचलिस्ट जाँच</string>
     <string name="signal_identity_graph">पहिचान ग्राफ विश्लेषण</string>
     <string name="signal_mrz">MRZ सत्यापन</string>
-    <string name="signal_tampering">छेडछाड पत्ता लगाउने</string>
+    <string name="signal_tampering">परिवर्तन पहिचान</string>
 
     <!-- Decision Types -->
     <string name="decision_clear">क्लियर</string>
@@ -523,4 +523,6 @@
     <string name="doc_type_national_id_sub">नागरिकता कार्ड · आधार · राष्ट्रिय पहिचान</string>
     <string name="doc_type_driving_licence_sub">भारतीय DL · भूटानी DL · नेपाली DL</string>
     <string name="doc_type_permit_sub">इनर लाइन परमिट · प्रतिबन्धित क्षेत्र परमिट</string>
+    <string name="skip_back_side">छोड्नुहोस् — पछाडिको भाग छैन</string>
+    <string name="skip_back_hint">यदि यो कागजातको पछाडिको भाग छैन भने, तपाईं यो चरण छोड्न सक्नुहुन्छ।</string>
 </resources>

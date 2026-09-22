@@ -8,6 +8,7 @@ from app.models.case import Case, CaseNote, OfficerDecision, SyncQueueItem  # no
 from app.models.checkpoint import Checkpoint  # noqa: F401
 from app.models.citizen_registry import MockCitizenRegistryEntry  # noqa: F401
 from app.models.device import Device  # noqa: F401
+from app.models.image import StoredImage  # noqa: F401
 from app.models.identity_embedding import IdentityEmbeddingRecord  # noqa: F401
 from app.models.network import (  # noqa: F401
     NetworkRelationship,

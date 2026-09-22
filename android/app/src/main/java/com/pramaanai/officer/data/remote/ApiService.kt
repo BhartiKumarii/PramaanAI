@@ -102,6 +102,18 @@ interface ApiService {
     @GET("checkpoints")
     suspend fun listCheckpoints(): List<CheckpointResponse>
 
+    @POST("devices/register")
+    suspend fun registerDevice(
+        @Header("Authorization") authorization: String,
+        @Body request: DeviceRegisterRequest,
+    ): Map<String, Any>
+
+    @POST("devices/{device_id}/heartbeat")
+    suspend fun deviceHeartbeat(
+        @Header("Authorization") authorization: String,
+        @Path("device_id") deviceId: String,
+    ): Map<String, Any>
+
     @Multipart
     @POST("images/{verification_id}/upload")
     suspend fun uploadImages(
@@ -165,6 +177,11 @@ data class ScreeningSubmissionRequest(
 data class DisputeRequest(val reason: String)
 
 data class CaseSubmitRequest(val note: String? = null)
+
+data class DeviceRegisterRequest(
+    val device_identifier: String,
+    val app_version: String? = null,
+)
 
 data class CaseListItemResponse(
     val id: String,

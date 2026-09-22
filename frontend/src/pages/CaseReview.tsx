@@ -597,11 +597,22 @@ export function CaseReview() {
   const identityHistory = useAsync(() => getCaseIdentityHistory(caseId!), [caseId])
   const timeline = useAsync(() => getCaseTimeline(caseId!), [caseId])
 
+  const [noteLoading, setNoteLoading] = useState(false)
+  const [noteError, setNoteError] = useState('')
+
   async function handleAddNote() {
     if (!noteText.trim()) return
-    await addCaseNote(caseId!, noteText)
-    setNoteText('')
-    caseQuery.refetch()
+    setNoteLoading(true)
+    setNoteError('')
+    try {
+      await addCaseNote(caseId!, noteText)
+      setNoteText('')
+      caseQuery.refetch()
+    } catch (e: unknown) {
+      setNoteError(e instanceof Error ? e.message : 'Failed to add note')
+    } finally {
+      setNoteLoading(false)
+    }
   }
 
   if (caseQuery.loading) return <p className="text-sm text-muted-foreground">Loading case…</p>
@@ -848,9 +859,13 @@ export function CaseReview() {
                 <ol className="space-y-4 border-l-2 border-border pl-4">
                   {timeline.data.map((event, i) => {
                     const label = TIMELINE_LABELS[event.event_type] ?? event.action
+                    const dotColor = event.event_type?.includes('CLEAR') ? 'bg-status-clear border-status-clear/50'
+                      : event.event_type?.includes('HOLD') || event.event_type?.includes('FLAG') ? 'bg-status-high border-status-high/50'
+                      : event.event_type?.includes('REVIEW') || event.event_type?.includes('SENT') ? 'bg-status-review border-status-review/50'
+                      : 'bg-accent border-accent/50'
                     return (
                       <li key={i} className="relative">
-                        <div className="absolute -left-[1.3rem] mt-1 h-3 w-3 rounded-full border-2 border-border bg-card" />
+                        <div className={`absolute -left-[1.3rem] mt-1 h-3 w-3 rounded-full border-2 ${dotColor}`} />
                         <p className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</p>
                         <p className="text-sm font-medium text-foreground">{label}</p>
                         {event.actor_username && (
@@ -897,21 +912,31 @@ export function CaseReview() {
           {c.decisions.length > 0 && (
             <Card title="Decision History">
               <ul className="space-y-3 text-sm">
-                {c.decisions.map((d, i) => (
-                  <li key={i} className="border-b border-border pb-3 last:border-0">
-                    <p className="font-medium text-foreground">
-                      {DECISION_LABELS[d.decision] ?? d.decision.replace(/_/g, ' ')}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Recorded by {d.officer_username ?? 'reviewer'} · {new Date(d.created_at).toLocaleString()}
-                    </p>
-                    {d.reason && (
-                      <p className="mt-1.5 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
-                        {humanizeReason(d.reason)}
+                {c.decisions.map((d, i) => {
+                  const isClear = d.decision === 'CLEAR'
+                  const isHold = d.decision === 'HOLD_REFER'
+                  const icon = isClear ? '✓' : isHold ? '⚑' : '⚠'
+                  const accentClass = isClear ? 'text-status-clear' : isHold ? 'text-status-high' : 'text-status-review'
+                  const bgClass = isClear ? 'bg-status-clear/5 border-status-clear/20' : isHold ? 'bg-status-high/5 border-status-high/20' : 'bg-status-review/5 border-status-review/20'
+                  return (
+                    <li key={i} className={`rounded-lg border p-3 ${bgClass}`}>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-base ${accentClass}`}>{icon}</span>
+                        <p className={`font-semibold ${accentClass}`}>
+                          {DECISION_LABELS[d.decision] ?? d.decision.replace(/_/g, ' ')}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Recorded by {d.officer_username ?? 'reviewer'} · {new Date(d.created_at).toLocaleString()}
                       </p>
-                    )}
-                  </li>
-                ))}
+                      {d.reason && (
+                        <p className="mt-2 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
+                          {humanizeReason(d.reason)}
+                        </p>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </Card>
           )}
@@ -959,9 +984,10 @@ export function CaseReview() {
               className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-ring focus:outline-none"
               rows={3} placeholder="Add a note…" value={noteText}
               onChange={(e) => setNoteText(e.target.value)} />
-            <button onClick={handleAddNote}
-              className="mt-2 w-full rounded-md border border-border py-1.5 text-sm font-medium text-foreground hover:bg-secondary">
-              Add Note
+            {noteError && <p className="mt-1 text-xs text-status-high">{noteError}</p>}
+            <button onClick={handleAddNote} disabled={noteLoading || !noteText.trim()}
+              className="mt-2 w-full rounded-md border border-border py-1.5 text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50">
+              {noteLoading ? 'Saving…' : 'Add Note'}
             </button>
           </Card>
         </div>

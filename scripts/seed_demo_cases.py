@@ -152,8 +152,42 @@ def seed_demo_cases() -> None:
 
         db.commit()
         print("Demo case seeding complete.")
+
+        _seed_demo_devices(db)
     finally:
         db.close()
+
+
+DEMO_DEVICES = [
+    ("SM-G998B_ATW01", "attari_officer", "1.0.0"),
+    ("SM-A545F_ATW02", "attari_officer", "1.0.0"),
+    ("Pixel_8_PET01", "petrapole_officer", "1.0.0"),
+    ("SM-G991B_RAX01", "raxaul_officer", "0.9.2"),
+    ("Redmi_Note_JAI01", "jaigaon_officer", "1.0.0"),
+    ("OnePlus_12_GEL01", "gelephu_officer", "1.0.0"),
+]
+
+
+def _seed_demo_devices(db):
+    from app.models.device import Device
+
+    for dev_id, officer_username, app_ver in DEMO_DEVICES:
+        existing = db.query(Device).filter(Device.device_identifier == dev_id).first()
+        if existing:
+            continue
+        officer = db.query(User).filter(User.username == officer_username).first()
+        if not officer:
+            continue
+        device = Device(
+            device_identifier=dev_id,
+            officer_id=uuid.UUID(officer.id) if isinstance(officer.id, str) else officer.id,
+            app_version=app_ver,
+            last_active_at=datetime.now(timezone.utc) - timedelta(hours=2),
+        )
+        db.add(device)
+        print(f"Created demo device '{dev_id}' for {officer_username}")
+    db.commit()
+    print("Demo device seeding complete.")
 
 
 if __name__ == "__main__":

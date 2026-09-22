@@ -13,7 +13,7 @@
     <string name="app_name">PramaanAI Officer</string>
 
     <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_queue">Queue</string>
+    <string name="nav_queue">Review</string>
     <string name="nav_history">History</string>
     <string name="nav_alerts">Alerts</string>
     <string name="nav_more">More</string>
@@ -244,11 +244,11 @@
     <!-- Signal Names -->
     <string name="signal_checksum">ཞིབ་བཤེར་གཞི་རྟགས</string>
     <string name="signal_face_match">ཞལ་པར་མཐུན</string>
-    <string name="signal_forensics">ཁྲིམས་རིག་དཔྱད་པ</string>
+    <string name="signal_forensics">Document integrity</string>
     <string name="signal_blacklist">བལྟ་ཐོ་ཞིབ</string>
     <string name="signal_identity_graph">ངོ་བོ་ཐིག་ལེ་དཔྱད</string>
     <string name="signal_mrz">MRZ ཞིབ་བཤེར</string>
-    <string name="signal_tampering">བཟོ་བཅོས་འཚོལ</string>
+    <string name="signal_tampering">Alteration detection</string>
 
     <!-- Decision Types -->
     <string name="decision_clear">གཙང་མ</string>
@@ -324,4 +324,6 @@
     <string name="doc_type_national_id_sub">མི་སེར་ལག་ཁྱེར། · আধার</string>
     <string name="doc_type_driving_licence_sub">རྒྱ་གར་DL · འབྲུག་DL · བལ་ཡུལ་DL</string>
     <string name="doc_type_permit_sub">ILP · ཆེད་ཡུལ་ཆོག་མཆན།</string>
+    <string name="skip_back_side">Skip — no back side</string>
+    <string name="skip_back_hint">If this document has no back side, you can skip this step.</string>
 </resources>
