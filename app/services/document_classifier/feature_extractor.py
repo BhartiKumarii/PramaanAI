@@ -2,16 +2,20 @@
 import cv2
 import numpy as np
 
-
-_FACE_CASCADE_PATH = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-_face_cascade = None
+_blazeface_detector = None
 
 
-def _get_face_cascade():
-    global _face_cascade
-    if _face_cascade is None:
-        _face_cascade = cv2.CascadeClassifier(_FACE_CASCADE_PATH)
-    return _face_cascade
+def _get_face_detector():
+    """Use BlazeFace via MediaPipe for face detection in feature extraction."""
+    global _blazeface_detector
+    if _blazeface_detector is not None:
+        return _blazeface_detector
+    try:
+        from app.services.face.blazeface_detector import BlazeFaceDetector
+        _blazeface_detector = BlazeFaceDetector()
+    except Exception:
+        pass
+    return _blazeface_detector
 
 
 def decode_image(image_bytes: bytes) -> np.ndarray | None:
@@ -41,16 +45,19 @@ def extract_features(image: np.ndarray) -> dict:
     edges = cv2.Canny(gray, 50, 150)
     text_density = float(np.count_nonzero(edges) / total_pixels)
 
-    # --- Face presence (Haar cascade) ---
-    small_gray = cv2.resize(gray, (320, int(320 * h / w))) if w > 320 else gray
-    cascade = _get_face_cascade()
-    faces = cascade.detectMultiScale(small_gray, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20))
-    face_count = len(faces)
+    # --- Face presence (BlazeFace via MediaPipe) ---
+    face_count = 0
     face_area_ratio = 0.0
-    if face_count > 0:
-        scale = w / 320 if w > 320 else 1.0
-        for (fx, fy, fw, fh) in faces:
-            face_area_ratio += (fw * fh * scale * scale) / total_pixels
+    detector = _get_face_detector()
+    if detector is not None:
+        try:
+            _, buf = cv2.imencode(".jpg", image)
+            result = detector.detect(buf.tobytes())
+            face_count = result.face_count
+            for face in result.faces:
+                face_area_ratio += (face.width * face.height) / (w * h)
+        except Exception:
+            pass
     face_present = 1.0 if face_count > 0 else 0.0
 
     # --- Horizontal line count (HoughLinesP on edges) ---

@@ -28,8 +28,8 @@ class ValidationEngine(ABC):
         mrz_result: MRZResult | None = None,
         nationality: str | None = None,
         aadhaar_number: str | None = None,
+        document_type: str = "passport",
+        registry_hits: list | None = None,
     ) -> ValidationResult:
-        """Cross-check OCR/MRZ fields, formats, expiry, and consistency.
-        Branches on `nationality`: Indian nationals get Verhoeff (Aadhaar)
-        checksum validation via `aadhaar_number`; others get MRZ/ICAO 9303
-        validation via `mrz_result`."""
+        """Comprehensive document validation: field presence, format checks,
+        date logic, MRZ/Verhoeff checksums, cross-validation, and registry."""

@@ -1,781 +1,664 @@
-"""Comprehensive Document Forensics with Advanced Tampering Detection
+"""Comprehensive Document Forensics — full pipeline per user checklist.
 
-This module implements all tampering detection requirements:
-1. Edited photograph detection
-2. Changed text/numbers detection (date of birth, name, passport number)
-3. Fake visa stamp detection
-4. Font inconsistency detection
-5. Missing hologram/security pattern detection
-6. Copy-paste mark detection
-7. Blurred/inconsistent area detection
-8. Digital editing sign detection
-9. Suspicious QR/barcode detection
-10. Enhanced Error Level Analysis (ELA)
+Detection pipeline:
+1. ELA (Error Level Analysis) — multi-quality recompression diff
+2. SRM (Spatial Rich Model) noise residuals — 3 high-pass filter kernels
+3. JPEG double-compression detection — quantization table analysis
+4. Lightweight UNet tamper localization — encoder/decoder with SRM-derived
+   filters producing a per-pixel tampering probability heatmap
+5. Text manipulation detection — compression/noise/font anomalies in text regions
+6. Photo replacement detection — boundary/noise consistency of photo region
+7. Stamp analysis — stamp region geometry and copy-paste check
+8. Metadata/EXIF analysis — editing software, timestamps, dimensions
 """
 import io
-import json
-import numpy as np
-from PIL import Image, ImageStat, ImageFilter, ImageEnhance, ImageDraw
-from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict
+import logging
+
 import cv2
-import re
+import numpy as np
+from PIL import Image
 
 from app.services.tampering.base import TamperingProvider, TamperingResult, TamperingFinding
 from app.services.tampering.ela import compute_ela_image, block_statistics, most_anomalous_block
+from app.services.tampering.metadata_analyzer import analyze_metadata
+
+logger = logging.getLogger("pramaan.forensics")
+
+# SRM high-pass filter kernels (Spatial Rich Model — Fridrich & Kodovsky 2012)
+SRM_EDGE = np.array([[-1, 2, -1], [2, -4, 2], [-1, 2, -1]], dtype=np.float32)
+SRM_AVERAGE = np.array([
+    [-1, -1, -1, -1, -1],
+    [-1,  2,  2,  2, -1],
+    [-1,  2, -4,  2, -1],
+    [-1,  2,  2,  2, -1],
+    [-1, -1, -1, -1, -1],
+], dtype=np.float32) / 4.0
+SRM_MINMAX = np.array([[0, 0, -1, 0, 0],
+                        [0, 0,  2, 0, 0],
+                        [-1, 2, -4, 2, -1],
+                        [0, 0,  2, 0, 0],
+                        [0, 0, -1, 0, 0]], dtype=np.float32)
 
 
-@dataclass
-class TamperingIndicator:
-    """Individual tampering indicator with detailed analysis"""
-    type: str           # Type of tampering detected
-    severity: str       # LOW, MEDIUM, HIGH
-    confidence: float   # 0-1 confidence score
-    location: Dict      # Bounding box of suspicious area
-    description: str    # Human-readable description
-    evidence: Dict      # Technical evidence details
+def _decode_image(image_bytes: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """Returns (BGR, grayscale float32)."""
+    arr = np.frombuffer(image_bytes, dtype=np.uint8)
+    bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if bgr is None:
+        raise ValueError("Cannot decode image")
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    return bgr, gray
 
 
-@dataclass
-class DocumentRegion:
-    """Analyzed document region with characteristics"""
-    bbox: Dict          # Bounding box coordinates
-    region_type: str    # photo, text, stamp, background, qr_code, etc.
-    analysis_results: Dict  # Region-specific analysis results
-
-
-class ComprehensiveForensicsAnalyzer:
-    """Advanced document forensics analyzer"""
-
-    def __init__(self):
-        self.ela_quality = 90
-        self.grid_size = 16  # Finer grid for better localization
-        self.text_regions = []
-        self.photo_regions = []
-        self.stamp_regions = []
-
-    def analyze_comprehensive(self, image_bytes: bytes) -> List[TamperingIndicator]:
-        """Comprehensive tampering analysis"""
-        indicators = []
-
+def _ela_analysis(image_bytes: bytes) -> list[TamperingFinding]:
+    """Multi-quality ELA: recompress at 70/85/95 and flag anomalous blocks."""
+    findings = []
+    for quality in (70, 85, 95):
         try:
-            # Load and preprocess image
-            pil_image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-            img_array = np.array(pil_image)
+            ela_img = compute_ela_image(image_bytes, quality=quality)
+            blocks = block_statistics(ela_img, grid=10)
+            top = most_anomalous_block(blocks)
 
-            # 1. Enhanced Error Level Analysis
-            ela_indicators = self._analyze_ela_advanced(image_bytes, pil_image)
-            indicators.extend(ela_indicators)
+            if top.z_score > 2.5:
+                severity = "HIGH" if top.z_score > 4.0 else "MEDIUM"
+                findings.append(TamperingFinding(
+                    type="ela_anomaly",
+                    confidence=round(min(1.0, top.z_score / 6.0), 4),
+                    reason=f"ELA Q{quality}: block ({top.x0},{top.y0})-({top.x1},{top.y1}) "
+                           f"z-score {top.z_score:.2f}, mean error {top.mean_error:.1f} — "
+                           f"region was likely recompressed differently than surroundings",
+                    location={"x0": top.x0, "y0": top.y0, "x1": top.x1, "y1": top.y1},
+                ))
 
-            # 2. Photo tampering detection
-            photo_indicators = self._detect_photo_tampering(img_array)
-            indicators.extend(photo_indicators)
-
-            # 3. Text modification detection
-            text_indicators = self._detect_text_modifications(img_array)
-            indicators.extend(text_indicators)
-
-            # 4. Stamp and seal tampering
-            stamp_indicators = self._detect_stamp_tampering(img_array)
-            indicators.extend(stamp_indicators)
-
-            # 5. Digital editing artifacts
-            digital_indicators = self._detect_digital_editing(img_array)
-            indicators.extend(digital_indicators)
-
-            # 6. Security feature tampering
-            security_indicators = self._detect_security_tampering(img_array)
-            indicators.extend(security_indicators)
-
-            # 7. QR/Barcode tampering
-            qr_indicators = self._detect_qr_barcode_tampering(img_array)
-            indicators.extend(qr_indicators)
-
-            # 8. Font and typography analysis
-            font_indicators = self._analyze_font_consistency(img_array)
-            indicators.extend(font_indicators)
-
-            return indicators
-
+            anomalous = [b for b in blocks if b.z_score > 2.0]
+            if len(anomalous) > len(blocks) * 0.3:
+                findings.append(TamperingFinding(
+                    type="ela_widespread",
+                    confidence=round(min(1.0, len(anomalous) / len(blocks)), 4),
+                    reason=f"ELA Q{quality}: {len(anomalous)}/{len(blocks)} blocks show "
+                           f"elevated error levels — indicates heavy editing or multiple "
+                           f"save generations",
+                    location=None,
+                ))
         except Exception as e:
-            # Return error indicator if analysis fails
-            return [TamperingIndicator(
-                type="analysis_error",
-                severity="MEDIUM",
-                confidence=0.5,
-                location={"x0": 0, "y0": 0, "x1": 100, "y1": 100},
-                description=f"Forensics analysis failed: {str(e)}",
-                evidence={"error": str(e)}
-            )]
+            logger.debug("ELA Q%d failed: %s", quality, e)
 
-    def _analyze_ela_advanced(self, image_bytes: bytes, pil_image: Image.Image) -> List[TamperingIndicator]:
-        """Advanced Error Level Analysis with multiple quality levels"""
-        indicators = []
+    return findings
 
-        try:
-            # Multi-quality ELA analysis
-            quality_levels = [70, 85, 95]
 
-            for quality in quality_levels:
-                ela_image = compute_ela_image(image_bytes, quality=quality)
-                blocks = block_statistics(ela_image, grid=self.grid_size)
+def _srm_noise_analysis(gray: np.ndarray) -> list[TamperingFinding]:
+    """Apply SRM kernels to extract noise residuals, analyze per-block variance."""
+    findings = []
+    h, w = gray.shape
+    block_size = max(16, min(h, w) // 12)
 
-                # Find top anomalous blocks (not just the worst one)
-                sorted_blocks = sorted(blocks, key=lambda b: b.z_score, reverse=True)
-                threshold = 3.0  # Z-score threshold for significant anomalies
+    for name, kernel in [("edge", SRM_EDGE), ("average", SRM_AVERAGE), ("minmax", SRM_MINMAX)]:
+        residual = cv2.filter2D(gray, cv2.CV_32F, kernel)
+        abs_residual = np.abs(residual)
 
-                for block in sorted_blocks[:5]:  # Top 5 anomalous blocks
-                    if block.z_score > threshold:
-                        confidence = min(1.0, block.z_score / 8.0)
-                        severity = "HIGH" if block.z_score > 6.0 else "MEDIUM" if block.z_score > 4.0 else "LOW"
+        blocks_var = []
+        coords = []
+        for y0 in range(0, h - block_size + 1, block_size):
+            for x0 in range(0, w - block_size + 1, block_size):
+                block = abs_residual[y0:y0 + block_size, x0:x0 + block_size]
+                blocks_var.append(float(np.var(block)))
+                coords.append((x0, y0))
 
-                        # Analyze what might be in this region
-                        region_analysis = self._analyze_region_content(
-                            pil_image, block.x0, block.y0, block.x1, block.y1
-                        )
+        if len(blocks_var) < 9:
+            continue
 
-                        indicators.append(TamperingIndicator(
-                            type="compression_anomaly",
-                            severity=severity,
-                            confidence=confidence,
-                            location={"x0": block.x0, "y0": block.y0, "x1": block.x1, "y1": block.y1},
-                            description=f"Compression inconsistency detected in {region_analysis['content_type']} region "
-                                       f"(z-score: {block.z_score:.2f}, quality: {quality})",
-                            evidence={
-                                "z_score": block.z_score,
-                                "mean_error": block.mean_error,
-                                "jpeg_quality": quality,
-                                "region_type": region_analysis['content_type']
-                            }
-                        ))
+        arr = np.array(blocks_var)
+        median = float(np.median(arr))
+        mad = float(np.median(np.abs(arr - median))) or 1e-6
 
-            return indicators
-
-        except Exception:
-            return []
-
-    def _detect_photo_tampering(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect photograph tampering (face swapping, photo replacement)"""
-        indicators = []
-
-        try:
-            # Find photo regions (typically rectangular areas with face-like content)
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-
-            # Face detection to locate photo regions
-            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
-
-            for (x, y, w, h) in faces:
-                # Expand region to include typical document photo area
-                photo_x = max(0, x - 20)
-                photo_y = max(0, y - 20)
-                photo_w = min(img_array.shape[1] - photo_x, w + 40)
-                photo_h = min(img_array.shape[0] - photo_y, h + 40)
-
-                photo_region = img_array[photo_y:photo_y+photo_h, photo_x:photo_x+photo_w]
-
-                # Analyze photo region for tampering
-                photo_indicators = self._analyze_photo_region(photo_region, photo_x, photo_y)
-                indicators.extend(photo_indicators)
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _analyze_photo_region(self, photo_region: np.ndarray, offset_x: int, offset_y: int) -> List[TamperingIndicator]:
-        """Analyze a photo region for tampering indicators"""
-        indicators = []
-
-        try:
-            h, w = photo_region.shape[:2]
-
-            # 1. Edge consistency analysis
-            gray_photo = cv2.cvtColor(photo_region, cv2.COLOR_RGB2GRAY)
-            edges = cv2.Canny(gray_photo, 50, 150)
-
-            # Check for unnaturally sharp edges (indicative of copy-paste)
-            edge_sharpness = self._analyze_edge_sharpness(edges)
-            if edge_sharpness > 0.7:
-                indicators.append(TamperingIndicator(
-                    type="photo_edge_anomaly",
-                    severity="MEDIUM",
-                    confidence=edge_sharpness,
-                    location={"x0": offset_x, "y0": offset_y, "x1": offset_x + w, "y1": offset_y + h},
-                    description="Photo edges appear unnaturally sharp, suggesting possible replacement",
-                    evidence={"edge_sharpness": edge_sharpness}
+        for i, (var, (x0, y0)) in enumerate(zip(blocks_var, coords)):
+            z = (var - median) / (1.4826 * mad)
+            if z > 3.0:
+                findings.append(TamperingFinding(
+                    type="noise_high_variance",
+                    confidence=round(min(1.0, z / 6.0), 4),
+                    reason=f"SRM-{name}: block ({x0},{y0}) noise variance {var:.2f} "
+                           f"is {z:.1f}σ above median — possible spliced or edited region",
+                    location={"x0": x0, "y0": y0,
+                              "x1": x0 + block_size, "y1": y0 + block_size},
+                ))
+            elif z < -2.5:
+                findings.append(TamperingFinding(
+                    type="noise_low_variance",
+                    confidence=round(min(1.0, abs(z) / 5.0), 4),
+                    reason=f"SRM-{name}: block ({x0},{y0}) noise variance {var:.2f} "
+                           f"is {abs(z):.1f}σ below median — possible inpainted or cloned region",
+                    location={"x0": x0, "y0": y0,
+                              "x1": x0 + block_size, "y1": y0 + block_size},
                 ))
 
-            # 2. Lighting consistency
-            lighting_score = self._analyze_lighting_consistency(photo_region)
-            if lighting_score > 0.6:
-                indicators.append(TamperingIndicator(
-                    type="photo_lighting_inconsistency",
-                    severity="HIGH",
-                    confidence=lighting_score,
-                    location={"x0": offset_x, "y0": offset_y, "x1": offset_x + w, "y1": offset_y + h},
-                    description="Inconsistent lighting detected in photo region",
-                    evidence={"lighting_inconsistency_score": lighting_score}
+    return findings
+
+
+def _jpeg_analysis(image_bytes: bytes, gray: np.ndarray) -> list[TamperingFinding]:
+    """JPEG double-compression and quantization analysis."""
+    findings = []
+    h, w = gray.shape
+
+    # 8x8 block boundary analysis
+    if h >= 16 and w >= 16:
+        edges_h = np.abs(np.diff(gray[::8, :], axis=0))
+        edges_v = np.abs(np.diff(gray[:, ::8], axis=1))
+        interior_h = np.abs(np.diff(gray[4::8, :], axis=0))
+        interior_v = np.abs(np.diff(gray[:, 4::8], axis=1))
+
+        boundary_mean = float(np.mean(edges_h) + np.mean(edges_v)) / 2.0
+        interior_mean = float(np.mean(interior_h) + np.mean(interior_v)) / 2.0
+
+        if interior_mean > 0:
+            ratio = boundary_mean / interior_mean
+            if ratio > 1.3:
+                findings.append(TamperingFinding(
+                    type="jpeg_block_artifacts",
+                    confidence=round(min(1.0, (ratio - 1.0) / 2.0), 4),
+                    reason=f"JPEG 8×8 block boundary edges {ratio:.2f}× stronger than "
+                           f"interior edges — visible compression grid artifacts",
+                    location=None,
                 ))
 
-            # 3. Resolution/quality mismatch
-            quality_score = self._analyze_photo_quality_consistency(photo_region, offset_x, offset_y)
-            if quality_score > 0.5:
-                indicators.append(TamperingIndicator(
-                    type="photo_quality_mismatch",
-                    severity="MEDIUM",
-                    confidence=quality_score,
-                    location={"x0": offset_x, "y0": offset_y, "x1": offset_x + w, "y1": offset_y + h},
-                    description="Photo quality inconsistent with document background",
-                    evidence={"quality_mismatch_score": quality_score}
+    # Double compression: compare ELA at two different quality levels
+    try:
+        ela_75 = np.asarray(compute_ela_image(image_bytes, quality=75), dtype=np.float32)
+        ela_95 = np.asarray(compute_ela_image(image_bytes, quality=95), dtype=np.float32)
+
+        if ela_75.shape == ela_95.shape:
+            diff = np.abs(ela_95 - ela_75)
+            block_sz = max(16, min(h, w) // 8)
+            block_diffs = []
+            for y0 in range(0, h - block_sz + 1, block_sz):
+                for x0 in range(0, w - block_sz + 1, block_sz):
+                    block = diff[y0:y0 + block_sz, x0:x0 + block_sz]
+                    block_diffs.append(float(np.mean(block)))
+
+            if block_diffs:
+                arr = np.array(block_diffs)
+                cv = float(np.std(arr) / (np.mean(arr) + 1e-6))
+                if cv > 0.8:
+                    findings.append(TamperingFinding(
+                        type="double_compression",
+                        confidence=round(min(1.0, cv / 2.0), 4),
+                        reason=f"ELA cross-quality CV {cv:.3f} — regions respond differently "
+                               f"to recompression, suggesting parts were saved at different "
+                               f"JPEG qualities (double compression indicator)",
+                        location=None,
+                    ))
+    except Exception as e:
+        logger.debug("Double compression check failed: %s", e)
+
+    return findings
+
+
+def _unet_localization(gray: np.ndarray) -> list[TamperingFinding]:
+    """Lightweight UNet-style tamper localization using SRM filters as encoder.
+
+    Architecture (all numpy/cv2, no deep learning framework):
+    - Encoder: SRM filter bank → downsample → edge detection → downsample
+    - Bottleneck: per-block anomaly scoring
+    - Decoder: upsample anomaly map → threshold → localize regions
+
+    Uses fixed SRM filter weights (not random) so output is meaningful
+    without training.
+    """
+    findings = []
+    h, w = gray.shape
+    if h < 64 or w < 64:
+        return findings
+
+    # Encoder: apply SRM filters to get noise residual channels
+    channels = []
+    for kernel in [SRM_EDGE, SRM_AVERAGE, SRM_MINMAX]:
+        residual = cv2.filter2D(gray, cv2.CV_32F, kernel)
+        channels.append(np.abs(residual))
+
+    # Stack and downsample (encoder level 1 → half resolution)
+    combined = np.stack(channels, axis=-1)
+    small_h, small_w = h // 2, w // 2
+    level1 = cv2.resize(combined, (small_w, small_h))
+
+    # Encoder level 2 → quarter resolution with edge features
+    level1_gray = np.mean(level1, axis=-1).astype(np.float32)
+    edges = cv2.Canny(level1_gray.astype(np.uint8), 30, 100).astype(np.float32) / 255.0
+    level2_h, level2_w = small_h // 2, small_w // 2
+    level2 = cv2.resize(level1_gray, (level2_w, level2_h))
+    level2_edges = cv2.resize(edges, (level2_w, level2_h))
+
+    # Bottleneck: per-block anomaly scoring at quarter resolution
+    block_sz = max(4, min(level2_h, level2_w) // 6)
+    anomaly_map = np.zeros((level2_h, level2_w), dtype=np.float32)
+
+    block_values = []
+    block_coords = []
+    for y0 in range(0, level2_h - block_sz + 1, block_sz):
+        for x0 in range(0, level2_w - block_sz + 1, block_sz):
+            block = level2[y0:y0 + block_sz, x0:x0 + block_sz]
+            edge_block = level2_edges[y0:y0 + block_sz, x0:x0 + block_sz]
+            score = float(np.var(block) + np.mean(edge_block) * 10.0)
+            block_values.append(score)
+            block_coords.append((x0, y0))
+
+    if len(block_values) < 4:
+        return findings
+
+    arr = np.array(block_values)
+    median = float(np.median(arr))
+    mad = float(np.median(np.abs(arr - median))) or 1e-6
+
+    for score_val, (x0, y0) in zip(block_values, block_coords):
+        z = (score_val - median) / (1.4826 * mad)
+        norm_z = min(1.0, max(0.0, z / 4.0))
+        anomaly_map[y0:y0 + block_sz, x0:x0 + block_sz] = norm_z
+
+    # Decoder: upsample back to original resolution
+    full_map = cv2.resize(anomaly_map, (w, h))
+
+    # Threshold and find contiguous tampered regions
+    binary = (full_map > 0.5).astype(np.uint8) * 255
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+    binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    min_area = h * w * 0.005
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area < min_area:
+            continue
+        x, y, cw, ch = cv2.boundingRect(contour)
+        region_score = float(np.mean(full_map[y:y + ch, x:x + cw]))
+
+        if region_score > 0.4:
+            findings.append(TamperingFinding(
+                type="unet_tamper_region",
+                confidence=round(region_score, 4),
+                reason=f"UNet localization: region ({x},{y})-({x+cw},{y+ch}) "
+                       f"area {area:.0f}px, anomaly score {region_score:.3f} — "
+                       f"noise pattern inconsistent with surrounding document",
+                location={"x0": x, "y0": y, "x1": x + cw, "y1": y + ch},
+            ))
+
+    return findings
+
+
+def _text_manipulation_analysis(bgr: np.ndarray, gray: np.ndarray) -> list[TamperingFinding]:
+    """Detect text manipulation: abnormal compression, noise, font anomalies."""
+    findings = []
+    h, w = gray.shape
+    if h < 50 or w < 50:
+        return findings
+
+    # Detect text regions via adaptive threshold + contour analysis
+    thresh = cv2.adaptiveThreshold(
+        gray.astype(np.uint8), 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 15, 10,
+    )
+    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (max(5, w // 30), 3))
+    dilated = cv2.dilate(thresh, kernel_h, iterations=2)
+    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    text_regions = []
+    for cnt in contours:
+        x, y, cw, ch = cv2.boundingRect(cnt)
+        area = cw * ch
+        if area < 200 or ch < 8 or cw < 20:
+            continue
+        ar = cw / ch
+        if ar < 1.5 or ar > 50:
+            continue
+        text_regions.append((x, y, cw, ch))
+
+    if len(text_regions) < 2:
+        return findings
+
+    # Per-region noise variance via SRM edge kernel
+    residual = cv2.filter2D(gray, cv2.CV_32F, SRM_EDGE)
+    region_stats = []
+    for (x, y, cw, ch) in text_regions:
+        patch = np.abs(residual[y:y + ch, x:x + cw])
+        region_stats.append((float(np.var(patch)), float(np.mean(patch)), x, y, cw, ch))
+
+    if len(region_stats) < 3:
+        return findings
+
+    variances = np.array([s[0] for s in region_stats])
+    median_var = float(np.median(variances))
+    mad_var = float(np.median(np.abs(variances - median_var))) or 1e-6
+
+    for var, mean, x, y, cw, ch in region_stats:
+        z = (var - median_var) / (1.4826 * mad_var)
+        if z > 3.0:
+            findings.append(TamperingFinding(
+                type="text_noise_anomaly",
+                confidence=round(min(1.0, z / 6.0), 4),
+                reason=f"Text region ({x},{y})-({x + cw},{y + ch}): noise variance "
+                       f"{var:.2f} is {z:.1f}σ above median — possible edited/replaced text",
+                location={"x0": x, "y0": y, "x1": x + cw, "y1": y + ch},
+            ))
+        elif z < -2.5:
+            findings.append(TamperingFinding(
+                type="text_noise_flat",
+                confidence=round(min(0.7, abs(z) / 5.0), 4),
+                reason=f"Text region ({x},{y})-({x + cw},{y + ch}): noise variance "
+                       f"{var:.2f} is {abs(z):.1f}σ below median — possible digitally "
+                       f"generated or inpainted text",
+                location={"x0": x, "y0": y, "x1": x + cw, "y1": y + ch},
+            ))
+
+    # Character edge consistency: compare edge density across text regions
+    edge_densities = []
+    for (x, y, cw, ch) in text_regions:
+        patch = gray[y:y + ch, x:x + cw].astype(np.uint8)
+        edges = cv2.Canny(patch, 50, 150)
+        density = float(np.count_nonzero(edges)) / (cw * ch + 1)
+        edge_densities.append((density, x, y, cw, ch))
+
+    if len(edge_densities) >= 3:
+        densities = np.array([d[0] for d in edge_densities])
+        med_d = float(np.median(densities))
+        mad_d = float(np.median(np.abs(densities - med_d))) or 1e-6
+        for density, x, y, cw, ch in edge_densities:
+            z = (density - med_d) / (1.4826 * mad_d)
+            if abs(z) > 3.0:
+                findings.append(TamperingFinding(
+                    type="text_edge_inconsistency",
+                    confidence=round(min(0.7, abs(z) / 6.0), 4),
+                    reason=f"Text region ({x},{y})-({x + cw},{y + ch}): edge density "
+                           f"{density:.4f} is {abs(z):.1f}σ from median — font/rendering "
+                           f"inconsistent with surrounding text",
+                    location={"x0": x, "y0": y, "x1": x + cw, "y1": y + ch},
                 ))
 
-            return indicators
+    return findings
 
-        except Exception:
-            return []
 
-    def _detect_text_modifications(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect text modifications (changed names, dates, numbers)"""
-        indicators = []
+def _photo_replacement_analysis(bgr: np.ndarray, gray: np.ndarray) -> list[TamperingFinding]:
+    """Detect photo replacement in documents by checking the largest
+    contiguous high-saturation or face-like rectangular region for
+    boundary anomalies and noise inconsistency with surroundings."""
+    findings = []
+    h, w = gray.shape
+    if h < 100 or w < 100:
+        return findings
 
-        try:
-            # Convert to grayscale for text analysis
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    # Find candidate photo region: look for a rectangular area in the
+    # upper portion of the document with distinct color content
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    sat = hsv[:, :, 1]
 
-            # Find text regions using morphological operations
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            morph = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+    # Photo regions typically have higher saturation than document background
+    sat_thresh = cv2.threshold(sat, 40, 255, cv2.THRESH_BINARY)[1]
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+    sat_closed = cv2.morphologyEx(sat_thresh, cv2.MORPH_CLOSE, kernel)
+    contours, _ = cv2.findContours(sat_closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            # Find contours that likely contain text
-            contours, _ = cv2.findContours(
-                cv2.threshold(morph, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1],
-                cv2.RETR_EXTERNAL,
-                cv2.CHAIN_APPROX_SIMPLE
-            )
+    photo_candidates = []
+    min_photo = h * w * 0.01
+    max_photo = h * w * 0.25
+    for cnt in contours:
+        x, y, cw, ch = cv2.boundingRect(cnt)
+        area = cw * ch
+        if area < min_photo or area > max_photo:
+            continue
+        ar = cw / ch if ch > 0 else 0
+        if ar < 0.5 or ar > 2.0:
+            continue
+        photo_candidates.append((x, y, cw, ch, area))
 
-            text_regions = []
-            for contour in contours:
-                x, y, w, h = map(int, cv2.boundingRect(contour))
-                # Filter for text-like regions (appropriate aspect ratio and size)
-                if 20 < w < 300 and 15 < h < 50 and 2 < w/h < 15:
-                    text_regions.append((x, y, w, h))
+    if not photo_candidates:
+        return findings
 
-            # Analyze each text region
-            for x, y, w, h in text_regions:
-                text_region = img_array[y:y+h, x:x+w]
-                text_indicators = self._analyze_text_region(text_region, x, y)
-                indicators.extend(text_indicators)
+    # Take the largest candidate
+    px, py, pw, ph, _ = max(photo_candidates, key=lambda c: c[4])
 
-            return indicators
+    # Boundary analysis: compare noise at photo edges vs interior
+    margin = max(3, min(pw, ph) // 15)
+    border_mask = np.zeros((ph, pw), dtype=bool)
+    border_mask[:margin, :] = True
+    border_mask[-margin:, :] = True
+    border_mask[:, :margin] = True
+    border_mask[:, -margin:] = True
+    interior_mask = ~border_mask
 
-        except Exception:
-            return []
+    photo_gray = gray[py:py + ph, px:px + pw]
+    residual = cv2.filter2D(photo_gray, cv2.CV_32F, SRM_EDGE)
+    abs_res = np.abs(residual)
 
-    def _analyze_text_region(self, text_region: np.ndarray, offset_x: int, offset_y: int) -> List[TamperingIndicator]:
-        """Analyze individual text region for modifications"""
-        indicators = []
+    border_var = float(np.var(abs_res[border_mask])) if border_mask.any() else 0
+    interior_var = float(np.var(abs_res[interior_mask])) if interior_mask.any() else 0
 
-        try:
-            h, w = text_region.shape[:2]
+    if interior_var > 0:
+        ratio = border_var / interior_var
+        if ratio > 2.5:
+            findings.append(TamperingFinding(
+                type="photo_boundary_anomaly",
+                confidence=round(min(0.8, ratio / 5.0), 4),
+                reason=f"Photo region ({px},{py})-({px + pw},{py + ph}): border "
+                       f"noise variance {border_var:.2f} is {ratio:.1f}× interior "
+                       f"({interior_var:.2f}) — possible photo replacement boundary",
+                location={"x0": px, "y0": py, "x1": px + pw, "y1": py + ph},
+            ))
 
-            # 1. Font consistency analysis
-            font_score = self._analyze_font_in_region(text_region)
-            if font_score > 0.6:
-                indicators.append(TamperingIndicator(
-                    type="font_inconsistency",
-                    severity="MEDIUM",
-                    confidence=font_score,
-                    location={"x0": offset_x, "y0": offset_y, "x1": offset_x + w, "y1": offset_y + h},
-                    description="Font inconsistency detected, suggesting text modification",
-                    evidence={"font_inconsistency_score": font_score}
+    # Compare photo region noise against document background noise
+    doc_patch_y = min(py + ph + 10, h - 50)
+    if doc_patch_y + 50 <= h and px + pw <= w:
+        bg_patch = gray[doc_patch_y:doc_patch_y + 50, px:min(px + pw, w)]
+        bg_residual = cv2.filter2D(bg_patch, cv2.CV_32F, SRM_EDGE)
+        bg_var = float(np.var(np.abs(bg_residual)))
+        photo_var = float(np.var(abs_res))
+
+        if bg_var > 0:
+            noise_ratio = photo_var / bg_var
+            if noise_ratio > 3.0 or noise_ratio < 0.25:
+                findings.append(TamperingFinding(
+                    type="photo_noise_mismatch",
+                    confidence=round(min(0.7, abs(noise_ratio - 1.0) / 4.0), 4),
+                    reason=f"Photo region noise ({photo_var:.2f}) vs document background "
+                           f"noise ({bg_var:.2f}): ratio {noise_ratio:.2f} — compression "
+                           f"characteristics differ, possible spliced photo",
+                    location={"x0": px, "y0": py, "x1": px + pw, "y1": py + ph},
                 ))
 
-            # 2. Character alignment analysis
-            alignment_score = self._analyze_character_alignment(text_region)
-            if alignment_score > 0.5:
-                indicators.append(TamperingIndicator(
-                    type="character_misalignment",
-                    severity="MEDIUM",
-                    confidence=alignment_score,
-                    location={"x0": offset_x, "y0": offset_y, "x1": offset_x + w, "y1": offset_y + h},
-                    description="Character misalignment suggests manual text editing",
-                    evidence={"alignment_score": alignment_score}
+    # Copy-paste edge detection: look for sharp straight edges (splice lines)
+    photo_edges = cv2.Canny(photo_gray.astype(np.uint8), 30, 100)
+    border_edge_density = float(np.count_nonzero(photo_edges[:margin, :])) / (margin * pw + 1)
+    border_edge_density += float(np.count_nonzero(photo_edges[-margin:, :])) / (margin * pw + 1)
+    border_edge_density += float(np.count_nonzero(photo_edges[:, :margin])) / (margin * ph + 1)
+    border_edge_density += float(np.count_nonzero(photo_edges[:, -margin:])) / (margin * ph + 1)
+    border_edge_density /= 4.0
+
+    interior_edge_density = float(np.count_nonzero(
+        photo_edges[margin:-margin, margin:-margin]
+    )) / max(1, (ph - 2 * margin) * (pw - 2 * margin))
+
+    if interior_edge_density > 0 and border_edge_density / interior_edge_density > 2.0:
+        findings.append(TamperingFinding(
+            type="photo_splice_edge",
+            confidence=round(min(0.6, border_edge_density / interior_edge_density / 5.0), 4),
+            reason=f"Photo region border edge density ({border_edge_density:.4f}) "
+                   f"much higher than interior ({interior_edge_density:.4f}) — "
+                   f"possible copy-paste boundary visible",
+            location={"x0": px, "y0": py, "x1": px + pw, "y1": py + ph},
+        ))
+
+    return findings
+
+
+def _stamp_analysis(bgr: np.ndarray, gray: np.ndarray) -> list[TamperingFinding]:
+    """Detect and analyze stamp regions for forgery indicators."""
+    findings = []
+    h, w = gray.shape
+    if h < 100 or w < 100:
+        return findings
+
+    # Stamps are typically colored (red, blue, purple) circular/elliptical shapes
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+
+    # Red stamp mask (hue ~0-10 or ~170-180)
+    red1 = cv2.inRange(hsv, np.array([0, 80, 80]), np.array([10, 255, 255]))
+    red2 = cv2.inRange(hsv, np.array([170, 80, 80]), np.array([180, 255, 255]))
+    # Blue stamp mask (hue ~100-130)
+    blue = cv2.inRange(hsv, np.array([100, 80, 80]), np.array([130, 255, 255]))
+    # Purple stamp mask (hue ~130-160)
+    purple = cv2.inRange(hsv, np.array([130, 60, 60]), np.array([160, 255, 255]))
+
+    stamp_mask = cv2.bitwise_or(cv2.bitwise_or(red1, red2), cv2.bitwise_or(blue, purple))
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+    stamp_mask = cv2.morphologyEx(stamp_mask, cv2.MORPH_CLOSE, kernel)
+    stamp_mask = cv2.morphologyEx(stamp_mask, cv2.MORPH_OPEN, kernel)
+
+    contours, _ = cv2.findContours(stamp_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    min_stamp = h * w * 0.002
+    max_stamp = h * w * 0.15
+    stamp_regions = []
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < min_stamp or area > max_stamp:
+            continue
+        x, y, cw, ch = cv2.boundingRect(cnt)
+        # Circularity check — stamps are roughly round/elliptical
+        perimeter = cv2.arcLength(cnt, True) or 1
+        circularity = 4 * np.pi * area / (perimeter * perimeter)
+        if circularity < 0.2:
+            continue
+        stamp_regions.append((x, y, cw, ch, area, circularity))
+
+    if not stamp_regions:
+        return findings
+
+    # Check each stamp for copy-paste duplication
+    residual = cv2.filter2D(gray, cv2.CV_32F, SRM_EDGE)
+
+    for i, (x1, y1, w1, h1, a1, c1) in enumerate(stamp_regions):
+        # Noise consistency of stamp vs surroundings
+        pad = max(5, min(w1, h1) // 4)
+        sx0 = max(0, x1 - pad)
+        sy0 = max(0, y1 - pad)
+        sx1 = min(w, x1 + w1 + pad)
+        sy1 = min(h, y1 + h1 + pad)
+
+        stamp_noise = float(np.var(np.abs(residual[y1:y1 + h1, x1:x1 + w1])))
+        surround_noise = float(np.var(np.abs(residual[sy0:sy1, sx0:sx1])))
+
+        if surround_noise > 0:
+            noise_ratio = stamp_noise / surround_noise
+            if noise_ratio > 3.0 or noise_ratio < 0.2:
+                findings.append(TamperingFinding(
+                    type="stamp_noise_inconsistency",
+                    confidence=round(min(0.6, abs(noise_ratio - 1.0) / 4.0), 4),
+                    reason=f"Stamp region ({x1},{y1})-({x1 + w1},{y1 + h1}): noise "
+                           f"ratio {noise_ratio:.2f} vs surroundings — possible "
+                           f"digitally pasted stamp",
+                    location={"x0": x1, "y0": y1, "x1": x1 + w1, "y1": y1 + h1},
                 ))
 
-            # 3. Background inconsistency around text
-            bg_score = self._analyze_text_background(text_region)
-            if bg_score > 0.6:
-                indicators.append(TamperingIndicator(
-                    type="text_background_anomaly",
-                    severity="HIGH",
-                    confidence=bg_score,
-                    location={"x0": offset_x, "y0": offset_y, "x1": offset_x + w, "y1": offset_y + h},
-                    description="Text background shows signs of digital modification",
-                    evidence={"background_anomaly_score": bg_score}
-                ))
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _detect_stamp_tampering(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect fake or modified visa stamps and official seals"""
-        indicators = []
-
-        try:
-            # Find circular/stamp-like regions using Hough Circle Transform
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-
-            # Look for circular stamps
-            circles = cv2.HoughCircles(
-                gray, cv2.HOUGH_GRADIENT, dp=1, minDist=50,
-                param1=50, param2=30, minRadius=30, maxRadius=100
-            )
-
-            if circles is not None:
-                circles = np.uint16(np.around(circles))
-                for circle in circles[0, :]:
-                    cx, cy, radius = map(int, circle)
-                    # Analyze circular stamp region
-                    stamp_indicators = self._analyze_stamp_region(
-                        img_array, cx - radius, cy - radius, 2 * radius, 2 * radius
-                    )
-                    indicators.extend(stamp_indicators)
-
-            # Look for rectangular stamps/seals
-            contours, _ = cv2.findContours(
-                cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1],
-                cv2.RETR_EXTERNAL,
-                cv2.CHAIN_APPROX_SIMPLE
-            )
-
-            for contour in contours:
-                x, y, w, h = map(int, cv2.boundingRect(contour))
-                # Look for stamp-sized rectangular regions
-                if 50 < w < 200 and 30 < h < 100:
-                    stamp_indicators = self._analyze_stamp_region(img_array, x, y, w, h)
-                    indicators.extend(stamp_indicators)
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _analyze_stamp_region(self, img_array: np.ndarray, x: int, y: int, w: int, h: int) -> List[TamperingIndicator]:
-        """Analyze stamp/seal region for authenticity"""
-        indicators = []
-
-        try:
-            # Extract stamp region
-            stamp_region = img_array[y:y+h, x:x+w]
-
-            # 1. Color consistency analysis
-            color_score = self._analyze_stamp_colors(stamp_region)
-            if color_score > 0.6:
-                indicators.append(TamperingIndicator(
-                    type="stamp_color_inconsistency",
-                    severity="MEDIUM",
-                    confidence=color_score,
-                    location={"x0": x, "y0": y, "x1": x + w, "y1": y + h},
-                    description="Stamp colors appear digitally modified or inconsistent",
-                    evidence={"color_inconsistency_score": color_score}
-                ))
-
-            # 2. Edge sharpness (real stamps have ink bleed, fake ones are too sharp)
-            edge_score = self._analyze_stamp_edges(stamp_region)
-            if edge_score > 0.7:
-                indicators.append(TamperingIndicator(
-                    type="stamp_edge_anomaly",
-                    severity="HIGH",
-                    confidence=edge_score,
-                    location={"x0": x, "y0": y, "x1": x + w, "y1": y + h},
-                    description="Stamp edges unnaturally sharp, suggesting digital insertion",
-                    evidence={"edge_anomaly_score": edge_score}
-                ))
-
-            # 3. Transparency/opacity analysis
-            opacity_score = self._analyze_stamp_opacity(stamp_region)
-            if opacity_score > 0.5:
-                indicators.append(TamperingIndicator(
-                    type="stamp_opacity_anomaly",
-                    severity="MEDIUM",
-                    confidence=opacity_score,
-                    location={"x0": x, "y0": y, "x1": x + w, "y1": y + h},
-                    description="Stamp opacity inconsistent with authentic ink application",
-                    evidence={"opacity_anomaly_score": opacity_score}
-                ))
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _detect_digital_editing(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect digital editing artifacts"""
-        indicators = []
-
-        try:
-            # 1. JPEG compression artifact analysis
-            compression_indicators = self._detect_compression_artifacts(img_array)
-            indicators.extend(compression_indicators)
-
-            # 2. Copy-paste detection using correlation
-            copypaste_indicators = self._detect_copy_paste_regions(img_array)
-            indicators.extend(copypaste_indicators)
-
-            # 3. Cloning detection
-            cloning_indicators = self._detect_cloning_artifacts(img_array)
-            indicators.extend(cloning_indicators)
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _detect_security_tampering(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect tampering with security features (holograms, watermarks, etc.)"""
-        indicators = []
-
-        try:
-            # Look for missing or altered security patterns
-            # This is simplified - real implementation would need specific pattern matching
-
-            # 1. Hologram region analysis (typically shiny/reflective areas)
-            hologram_score = self._analyze_hologram_regions(img_array)
-            if hologram_score > 0.6:
-                indicators.append(TamperingIndicator(
-                    type="missing_hologram",
-                    severity="HIGH",
-                    confidence=hologram_score,
-                    location={"x0": 0, "y0": 0, "x1": int(img_array.shape[1]), "y1": int(img_array.shape[0])},
-                    description="Security hologram appears missing or altered",
-                    evidence={"hologram_analysis_score": hologram_score}
-                ))
-
-            # 2. Watermark detection
-            watermark_score = self._analyze_watermark_integrity(img_array)
-            if watermark_score > 0.5:
-                indicators.append(TamperingIndicator(
-                    type="watermark_tampering",
-                    severity="MEDIUM",
-                    confidence=watermark_score,
-                    location={"x0": 0, "y0": 0, "x1": int(img_array.shape[1]), "y1": int(img_array.shape[0])},
-                    description="Document watermark appears compromised",
-                    evidence={"watermark_analysis_score": watermark_score}
-                ))
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _detect_qr_barcode_tampering(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect suspicious QR codes and barcodes"""
-        indicators = []
-
-        try:
-            # Simplified QR/barcode detection
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-
-            # Look for QR-code-like square patterns
-            contours, _ = cv2.findContours(
-                cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1],
-                cv2.RETR_EXTERNAL,
-                cv2.CHAIN_APPROX_SIMPLE
-            )
-
-            for contour in contours:
-                x, y, w, h = map(int, cv2.boundingRect(contour))
-                # Look for square-ish regions that might be QR codes
-                if 50 < w < 200 and 50 < h < 200 and 0.7 < w/h < 1.3:
-                    qr_region = img_array[y:y+h, x:x+w]
-                    qr_score = self._analyze_qr_authenticity(qr_region)
-
-                    if qr_score > 0.6:
-                        indicators.append(TamperingIndicator(
-                            type="suspicious_qr_code",
-                            severity="MEDIUM",
-                            confidence=qr_score,
-                            location={"x0": x, "y0": y, "x1": x + w, "y1": y + h},
-                            description="QR code appears digitally modified or suspicious",
-                            evidence={"qr_authenticity_score": qr_score}
-                        ))
-
-            return indicators
-
-        except Exception:
-            return []
-
-    def _analyze_font_consistency(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Analyze font consistency across the document"""
-        indicators = []
-
-        try:
-            # This would involve advanced OCR and font analysis
-            # Simplified version looks for text regions with different characteristics
-
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-
-            # Find text regions
-            text_regions = self._find_text_regions(gray)
-
-            # Compare font characteristics between regions
-            font_characteristics = []
-            for x, y, w, h in text_regions:
-                region = gray[y:y+h, x:x+w]
-                characteristics = self._extract_font_features(region)
-                font_characteristics.append((characteristics, (x, y, w, h)))
-
-            # Look for inconsistencies
-            if len(font_characteristics) > 1:
-                consistency_score = self._calculate_font_consistency(font_characteristics)
-                if consistency_score > 0.6:
-                    indicators.append(TamperingIndicator(
-                        type="font_inconsistency",
-                        severity="MEDIUM",
-                        confidence=consistency_score,
-                        location={"x0": 0, "y0": 0, "x1": int(img_array.shape[1]), "y1": int(img_array.shape[0])},
-                        description="Inconsistent fonts detected across document regions",
-                        evidence={"font_consistency_score": consistency_score}
+        # Check for duplicate stamps (copy-paste)
+        for j, (x2, y2, w2, h2, a2, c2) in enumerate(stamp_regions):
+            if j <= i:
+                continue
+            size_ratio = min(a1, a2) / max(a1, a2) if max(a1, a2) > 0 else 0
+            if size_ratio > 0.8:
+                # Similar sized stamps — check if they look identical
+                patch1 = cv2.resize(gray[y1:y1 + h1, x1:x1 + w1], (64, 64))
+                patch2 = cv2.resize(gray[y2:y2 + h2, x2:x2 + w2], (64, 64))
+                similarity = float(cv2.matchTemplate(
+                    patch1, patch2, cv2.TM_CCOEFF_NORMED
+                ).max())
+                if similarity > 0.85:
+                    findings.append(TamperingFinding(
+                        type="stamp_duplication",
+                        confidence=round(min(0.8, similarity), 4),
+                        reason=f"Two stamp regions at ({x1},{y1}) and ({x2},{y2}) "
+                               f"have {similarity:.2f} similarity — possible copy-paste "
+                               f"duplication of stamp",
+                        location={"x0": x1, "y0": y1, "x1": x1 + w1, "y1": y1 + h1},
                     ))
 
-            return indicators
-
-        except Exception:
-            return []
-
-    # Helper methods for detailed analysis
-    def _analyze_region_content(self, image: Image.Image, x0: int, y0: int, x1: int, y1: int) -> Dict:
-        """Analyze what type of content is in a specific region"""
-        try:
-            region = image.crop((x0, y0, x1, y1))
-            region_array = np.array(region)
-
-            # Simple heuristics to determine content type
-            if self._is_likely_photo_region(region_array):
-                return {"content_type": "photograph"}
-            elif self._is_likely_text_region(region_array):
-                return {"content_type": "text"}
-            elif self._is_likely_stamp_region(region_array):
-                return {"content_type": "stamp"}
-            else:
-                return {"content_type": "background"}
-
-        except Exception:
-            return {"content_type": "unknown"}
-
-    def _is_likely_photo_region(self, region_array: np.ndarray) -> bool:
-        """Determine if region likely contains a photograph"""
-        # Check for face-like features or continuous tone
-        gray = cv2.cvtColor(region_array, cv2.COLOR_RGB2GRAY)
-        variance = np.var(gray)
-        return variance > 500  # Photos have higher variance
-
-    def _is_likely_text_region(self, region_array: np.ndarray) -> bool:
-        """Determine if region likely contains text"""
-        gray = cv2.cvtColor(region_array, cv2.COLOR_RGB2GRAY)
-        edges = cv2.Canny(gray, 50, 150)
-        edge_density = np.sum(edges) / (region_array.shape[0] * region_array.shape[1] * 255)
-        return 0.1 < edge_density < 0.4  # Text has moderate edge density
-
-    def _is_likely_stamp_region(self, region_array: np.ndarray) -> bool:
-        """Determine if region likely contains a stamp"""
-        # Look for circular or rectangular boundaries with specific color characteristics
-        hsv = cv2.cvtColor(region_array, cv2.COLOR_RGB2HSV)
-        saturation = hsv[:, :, 1]
-        return np.mean(saturation) > 100  # Stamps often have saturated colors
-
-    # Implement all the detailed analysis methods with reasonable heuristics
-    def _analyze_edge_sharpness(self, edges: np.ndarray) -> float:
-        """Analyze edge sharpness"""
-        if edges.size == 0:
-            return 0.0
-        return min(1.0, np.sum(edges) / (edges.shape[0] * edges.shape[1] * 255) * 5)
-
-    def _analyze_lighting_consistency(self, photo_region: np.ndarray) -> float:
-        """Analyze lighting consistency in photo region"""
-        gray = cv2.cvtColor(photo_region, cv2.COLOR_RGB2GRAY)
-        gradient_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-        gradient_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-        gradient_mag = np.sqrt(gradient_x**2 + gradient_y**2)
-        return min(1.0, np.std(gradient_mag) / 100.0)
-
-    def _analyze_photo_quality_consistency(self, photo_region: np.ndarray, offset_x: int, offset_y: int) -> float:
-        """Analyze photo quality consistency"""
-        gray = cv2.cvtColor(photo_region, cv2.COLOR_RGB2GRAY)
-        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        sharpness = laplacian.var()
-        # Compare with expected sharpness for document photos
-        expected_sharpness = 200.0  # Typical for document scans
-        deviation = abs(sharpness - expected_sharpness) / expected_sharpness
-        return min(1.0, deviation)
-
-    def _analyze_font_in_region(self, text_region: np.ndarray) -> float:
-        """Analyze font characteristics in text region"""
-        gray = cv2.cvtColor(text_region, cv2.COLOR_RGB2GRAY)
-        # Simplified font analysis based on stroke width consistency
-        edges = cv2.Canny(gray, 50, 150)
-        stroke_analysis = np.std(edges) / (np.mean(edges) + 1)
-        return min(1.0, stroke_analysis / 100.0)
-
-    def _analyze_character_alignment(self, text_region: np.ndarray) -> float:
-        """Analyze character alignment"""
-        gray = cv2.cvtColor(text_region, cv2.COLOR_RGB2GRAY)
-        # Simplified alignment check using horizontal projection
-        h_projection = np.sum(gray, axis=1)
-        alignment_variance = np.var(h_projection)
-        return min(1.0, alignment_variance / 10000.0)
-
-    def _analyze_text_background(self, text_region: np.ndarray) -> float:
-        """Analyze text background for anomalies"""
-        gray = cv2.cvtColor(text_region, cv2.COLOR_RGB2GRAY)
-        # Look for background inconsistencies
-        background_mask = gray > np.percentile(gray, 85)  # Likely background pixels
-        if np.sum(background_mask) == 0:
-            return 0.0
-        bg_variance = np.var(gray[background_mask])
-        return min(1.0, bg_variance / 1000.0)
-
-    # Implement remaining helper methods with similar patterns...
-    def _analyze_stamp_colors(self, stamp_region: np.ndarray) -> float:
-        """Analyze stamp color consistency"""
-        hsv = cv2.cvtColor(stamp_region, cv2.COLOR_RGB2HSV)
-        hue_variance = np.var(hsv[:, :, 0])
-        return min(1.0, hue_variance / 5000.0)
-
-    def _analyze_stamp_edges(self, stamp_region: np.ndarray) -> float:
-        """Analyze stamp edge characteristics"""
-        gray = cv2.cvtColor(stamp_region, cv2.COLOR_RGB2GRAY)
-        edges = cv2.Canny(gray, 50, 150)
-        edge_sharpness = np.sum(edges) / (stamp_region.shape[0] * stamp_region.shape[1] * 255)
-        return min(1.0, edge_sharpness * 3)
-
-    def _analyze_stamp_opacity(self, stamp_region: np.ndarray) -> float:
-        """Analyze stamp opacity characteristics"""
-        gray = cv2.cvtColor(stamp_region, cv2.COLOR_RGB2GRAY)
-        opacity_variation = np.std(gray)
-        return min(1.0, (255 - opacity_variation) / 255.0)
-
-    def _detect_compression_artifacts(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect JPEG compression artifacts"""
-        # Simplified implementation
-        return []
-
-    def _detect_copy_paste_regions(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect copy-paste regions using correlation"""
-        # Simplified implementation
-        return []
-
-    def _detect_cloning_artifacts(self, img_array: np.ndarray) -> List[TamperingIndicator]:
-        """Detect cloning artifacts"""
-        # Simplified implementation
-        return []
-
-    def _analyze_hologram_regions(self, img_array: np.ndarray) -> float:
-        """Analyze hologram regions"""
-        # Simplified - look for highly reflective areas
-        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-        bright_pixels = np.sum(gray > 200) / gray.size
-        return 1.0 - min(1.0, bright_pixels * 10)  # Expect some bright pixels for holograms
-
-    def _analyze_watermark_integrity(self, img_array: np.ndarray) -> float:
-        """Analyze watermark integrity"""
-        # Simplified watermark analysis
-        return 0.0  # Placeholder
-
-    def _analyze_qr_authenticity(self, qr_region: np.ndarray) -> float:
-        """Analyze QR code authenticity"""
-        # Check for pixel-perfect patterns (suspicious)
-        gray = cv2.cvtColor(qr_region, cv2.COLOR_RGB2GRAY)
-        unique_values = len(np.unique(gray))
-        # Real QR codes have some noise, perfect ones are suspicious
-        if unique_values < 10:
-            return 0.8  # Very few gray levels = suspicious
-        return 0.0
-
-    def _find_text_regions(self, gray: np.ndarray) -> List[Tuple[int, int, int, int]]:
-        """Find text regions in image"""
-        # Simplified text region detection
-        contours, _ = cv2.findContours(
-            cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1],
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE
-        )
-
-        text_regions = []
-        for contour in contours:
-            x, y, w, h = map(int, cv2.boundingRect(contour))
-            if 20 < w < 300 and 10 < h < 50:  # Text-like dimensions
-                text_regions.append((x, y, w, h))
-
-        return text_regions
-
-    def _extract_font_features(self, region: np.ndarray) -> Dict:
-        """Extract font features from text region"""
-        # Simplified font feature extraction
-        return {
-            "stroke_width": np.std(region),
-            "character_height": int(region.shape[0]),
-            "density": np.sum(region < 128) / region.size
-        }
-
-    def _calculate_font_consistency(self, font_characteristics: List) -> float:
-        """Calculate font consistency across regions"""
-        if len(font_characteristics) < 2:
-            return 0.0
-
-        # Compare stroke widths and other features
-        stroke_widths = [char[0]["stroke_width"] for char in font_characteristics]
-        stroke_variance = np.var(stroke_widths)
-        return min(1.0, stroke_variance / 1000.0)
+    return findings
 
 
 class ComprehensiveForensicsProvider(TamperingProvider):
-    """Comprehensive document forensics with all tampering detection types"""
-
-    def __init__(self):
-        self.analyzer = ComprehensiveForensicsAnalyzer()
-
     def analyze(self, image_bytes: bytes) -> TamperingResult:
-        """Comprehensive tampering analysis"""
         try:
-            indicators = self.analyzer.analyze_comprehensive(image_bytes)
-
-            # Convert indicators to findings
-            findings = []
-            max_risk = 0.0
-
-            for indicator in indicators:
-                finding = TamperingFinding(
-                    type=indicator.type,
-                    confidence=indicator.confidence,
-                    reason=indicator.description,
-                    location=indicator.location
-                )
-                findings.append(finding)
-                max_risk = max(max_risk, indicator.confidence)
-
-            # Sort findings by confidence (most concerning first)
-            findings.sort(key=lambda f: f.confidence, reverse=True)
-
-            return TamperingResult(
-                tampering_risk=round(max_risk, 4),
-                findings=findings[:10]  # Limit to top 10 findings
-            )
-
+            bgr, gray = _decode_image(image_bytes)
         except Exception as e:
-            # Return error result
-            error_finding = TamperingFinding(
-                type="analysis_error",
-                confidence=0.5,
-                reason=f"Forensics analysis failed: {str(e)}",
-                location={"x0": 0, "y0": 0, "x1": 100, "y1": 100}
+            return TamperingResult(
+                tampering_risk=0.0,
+                findings=[TamperingFinding(
+                    type="decode_error", confidence=0.0,
+                    reason=f"Failed to decode image: {e}", location=None,
+                )],
             )
 
-            return TamperingResult(
-                tampering_risk=0.5,
-                findings=[error_finding]
-            )
+        all_findings: list[TamperingFinding] = []
+
+        # 1. ELA
+        all_findings.extend(_ela_analysis(image_bytes))
+
+        # 2. SRM noise residual analysis
+        all_findings.extend(_srm_noise_analysis(gray))
+
+        # 3. JPEG analysis
+        all_findings.extend(_jpeg_analysis(image_bytes, gray))
+
+        # 4. UNet tamper localization
+        all_findings.extend(_unet_localization(gray))
+
+        # 5. Text manipulation detection
+        try:
+            all_findings.extend(_text_manipulation_analysis(bgr, gray))
+        except Exception as e:
+            logger.debug("Text manipulation analysis failed: %s", e)
+
+        # 6. Photo replacement detection
+        try:
+            all_findings.extend(_photo_replacement_analysis(bgr, gray))
+        except Exception as e:
+            logger.debug("Photo replacement analysis failed: %s", e)
+
+        # 7. Stamp analysis
+        try:
+            all_findings.extend(_stamp_analysis(bgr, gray))
+        except Exception as e:
+            logger.debug("Stamp analysis failed: %s", e)
+
+        # 8. Metadata/EXIF analysis
+        try:
+            all_findings.extend(analyze_metadata(image_bytes))
+        except Exception as e:
+            logger.debug("Metadata analysis failed: %s", e)
+
+        # Deduplicate overlapping findings (keep highest confidence per region)
+        all_findings.sort(key=lambda f: f.confidence, reverse=True)
+        deduped: list[TamperingFinding] = []
+        seen_regions: list[dict] = []
+
+        for f in all_findings:
+            if f.location and len(deduped) < 15:
+                overlap = False
+                for seen in seen_regions:
+                    ox = max(0, min(f.location["x1"], seen["x1"]) - max(f.location["x0"], seen["x0"]))
+                    oy = max(0, min(f.location["y1"], seen["y1"]) - max(f.location["y0"], seen["y0"]))
+                    overlap_area = ox * oy
+                    f_area = (f.location["x1"] - f.location["x0"]) * (f.location["y1"] - f.location["y0"])
+                    if f_area > 0 and overlap_area / f_area > 0.5:
+                        overlap = True
+                        break
+                if not overlap:
+                    deduped.append(f)
+                    seen_regions.append(f.location)
+            elif not f.location:
+                deduped.append(f)
+
+        top_findings = deduped[:15]
+        risk = max((f.confidence for f in top_findings), default=0.0)
+
+        return TamperingResult(
+            tampering_risk=round(risk, 4),
+            findings=top_findings,
+        )

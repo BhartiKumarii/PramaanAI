@@ -176,6 +176,34 @@ def reset_screening_data(
     return {"deleted": deleted}
 
 
+@router.delete("/purge-demo-cases", summary="Delete only the seeded demo cases (BSA-20260916-*) and their verification records")
+def purge_demo_cases(
+    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+) -> dict:
+    from app.models.case import Case
+    from app.models.verification import VerificationRecord
+    demo_cases = db.query(Case).filter(Case.case_number.like("BSA-20260916-%")).all()
+    if not demo_cases:
+        return {"deleted_cases": 0, "deleted_verifications": 0}
+    verification_ids = [c.verification_id for c in demo_cases if c.verification_id]
+    case_ids = [c.id for c in demo_cases]
+    for cid in case_ids:
+        db.execute(text("DELETE FROM case_notes WHERE case_id = :cid"), {"cid": str(cid)})
+        db.execute(text("DELETE FROM officer_decisions WHERE case_id = :cid"), {"cid": str(cid)})
+        db.execute(text("DELETE FROM audit_events WHERE case_id = :cid"), {"cid": str(cid)})
+    for c in demo_cases:
+        db.delete(c)
+    db.flush()
+    v_count = 0
+    for vid in verification_ids:
+        v = db.get(VerificationRecord, vid)
+        if v:
+            db.delete(v)
+            v_count += 1
+    db.commit()
+    return {"deleted_cases": len(demo_cases), "deleted_verifications": v_count}
+
+
 @router.get("/checkpoints", response_model=list[CheckpointResponse], summary="List all checkpoints")
 def list_checkpoints_route(
     _user: User = Depends(require_role()), db: Session = Depends(get_db)

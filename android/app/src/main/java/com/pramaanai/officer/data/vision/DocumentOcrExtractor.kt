@@ -155,7 +155,7 @@ object DocumentOcrExtractor {
             checks.add(VerificationCheck("Critical field extraction", CheckStatus.WARNING, "Missing: ${missingCritical.joinToString(", ").replace("_", " ")}"))
         }
         // Document number presence
-        val hasDocNum = fields.keys.any { it in setOf("passport_number", "document_number", "aadhaar_number", "pan_number", "voter_id", "dl_number", "visa_number") }
+        val hasDocNum = fields.keys.any { it in setOf("passport_number", "document_number", "aadhaar_number", "pan_number", "voter_id", "dl_number", "visa_number", "citizenship_number", "cid_number", "licence_number", "license_number", "permit_number") }
         if (hasDocNum) {
             checks.add(VerificationCheck("Document number extraction", CheckStatus.PASS, "Document number found"))
         } else {

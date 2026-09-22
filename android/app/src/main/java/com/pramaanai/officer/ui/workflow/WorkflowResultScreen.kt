@@ -251,7 +251,7 @@ private fun documentFieldSchema(docType: String, ocrFields: Map<String, String>)
         )
         dt.contains("national") || dt.contains("citizenship") || dt.contains("cid") -> listOf(
             numKey("full_name", "name") to "Full name",
-            numKey("cid_number", "nin_number", "citizenship_id", "document_number") to "ID number",
+            numKey("aadhaar_number", "citizenship_number", "cid_number", "nin_number", "citizenship_id", "document_number") to "ID number",
             "nationality"       to "Nationality",
             "date_of_birth"     to "Date of birth",
             numKey("sex", "gender") to "Gender",
@@ -267,7 +267,7 @@ private fun documentFieldSchema(docType: String, ocrFields: Map<String, String>)
         )
         dt.contains("driving") || dt.contains("licence") || dt.contains("license") -> listOf(
             numKey("full_name", "name") to "Full name",
-            numKey("dl_number", "document_number") to "Licence number",
+            numKey("licence_number", "license_number", "dl_number", "document_number") to "Licence number",
             "date_of_birth"     to "Date of birth",
             numKey("sex", "gender") to "Gender",
             "nationality"       to "Nationality",

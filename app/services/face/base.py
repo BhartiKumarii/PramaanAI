@@ -2,7 +2,7 @@
 embedding extraction, and cosine-similarity matching."""
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FaceMatchResult(BaseModel):
@@ -11,6 +11,8 @@ class FaceMatchResult(BaseModel):
     confidence: float
     reason: str  # specific similarity value + threshold, never a generic string
     location: dict | None = None  # detected face bbox in the presented image, null if none found
+    inconclusive: bool = False  # True when quality too poor — NOT a mismatch
+    quality_issues: list[str] = Field(default_factory=list)
 
 
 class FaceProvider(ABC):

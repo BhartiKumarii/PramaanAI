@@ -100,6 +100,7 @@ import com.pramaanai.officer.data.vision.TamperingAnalyzer
 import com.pramaanai.officer.ui.components.ConfidenceTag
 import com.pramaanai.officer.ui.components.GridPatternBackground
 import com.pramaanai.officer.ui.components.WorkflowStepper
+import androidx.compose.ui.text.font.FontFamily
 import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import kotlinx.coroutines.Dispatchers
@@ -746,8 +747,18 @@ fun CaptureScreen(
                     name = ocrResult.fields["name"] ?: "",
                     // Every document type's number (passport, ID, licence, permit) travels
                     // under this one key — it is what the backend looks up and de-duplicates on.
-                    passportNumber = (ocrResult.fields["passport_number"] ?: ocrResult.fields["document_number"] ?: "")
-                        .replace(" ", ""),
+                    passportNumber = (ocrResult.fields["passport_number"]
+                        ?: ocrResult.fields["document_number"]
+                        ?: ocrResult.fields["aadhaar_number"]
+                        ?: ocrResult.fields["citizenship_number"]
+                        ?: ocrResult.fields["cid_number"]
+                        ?: ocrResult.fields["licence_number"]
+                        ?: ocrResult.fields["license_number"]
+                        ?: ocrResult.fields["visa_number"]
+                        ?: ocrResult.fields["permit_number"]
+                        ?: ocrResult.fields["pan_number"]
+                        ?: ocrResult.fields["voter_id"]
+                        ?: "").replace(" ", ""),
                     nationality = ocrResult.fields["nationality"] ?: "",
                     dateOfBirth = ocrResult.fields["date_of_birth"] ?: "",
                     dateOfExpiry = ocrResult.fields["date_of_expiry"] ?: "",
@@ -852,11 +863,19 @@ fun CaptureScreen(
                         put("document_number", docNum)
                         when (effectiveDocType.uppercase()) {
                             "PASSPORT" -> put("passport_number", docNum)
-                            "NATIONAL_ID" -> put("aadhaar_number", docNum)
+                            "NATIONAL_ID" -> {
+                                put("aadhaar_number", docNum)
+                                put("citizenship_number", docNum)
+                                put("cid_number", docNum)
+                            }
                             "PAN_CARD" -> put("pan_number", docNum)
                             "VOTER_ID" -> put("voter_id", docNum)
-                            "DRIVING_LICENCE", "DRIVING_LICENSE" -> put("license_number", docNum)
+                            "DRIVING_LICENCE", "DRIVING_LICENSE" -> {
+                                put("licence_number", docNum)
+                                put("license_number", docNum)
+                            }
                             "VISA" -> put("visa_number", docNum)
+                            "PERMIT" -> put("permit_number", docNum)
                             else -> put("passport_number", docNum)
                         }
                     }
@@ -1065,6 +1084,49 @@ fun CaptureScreen(
                             val label = key.replace("_", " ").replaceFirstChar { it.uppercase() }
                             ExtractedFieldRow(label, value)
                         }
+                    }
+
+                    // Detected document type
+                    if (detectedDocType != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AccentGreen.copy(alpha = 0.10f), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text("Detected type:", style = MaterialTheme.typography.labelMedium, color = Gray600)
+                            Text(
+                                detectedDocType!!.replace("_", " "),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                color = AccentGreen,
+                            )
+                        }
+                    }
+
+                    // MRZ section
+                    if (mrzLines.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "Machine-Readable Zone (MRZ)",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                            color = Gray600,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            mrzLines.joinToString("\n"),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = AccentGreen,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(BackgroundDark, RoundedCornerShape(8.dp))
+                                .padding(10.dp),
+                        )
                     }
 
                     if (listOf(fields.name, fields.passportNumber, fields.nationality, fields.dateOfBirth, fields.dateOfExpiry).all { it.isBlank() }) {

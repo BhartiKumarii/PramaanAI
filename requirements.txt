@@ -13,24 +13,8 @@ pytesseract>=0.3.10,<0.4
 pillow>=10.3,<11
 numpy>=1.26,<3
 networkx>=3.2,<4
-opencv-python-headless>=4.9,<5
-scikit-image>=0.21,<0.22
-
-# Module 1 (OCR) uses Tesseract via pytesseract, not PaddleOCR — see
-# app/services/ocr/tesseract_provider.py for rationale (PaddlePaddle's
-# footprint was a poor fit for this build's network conditions). The
-# tesseract-ocr system binary is installed separately (see Dockerfile /
-# README) since it's not a pip package.
-
-# Module 3 (tampering) is pure Pillow (ELA) — no opencv/torch needed.
-# Module 4 (face match) is a classical HOG-over-Sobel-gradients embedding,
-# pure Pillow + numpy — see app/services/face/embedding.py and
-# app/services/face/classical_provider.py for rationale (dlib/face_recognition
-# needs cmake, unavailable here with no passwordless sudo; EasyOCR/mediapipe-
-# adjacent stacks repeat the same multi-hundred-MB dependency problem that
-# already ruled out PaddleOCR for OCR). Face *detection* (presence/count/
-# position — distinct from match) does use opencv-python-headless, but
-# only for YuNet (see app/services/face/yunet_detector.py): a small
-# (~230KB) prebuilt ONNX model via a pure-wheel package needing no cmake
-# or system compiler, a materially different cost than the mediapipe/
-# dlib stacks ruled out above.
+opencv-contrib-python>=4.9,<6
+mediapipe>=1.0,<2
+onnxruntime>=1.17,<2
+insightface>=0.7,<3
+rapidocr-onnxruntime>=1.4,<2

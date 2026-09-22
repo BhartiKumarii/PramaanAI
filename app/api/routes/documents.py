@@ -55,7 +55,8 @@ from app.services.deepfake.base import DeepfakeProvider, DeepfakeResult
 from app.services.duplicate.base import DuplicateDocumentResult
 from app.services.duplicate.checker import check_duplicate_document
 from app.services.face.base import FaceDetectionResult, FaceDetector, FaceMatchResult, FaceProvider
-from app.services.face.classical_provider import match_from_embeddings
+from app.services.face.classical_provider import match_from_embeddings as hog_match_from_embeddings
+from app.services.face.mobilefacenet_provider import mobilefacenet_match
 from app.services.identity_graph.base import IdentityGraphResult
 from app.services.identity_graph.graph import build_graph, find_multi_identity_cluster
 from app.services.liveness.base import LivenessProvider, LivenessResult
@@ -207,6 +208,36 @@ async def analyze_tampering(
 
 
 @router.post(
+    "/forensic-report",
+    summary="Generate a forensic evidence visualization (ELA heatmap + noise map + annotated findings)",
+)
+async def forensic_report(
+    file: UploadFile = File(...),
+    _user: User = Depends(get_current_user),
+    tampering_provider: TamperingProvider = Depends(get_tampering_provider),
+):
+    from fastapi.responses import Response
+    from app.services.tampering.forensic_visualizer import generate_forensic_report
+
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    image_bytes = downscale_image_bytes(image_bytes)
+
+    result = tampering_provider.analyze(image_bytes)
+    findings_dicts = [
+        {"type": f.type, "confidence": f.confidence, "severity": "HIGH" if f.confidence > 0.7 else "MEDIUM" if f.confidence > 0.4 else "LOW", "location": f.location}
+        for f in result.findings
+    ]
+
+    report_bytes = generate_forensic_report(image_bytes, findings_dicts)
+    if not report_bytes:
+        raise HTTPException(status_code=500, detail="Failed to generate forensic report")
+
+    return Response(content=report_bytes, media_type="image/jpeg")
+
+
+@router.post(
     "/detect-faces",
     response_model=FaceDetectionResult,
     summary="Real face detection (YuNet) — face presence, count, and position; "
@@ -308,6 +339,24 @@ def screen_document(
             except MRZFormatError:
                 mrz_result = None
 
+        stage = "registry_lookup"
+        name_for_lookup = payload.ocr_fields.get("name")
+        document_number_for_lookup = (
+            payload.ocr_fields.get("passport_number")
+            or payload.ocr_fields.get("document_number")
+            or payload.ocr_fields.get("aadhaar_number")
+            or payload.ocr_fields.get("licence_number")
+            or payload.ocr_fields.get("license_number")
+            or payload.ocr_fields.get("visa_number")
+            or payload.ocr_fields.get("pan_number")
+            or payload.ocr_fields.get("voter_id")
+            or payload.ocr_fields.get("citizenship_number")
+            or payload.ocr_fields.get("cid_number")
+            or payload.ocr_fields.get("permit_number")
+            or payload.aadhaar_number
+        )
+        registry_result: RegistryLookupResult = lookup_registry(db, document_number_for_lookup, name_for_lookup)
+
         stage = "validation"
         aadhaar_for_validation = payload.aadhaar_number or payload.ocr_fields.get("aadhaar_number")
         validation_result: ValidationResult = validation_engine.validate(
@@ -315,21 +364,9 @@ def screen_document(
             mrz_result=mrz_result,
             nationality=payload.nationality,
             aadhaar_number=aadhaar_for_validation,
+            document_type=payload.document_type.value,
+            registry_hits=registry_result.hits if registry_result else None,
         )
-
-        stage = "registry_lookup"
-        name_for_lookup = payload.ocr_fields.get("name")
-        document_number_for_lookup = (
-            payload.ocr_fields.get("passport_number")
-            or payload.ocr_fields.get("document_number")
-            or payload.ocr_fields.get("aadhaar_number")
-            or payload.ocr_fields.get("license_number")
-            or payload.ocr_fields.get("visa_number")
-            or payload.ocr_fields.get("pan_number")
-            or payload.ocr_fields.get("voter_id")
-            or payload.aadhaar_number
-        )
-        registry_result: RegistryLookupResult = lookup_registry(db, document_number_for_lookup, name_for_lookup)
         duplicate_document_result: DuplicateDocumentResult | None = check_duplicate_document(
             db, document_number_for_lookup, name_for_lookup
         )
@@ -344,7 +381,10 @@ def screen_document(
         stage = "face_match"
         face_result: FaceMatchResult | None = None
         if payload.document_face_embedding and payload.live_face_embedding:
-            face_result = match_from_embeddings(payload.document_face_embedding, payload.live_face_embedding)
+            if len(payload.document_face_embedding) == 128:
+                face_result = mobilefacenet_match(payload.document_face_embedding, payload.live_face_embedding)
+            else:
+                face_result = hog_match_from_embeddings(payload.document_face_embedding, payload.live_face_embedding)
 
         stage = "identity_graph"
         identity_graph_result: IdentityGraphResult | None = None

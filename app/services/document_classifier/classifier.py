@@ -1,5 +1,13 @@
-"""Document type classifier using reference profiles built from the ID dataset."""
+"""Document type classifier — OCR text keywords first, visual features as fallback.
+
+The previous version relied only on visual feature profiles (color histograms,
+aspect ratios) which are too unreliable for real documents. OCR text is far more
+accurate: a passport literally says "PASSPORT", a driving licence says "DRIVING
+LICENCE", etc. Visual features are used only when OCR text is ambiguous.
+"""
+import io
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -24,11 +32,8 @@ HISTOGRAM_KEYS = ["hist_h", "hist_s", "hist_v"]
 
 REFERENCE_PATH = Path(__file__).parent / "reference_profiles.json"
 
-# Minimum confidence to consider a match valid — raised to reject non-documents
-# Real ID docs typically score 0.73+, non-docs score ~0.60-0.67
 ID_DOC_THRESHOLD = 0.72
 
-# Feature weights for matching (higher = more important for classification)
 FEATURE_WEIGHTS = {
     "aspect_ratio": 3.0,
     "text_density": 2.0,
@@ -46,13 +51,36 @@ FEATURE_WEIGHTS = {
     "hist_v": 1.0,
 }
 
-# Map dataset folder names to canonical types
 DOCTYPE_MAP = {
     "National_ID": "national_id",
     "Passport": "passport",
     "Driving_License": "driving_license",
     "Visa": "visa",
     "Permit": "permit",
+}
+
+_KEYWORD_RULES: list[tuple[str, str, list[str]]] = [
+    # (doc_type, country, keywords) — first match wins, most specific first
+    ("passport", "India", ["republic of india", "indian passport", "passport", r"type\s*p"]),
+    ("passport", "Nepal", ["nepal", "nepali passport", r"government\s*of\s*nepal"]),
+    ("passport", "Bhutan", ["bhutan", "bhutanese passport", r"kingdom\s*of\s*bhutan"]),
+    ("national_id", "India", ["aadhaar", "unique identification", "uidai", r"xxxx\s*\d{4}", r"\d{4}\s*\d{4}\s*\d{4}"]),
+    ("national_id", "India", ["election commission", "voter", "electors photo", "epic"]),
+    ("national_id", "India", ["permanent account number", "income tax", r"pan\s*card", r"[A-Z]{5}\d{4}[A-Z]"]),
+    ("national_id", "Nepal", ["nepal", r"national\s*id", r"citizenship", r"nagarikta"]),
+    ("national_id", "Bhutan", ["bhutan", r"citizen\s*id", r"cid\s*no"]),
+    ("driving_license", "India", [r"driving\s*licen[cs]e", r"motor\s*vehicle", "transport", r"dl\s*no", r"licen[cs]e\s*no"]),
+    ("driving_license", "Nepal", ["nepal", r"driving\s*licen[cs]e", r"sawari\s*chalak"]),
+    ("driving_license", "Bhutan", ["bhutan", r"driving\s*licen[cs]e"]),
+    ("visa", "India", [r"visa", r"entry\s*permit", r"valid\s*for", r"no\.\s*of\s*entries"]),
+    ("visa", "Nepal", ["nepal", r"visa", r"arrival"]),
+    ("permit", "unknown", [r"permit", r"border\s*pass", r"entry\s*pass", r"inner\s*line"]),
+]
+
+_COUNTRY_KEYWORDS = {
+    "India": [r"india", r"republic of india", r"bharat", r"government of india"],
+    "Nepal": [r"nepal", r"government of nepal"],
+    "Bhutan": [r"bhutan", r"kingdom of bhutan", r"druk"],
 }
 
 
@@ -81,6 +109,56 @@ class DocumentClassifier:
         self._loaded = bool(self._profiles)
         print(f"[DocumentClassifier] Loaded {len(self._profiles)} reference profiles")
 
+    def _ocr_text(self, image_bytes: bytes) -> str:
+        try:
+            import pytesseract
+            from PIL import Image, ImageOps
+            image = Image.open(io.BytesIO(image_bytes))
+            image = ImageOps.exif_transpose(image)
+            gray = image.convert("L")
+            gray = ImageOps.autocontrast(gray)
+            return pytesseract.image_to_string(gray)
+        except Exception:
+            return ""
+
+    def _classify_by_text(self, text: str) -> tuple[str, str, float, str] | None:
+        """Return (doc_type, country, confidence, reason) from OCR keywords."""
+        lower = text.lower()
+        if len(lower.strip()) < 5:
+            return None
+
+        best_match: tuple[str, str, int, str] | None = None
+
+        for doc_type, country, patterns in _KEYWORD_RULES:
+            hits = 0
+            matched = []
+            for pat in patterns:
+                if re.search(pat, lower):
+                    hits += 1
+                    matched.append(pat)
+            if hits >= 2 or (hits == 1 and doc_type in ("passport", "visa", "permit")):
+                if best_match is None or hits > best_match[2]:
+                    best_match = (doc_type, country, hits, ", ".join(matched))
+
+        if best_match is None:
+            return None
+
+        doc_type, country, hits, matched_str = best_match
+
+        if country == "unknown":
+            country = self._detect_country_from_text(lower)
+
+        confidence = min(0.95, 0.70 + hits * 0.08)
+        reason = f"OCR text matched {country} {doc_type} (keywords: {matched_str})"
+        return doc_type, country, confidence, reason
+
+    def _detect_country_from_text(self, lower_text: str) -> str:
+        for country, patterns in _COUNTRY_KEYWORDS.items():
+            for pat in patterns:
+                if re.search(pat, lower_text):
+                    return country
+        return "unknown"
+
     def classify(self, image_bytes: bytes) -> DocumentClassification:
         features = extract_features_from_bytes(image_bytes)
         if features is None:
@@ -92,18 +170,31 @@ class DocumentClassifier:
                 reason="Could not decode image",
             )
 
+        ocr_text = self._ocr_text(image_bytes)
+        text_result = self._classify_by_text(ocr_text) if ocr_text else None
+
+        if text_result is not None:
+            doc_type, country, confidence, reason = text_result
+            return DocumentClassification(
+                is_identity_document=True,
+                document_type=doc_type,
+                country=country,
+                confidence=confidence,
+                reason=reason,
+                features=features,
+            )
+
         if not self._loaded:
             return DocumentClassification(
                 is_identity_document=False,
                 document_type="unknown",
                 country="unknown",
                 confidence=0.0,
-                reason="No reference profiles loaded — run reference_builder first",
+                reason="No reference profiles loaded and OCR text inconclusive",
                 features=features,
             )
 
         scores: list[tuple[str, float]] = []
-
         for profile_key, profile_data in self._profiles.items():
             score = self._compute_similarity(features, profile_data["features"])
             scores.append((profile_key, score))
@@ -111,7 +202,6 @@ class DocumentClassifier:
         scores.sort(key=lambda x: x[1], reverse=True)
         best_key, best_score = scores[0]
 
-        # Parse country and doc type from the key
         parts = best_key.split("_", 1)
         country = parts[0] if len(parts) >= 2 else "unknown"
         raw_doc_type = parts[1] if len(parts) >= 2 else best_key
@@ -119,19 +209,16 @@ class DocumentClassifier:
 
         is_id = best_score >= ID_DOC_THRESHOLD
 
-        # Secondary structural gate — even if score is above threshold,
-        # reject images that lack fundamental ID document characteristics
         if is_id:
             structural_issues = self._structural_check(features, doc_type)
             if structural_issues:
                 is_id = False
                 reason = "Document rejected — " + "; ".join(structural_issues)
             else:
-                reason = f"Matched {country} {doc_type} profile (confidence: {best_score:.2f})"
+                reason = f"Visual profile matched {country} {doc_type} (confidence: {best_score:.2f})"
         else:
             reason = self._build_rejection_reason(features, best_score)
 
-        # Add runner-up info for debugging
         if len(scores) > 1:
             runner_key, runner_score = scores[1]
             features["_runner_up"] = f"{runner_key}={runner_score:.3f}"

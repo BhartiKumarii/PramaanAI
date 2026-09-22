@@ -54,13 +54,12 @@ from dataclasses import dataclass
 import re
 
 from sqlalchemy.orm import Session
-from app.services.face.enhanced_provider import EnhancedFaceProvider, EnhancedFaceDetector
+from app.services.face.mobilefacenet_provider import MobileFaceNetProvider
+from app.services.face.blazeface_detector import BlazeFaceDetector
 from app.services.liveness.advanced_provider import AdvancedLivenessProvider
 from app.services.liveness.heuristic_provider import HeuristicLivenessProvider
 from app.services.tampering.forensics_provider import ComprehensiveForensicsProvider
 from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
-from app.services.visa.nepal_visa_handler import NepalVisaHandler
-from app.services.language.multilingual_handler import MultilingualDocumentHandler
 
 
 @dataclass
@@ -115,15 +114,12 @@ class ComprehensiveVerificationEngine:
     def __init__(self, db_session: Session):
         self.db = db_session
 
-        # Initialize all verification services
-        self.face_provider = EnhancedFaceProvider()
-        self.face_detector = EnhancedFaceDetector()
+        self.face_provider = MobileFaceNetProvider()
+        self.face_detector = BlazeFaceDetector()
         self.liveness_provider = AdvancedLivenessProvider()
         self.liveness_fallback = HeuristicLivenessProvider()
         self.tampering_provider = ComprehensiveForensicsProvider()
         self.deepfake_provider = AdvancedDeepfakeProvider()
-        self.nepal_visa_handler = NepalVisaHandler()
-        self.multilingual_handler = MultilingualDocumentHandler()
 
         # Verification thresholds (aligned with face providers)
         self.face_match_threshold = 0.42
@@ -145,12 +141,6 @@ class ComprehensiveVerificationEngine:
         officer_recommendations = []
         required_actions = []
 
-        # 0. MULTILINGUAL DOCUMENT PROCESSING
-        multilingual_conditions = self._verify_multilingual_conditions(
-            document_image_bytes, document_type, nationality
-        )
-        all_conditions.extend(multilingual_conditions)
-
         # 1. DOCUMENT VERIFICATION CONDITIONS
         doc_conditions = self._verify_document_conditions(
             ocr_fields, document_type, nationality, aadhaar_number
@@ -160,13 +150,6 @@ class ComprehensiveVerificationEngine:
         # 2. TAMPERING DETECTION CONDITIONS
         tampering_conditions = self._verify_tampering_conditions(document_image_bytes)
         all_conditions.extend(tampering_conditions)
-
-        # 2.5. NEPAL VISA SPECIFIC VERIFICATION (if applicable)
-        if document_type.lower() == 'visa' and nationality.lower() == 'nepal':
-            nepal_visa_conditions = self._verify_nepal_visa_conditions(
-                document_image_bytes, ocr_fields
-            )
-            all_conditions.extend(nepal_visa_conditions)
 
         # 3. FACE VERIFICATION CONDITIONS
         face_conditions = self._verify_face_conditions(
@@ -279,16 +262,37 @@ class ComprehensiveVerificationEngine:
 
         # Map forensics findings to specific tampering conditions
         tampering_types = {
+            # ELA / compression
             'compression_anomaly': 'TAMPERING_DIGITAL_EDITING',
+            'double_compression': 'TAMPERING_DIGITAL_EDITING',
+            # Photo tampering
             'photo_edge_anomaly': 'TAMPERING_PHOTO_REPLACEMENT',
             'photo_lighting_inconsistency': 'TAMPERING_PHOTO_REPLACEMENT',
+            'photo_quality_mismatch': 'TAMPERING_PHOTO_REPLACEMENT',
+            # Text / field tampering
             'font_inconsistency': 'TAMPERING_FONT_INCONSISTENCY',
             'character_misalignment': 'TAMPERING_TEXT_MODIFICATION',
             'text_background_anomaly': 'TAMPERING_TEXT_MODIFICATION',
+            # Stamp forgery
             'stamp_color_inconsistency': 'TAMPERING_FAKE_STAMP',
             'stamp_edge_anomaly': 'TAMPERING_FAKE_STAMP',
+            'stamp_opacity_anomaly': 'TAMPERING_FAKE_STAMP',
+            # Security features
             'missing_hologram': 'TAMPERING_MISSING_HOLOGRAM',
-            'suspicious_qr_code': 'TAMPERING_QR_CODE_TAMPERING'
+            'watermark_tampering': 'TAMPERING_MISSING_HOLOGRAM',
+            # QR / barcode
+            'suspicious_qr_code': 'TAMPERING_QR_CODE_TAMPERING',
+            # Copy-move / cloning
+            'copy_move_detected': 'TAMPERING_COPY_PASTE_MARKS',
+            'clone_artifact': 'TAMPERING_COPY_PASTE_MARKS',
+            # Noise inconsistency
+            'noise_high_variance': 'TAMPERING_DIGITAL_EDITING',
+            'noise_low_variance': 'TAMPERING_DIGITAL_EDITING',
+            'channel_correlation_anomaly': 'TAMPERING_DIGITAL_EDITING',
+            # Metadata / EXIF
+            'editing_software_detected': 'TAMPERING_DIGITAL_EDITING',
+            'timestamp_discrepancy': 'TAMPERING_DIGITAL_EDITING',
+            'no_exif_data': 'TAMPERING_DIGITAL_EDITING',
         }
 
         # Process each tampering finding
@@ -516,57 +520,74 @@ class ComprehensiveVerificationEngine:
         document_type: str,
         nationality: str
     ) -> List[VerificationCondition]:
-        """Verify multiple identity detection conditions"""
+        """Verify multiple identity detection conditions using SQLAlchemy session."""
         conditions = []
 
-        # Extract key identity fields
-        name = ocr_fields.get('name', '').strip()
-        doc_number = ocr_fields.get('passport_number') or ocr_fields.get('document_number', '').strip()
-        dob = ocr_fields.get('date_of_birth', '').strip()
-
-        # Check for existing records with same identity information
         try:
-            # Connect to our test database for identity checks
-            conn = sqlite3.connect("pramaan.db")
-            cursor = conn.cursor()
+            from app.services.citizen_registry.lookup import lookup_citizen_registry
+            from app.services.registry.lookup import lookup_registry
+            from app.services.duplicate.checker import check_duplicate_document
 
-            # 1. Same face linked to different passport numbers
-            identity_conflicts = self._check_identity_conflicts(
-                cursor, name, doc_number, dob, nationality, selfie_image_bytes
+            name = ocr_fields.get('name', '').strip()
+            doc_number = (
+                ocr_fields.get('passport_number')
+                or ocr_fields.get('document_number', '').strip()
             )
+            dob = ocr_fields.get('date_of_birth', '').strip()
 
-            for conflict in identity_conflicts:
+            registry_result = lookup_registry(self.db, doc_number, name)
+            if registry_result.hits:
+                for hit in registry_result.hits:
+                    if hit.severity == "HIGH":
+                        conditions.append(VerificationCondition(
+                            condition_type="IDENTITY_BLACKLIST_HIT",
+                            status="FAIL",
+                            severity="HIGH",
+                            message=f"Registry match: {hit.full_name} — {hit.registry_reason}",
+                            details={'match_type': hit.match_type, 'field': hit.matched_field},
+                            officer_action_required=True,
+                        ))
+
+            citizen_result = lookup_citizen_registry(self.db, doc_number, name, dob, nationality)
+            if citizen_result.status == "MISMATCH":
                 conditions.append(VerificationCondition(
-                    condition_type=conflict['type'],
+                    condition_type="IDENTITY_REGISTRY_MISMATCH",
                     status="FAIL",
                     severity="HIGH",
-                    message=conflict['message'],
-                    details=conflict['details'],
-                    officer_action_required=True
+                    message=f"Citizen registry mismatch: {citizen_result.reason}",
+                    details={'status': citizen_result.status},
+                    officer_action_required=True,
                 ))
 
-            conn.close()
+            dup_result = check_duplicate_document(self.db, doc_number, name)
+            if dup_result and dup_result.status == "DIFFERENT_IDENTITY_REUSE":
+                conditions.append(VerificationCondition(
+                    condition_type="IDENTITY_DUPLICATE_DOCUMENT",
+                    status="FAIL",
+                    severity="HIGH",
+                    message=f"Document reuse detected: {dup_result.reason}",
+                    details={'status': dup_result.status},
+                    officer_action_required=True,
+                ))
 
         except Exception as e:
-            # If database check fails, add a warning
             conditions.append(VerificationCondition(
                 condition_type="IDENTITY_CHECK_ERROR",
                 status="WARNING",
                 severity="MEDIUM",
-                message=f"Identity database check failed: {str(e)}",
+                message=f"Identity check failed: {str(e)}",
                 details={'error': str(e)},
-                officer_action_required=True
+                officer_action_required=True,
             ))
 
-        # If no identity conflicts found, add success conditions
         if not any(c.status == "FAIL" for c in conditions if c.condition_type.startswith("IDENTITY_")):
             conditions.append(VerificationCondition(
                 condition_type="IDENTITY_UNIQUE_VERIFIED",
                 status="PASS",
                 severity="LOW",
-                message="No multiple identity conflicts detected. Identity appears unique.",
-                details={'checks_performed': ['same_face_different_docs', 'same_doc_different_faces', 'duplicate_records']},
-                officer_action_required=False
+                message="No identity conflicts detected in registry.",
+                details={},
+                officer_action_required=False,
             ))
 
         return conditions
@@ -637,66 +658,6 @@ class ComprehensiveVerificationEngine:
             ))
 
         return conditions
-
-    def _check_identity_conflicts(
-        self,
-        cursor,
-        name: str,
-        doc_number: str,
-        dob: str,
-        nationality: str,
-        selfie_bytes: bytes
-    ) -> List[Dict]:
-        """Check for various identity conflicts in the database"""
-        conflicts = []
-
-        # Check for same document number with different personal details
-        cursor.execute("""
-            SELECT full_name, date_of_birth, nationality, document_number
-            FROM document_registry
-            WHERE document_number = ? AND (full_name != ? OR date_of_birth != ? OR nationality != ?)
-        """, (doc_number, name, dob, nationality))
-
-        same_doc_different_details = cursor.fetchall()
-
-        for record in same_doc_different_details:
-            conflicts.append({
-                'type': 'IDENTITY_SAME_DOCUMENT_DIFFERENT_PERSON',
-                'message': f"Document number {doc_number} previously used with different personal details: {record[0]} (DOB: {record[1]}, Nationality: {record[2]})",
-                'details': {
-                    'conflict_type': 'same_document_different_person',
-                    'existing_name': record[0],
-                    'existing_dob': record[1],
-                    'existing_nationality': record[2],
-                    'current_name': name,
-                    'current_dob': dob,
-                    'current_nationality': nationality
-                }
-            })
-
-        # Check for same personal details with different document numbers
-        cursor.execute("""
-            SELECT document_number, full_name, date_of_birth
-            FROM document_registry
-            WHERE full_name = ? AND date_of_birth = ? AND nationality = ? AND document_number != ?
-        """, (name, dob, nationality, doc_number))
-
-        same_person_different_docs = cursor.fetchall()
-
-        for record in same_person_different_docs:
-            conflicts.append({
-                'type': 'IDENTITY_SAME_PERSON_MULTIPLE_DOCUMENTS',
-                'message': f"Person {name} (DOB: {dob}) already registered with different document number: {record[0]}",
-                'details': {
-                    'conflict_type': 'same_person_multiple_documents',
-                    'existing_document': record[0],
-                    'current_document': doc_number,
-                    'person_name': name,
-                    'date_of_birth': dob
-                }
-            })
-
-        return conflicts
 
     def _check_document_validity(self, ocr_fields: Dict[str, str], document_type: str) -> VerificationCondition:
         """Check if document is valid or expired"""
@@ -865,62 +826,40 @@ class ComprehensiveVerificationEngine:
             )
 
     def _check_duplicate_usage(self, ocr_fields: Dict[str, str], document_type: str) -> VerificationCondition:
-        """Check if document is duplicate or already used"""
+        """Check if document is duplicate or already used via proper registry."""
+        doc_number = ocr_fields.get('passport_number') or ocr_fields.get('document_number', '')
+        name = ocr_fields.get('name', '')
+
+        if not doc_number:
+            return VerificationCondition(
+                condition_type="DUPLICATE_CHECK_SKIPPED",
+                status="WARNING",
+                severity="MEDIUM",
+                message="Cannot check for duplicates: document number not available",
+                details={},
+                officer_action_required=True,
+            )
+
         try:
-            doc_number = ocr_fields.get('passport_number') or ocr_fields.get('document_number', '')
-
-            if not doc_number:
-                return VerificationCondition(
-                    condition_type="DUPLICATE_CHECK_SKIPPED",
-                    status="WARNING",
-                    severity="MEDIUM",
-                    message="Cannot check for duplicates: document number not available",
-                    details={},
-                    officer_action_required=True
-                )
-
-            # Check database for existing usage
-            conn = sqlite3.connect("pramaan.db")
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                SELECT COUNT(*), full_name, nationality
-                FROM document_registry
-                WHERE document_number = ?
-                GROUP BY full_name, nationality
-            """, (doc_number,))
-
-            results = cursor.fetchall()
-            conn.close()
-
-            if len(results) > 1:
+            from app.services.duplicate.checker import check_duplicate_document
+            dup = check_duplicate_document(self.db, doc_number, name)
+            if dup and dup.status == "DIFFERENT_IDENTITY_REUSE":
                 return VerificationCondition(
                     condition_type="DOCUMENT_DUPLICATE_DETECTED",
                     status="FAIL",
                     severity="HIGH",
-                    message=f"Document number {doc_number} found with multiple different identities",
-                    details={'document_number': doc_number, 'identity_count': len(results)},
-                    officer_action_required=True
-                )
-            elif len(results) == 1 and results[0][0] > 1:
-                return VerificationCondition(
-                    condition_type="DOCUMENT_MULTIPLE_USAGE",
-                    status="WARNING",
-                    severity="MEDIUM",
-                    message=f"Document number {doc_number} has been used {results[0][0]} times (same identity)",
-                    details={'document_number': doc_number, 'usage_count': results[0][0], 'identity': results[0][1]},
-                    officer_action_required=True
-                )
-            else:
-                return VerificationCondition(
-                    condition_type="DOCUMENT_UNIQUE",
-                    status="PASS",
-                    severity="LOW",
-                    message="No duplicate usage detected",
+                    message=f"Document {doc_number} reused under different identity: {dup.reason}",
                     details={'document_number': doc_number},
-                    officer_action_required=False
+                    officer_action_required=True,
                 )
-
+            return VerificationCondition(
+                condition_type="DOCUMENT_UNIQUE",
+                status="PASS",
+                severity="LOW",
+                message="No duplicate usage detected",
+                details={'document_number': doc_number},
+                officer_action_required=False,
+            )
         except Exception as e:
             return VerificationCondition(
                 condition_type="DUPLICATE_CHECK_ERROR",
@@ -928,66 +867,46 @@ class ComprehensiveVerificationEngine:
                 severity="MEDIUM",
                 message=f"Duplicate check failed: {str(e)}",
                 details={'error': str(e)},
-                officer_action_required=True
+                officer_action_required=True,
             )
 
     def _check_blacklist_status(self, ocr_fields: Dict[str, str], document_type: str) -> VerificationCondition:
-        """Check if document is blacklisted or revoked"""
+        """Check if document is blacklisted or revoked via proper registry."""
+        doc_number = ocr_fields.get('passport_number') or ocr_fields.get('document_number', '')
+        name = ocr_fields.get('name', '')
+
+        if not doc_number:
+            return VerificationCondition(
+                condition_type="BLACKLIST_CHECK_SKIPPED",
+                status="WARNING",
+                severity="MEDIUM",
+                message="Cannot check blacklist: document number not available",
+                details={},
+                officer_action_required=True,
+            )
+
         try:
-            doc_number = ocr_fields.get('passport_number') or ocr_fields.get('document_number', '')
-            name = ocr_fields.get('name', '')
-
-            if not doc_number:
-                return VerificationCondition(
-                    condition_type="BLACKLIST_CHECK_SKIPPED",
-                    status="WARNING",
-                    severity="MEDIUM",
-                    message="Cannot check blacklist status: document number not available",
-                    details={},
-                    officer_action_required=True
-                )
-
-            # Check database for blacklist status
-            conn = sqlite3.connect("pramaan.db")
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                SELECT status, blacklist_reason
-                FROM document_registry
-                WHERE document_number = ? OR full_name = ?
-            """, (doc_number, name))
-
-            result = cursor.fetchone()
-            conn.close()
-
-            if result and result[0] == 'BLACKLISTED':
+            from app.services.registry.lookup import lookup_registry
+            result = lookup_registry(self.db, doc_number, name)
+            high_hits = [h for h in result.hits if h.severity == "HIGH"]
+            if high_hits:
+                hit = high_hits[0]
                 return VerificationCondition(
                     condition_type="DOCUMENT_BLACKLISTED",
                     status="FAIL",
                     severity="HIGH",
-                    message=f"Document/person is BLACKLISTED. Reason: {result[1] or 'Not specified'}",
-                    details={'document_number': doc_number, 'blacklist_reason': result[1]},
-                    officer_action_required=True
+                    message=f"Registry alert: {hit.full_name} — {hit.registry_reason}",
+                    details={'match_type': hit.match_type, 'field': hit.matched_field},
+                    officer_action_required=True,
                 )
-            elif result and result[0] == 'REVOKED':
-                return VerificationCondition(
-                    condition_type="DOCUMENT_REVOKED",
-                    status="FAIL",
-                    severity="HIGH",
-                    message="Document has been REVOKED and is no longer valid",
-                    details={'document_number': doc_number, 'status': 'REVOKED'},
-                    officer_action_required=True
-                )
-            else:
-                return VerificationCondition(
-                    condition_type="DOCUMENT_NOT_BLACKLISTED",
-                    status="PASS",
-                    severity="LOW",
-                    message="Document/person not found on blacklist",
-                    details={'document_number': doc_number, 'name': name},
-                    officer_action_required=False
-                )
-
+            return VerificationCondition(
+                condition_type="DOCUMENT_NOT_BLACKLISTED",
+                status="PASS",
+                severity="LOW",
+                message="Document/person not found on watchlist",
+                details={'document_number': doc_number},
+                officer_action_required=False,
+            )
         except Exception as e:
             return VerificationCondition(
                 condition_type="BLACKLIST_CHECK_ERROR",
@@ -995,7 +914,7 @@ class ComprehensiveVerificationEngine:
                 severity="MEDIUM",
                 message=f"Blacklist check failed: {str(e)}",
                 details={'error': str(e)},
-                officer_action_required=True
+                officer_action_required=True,
             )
 
     def _check_date_validity(self, ocr_fields: Dict[str, str], document_type: str) -> VerificationCondition:
@@ -1261,263 +1180,3 @@ class ComprehensiveVerificationEngine:
                 reason=f"Both advanced and heuristic liveness analysis failed: {str(e)}"
             )
 
-    def _verify_nepal_visa_conditions(
-        self,
-        document_image_bytes: bytes,
-        ocr_fields: Dict[str, str]
-    ) -> List[VerificationCondition]:
-        """Verify Nepal visa specific conditions"""
-        conditions = []
-
-        try:
-            print(f"[DEBUG] Starting Nepal visa verification...")
-
-            # Extract passport data from OCR fields if available
-            passport_data = {}
-            for key, value in ocr_fields.items():
-                if 'passport' in key.lower() and value:
-                    passport_data['passport_number'] = value
-                    break
-
-            # Run Nepal visa verification
-            nepal_result = self.nepal_visa_handler.verify_nepal_visa(
-                document_image_bytes,
-                passport_data if passport_data else None
-            )
-
-            # Convert Nepal visa results to verification conditions
-
-            # 1. Visa Format Detection
-            if nepal_result.format_detected.confidence >= 0.6:
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_FORMAT_DETECTED",
-                    status="PASS",
-                    severity="LOW",
-                    message=f"Nepal {nepal_result.format_detected.format_type} format detected with good confidence",
-                    details={
-                        'format_type': nepal_result.format_detected.format_type,
-                        'confidence': nepal_result.format_detected.confidence
-                    },
-                    officer_action_required=False
-                ))
-            elif nepal_result.format_detected.confidence >= 0.3:
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_FORMAT_UNCERTAIN",
-                    status="WARNING",
-                    severity="MEDIUM",
-                    message=f"Visa format detected but with low confidence ({nepal_result.format_detected.confidence:.2f})",
-                    details={
-                        'format_type': nepal_result.format_detected.format_type,
-                        'confidence': nepal_result.format_detected.confidence
-                    },
-                    officer_action_required=True
-                ))
-            else:
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_FORMAT_UNKNOWN",
-                    status="FAIL",
-                    severity="HIGH",
-                    message="Nepal visa format could not be confidently identified",
-                    details={
-                        'confidence': nepal_result.format_detected.confidence
-                    },
-                    officer_action_required=True
-                ))
-
-            # 2. Date Validation
-            if nepal_result.date_validation.status == "VALID":
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_DATES_VALID",
-                    status="PASS",
-                    severity="LOW",
-                    message="Visa dates are consistent and currently valid",
-                    details={
-                        'current_validity': nepal_result.date_validation.current_validity,
-                        'validity_end': nepal_result.date_validation.validity_end.isoformat() if nepal_result.date_validation.validity_end else None
-                    },
-                    officer_action_required=False
-                ))
-            elif nepal_result.date_validation.status == "EXPIRED":
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_EXPIRED",
-                    status="FAIL",
-                    severity="HIGH",
-                    message=f"Visa has expired. {nepal_result.date_validation.explanation}",
-                    details={
-                        'current_validity': nepal_result.date_validation.current_validity,
-                        'validity_end': nepal_result.date_validation.validity_end.isoformat() if nepal_result.date_validation.validity_end else None
-                    },
-                    officer_action_required=True
-                ))
-            else:
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_DATE_ISSUES",
-                    status="WARNING",
-                    severity="MEDIUM",
-                    message=f"Visa date issues detected. {nepal_result.date_validation.explanation}",
-                    details={
-                        'status': nepal_result.date_validation.status,
-                        'explanation': nepal_result.date_validation.explanation
-                    },
-                    officer_action_required=True
-                ))
-
-            # 3. Passport Link Check
-            if nepal_result.passport_link.status == "MATCH":
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_PASSPORT_MATCH",
-                    status="PASS",
-                    severity="LOW",
-                    message="Visa passport number matches the provided passport",
-                    details={
-                        'visa_passport': nepal_result.passport_link.visa_passport_number,
-                        'document_passport': nepal_result.passport_link.document_passport_number
-                    },
-                    officer_action_required=False
-                ))
-            elif nepal_result.passport_link.status == "MISMATCH":
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_PASSPORT_MISMATCH",
-                    status="FAIL",
-                    severity="HIGH",
-                    message="Visa passport number does not match the provided passport",
-                    details={
-                        'visa_passport': nepal_result.passport_link.visa_passport_number,
-                        'document_passport': nepal_result.passport_link.document_passport_number,
-                        'explanation': nepal_result.passport_link.explanation
-                    },
-                    officer_action_required=True
-                ))
-            else:
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_PASSPORT_UNAVAILABLE",
-                    status="WARNING",
-                    severity="LOW",
-                    message="Passport number cross-validation unavailable",
-                    details={
-                        'explanation': nepal_result.passport_link.explanation
-                    },
-                    officer_action_required=False
-                ))
-
-            # 4. QR/Barcode Check
-            if nepal_result.qr_barcode.status == "READABLE":
-                if nepal_result.qr_barcode.validation_status == "MATCHES":
-                    conditions.append(VerificationCondition(
-                        condition_type="NEPAL_VISA_QR_VALID",
-                        status="PASS",
-                        severity="LOW",
-                        message="QR code is readable and information matches visa details",
-                        details={
-                            'qr_status': nepal_result.qr_barcode.status,
-                            'validation': nepal_result.qr_barcode.validation_status
-                        },
-                        officer_action_required=False
-                    ))
-                else:
-                    conditions.append(VerificationCondition(
-                        condition_type="NEPAL_VISA_QR_MISMATCH",
-                        status="WARNING",
-                        severity="MEDIUM",
-                        message="QR code readable but information differs from visa details",
-                        details={
-                            'qr_status': nepal_result.qr_barcode.status,
-                            'validation': nepal_result.qr_barcode.validation_status,
-                            'explanation': nepal_result.qr_barcode.explanation
-                        },
-                        officer_action_required=True
-                    ))
-            elif nepal_result.qr_barcode.status == "NOT_FOUND":
-                conditions.append(VerificationCondition(
-                    condition_type="NEPAL_VISA_NO_QR",
-                    status="PASS",
-                    severity="LOW",
-                    message="No QR code detected (acceptable for older visa formats)",
-                    details={
-                        'qr_status': nepal_result.qr_barcode.status
-                    },
-                    officer_action_required=False
-                ))
-
-            print(f"[DEBUG] Nepal visa verification completed with {len(conditions)} conditions")
-
-        except Exception as e:
-            print(f"[DEBUG] Nepal visa verification failed: {str(e)}")
-            conditions.append(VerificationCondition(
-                condition_type="NEPAL_VISA_VERIFICATION_ERROR",
-                status="WARNING",
-                severity="MEDIUM",
-                message=f"Nepal visa verification could not be completed: {str(e)}",
-                details={'error': str(e)},
-                officer_action_required=True
-            ))
-
-        return conditions
-
-    def _verify_multilingual_conditions(
-        self,
-        document_image_bytes: bytes,
-        document_type: str,
-        country: str
-    ) -> List[VerificationCondition]:
-        """Verify multilingual document processing conditions"""
-        conditions = []
-
-        try:
-            print(f"[DEBUG] Starting multilingual document processing...")
-
-            # Run multilingual document processing
-            multilingual_result = self.multilingual_handler.process_multilingual_document(
-                document_image_bytes,
-                document_type,
-                country
-            )
-
-            # Convert multilingual results to verification conditions
-
-            # 1. Script Detection
-            script_confidence = multilingual_result.script_detection.confidence
-            if script_confidence >= 0.7:
-                conditions.append(VerificationCondition(
-                    condition_type="DOCUMENT_SCRIPT_DETECTED",
-                    status="PASS",
-                    severity="LOW",
-                    message=f"Document script detected: {multilingual_result.officer_display.get('script', 'unknown')}",
-                    details={
-                        'primary_script': multilingual_result.script_detection.primary_script.value,
-                        'confidence': script_confidence,
-                        'detected_scripts': [s.value for s in multilingual_result.script_detection.detected_scripts]
-                    },
-                    officer_action_required=False
-                ))
-
-            # 2. Language Detection
-            language_confidence = multilingual_result.language_detection.confidence
-            if language_confidence >= 0.7:
-                conditions.append(VerificationCondition(
-                    condition_type="DOCUMENT_LANGUAGE_DETECTED",
-                    status="PASS",
-                    severity="LOW",
-                    message=f"Document language: {multilingual_result.officer_display.get('primary_language', 'unknown')}",
-                    details={
-                        'primary_language': multilingual_result.language_detection.primary_language.value,
-                        'confidence': language_confidence,
-                        'detection_method': multilingual_result.language_detection.detection_method
-                    },
-                    officer_action_required=False
-                ))
-
-            print(f"[DEBUG] Multilingual processing completed with {len(conditions)} conditions")
-
-        except Exception as e:
-            print(f"[DEBUG] Multilingual processing failed: {str(e)}")
-            conditions.append(VerificationCondition(
-                condition_type="MULTILINGUAL_PROCESSING_ERROR",
-                status="WARNING",
-                severity="LOW",
-                message=f"Multilingual processing encountered an error: {str(e)}",
-                details={'error': str(e)},
-                officer_action_required=False
-            ))
-
-        return conditions

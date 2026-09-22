@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
@@ -129,8 +129,13 @@ function DeskStat({
 export function VerificationDesk() {
   const navigate = useNavigate()
 
-  // Data
-  const allCases = useAsync(() => listCases({ limit: 200 }), [])
+  // Data — auto-refresh every 30s so sent cases appear without manual reload
+  const [refreshTick, setRefreshTick] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => setRefreshTick(t => t + 1), 30_000)
+    return () => clearInterval(interval)
+  }, [])
+  const allCases = useAsync(() => listCases({ limit: 200 }), [refreshTick])
   const checkpoints = useAsync(() => listAdminCheckpoints(), [])
 
   // Filters

@@ -1,7 +1,22 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.repositories.citizen_registry_repository import find_by_document_number
 from app.services.citizen_registry.base import CitizenRegistryResult
+
+_DATE_FORMATS = ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y", "%d.%m.%Y"]
+
+
+def _normalize_date(raw: str) -> str | None:
+    raw = raw.strip()
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(raw, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    return None
+
 
 _NATIONALITY_ALIASES = {
     # ISO 2-letter
@@ -12,6 +27,10 @@ _NATIONALITY_ALIASES = {
     # Full names
     "INDIAN": "INDIAN", "NEPALI": "NEPALI", "NEPALESE": "NEPALI",
     "BHUTANESE": "BHUTANESE", "SPANISH": "SPANISH", "GERMAN": "GERMAN",
+    # Country names to demonym
+    "INDIA": "INDIAN", "NEPAL": "NEPALI", "BHUTAN": "BHUTANESE",
+    "BANGLADESH": "BANGLADESHI", "PAKISTAN": "PAKISTANI", "USA": "AMERICAN",
+    "CANADA": "CANADIAN", "CANADIAN": "CANADIAN",
 }
 
 
@@ -55,8 +74,14 @@ def lookup_citizen_registry(
     mismatched: list[str] = []
     if full_name and not _names_match(full_name, record.full_name):
         mismatched.append(f"name (declared {full_name!r} vs registry {record.full_name!r})")
-    if date_of_birth and date_of_birth.strip() != record.date_of_birth.strip():
-        mismatched.append(f"date of birth (declared {date_of_birth!r} vs registry {record.date_of_birth!r})")
+    if date_of_birth:
+        norm_declared = _normalize_date(date_of_birth)
+        norm_on_file = _normalize_date(record.date_of_birth)
+        if norm_declared and norm_on_file:
+            if norm_declared != norm_on_file:
+                mismatched.append(f"date of birth (declared {date_of_birth!r} vs registry {record.date_of_birth!r})")
+        elif date_of_birth.strip() != record.date_of_birth.strip():
+            mismatched.append(f"date of birth (declared {date_of_birth!r} vs registry {record.date_of_birth!r})")
     if nationality and not _nationality_match(nationality, record.nationality):
         mismatched.append(f"nationality (declared {nationality!r} vs registry {record.nationality!r})")
 

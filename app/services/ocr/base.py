@@ -1,14 +1,15 @@
-"""OCR provider interface. Concrete implementation (PaddleOCR-backed) is
-Module 1, not yet built — this defines the swappable contract only."""
+"""OCR provider interface — PP-OCR backed via RapidOCR/ONNX runtime."""
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class OCRResult(BaseModel):
     document_type: str
     fields: dict[str, str]
     ocr_confidence: float
+    raw_text: str = ""
+    bounding_boxes: list[dict] = Field(default_factory=list)
 
 
 class OCRProvider(ABC):

@@ -41,8 +41,8 @@ _WEIGHTS = {
     "citizen_registry": 0.14,
 }
 _FUZZY_CONFIDENCE_MULTIPLIER = 0.5
-_LOW_RISK_CEILING = 30
-_MEDIUM_RISK_CEILING = 70
+_LOW_RISK_CEILING = 20
+_MEDIUM_RISK_CEILING = 55
 
 
 def active_risk_config() -> dict:
@@ -94,7 +94,14 @@ def _blacklist_risk(result: RegistryLookupResult) -> tuple[float, str, dict | No
 
 
 def _face_risk(result: FaceMatchResult) -> tuple[float, str, dict | None]:
-    return max(0.0, 1.0 - result.confidence), result.reason, result.location
+    if not result.match:
+        # Mismatch is a serious security concern — scale risk by how far
+        # below threshold the similarity is: 0.42 threshold, 0.1 similarity
+        # should produce near-maximum risk.
+        risk = min(1.0, 0.6 + (0.42 - result.similarity) * 1.5)
+        return max(0.5, risk), result.reason, result.location
+    # Match: risk inversely proportional to similarity strength
+    return max(0.0, 0.3 - result.similarity * 0.5), result.reason, result.location
 
 
 def _identity_graph_risk(result: IdentityGraphResult) -> tuple[float, str, dict | None]:
@@ -121,10 +128,12 @@ def _citizen_registry_risk(result: CitizenRegistryResult) -> tuple[float, str, d
     if result.status == "MISMATCH":
         return 1.0, result.reason, None
     if result.status == "REVOKED_MATCH":
-        return 0.8, result.reason, None
-    # MATCH and NO_RECORD are both zero risk — a positive match is clean,
-    # and an unseeded document in a small demo dataset is not evidence of
-    # anything (see the module docstring on CitizenRegistryResult).
+        return 0.9, result.reason, None
+    if result.status == "NO_RECORD":
+        # Document not found in registry — a real security concern. At a
+        # border checkpoint an unrecognized document warrants officer review.
+        return 0.4, result.reason or "Document/person not found in citizen registry — identity cannot be verified against known records", None
+    # MATCH — positive identity confirmation
     return 0.0, result.reason, None
 
 
@@ -222,9 +231,14 @@ class DefaultRiskEngine(RiskEngine):
         # score well below a threshold that different people also miss, so a
         # "strong mismatch" verdict would not be honest. The officer sees the
         # exact similarity value and decides.
-        if face_result is not None and not face_result.match and level == "LOW_RISK":
-            level = "MEDIUM_RISK"
-            score = max(score, _LOW_RISK_CEILING)
+        if face_result is not None and not face_result.match:
+            # Face mismatch is a critical security signal — always escalate
+            if face_result.similarity < 0.25:
+                level = "HIGH_RISK"
+                score = max(score, _MEDIUM_RISK_CEILING)
+            elif level == "LOW_RISK":
+                level = "MEDIUM_RISK"
+                score = max(score, _LOW_RISK_CEILING)
             top = next(b for b in breakdown if b.signal == "face_match")
         if (
             level == "LOW_RISK"

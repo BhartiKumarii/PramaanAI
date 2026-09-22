@@ -12,10 +12,10 @@ on it.
 from app.services.face.base import FaceMatchResult, FaceProvider
 from app.services.face.embedding import cosine_similarity, extract_embedding
 
-# Lowered from 0.75 to 0.42 — cross-condition HOG (document photo vs
-# live selfie) produces similarity in the 0.3–0.6 range for same-person
-# pairs due to lighting, resolution, and background differences.
-_MATCH_THRESHOLD = 0.42
+# Raised from 0.42 to 0.58 — the lower threshold was producing false
+# matches between different faces, which is worse than missing a true
+# match (the officer can override a non-match after visual inspection).
+_MATCH_THRESHOLD = 0.58
 
 
 def match_from_embeddings(document_embedding: list[float], presented_embedding: list[float]) -> FaceMatchResult:
