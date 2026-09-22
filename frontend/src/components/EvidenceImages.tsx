@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { baseURL } from '../api/client'
 
 function getToken(): string {
   return localStorage.getItem('bsa_access_token') ?? ''
@@ -114,7 +115,7 @@ interface EvidenceImagesProps {
 }
 
 export function EvidenceImages({ verificationId, caseCreatedAt }: EvidenceImagesProps) {
-  const base = `/api/images/${verificationId}`
+  const base = `${baseURL}/images/${verificationId}`
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">

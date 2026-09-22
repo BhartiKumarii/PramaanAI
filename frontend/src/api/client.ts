@@ -3,7 +3,7 @@ import axios from 'axios'
 // Dev: Vite proxies /api -> http://127.0.0.1:8000 (see vite.config.ts), so
 // the browser only ever talks to one origin. Prod build can override via
 // VITE_API_BASE_URL to point straight at the deployed backend.
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
+export const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export const apiClient = axios.create({ baseURL })
 
