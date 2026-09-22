@@ -157,17 +157,18 @@ def reactivate_device_route(
 def reset_screening_data(
     _user: User = Depends(require_role()), db: Session = Depends(get_db)
 ) -> dict:
-    tables = ["case_notes", "officer_decisions", "audit_events", "stored_images", "cases", "verifications", "sync_queue_items"]
+    tables = ["case_notes", "officer_decisions", "audit_events", "stored_images",
+               "blockchain_blocks", "cases", "verifications", "sync_queue_items"]
     deleted = {}
     for t in tables:
         try:
             count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
             db.execute(text(f"DELETE FROM {t}"))
+            db.commit()
             deleted[t] = count
         except Exception:
             db.rollback()
             deleted[t] = "skipped"
-    db.commit()
     return {"deleted": deleted}
 
 
