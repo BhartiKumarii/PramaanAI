@@ -1689,10 +1689,15 @@ object DocumentOcrExtractor {
 
     /** OCR reads the MRZ's filler `<` as everything from `K` to `(` and
      * inserts spaces; anything outside the MRZ alphabet is treated as a
-     * filler. Only applied to candidate lines, never to normal text. */
+     * filler. Only applied to candidate lines, never to normal text.
+     * Spaces become `<` (OCR commonly reads `<` as space). */
     private fun normalizeMrzLine(raw: String): String =
-        raw.uppercase().filterNot { it.isWhitespace() }
-            .map { c -> if (c in 'A'..'Z' || c in '0'..'9' || c == '<') c else '<' }
+        raw.uppercase()
+            .map { c -> when {
+                c in 'A'..'Z' || c in '0'..'9' || c == '<' -> c
+                c.isWhitespace() -> '<'
+                else -> '<'
+            }}
             .joinToString("")
 
     /** In numeric MRZ fields a letter can only be a misread digit. */
@@ -1790,22 +1795,35 @@ object DocumentOcrExtractor {
             val result = tryParseMrzPair(rawL1, l2)
             if (result != null) return result
         }
-        // Fallback: OCR may merge MRZ into surrounding text or split lines
-        // differently. Search for P< followed by a 3-letter country code
-        // anywhere in the normalized full text, then extract the next line.
-        val flat = normalizeMrzLine(text.replace("\n", " "))
-        val mrzStart = Regex("""P<[A-Z]{3}[A-Z<]{30,}""").find(flat)
-        if (mrzStart != null) {
-            val fromStart = flat.substring(mrzStart.range.first)
-            if (fromStart.length >= 80) {
-                val l1 = fromStart.substring(0, 44)
-                val rest = fromStart.substring(44)
-                val l2Candidate = rest.take(44.coerceAtMost(rest.length))
-                if (l2Candidate.length >= 28) {
-                    val result = tryParseMrzPair(l1, l2Candidate)
-                    if (result != null) return result
-                }
+        // Fallback 1: try non-adjacent lines (OCR may insert blank/short
+        // lines between the two MRZ rows)
+        for (i in normalized.indices) {
+            val rawL1 = normalized[i]
+            if (rawL1.length !in 36..50) continue
+            if (rawL1.getOrNull(0)?.let { it == 'P' || it == 'V' } != true) continue
+            for (j in i + 1..minOf(i + 3, normalized.size - 1)) {
+                val l2 = normalized[j]
+                if (l2.length !in 28..50) continue
+                val result = tryParseMrzPair(rawL1, l2)
+                if (result != null) return result
             }
+        }
+        // Fallback 2: search for P< pattern in flat text — handles cases
+        // where OCR merges MRZ lines with surrounding text.
+        val flat = normalizeMrzLine(text.replace("\n", " "))
+        // Find L1 start: P<XXX followed by name characters
+        val l1Match = Regex("""P<[A-Z]{3}[A-Z<]{30,}""").find(flat) ?: return null
+        val l1Raw = flat.substring(l1Match.range.first)
+        val l1 = l1Raw.take(44)
+        if (l1.length < 44) return null
+        // L2 starts after L1 — skip any filler `<` between the lines
+        val afterL1 = l1Raw.substring(44).trimStart('<')
+        // L2 starts with a document number (alphanumeric), look for it
+        val l2Start = Regex("""[A-Z0-9]{2}[A-Z0-9<]{26,}""").find(afterL1) ?: return null
+        val l2Candidate = afterL1.substring(l2Start.range.first).take(44)
+        if (l2Candidate.length >= 28) {
+            val result = tryParseMrzPair(l1, l2Candidate)
+            if (result != null) return result
         }
         return null
     }

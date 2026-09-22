@@ -57,6 +57,14 @@ from app.services.validation.base import ValidationResult
 router = APIRouter(prefix="/cases", tags=["cases"])
 
 
+def _ensure_uuid(value) -> uuid.UUID:
+    """Safely convert to uuid.UUID — handles str, uuid.UUID, and other types
+    without crashing on PostgreSQL where IDs are already native UUIDs."""
+    if isinstance(value, uuid.UUID):
+        return value
+    return uuid.UUID(str(value))
+
+
 def _get_case_or_404(db: Session, case_id: uuid.UUID, user: User) -> Case:
     case = get_case(db, case_id)
     if case is None:
@@ -213,7 +221,7 @@ def submit_case_route(
     if case.status not in (CaseStatus.PENDING, CaseStatus.REVIEW_REQUIRED):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"case is already {case.status.value}, cannot resubmit")
     if payload.note:
-        add_note(db, case_id, uuid.UUID(user.id), payload.note)
+        add_note(db, case_id, _ensure_uuid(user.id), payload.note)
     case = submit_case(db, case)
     log_event(db, case.verification_id, "SENT", user.id, case_id=case.id)
     [summary] = _serialize_list(db, [case])
@@ -246,7 +254,7 @@ def decide_case_route(
     if payload.decision != "CLEAR" and not payload.reason:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="reason is required for Secondary Review and Hold/Refer")
 
-    case, _decision = record_decision(db, case, uuid.UUID(user.id), payload.decision, payload.reason)
+    case, _decision = record_decision(db, case, _ensure_uuid(user.id), payload.decision, payload.reason)
     log_event(db, case.verification_id, f"DECISION_{payload.decision}", user.id, reason=payload.reason, case_id=case.id)
     return get_case_route(case_id, user, db)
 
@@ -257,7 +265,7 @@ def add_note_route(
     user: User = Depends(get_current_user), db: Session = Depends(get_db),
 ) -> CaseNoteResponse:
     _get_case_or_404(db, case_id, user)
-    note = add_note(db, case_id, uuid.UUID(user.id), payload.note)
+    note = add_note(db, case_id, _ensure_uuid(user.id), payload.note)
     return CaseNoteResponse(id=str(note.id), author_username=user.username, note=note.note, created_at=note.created_at.isoformat())
 
 
