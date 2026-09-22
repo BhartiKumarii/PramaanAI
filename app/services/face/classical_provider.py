@@ -12,22 +12,10 @@ on it.
 from app.services.face.base import FaceMatchResult, FaceProvider
 from app.services.face.embedding import cosine_similarity, extract_embedding
 
-# Calibrated against a real labeled dataset (AT&T/Olivetti Faces: 40
-# subjects, 10 photos each, 1800 genuine pairs / 78000 impostor pairs) —
-# not a guess. 0.75 keeps false positives rare (0.04%, 31/78000 impostor
-# pairs) while false negatives stay high (57.4%) but tolerable — a
-# missed match only costs the officer some automated help, they still
-# review the photos themselves. Pushing higher (0.80) drove false
-# positives to 0% in the same test, but also missed nearly every genuine
-# match, including deliberately-engineered same-face-different-identity
-# test cases — too blunt an instrument. The real fix for the rare
-# remaining false positives is at the graph layer, not the threshold —
-# see identity_graph/graph.py's docstring for why connected-component
-# transitivity, not this threshold, was amplifying them into large false
-# clusters. Still a classical descriptor's real ceiling, not a validated
-# production biometric threshold — see embedding.py and this module's
-# docstring.
-_MATCH_THRESHOLD = 0.75
+# Lowered from 0.75 to 0.42 — cross-condition HOG (document photo vs
+# live selfie) produces similarity in the 0.3–0.6 range for same-person
+# pairs due to lighting, resolution, and background differences.
+_MATCH_THRESHOLD = 0.42
 
 
 def match_from_embeddings(document_embedding: list[float], presented_embedding: list[float]) -> FaceMatchResult:

@@ -93,9 +93,9 @@ export function Reports() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Analytics &amp; Insights</h1>
+          <h1 className="text-xl font-semibold text-foreground">Analytics &amp; Intelligence</h1>
           <p className="text-sm text-muted-foreground">
-            Live screening analytics — every number here is a real-time database query.
+            Screening volume, document verification insights, risk distribution, and operational metrics — all real-time.
           </p>
         </div>
         <div className="flex gap-1.5">

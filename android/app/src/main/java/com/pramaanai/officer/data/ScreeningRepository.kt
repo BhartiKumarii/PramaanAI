@@ -327,7 +327,7 @@ class ScreeningRepository(
      * a real 5xx from the app itself, no network) is not retried and is
      * thrown straight through — a real failure stays a real failure. */
     private suspend fun <T> callWithRetry(call: suspend () -> T): T {
-        val delaysMs = listOf(8_000L, 20_000L)
+        val delaysMs = listOf(15_000L, 30_000L, 30_000L)
         delaysMs.forEachIndexed { attempt, delayMs ->
             try {
                 return call()

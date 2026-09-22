@@ -1781,44 +1781,60 @@ object DocumentOcrExtractor {
      * enforced here — the backend runs the real ICAO 9303 checksums and
      * reports exactly which digit failed; this only extracts. */
     private fun parseTd3Mrz(text: String): MrzParse? {
-        // Line 2 (numbers + check digits) is read reliably and is exactly 44
-        // characters. Line 1 ends in a long run of `<` filler that OCR often
-        // miscounts, so it's accepted at a near-44 length and refitted.
+        // Try line-based parsing first (standard case)
         val normalized = text.lines().map { normalizeMrzLine(it) }
         for (i in 0 until normalized.size - 1) {
             val rawL1 = normalized[i]
             val l2 = normalized[i + 1]
-            // Every field this reads sits in the first 28 characters of line
-            // 2, so a tail truncated by OCR still yields reliable fields.
             if (l2.length !in 28..50 || rawL1.length !in 36..50) continue
-            val l1 = rawL1.padEnd(44, '<').take(44)
-            if (l1[0] != 'P' && l1[0] != 'V') continue
-            if (l1[1] != '<' && !l1[1].isLetter()) continue
-            if (l2[20] != 'M' && l2[20] != 'F' && l2[20] != '<') continue
-            val dob = mrzDate(fixDigits(l2.substring(13, 19)), isBirth = true)
-            val exp = mrzDate(fixDigits(l2.substring(21, 27)), isBirth = false)
-            if (dob == null && exp == null) continue
-
-            val nameParts = l1.substring(5).split("<<")
-            val surname = nameParts.firstOrNull().orEmpty().replace('<', ' ').trim()
-            val given = nameParts.drop(1).joinToString(" ").replace('<', ' ').trim().replace(Regex("\\s+"), " ")
-            val fields = LinkedHashMap<String, String>()
-            listOf(given, surname).filter { it.isNotBlank() }.joinToString(" ").takeIf { it.isNotBlank() }
-                ?.let { fields["name"] = it }
-            l2.substring(0, 9).replace("<", "").takeIf { it.isNotBlank() }?.let { fields["passport_number"] = it }
-            l2.substring(10, 13).takeIf { it.all { c -> c.isLetter() } }?.let { fields["nationality"] = NATIONALITY_BY_ICAO[it] ?: it }
-            dob?.let { fields["date_of_birth"] = it }
-            exp?.let { fields["date_of_expiry"] = it }
-            when (l2[20]) { 'M' -> fields["gender"] = "M"; 'F' -> fields["gender"] = "F" }
-            // MRZ *lines* are only reported when both were read at their full
-            // 44 characters — a padded or truncated line would make the
-            // backend's check-digit validation fail on OCR loss, not on the
-            // document, and would be shown as if it were the real MRZ.
-            val complete = rawL1.length == 44 && l2.length == 44
-            val checkDigits = if (l2.length >= 44) validateMrzCheckDigits(l2) else null
-            return MrzParse(if (complete) listOf(l1, l2) else emptyList(), fields, checkDigits)
+            val result = tryParseMrzPair(rawL1, l2)
+            if (result != null) return result
+        }
+        // Fallback: OCR may merge MRZ into surrounding text or split lines
+        // differently. Search for P< followed by a 3-letter country code
+        // anywhere in the normalized full text, then extract the next line.
+        val flat = normalizeMrzLine(text.replace("\n", " "))
+        val mrzStart = Regex("""P<[A-Z]{3}[A-Z<]{30,}""").find(flat)
+        if (mrzStart != null) {
+            val fromStart = flat.substring(mrzStart.range.first)
+            if (fromStart.length >= 80) {
+                val l1 = fromStart.substring(0, 44)
+                val rest = fromStart.substring(44)
+                val l2Candidate = rest.take(44.coerceAtMost(rest.length))
+                if (l2Candidate.length >= 28) {
+                    val result = tryParseMrzPair(l1, l2Candidate)
+                    if (result != null) return result
+                }
+            }
         }
         return null
+    }
+
+    private fun tryParseMrzPair(rawL1: String, rawL2: String): MrzParse? {
+        val l1 = rawL1.padEnd(44, '<').take(44)
+        val l2 = rawL2.padEnd(44, '<').take(44)
+        if (l1[0] != 'P' && l1[0] != 'V') return null
+        if (l1[1] != '<' && !l1[1].isLetter()) return null
+        if (l2.length < 28) return null
+        if (l2[20] != 'M' && l2[20] != 'F' && l2[20] != '<') return null
+        val dob = mrzDate(fixDigits(l2.substring(13, 19)), isBirth = true)
+        val exp = mrzDate(fixDigits(l2.substring(21, 27)), isBirth = false)
+        if (dob == null && exp == null) return null
+
+        val nameParts = l1.substring(5).split("<<")
+        val surname = nameParts.firstOrNull().orEmpty().replace('<', ' ').trim()
+        val given = nameParts.drop(1).joinToString(" ").replace('<', ' ').trim().replace(Regex("\\s+"), " ")
+        val fields = LinkedHashMap<String, String>()
+        listOf(given, surname).filter { it.isNotBlank() }.joinToString(" ").takeIf { it.isNotBlank() }
+            ?.let { fields["name"] = it }
+        l2.substring(0, 9).replace("<", "").takeIf { it.isNotBlank() }?.let { fields["passport_number"] = it }
+        l2.substring(10, 13).takeIf { it.all { c -> c.isLetter() } }?.let { fields["nationality"] = NATIONALITY_BY_ICAO[it] ?: it }
+        dob?.let { fields["date_of_birth"] = it }
+        exp?.let { fields["date_of_expiry"] = it }
+        when (l2[20]) { 'M' -> fields["gender"] = "M"; 'F' -> fields["gender"] = "F" }
+        val complete = rawL1.length == 44 && rawL2.length == 44
+        val checkDigits = if (rawL2.length >= 44) validateMrzCheckDigits(rawL2) else null
+        return MrzParse(if (complete) listOf(l1, l2) else emptyList(), fields, checkDigits)
     }
 
     /** Extract fields using regex patterns */

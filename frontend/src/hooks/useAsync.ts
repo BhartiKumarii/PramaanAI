@@ -33,12 +33,15 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncSt
         }
       } catch (err) {
         if (cancelled) return
-        if (isNetworkError(err) && retries < 3) {
-          await new Promise((r) => setTimeout(r, (retries + 1) * 3000))
+        const delays = [5000, 15000, 25000, 30000]
+        if (isNetworkError(err) && retries < delays.length) {
+          await new Promise((r) => setTimeout(r, delays[retries]))
           if (!cancelled) await attempt(retries + 1)
           return
         }
-        setError((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? (err as Error).message ?? 'Request failed')
+        const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        const msg = detail ?? (err as Error).message ?? 'Request failed'
+        setError(isNetworkError(err) ? 'Backend is waking up — please wait a moment then tap Retry.' : msg)
         setLoading(false)
       }
     }

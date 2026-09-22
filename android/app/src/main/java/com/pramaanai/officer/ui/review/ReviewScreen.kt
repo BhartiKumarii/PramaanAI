@@ -143,7 +143,7 @@ fun ReviewScreen(repository: ScreeningRepository, screeningId: String, onBack: (
             item { RiskScoreCard(currentItem) }
             item { Spacer(Modifier.height(16.dp)) }
 
-            item { DocumentImageWithOverlay(currentItem) }
+            item { CapturedPhotos(currentItem) }
             item { Spacer(Modifier.height(16.dp)) }
 
             if (currentItem.registryHits.isNotEmpty()) {
@@ -353,16 +353,78 @@ private fun RiskScoreCard(item: ScreeningQueueItem) {
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.top_reason), style = MaterialTheme.typography.labelMedium)
-            Text(getLocalizedValidationReason(risk.topReason), style = MaterialTheme.typography.bodyMedium)
+            Text(com.pramaanai.officer.data.humanTopReason(risk.topReason), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
 
-/** Draws each signal's real bounding box (backend pixel coordinates, e.g.
- * the ELA forensics anomaly region) directly on the real captured document
- * image, scaled to however large the image renders on screen. Mock queue
- * items have no [ScreeningQueueItem.documentImagePath] and show nothing
- * here — there is no real photo to draw on, so this doesn't fake one. */
+@Composable
+private fun CapturedPhotos(item: ScreeningQueueItem) {
+    val hasDoc = item.documentImagePath != null
+    val hasSelfie = item.selfieImagePath != null
+    val hasBack = item.documentBackImagePath != null
+    if (!hasDoc && !hasSelfie) return
+
+    Column {
+        Text(stringResource(R.string.captured_document), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            if (hasDoc) {
+                Column(modifier = Modifier.weight(1f)) {
+                    DocumentImageWithOverlay(item)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Document", style = MaterialTheme.typography.labelSmall, color = Gray500)
+                }
+            }
+            if (hasBack) {
+                Column(modifier = Modifier.weight(1f)) {
+                    val backBmp = remember(item.documentBackImagePath) {
+                        BitmapFactory.decodeFile(item.documentBackImagePath)
+                    }
+                    if (backBmp != null) {
+                        Image(
+                            bitmap = backBmp.asImageBitmap(),
+                            contentDescription = "Document back side",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.9f)
+                                .background(Color(0xFF121212), RoundedCornerShape(8.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("Back side", style = MaterialTheme.typography.labelSmall, color = Gray500)
+                }
+            }
+            if (hasSelfie) {
+                Column(modifier = Modifier.weight(1f)) {
+                    val selfieBmp = remember(item.selfieImagePath) {
+                        BitmapFactory.decodeFile(item.selfieImagePath)
+                    }
+                    if (selfieBmp != null) {
+                        Image(
+                            bitmap = selfieBmp.asImageBitmap(),
+                            contentDescription = "Live photo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.9f)
+                                .background(Color(0xFF121212), RoundedCornerShape(8.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().aspectRatio(0.9f).background(Color(0xFF1A1A1A), RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) { Text("Not available", style = MaterialTheme.typography.labelSmall, color = Gray500) }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("Live photo", style = MaterialTheme.typography.labelSmall, color = Gray500)
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun DocumentImageWithOverlay(item: ScreeningQueueItem) {
     val path = item.documentImagePath ?: return
@@ -375,50 +437,28 @@ private fun DocumentImageWithOverlay(item: ScreeningQueueItem) {
     val (imageBitmap, originalWidth, originalHeight) = decoded
     if (originalWidth <= 0 || originalHeight <= 0) return
 
-    Column {
-        Text(stringResource(R.string.captured_document), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(originalWidth.toFloat() / originalHeight.toFloat()),
-        ) {
-            Image(
-                bitmap = imageBitmap,
-                contentDescription = "Captured document photo",
-                modifier = Modifier.fillMaxSize(),
-            )
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val scaleX = size.width / originalWidth
-                val scaleY = size.height / originalHeight
-                boxedSignals.forEach { signal ->
-                    val loc = signal.location ?: return@forEach
-                    val color = SIGNAL_BOX_COLORS[signal.signal] ?: DEFAULT_BOX_COLOR
-                    drawRect(
-                        color = color,
-                        topLeft = Offset(loc.x * scaleX, loc.y * scaleY),
-                        size = Size(loc.width * scaleX, loc.height * scaleY),
-                        style = Stroke(width = 4f),
-                    )
-                }
-            }
-        }
-        if (boxedSignals.isNotEmpty()) {
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                boxedSignals.forEach { signal ->
-                    val color = SIGNAL_BOX_COLORS[signal.signal] ?: DEFAULT_BOX_COLOR
-                    Row {
-                        Box(
-                            modifier = Modifier
-                                .height(12.dp)
-                                .width(12.dp)
-                                .background(color, RoundedCornerShape(2.dp)),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(signal.signal.replace("_", " "), style = MaterialTheme.typography.labelSmall)
-                    }
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(originalWidth.toFloat() / originalHeight.toFloat()),
+    ) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "Captured document photo",
+            modifier = Modifier.fillMaxSize(),
+        )
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val scaleX = size.width / originalWidth
+            val scaleY = size.height / originalHeight
+            boxedSignals.forEach { signal ->
+                val loc = signal.location ?: return@forEach
+                val color = SIGNAL_BOX_COLORS[signal.signal] ?: DEFAULT_BOX_COLOR
+                drawRect(
+                    color = color,
+                    topLeft = Offset(loc.x * scaleX, loc.y * scaleY),
+                    size = Size(loc.width * scaleX, loc.height * scaleY),
+                    style = Stroke(width = 4f),
+                )
             }
         }
     }
@@ -490,11 +530,27 @@ private fun RegistryHitRow(hit: RegistryHit) {
 
 @Composable
 private fun SignalRow(signal: RiskSignalBreakdown) {
+    val state = when {
+        signal.rawRisk <= 0.0001 -> "Passed" to Color(0xFF43A047)
+        signal.rawRisk >= 0.7    -> "Alert" to Color(0xFFE53935)
+        else                     -> "Review" to Color(0xFFFFA726)
+    }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text(getLocalizedSignalName(signal.signal), fontWeight = FontWeight.SemiBold)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(com.pramaanai.officer.data.humanSignalTitle(signal.signal), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(
+                    state.first,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = state.second,
+                    modifier = Modifier
+                        .background(state.second.copy(alpha = 0.14f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+            }
             Spacer(Modifier.height(4.dp))
-            Text(getLocalizedValidationReason(signal.reason), style = MaterialTheme.typography.bodySmall)
+            Text(com.pramaanai.officer.data.humanSignalReason(signal.signal, signal.reason), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

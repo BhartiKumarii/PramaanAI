@@ -9,14 +9,13 @@ const TITLE_BY_PATH: { test: (p: string) => boolean; label: string }[] = [
   { test: (p) => p.startsWith('/console/verification'), label: 'Verification Desk' },
   { test: (p) => p.startsWith('/console/cases'), label: 'Verification Desk' },
   { test: (p) => p.startsWith('/console/identity'), label: 'Identity Intelligence' },
-  { test: (p) => p.startsWith('/console/document-intelligence'), label: 'Document Intelligence' },
   { test: (p) => p.startsWith('/console/checkpoints'), label: 'Checkpoints' },
   { test: (p) => p.startsWith('/console/area-monitoring'), label: 'Area Monitoring' },
   { test: (p) => p.startsWith('/console/officers'), label: 'Officers Monitoring' },
   { test: (p) => p.startsWith('/console/devices'), label: 'Device Management' },
   { test: (p) => p.startsWith('/console/admin/users'), label: 'User Management' },
   { test: (p) => p.startsWith('/console/admin/audit-logs'), label: 'Audit Trail' },
-  { test: (p) => p.startsWith('/console/analytics'), label: 'Analytics & Reports' },
+  { test: (p) => p.startsWith('/console/analytics'), label: 'Analytics & Intelligence' },
   { test: (p) => p.startsWith('/console/settings'), label: 'Admin Settings' },
 ]
 

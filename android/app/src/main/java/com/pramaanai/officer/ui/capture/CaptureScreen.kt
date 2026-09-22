@@ -201,15 +201,16 @@ fun EnhancedCameraPreview(
                 val capture = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
+                val analysisExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
                 val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setTargetResolution(android.util.Size(640, 480))
                     .build()
                     .also { imgAnalysis ->
-                        imgAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                        imgAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
                             val newState = analyzeFrame(imageProxy, step, onAutoCapture)
                             if (newState != null) {
-                                previewState.value = newState
+                                Handler(Looper.getMainLooper()).post { previewState.value = newState }
                             }
                         }
                         onAnalysisReady(imgAnalysis)

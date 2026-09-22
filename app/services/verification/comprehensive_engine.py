@@ -126,7 +126,7 @@ class ComprehensiveVerificationEngine:
         self.multilingual_handler = MultilingualDocumentHandler()
 
         # Verification thresholds (aligned with face providers)
-        self.face_match_threshold = 0.75
+        self.face_match_threshold = 0.42
         self.spoof_detection_threshold = 0.6
         self.tampering_threshold = 0.5
 

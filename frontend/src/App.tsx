@@ -13,7 +13,6 @@ import { CaseReview } from './pages/CaseReview'
 import { AdminUsers } from './pages/AdminUsers'
 import { IdentityIntelligence } from './pages/IdentityIntelligence'
 import { DeviceManagement } from './pages/DeviceManagement'
-import { DocumentIntelligence } from './pages/DocumentIntelligence'
 import { Officers } from './pages/Officers'
 import { AreaMonitoring } from './pages/AreaMonitoring'
 import { Reports } from './pages/Reports'
@@ -47,7 +46,7 @@ function AppRoutes() {
                 <Route path="/results" element={<Navigate to="/console/verification" replace />} />
                 <Route path="/alerts" element={<Navigate to="/console/verification" replace />} />
                 <Route path="/identity" element={<IdentityIntelligence />} />
-                <Route path="/document-intelligence" element={<DocumentIntelligence />} />
+                <Route path="/document-intelligence" element={<Navigate to="/console/analytics" replace />} />
                 <Route path="/checkpoints" element={<Checkpoints />} />
                 <Route path="/area-monitoring" element={<AreaMonitoring />} />
                 <Route path="/officers" element={<Officers />} />
