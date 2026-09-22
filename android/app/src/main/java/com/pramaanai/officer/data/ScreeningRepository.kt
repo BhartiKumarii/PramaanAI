@@ -56,6 +56,7 @@ class ScreeningRepository(
     private val checkpoint: String,
     private val pendingQueue: PendingSubmissionQueue,
 ) {
+    private val TAG = "ScreeningRepository"
     private val uploadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     // Prefers the real, server-assigned checkpoint (populated at login —
     // see login() below) over the constructor default, which only ever
@@ -325,19 +326,25 @@ class ScreeningRepository(
      * than surfacing that as a submission failure. Any other error (4xx,
      * a real 5xx from the app itself, no network) is not retried and is
      * thrown straight through — a real failure stays a real failure. */
-    private suspend fun <T> callScreeningWithRetry(call: suspend () -> T): T {
+    private suspend fun <T> callWithRetry(call: suspend () -> T): T {
         val delaysMs = listOf(8_000L, 20_000L)
         delaysMs.forEachIndexed { attempt, delayMs ->
             try {
                 return call()
             } catch (e: HttpException) {
-                if (e.code() != 503) throw e
+                if (e.code() !in listOf(502, 503, 504)) throw e
                 if (attempt == delaysMs.lastIndex) throw e
+                Log.w(TAG, "Server returned ${e.code()}, retrying in ${delayMs}ms (attempt ${attempt + 1})")
+                delay(delayMs)
+            } catch (e: IOException) {
+                if (attempt == delaysMs.lastIndex) throw e
+                Log.w(TAG, "Network error, retrying in ${delayMs}ms (attempt ${attempt + 1})", e)
                 delay(delayMs)
             }
         }
         return call()
     }
+    private suspend fun <T> callScreeningWithRetry(call: suspend () -> T): T = callWithRetry(call)
 
     /** Real call to POST /documents/screen — JSON body only (see
      * ApiService.screenDocument / ScreeningSubmissionRequest): OCR fields,
@@ -450,7 +457,7 @@ class ScreeningRepository(
         val queueItem = store.getById(id) ?: error("Unknown screening: $id")
         val caseId = queueItem.caseId
             ?: error("This is a demo record — only real screenings captured on this device can be forwarded.")
-        api.submitCase(AuthSession.bearerHeader(), caseId, CaseSubmitRequest(note))
+        callWithRetry { api.submitCase(AuthSession.bearerHeader(), caseId, CaseSubmitRequest(note)) }
         store.upsert(queueItem.copy(status = ScreeningStatus.SENT, officerNotes = note ?: queueItem.officerNotes))
         logAudit(action = "Case forwarded to Immigration Officer", record = id, result = note?.let { "notes=\"$it\"" } ?: "no notes")
     }

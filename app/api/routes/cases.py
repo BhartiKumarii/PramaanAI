@@ -88,7 +88,7 @@ def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse
     from app.models.verification import VerificationRecord
     verifications: dict[str, VerificationRecord | None] = {}
     for vid in verification_ids:
-        v = db.get(VerificationRecord, str(vid))
+        v = db.get(VerificationRecord, vid if isinstance(vid, uuid.UUID) else uuid.UUID(str(vid)))
         if v:
             verifications[str(v.id)] = v
 

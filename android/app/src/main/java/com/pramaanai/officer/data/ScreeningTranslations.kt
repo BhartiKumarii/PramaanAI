@@ -52,8 +52,11 @@ fun humanTopReason(raw: String?): String {
             "Similar identity found in other records"
         lower.contains("face") && lower.contains("mismatch") ->
             "Photo does not match document"
-        lower.contains("cosine similarity") || lower.contains("similarity") && lower.contains("threshold") ->
+        lower.contains("cosine similarity") || lower.contains("similarity") ->
             humaniseSimilarityReason(raw)
+        lower.contains("embedding") || lower.contains("direct match") ->
+            if (lower.contains("match")) "Identity match found in prior records"
+            else "Identity analysis complete"
         lower.contains("hologram") ->
             "Document security feature appears altered"
         lower.contains("stamp opacity") || lower.contains("ink application") ->
@@ -110,12 +113,24 @@ private fun humaniseSimilarityReason(raw: String): String {
 }
 
 private fun shortenRawReason(raw: String): String {
-    // Strip technical prefixes and truncate to readable length
     val cleaned = raw
         .removePrefix("hard override: ")
         .removePrefix("forensics: ")
         .removePrefix("checksum: ")
         .removePrefix("blacklist: ")
+        // Strip technical terms that shouldn't appear in officer-facing text
+        .replace(Regex("""cosine similarity[\s:]*[\d.]+""", RegexOption.IGNORE_CASE), "match score")
+        .replace(Regex("""face[_\s]?embedding[s]?""", RegexOption.IGNORE_CASE), "photo comparison")
+        .replace(Regex("""embedding[s]?""", RegexOption.IGNORE_CASE), "analysis")
+        .replace(Regex("""direct match""", RegexOption.IGNORE_CASE), "confirmed match")
+        .replace(Regex("""similarity[\s:]*[\d.]+""", RegexOption.IGNORE_CASE), "match score")
+        .replace(Regex("""threshold[\s:]*[\d.]+""", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("""heuristic[s]?[\s:]*(score)?""", RegexOption.IGNORE_CASE), "analysis")
+        .replace(Regex("""\bELA\b"""), "image analysis")
+        .replace(Regex("""\bHOG\b"""), "photo analysis")
+        .replace(Regex("""\bvs\b""", RegexOption.IGNORE_CASE), "compared to")
+        .replace(Regex("""\s{2,}"""), " ")
+        .trim()
         .replaceFirstChar { it.uppercase() }
     return if (cleaned.length > 80) cleaned.take(77) + "…" else cleaned
 }
@@ -172,6 +187,11 @@ fun humanSignalReason(signal: String, raw: String?): String {
             lower.contains("cluster") ->
                 "Similar identity found in ${extractClusterSize(raw)} other record(s)"
             lower.contains("no cluster") -> "No related identity records found"
+            lower.contains("embedding") && lower.contains("match") ->
+                "Identity match found in prior records"
+            lower.contains("embedding") -> "Identity analysis complete"
+            lower.contains("direct match") -> "Identity match found in prior records"
+            lower.contains("similarity") -> humaniseSimilarityReason(raw)
             else -> shortenRawReason(raw)
         }
         "face_detection" -> when {

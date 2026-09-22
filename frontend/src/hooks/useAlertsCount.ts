@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { listCases } from '../api/resources'
 import type { CaseStatus } from '../api/types'
 
-const ALERT_STATUSES: CaseStatus[] = ['REVIEW_REQUIRED', 'SECONDARY_REVIEW', 'HOLD_REFER']
+const ALERT_STATUSES: CaseStatus[] = ['REVIEW_REQUIRED']
 
 // A real, polled count — never a hardcoded badge number. Roles that
 // can't see cases (e.g. IT_ADMIN) will just get a 403 here and the

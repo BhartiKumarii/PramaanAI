@@ -604,15 +604,32 @@ export function CaseReview() {
     if (!noteText.trim()) return
     setNoteLoading(true)
     setNoteError('')
-    try {
-      await addCaseNote(caseId!, noteText)
-      setNoteText('')
-      caseQuery.refetch()
-    } catch (e: unknown) {
-      setNoteError(e instanceof Error ? e.message : 'Failed to add note')
-    } finally {
-      setNoteLoading(false)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await addCaseNote(caseId!, noteText)
+        setNoteText('')
+        setNoteLoading(false)
+        caseQuery.refetch()
+        return
+      } catch (e: unknown) {
+        const axErr = e as { response?: { data?: { detail?: string }; status?: number }; message?: string }
+        const status = axErr.response?.status
+        if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) {
+          setNoteError(axErr.response?.data?.detail ?? 'Could not add note.')
+          setNoteLoading(false)
+          return
+        }
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, (attempt + 1) * 2000))
+          continue
+        }
+        const msg = axErr.response?.data?.detail ?? axErr.message ?? ''
+        setNoteError(msg.includes('Network') || msg.includes('timeout')
+          ? 'Server is not reachable — please check your connection and try again.'
+          : `Could not add note: ${msg || 'Unknown error'}`)
+      }
     }
+    setNoteLoading(false)
   }
 
   if (caseQuery.loading) return (
@@ -649,8 +666,10 @@ export function CaseReview() {
 
   // Extract useful OCR fields for the identity card
   const ocr = v?.ocr?.fields ?? {}
-  const docNumber = ocr.passport_number ?? ocr.license_number ?? ocr.document_number ?? ocr.visa_number ?? ocr.permit_number ?? null
+  const docNumber = ocr.passport_number ?? ocr.dl_number ?? ocr.license_number ?? ocr.document_number ?? ocr.visa_number ?? ocr.permit_number ?? ocr.nin_number ?? ocr.cid_number ?? null
+  const displayName = c.traveler_name ?? ocr.full_name ?? ocr.name ?? ocr.owner_name ?? null
   const displayDocType = DOC_TYPE_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type
+  const displayGender = ocr.sex ?? ocr.gender ?? null
 
   return (
     <div className="space-y-4">
@@ -662,7 +681,7 @@ export function CaseReview() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Case {c.case_number}</p>
             <h1 className="text-2xl font-bold text-foreground mt-1">
-              {c.traveler_name ?? ocr.name ?? 'Name not extracted'}
+              {displayName ?? 'Name not extracted'}
             </h1>
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
@@ -692,8 +711,8 @@ export function CaseReview() {
           {ocr.date_of_birth && <DetailField label="Date of Birth" value={ocr.date_of_birth} />}
           {ocr.date_of_expiry && <DetailField label="Date of Expiry" value={ocr.date_of_expiry} />}
           {ocr.date_of_issue && <DetailField label="Date of Issue" value={ocr.date_of_issue} />}
-          {ocr.gender && /^(m|f|male|female|other|transgender)$/i.test(ocr.gender.trim()) && (
-            <DetailField label="Gender" value={ocr.gender.trim().charAt(0).toUpperCase() === 'M' ? 'Male' : ocr.gender.trim().charAt(0).toUpperCase() === 'F' ? 'Female' : ocr.gender.trim()} />
+          {displayGender && /^(m|f|male|female|other|transgender)$/i.test(displayGender.trim()) && (
+            <DetailField label="Gender" value={displayGender.trim().charAt(0).toUpperCase() === 'M' ? 'Male' : displayGender.trim().charAt(0).toUpperCase() === 'F' ? 'Female' : displayGender.trim()} />
           )}
           {ocr.place_of_birth && <DetailField label="Place of Birth" value={ocr.place_of_birth} />}
           {ocr.place_of_issue && <DetailField label="Place of Issue" value={ocr.place_of_issue} />}
@@ -701,7 +720,16 @@ export function CaseReview() {
           {ocr.mrz_line1 && <DetailField label="MRZ" value={`${ocr.mrz_line1}${ocr.mrz_line2 ? '\n' + ocr.mrz_line2 : ''}`} mono />}
           {ocr.voter_id && <DetailField label="Voter ID" value={ocr.voter_id} mono />}
           {ocr.aadhaar_number && <DetailField label="Aadhaar" value={ocr.aadhaar_number} mono />}
-          {ocr.father_name && <DetailField label="Father's Name" value={ocr.father_name} />}
+          {(ocr.fathers_name || ocr.father_name) && <DetailField label="Father's Name" value={ocr.fathers_name ?? ocr.father_name} />}
+          {ocr.mothers_name && <DetailField label="Mother's Name" value={ocr.mothers_name} />}
+          {ocr.blood_group && <DetailField label="Blood Group" value={ocr.blood_group} />}
+          {ocr.vehicle_classes && <DetailField label="Vehicle Classes" value={ocr.vehicle_classes} />}
+          {ocr.category && <DetailField label="Category" value={ocr.category} />}
+          {ocr.citizenship_number && <DetailField label="Citizenship No." value={ocr.citizenship_number} mono />}
+          {ocr.permit_type && <DetailField label="Permit Type" value={ocr.permit_type} />}
+          {ocr.purpose && <DetailField label="Purpose" value={ocr.purpose} />}
+          {ocr.place_of_visit && <DetailField label="Place of Visit" value={ocr.place_of_visit} />}
+          {ocr.registration_no && <DetailField label="Registration No." value={ocr.registration_no} mono />}
           {ocr.address && <DetailField label="Address" value={ocr.address} />}
           <div className="border-t border-border mt-2 pt-2">
             <DetailField label="Checkpoint" value={c.checkpoint_code} />

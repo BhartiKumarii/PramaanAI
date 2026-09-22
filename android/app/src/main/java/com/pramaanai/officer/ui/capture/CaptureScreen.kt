@@ -863,6 +863,11 @@ fun CaptureScreen(
                     if (fields.dateOfBirth.isNotBlank()) put("date_of_birth", fields.dateOfBirth.trim())
                     if (fields.dateOfExpiry.isNotBlank()) put("date_of_expiry", fields.dateOfExpiry.trim())
                     if (fields.gender.isNotBlank()) put("gender", fields.gender.trim())
+                    // Include all additional fields extracted on-device (date_of_issue,
+                    // place_of_birth, issuing_authority, personal_number, cid_number, etc.)
+                    for ((k, v) in extraFields) {
+                        if (v.isNotBlank() && !containsKey(k)) put(k, v)
+                    }
                 }
                 // Convert on-device liveness result to the DTO the backend expects
                 val livenessDto = livenessResult?.let {

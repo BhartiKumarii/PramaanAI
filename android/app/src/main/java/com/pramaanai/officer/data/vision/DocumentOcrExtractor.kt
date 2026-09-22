@@ -267,6 +267,10 @@ object DocumentOcrExtractor {
     // Indian DL number: state code (2 letters) + RTO code (2 digits) + space/dash + year (4 digits) + space/dash + serial (7 digits)
     // e.g., KA01 2015 0001234, DL-0520190001234, MH12 20210001234
     private val DL_NUMBER_PATTERN = Regex("""([A-Z]{2}[\s\-]?\d{2}[\s\-]?\d{4}[\s\-]?\d{7})""")
+    // Nepal DL: DD-DD-DDDDDDDD (e.g., 28-49-26819815, 03-06-00354234)
+    private val NEPAL_DL_PATTERN = Regex("""(?:D\.?L\.?\s*No\.?\s*[:/]?\s*)(\d{2}-\d{2}-\d{8})""", RegexOption.IGNORE_CASE)
+    // Bhutan DL: X-DDDDD (e.g., G-18638, T-22358)
+    private val BHUTAN_DL_PATTERN = Regex("""(?:License\s*No\.?\s*[:/]?\s*)([A-Z]-\d{5})""", RegexOption.IGNORE_CASE)
 
     // Verhoeff checksum for on-device Aadhaar number validation — picks
     // the correct 12-digit candidate when OCR finds multiple on the card.
@@ -355,6 +359,20 @@ object DocumentOcrExtractor {
         if (lower.contains("सारथी") || lower.contains("अनुज्ञापत्र")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
         if (DL_NUMBER_PATTERN.containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 6
         if (lower.contains("rsta") || lower.contains("road safety")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (lower.contains("सवारी चालक") || lower.contains("अनुमतिपत्र")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 10
+        if (lower.contains("d.l.no") || lower.contains("dl no")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (lower.contains("license office")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (lower.contains("license no") || lower.contains("licence no")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (lower.contains("category") && (lower.contains("a") || lower.contains("b"))) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 3
+        if (lower.contains("f/h name")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 6
+        if (lower.contains("s/d/w of") || lower.contains("son/daughter/wife")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 6
+        if (lower.contains("validity") && (lower.contains("nt") || lower.contains("tr"))) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (lower.contains("valid till")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 7
+        if (lower.contains("union of india") && lower.contains("driving")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 10
+        if (lower.contains("government of nepal") && lower.contains("driving")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 10
+        if (lower.contains("kingdom of bhutan") && lower.contains("driving")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 10
+        if (NEPAL_DL_PATTERN.containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
+        if (BHUTAN_DL_PATTERN.containsMatchIn(text)) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 8
         // "transport" alone (without "department") is weaker — could appear in visa text
         if (lower.contains("transport") && !lower.contains("visa") && !lower.contains("passport")) scores["DRIVING_LICENCE"] = (scores["DRIVING_LICENCE"] ?: 0) + 3
 
@@ -366,6 +384,13 @@ object DocumentOcrExtractor {
         if (lower.contains("citizen identity") || lower.contains("cid")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 7
         if (lower.contains("bhutan") && lower.contains("identity")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 8
         if (lower.contains("identity card") || lower.contains("id card")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 4
+        // Nepal National Identity Card
+        if (lower.contains("national identity card") || lower.contains("राष्ट्रिय परिचयपत्र")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 10
+        if (lower.contains("nin") && lower.contains("nepal")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 9
+        if (lower.contains("government of nepal") && lower.contains("identity")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 9
+        // Bhutan Citizenship Card
+        if (lower.contains("citizenship card") || lower.contains("citizenship id no")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 9
+        if (lower.contains("kingdom of bhutan") && !lower.contains("driving")) scores["NATIONAL_ID"] = (scores["NATIONAL_ID"] ?: 0) + 7
 
         // --- PAN Card signals ---
         if (PAN_PATTERN.find(text) != null) scores["PAN_CARD"] = (scores["PAN_CARD"] ?: 0) + 6
@@ -397,6 +422,20 @@ object DocumentOcrExtractor {
         if (lower.contains("permit") && !lower.contains("driving")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 6
         if (lower.contains("अनुमति")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 8
         if (lower.contains("inner line permit") || lower.contains("ilp")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("entry permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("travel permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("temporary travel permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("tourist permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("contract carriage permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("international driving permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("permit no") || lower.contains("permit number")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 7
+        if (lower.contains("purpose of visit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 7
+        if (lower.contains("place of visit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 7
+        if (lower.contains("valid from") || lower.contains("valid till") || lower.contains("valid until")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 4
+        if (lower.contains("non-bhutanese") || lower.contains("visiting bhutan")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 9
+        if (lower.contains("immigration office")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 6
+        if (lower.contains("अनुमति-पत्र") || lower.contains("अनुमतिपत्र")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 10
+        if (lower.contains("registration no") && lower.contains("permit")) scores["PERMIT"] = (scores["PERMIT"] ?: 0) + 8
 
         // --- Nepal citizenship ---
         if (lower.contains("नागरिकता")) scores["CITIZENSHIP_CERTIFICATE"] = (scores["CITIZENSHIP_CERTIFICATE"] ?: 0) + 10
@@ -449,11 +488,27 @@ object DocumentOcrExtractor {
             }
         }
 
-        // DL number extraction
+        // DL number extraction — Indian format
         DL_NUMBER_PATTERN.find(text)?.let { match ->
             val dlNum = match.groupValues[1].replace(Regex("[\\s\\-]"), "")
             if (!result.containsKey("document_number")) result["document_number"] = dlNum
             result["dl_number"] = dlNum
+        }
+        // Nepal DL number: DD-DD-DDDDDDDD
+        if (!result.containsKey("dl_number")) {
+            NEPAL_DL_PATTERN.find(text)?.let { match ->
+                val dlNum = match.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = dlNum
+                result["dl_number"] = dlNum
+            }
+        }
+        // Bhutan DL License No: X-DDDDD
+        if (!result.containsKey("dl_number")) {
+            BHUTAN_DL_PATTERN.find(text)?.let { match ->
+                val dlNum = match.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = dlNum
+                result["dl_number"] = dlNum
+            }
         }
 
         // Document-type-specific field extraction
@@ -470,6 +525,44 @@ object DocumentOcrExtractor {
         if (isVisa(text)) {
             extractVisaFields(text, result)
         }
+
+        // Nepal NIN (National Identity Number): "393-384-5194" or "023-456-2130"
+        if (!result.containsKey("document_number") || text.contains("NATIONAL IDENTITY", ignoreCase = true)) {
+            val ninPattern = Regex("""(?:NIN|राष्ट्रिय परिचय नम्बर)\s*[:/]?\s*(\d{3}[-\s]?\d{3}[-\s]?\d{4})""", RegexOption.IGNORE_CASE)
+            ninPattern.find(text)?.let {
+                val nin = it.groupValues[1].replace(Regex("[\\s\\-]"), "")
+                result["document_number"] = nin
+                result["nin_number"] = nin
+            }
+            if (!result.containsKey("nin_number")) {
+                // Standalone NIN pattern (3-3-4 with dashes)
+                Regex("""\b(\d{3}-\d{3}-\d{4})\b""").find(text)?.let {
+                    if (text.contains("NATIONAL IDENTITY", ignoreCase = true) || text.contains("परिचयपत्र")) {
+                        val nin = it.groupValues[1].replace("-", "")
+                        if (!result.containsKey("document_number")) result["document_number"] = nin
+                        result["nin_number"] = nin
+                    }
+                }
+            }
+        }
+
+        // Bhutan CID from "Name:value" format on Citizenship Card (not DL or permit)
+        if ((text.contains("Citizenship Card", ignoreCase = true) ||
+             (text.contains("KINGDOM OF BHUTAN", ignoreCase = true) && !isDrivingLicence(text) && !isPermit(text)))
+        ) {
+            extractBhutanCitizenshipCard(text, result)
+        }
+
+        // Nepal NID specific fields
+        if (text.contains("NATIONAL IDENTITY CARD", ignoreCase = true) || text.contains("परिचयपत्र")) {
+            extractNepalNidFields(text, result)
+        }
+
+        // Permit extraction
+        if (isPermit(text)) {
+            extractPermitFields(text, result)
+        }
+
         extractCommonFields(text, result)
 
         return result
@@ -479,69 +572,148 @@ object DocumentOcrExtractor {
         val lower = text.lowercase()
         return lower.contains("driving licence") || lower.contains("driving license")
             || lower.contains("motor vehicle") || lower.contains("transport department")
+            || lower.contains("सवारी चालक") || lower.contains("अनुमतिपत्र")
+            || lower.contains("d.l.no") || lower.contains("dl no")
             || Regex("""\bRTO\b|\bRTA\b""", RegexOption.IGNORE_CASE).containsMatchIn(text)
     }
 
     private fun extractDrivingLicenceFields(text: String, result: MutableMap<String, String>) {
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
 
-        // DOB — look for "DOB" label or date_of_birth pattern
-        if (!result.containsKey("date_of_birth")) {
-            val dobPattern = Regex("""(?:DOB|D\.?O\.?B\.?|Date\s*of\s*Birth|जन्म\s*(?:तिथि|दिनांक))\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
-            dobPattern.find(text)?.let { match ->
-                normalizeDate(match.groupValues[1])?.let { result["date_of_birth"] = it }
+        // Name — "Name:" label (Indian & Nepal DL), or inline for Bhutan
+        if (!result.containsKey("full_name")) {
+            val namePattern = Regex("""(?:^|\n)\s*(?:Name|नाम)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            namePattern.find(text)?.let {
+                val candidate = it.groupValues[1].trim()
+                if (candidate.isNotBlank() && isLikelyPersonName(candidate)) {
+                    result["full_name"] = candidate.uppercase()
+                }
             }
         }
-
-        // Blood group
-        if (!result.containsKey("blood_group")) {
-            val bgPattern = Regex("""(?:Blood\s*Group|रक्त\s*समूह)\s*[:/]?\s*([ABO]{1,2}[\s]?[+-]?\s*(?:Positive|Negative|positive|negative)?)\b""", RegexOption.IGNORE_CASE)
-            bgPattern.find(text)?.let { result["blood_group"] = it.groupValues[1].trim() }
-        }
-
-        // Vehicle classes — LMV, MCWG, MCWOG, HMV, etc.
-        if (!result.containsKey("vehicle_classes")) {
-            val vcPattern = Regex("""\b(LMV|MCWG|MCWOG|HMV|HGV|LTV|MGV|HPMV|TRANS)\b""")
-            val classes = vcPattern.findAll(text).map { it.value }.toSet()
-            if (classes.isNotEmpty()) result["vehicle_classes"] = classes.joinToString(", ")
-        }
-
-        // Validity / Date of Expiry
-        if (!result.containsKey("date_of_expiry")) {
-            val validPattern = Regex("""(?:Valid|Validity|Date\s*of\s*Expiry|NT|Non[\s\-]?Transport)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
-            validPattern.find(text)?.let { match ->
-                normalizeDate(match.groupValues[1])?.let { result["date_of_expiry"] = it }
-            }
-        }
-
-        // Issued date
-        if (!result.containsKey("date_of_issue")) {
-            val issuePattern = Regex("""(?:Issued?\s*(?:On|Date)?|Date\s*of\s*Issue)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
-            issuePattern.find(text)?.let { match ->
-                normalizeDate(match.groupValues[1])?.let { result["date_of_issue"] = it }
-            }
-        }
-
-        // Name — person name on DL is usually after the DL number line
-        if (!result.containsKey("name")) {
+        // Fallback: standalone person name line (Bhutan DL has name without label)
+        if (!result.containsKey("full_name")) {
             for (line in lines) {
                 if (isLikelyPersonName(line)) {
                     val lower = line.lowercase()
                     if (!lower.contains("transport") && !lower.contains("motor") &&
                         !lower.contains("union") && !lower.contains("state") &&
                         !lower.contains("kingdom") && !lower.contains("bhutan") &&
-                        !lower.contains("driving")) {
-                        result["name"] = line.trim()
+                        !lower.contains("driving") && !lower.contains("nepal") &&
+                        !lower.contains("government") && !lower.contains("india") &&
+                        !lower.contains("maharashtra") && !lower.contains("offence") &&
+                        !lower.contains("signature") && !lower.contains("issued by") &&
+                        !lower.contains("blood") && !lower.contains("category") &&
+                        !lower.contains("validity") && !lower.contains("license")) {
+                        result["full_name"] = line.trim().uppercase()
                         break
                     }
                 }
             }
         }
 
+        // DOB
+        if (!result.containsKey("date_of_birth")) {
+            val dobPattern = Regex("""(?:DOB|D\.?O\.?B\.?|Date\s*of\s*Birth|जन्म\s*(?:तिथि|दिनांक|मिति))\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            dobPattern.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_birth"] = it }
+            }
+        }
+
+        // Date of Issue — "DOI", "D.O.I.", "Issue Date", "Issued", "Date of Issue"
+        if (!result.containsKey("date_of_issue")) {
+            val issuePattern = Regex("""(?:D\.?O\.?I\.?|Issue\s*Date|Issued?\s*(?:On|Date)?|Date\s*of\s*Issue|जारी करने की तिथि|जारी मिति)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            issuePattern.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_issue"] = it }
+            }
+        }
+
+        // Date of Expiry / Validity — "D.O.E.", "Valid Till", "Validity", "Validity (NT)"
+        if (!result.containsKey("date_of_expiry")) {
+            val expiryPattern = Regex("""(?:D\.?O\.?E\.?|Valid\s*Till|Validity\s*(?:\(NT\)|\(TR\))?|Date\s*of\s*Expiry|वैधता)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
+            expiryPattern.find(text)?.let { match ->
+                normalizeDate(match.groupValues[1])?.let { result["date_of_expiry"] = it }
+            }
+        }
+
+        // Blood group
+        if (!result.containsKey("blood_group")) {
+            val bgPattern = Regex("""(?:Blood\s*Group|B\.?G\.?|रक्त\s*समूह)\s*[:/]?\s*([ABO]{1,2}[\s]?[+-]?\s*(?:Positive|Negative)?)\b""", RegexOption.IGNORE_CASE)
+            bgPattern.find(text)?.let { result["blood_group"] = it.groupValues[1].trim() }
+        }
+
+        // Vehicle classes — LMV, MCWG, MCWOG, HMV, etc.
+        if (!result.containsKey("vehicle_classes")) {
+            val vcPattern = Regex("""\b(LMV|MCWG|MCWOG|HMV|HGV|LTV|MGV|HPMV|TRANS|AED)\b""")
+            val classes = vcPattern.findAll(text).map { it.value }.toSet()
+            if (classes.isNotEmpty()) result["vehicle_classes"] = classes.joinToString(", ")
+        }
+
+        // Category (Nepal DL): "Category: A,B"
+        if (!result.containsKey("category")) {
+            val catPattern = Regex("""Category\s*[:/]?\s*([A-Z](?:\s*,\s*[A-Z])*)""", RegexOption.IGNORE_CASE)
+            catPattern.find(text)?.let { result["category"] = it.groupValues[1].trim() }
+        }
+
+        // Father/Husband name (Nepal DL): "F/H Name:" or "S/D/W of:" (Indian DL)
+        if (!result.containsKey("fathers_name")) {
+            val fhPattern = Regex("""(?:F/?H\s*Name|S/?D/?W\s*of|Son/?Daughter/?Wife\s*of|पिता/?पतिको?\s*नाम)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            fhPattern.find(text)?.let {
+                val candidate = it.groupValues[1].trim()
+                if (candidate.isNotBlank() && isLikelyPersonName(candidate)) {
+                    result["fathers_name"] = candidate.uppercase()
+                }
+            }
+        }
+
+        // Citizenship No (Nepal DL): "Citizenship No.: 92-87-62-14038"
+        if (!result.containsKey("citizenship_number")) {
+            val czPattern = Regex("""Citizenship\s*No\.?\s*[:/]?\s*([\d\-/]+)""", RegexOption.IGNORE_CASE)
+            czPattern.find(text)?.let {
+                val num = it.groupValues[1].trim()
+                if (num.length >= 5) result["citizenship_number"] = num
+            }
+        }
+
+        // License Office (Nepal DL)
+        if (!result.containsKey("issuing_authority")) {
+            val officePattern = Regex("""License\s*Office\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            officePattern.find(text)?.let {
+                result["issuing_authority"] = it.groupValues[1].trim()
+            }
+        }
+        // Issuing Authority (Indian DL): "Issuing Authority: MH03 2008261"
+        if (!result.containsKey("issuing_authority")) {
+            val iaPattern = Regex("""(?:Issuing|Licensing|Licencing)\s*Authority\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            iaPattern.find(text)?.let {
+                result["issuing_authority"] = it.groupValues[1].trim()
+            }
+        }
+
+        // Address: "Address:" or "Add:" (Indian DL)
+        if (!result.containsKey("address")) {
+            val addrPattern = Regex("""(?:Address|Add)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            addrPattern.find(text)?.let {
+                result["address"] = it.groupValues[1].trim()
+            }
+        }
+
         // CID for Bhutan DL
-        if (!result.containsKey("document_number")) {
+        if (!result.containsKey("cid_number")) {
             val cidPattern = Regex("""CID\s*[:/]?\s*(\d{11})""", RegexOption.IGNORE_CASE)
-            cidPattern.find(text)?.let { result["document_number"] = it.groupValues[1] }
+            cidPattern.find(text)?.let {
+                result["cid_number"] = it.groupValues[1]
+                if (!result.containsKey("document_number")) result["document_number"] = it.groupValues[1]
+            }
+        }
+
+        // Sex/Gender
+        if (!result.containsKey("sex")) {
+            val sexPattern = Regex("""(?:Sex|Gender)\s*[:/]?\s*(M|F|Male|Female)""", RegexOption.IGNORE_CASE)
+            sexPattern.find(text)?.let {
+                result["sex"] = when (it.groupValues[1].uppercase().first()) {
+                    'M' -> "M"; 'F' -> "F"; else -> it.groupValues[1].uppercase()
+                }
+            }
         }
 
         // Nationality inference
@@ -549,7 +721,7 @@ object DocumentOcrExtractor {
             val lower = text.lowercase()
             result["nationality"] = when {
                 lower.contains("bhutan") || lower.contains("kingdom of bhutan") -> "BHUTANESE"
-                lower.contains("nepal") -> "NEPALI"
+                lower.contains("nepal") || lower.contains("government of nepal") -> "NEPALI"
                 else -> "INDIAN"
             }
         }
@@ -569,7 +741,143 @@ object DocumentOcrExtractor {
             || lower.contains("bureau of immigration")
     }
 
-    private val VISA_NUMBER_PATTERN = Regex("""(?:Visa\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z0-9]{6,20})""", RegexOption.IGNORE_CASE)
+    private fun isPermit(text: String): Boolean {
+        val lower = text.lowercase()
+        return (lower.contains("permit") && !lower.contains("driving licence") && !lower.contains("driving license"))
+            || lower.contains("entry permit") || lower.contains("travel permit")
+            || lower.contains("tourist permit") || lower.contains("inner line permit")
+            || lower.contains("अनुमति-पत्र") || lower.contains("अनुमतिपत्र")
+            || lower.contains("contract carriage permit") || lower.contains("international driving permit")
+    }
+
+    private fun extractPermitFields(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // Permit type detection
+        if (!result.containsKey("permit_type")) {
+            val lower = text.lowercase()
+            result["permit_type"] = when {
+                lower.contains("entry permit") -> "Entry Permit"
+                lower.contains("temporary travel permit") -> "Temporary Travel Permit"
+                lower.contains("tourist permit") || lower.contains("all india tourist permit") -> "Tourist Permit"
+                lower.contains("contract carriage permit") -> "Contract Carriage Permit"
+                lower.contains("international driving permit") -> "International Driving Permit"
+                lower.contains("inner line permit") || lower.contains("ilp") -> "Inner Line Permit"
+                lower.contains("अनुमति-पत्र") || lower.contains("अनुमतिपत्र") -> "Vehicle Permit"
+                else -> "Permit"
+            }
+        }
+
+        // Permit number: "Permit No:", "Permit No.:", "Ref. No.:", "#"
+        if (!result.containsKey("permit_number")) {
+            val pnPattern = Regex("""(?:Permit\s*No\.?\s*|अनुमति\s*पत्र\s*नं?\.?\s*)[:/]?\s*([A-Z0-9/\-]+\d+[A-Z0-9/\-]*)""", RegexOption.IGNORE_CASE)
+            pnPattern.find(text)?.let {
+                result["permit_number"] = it.groupValues[1].trim()
+                if (!result.containsKey("document_number")) result["document_number"] = it.groupValues[1].trim()
+            }
+        }
+
+        // Ref number
+        if (!result.containsKey("ref_number")) {
+            val refPattern = Regex("""(?:Ref\.?\s*No\.?|Reference\s*No\.?)\s*[:/]?\s*(\d+)""", RegexOption.IGNORE_CASE)
+            refPattern.find(text)?.let { result["ref_number"] = it.groupValues[1].trim() }
+        }
+
+        // Registration No (vehicle permits)
+        if (!result.containsKey("registration_no")) {
+            val regPattern = Regex("""Registration\s*(?:No\.?|Mark)\s*[:/]?\s*([A-Z0-9]+)""", RegexOption.IGNORE_CASE)
+            regPattern.find(text)?.let { result["registration_no"] = it.groupValues[1].trim() }
+        }
+
+        // Owner Name / Name
+        if (!result.containsKey("full_name")) {
+            val namePatterns = listOf(
+                Regex("""(?:Owner\s*Name|Name\s*(?:\(Gender\))?)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE),
+                Regex("""(?:Name\s*Of\s*(?:The\s*)?Permit\s*Holder)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE),
+            )
+            for (pat in namePatterns) {
+                pat.find(text)?.let {
+                    val candidate = it.groupValues[1].trim().replace(Regex("""\(.*\)"""), "").trim()
+                    if (candidate.isNotBlank() && isLikelyPersonName(candidate)) {
+                        result["full_name"] = candidate.uppercase()
+                    }
+                }
+                if (result.containsKey("full_name")) break
+            }
+        }
+
+        // Nationality
+        if (!result.containsKey("nationality")) {
+            val natPattern = Regex("""Nationality\s*[:/]?\s*(\w+)""", RegexOption.IGNORE_CASE)
+            natPattern.find(text)?.let { result["nationality"] = it.groupValues[1].trim().uppercase() }
+        }
+
+        // Purpose of Visit
+        if (!result.containsKey("purpose")) {
+            val purposePattern = Regex("""Purpose\s*(?:of\s*Visit)?\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            purposePattern.find(text)?.let { result["purpose"] = it.groupValues[1].trim() }
+        }
+
+        // Place of Visit
+        if (!result.containsKey("place_of_visit")) {
+            val placePattern = Regex("""Place\s*(?:of\s*Visit)?\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            placePattern.find(text)?.let { result["place_of_visit"] = it.groupValues[1].trim() }
+        }
+
+        // Valid From / Date of Issue
+        if (!result.containsKey("date_of_issue")) {
+            val fromPatterns = listOf(
+                Regex("""(?:Valid\s*From|Date\s*of\s*Issue|Issued?\s*(?:Date)?)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE),
+            )
+            for (pat in fromPatterns) {
+                pat.find(text)?.let {
+                    normalizeDate(it.groupValues[1].trim())?.let { d -> result["date_of_issue"] = d }
+                }
+                if (result.containsKey("date_of_issue")) break
+            }
+        }
+
+        // Valid Till / Until / Date of Expiry
+        if (!result.containsKey("date_of_expiry")) {
+            val tillPatterns = listOf(
+                Regex("""(?:Valid\s*(?:Till|Until|upto)|Date\s*of\s*Expiry)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE),
+            )
+            for (pat in tillPatterns) {
+                pat.find(text)?.let {
+                    normalizeDate(it.groupValues[1].trim())?.let { d -> result["date_of_expiry"] = d }
+                }
+                if (result.containsKey("date_of_expiry")) break
+            }
+        }
+
+        // Place of Issue
+        if (!result.containsKey("place_of_issue")) {
+            val poiPattern = Regex("""Place\s*(?:of\s*Issue)?\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            poiPattern.find(text)?.let { result["place_of_issue"] = it.groupValues[1].trim() }
+        }
+
+        // Issuing Authority
+        if (!result.containsKey("issuing_authority")) {
+            val iaPattern = Regex("""(?:Issuing\s*Authority|Immigration\s*Office[r]?)\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            iaPattern.find(text)?.let { result["issuing_authority"] = it.groupValues[1].trim() }
+        }
+
+        // Address
+        if (!result.containsKey("address")) {
+            val addrPattern = Regex("""(?:Complete\s*)?Address\s*(?:in\s*\w+)?\s*[:/]?\s*(.+)""", RegexOption.IGNORE_CASE)
+            addrPattern.find(text)?.let { result["address"] = it.groupValues[1].trim() }
+        }
+
+        // Sex/Gender from "(male)" or "(female)"
+        if (!result.containsKey("sex")) {
+            val sexPattern = Regex("""\((male|female)\)""", RegexOption.IGNORE_CASE)
+            sexPattern.find(text)?.let {
+                result["sex"] = if (it.groupValues[1].uppercase().startsWith("M")) "M" else "F"
+            }
+        }
+    }
+
+    private val VISA_NUMBER_PATTERN = Regex("""(?:Visa\s*(?:N[os]\.?\s*)?(?:No\.?|Number)?\s*(?:IB)?\s*[:/]?\s*)(\d{4,10})""", RegexOption.IGNORE_CASE)
     private val ETA_NUMBER_PATTERN = Regex("""(?:ETA\s*(?:No\.?|Number)\s*[:/]?\s*)([A-Z0-9]{6,20})""", RegexOption.IGNORE_CASE)
     // Bhutan passports label it "CITIZENSHIP ID NO" not "CID NO"
     private val BHUTAN_CID_PATTERN = Regex("""(?:(?:CITIZENSHIP\s*ID\s*(?:NO\.?|NUMBER)?|CID\s*(?:No\.?|Number)?)\s*[:/]?\s*)(\d{11})""", RegexOption.IGNORE_CASE)
@@ -624,31 +932,45 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Place of birth
+        // Place of birth — same-line or next-line (bilingual Indian passports)
         if (!result.containsKey("place_of_birth")) {
-            val pobPatterns = listOf(
-                Regex("""(?:Place\s*of\s*Birth|POB|जन्म\s*स्थान)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE),
-            )
-            for (p in pobPatterns) {
-                p.find(text)?.let {
-                    val place = it.groupValues[1].trim().take(50)
-                    if (place.length >= 2) result["place_of_birth"] = place
+            val pobRegex = Regex("""(?:Place\s*of\s*Birth|POB|जन्म\s*स्थान)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE)
+            pobRegex.find(text)?.let {
+                val place = it.groupValues[1].trim().take(50)
+                if (place.length >= 2) result["place_of_birth"] = place
+            }
+            if (!result.containsKey("place_of_birth")) {
+                val pobIdx = lines.indexOfFirst {
+                    it.contains("PLACE OF BIRTH", ignoreCase = true) || it.contains("जन्म स्थान", ignoreCase = false)
                 }
-                if (result.containsKey("place_of_birth")) break
+                if (pobIdx >= 0) {
+                    val nextLine = lines.getOrNull(pobIdx + 1)?.trim()
+                    if (nextLine != null && nextLine.length in 2..50 && !isLabelOnlyLine(nextLine) &&
+                        nextLine.any { it.isLetter() }) {
+                        result["place_of_birth"] = nextLine.replace(Regex("""[/\\].*"""), "").trim()
+                    }
+                }
             }
         }
 
-        // Place of issue
+        // Place of issue — same-line or next-line
         if (!result.containsKey("place_of_issue")) {
-            val poiPatterns = listOf(
-                Regex("""(?:Place\s*of\s*Issue|जारी\s*स्थान)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE),
-            )
-            for (p in poiPatterns) {
-                p.find(text)?.let {
-                    val place = it.groupValues[1].trim().take(50)
-                    if (place.length >= 2) result["place_of_issue"] = place
+            val poiRegex = Regex("""(?:Place\s*of\s*Issue|जारी\s*(?:करने\s*का\s*)?स्थान)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE)
+            poiRegex.find(text)?.let {
+                val place = it.groupValues[1].trim().take(50)
+                if (place.length >= 2) result["place_of_issue"] = place
+            }
+            if (!result.containsKey("place_of_issue")) {
+                val poiIdx = lines.indexOfFirst {
+                    it.contains("PLACE OF ISSUE", ignoreCase = true) || it.contains("जारी", ignoreCase = false) && it.contains("स्थान", ignoreCase = false)
                 }
-                if (result.containsKey("place_of_issue")) break
+                if (poiIdx >= 0) {
+                    val nextLine = lines.getOrNull(poiIdx + 1)?.trim()
+                    if (nextLine != null && nextLine.length in 2..50 && !isLabelOnlyLine(nextLine) &&
+                        nextLine.any { it.isLetter() }) {
+                        result["place_of_issue"] = nextLine.replace(Regex("""[/\\].*"""), "").trim()
+                    }
+                }
             }
         }
 
@@ -714,8 +1036,9 @@ object DocumentOcrExtractor {
                 it.contains("GIVEN NAME", ignoreCase = true)
             }
             val surnameIdx = lines.indexOfFirst {
-                val upper = it.trim().uppercase()
-                upper == "SURNAME" || upper.startsWith("SURNAME ")
+                it.contains("SURNAME", ignoreCase = true) &&
+                !it.contains("NAME OF BEARER", ignoreCase = true) &&
+                !it.contains("GIVEN NAME", ignoreCase = true)
             }
             val givenName = valueAfterLabel(nameOfBearerIdx)?.takeIf { isLikelyPersonName(it) }
             val surname = valueAfterLabel(surnameIdx)?.takeIf { isLikelyPersonName(it) }
@@ -726,34 +1049,43 @@ object DocumentOcrExtractor {
             }
         }
 
-        // Bhutan/Nepal passports: space-separated dates like "02 04 1991"
-        // The DATE_PATTERN already handles this now, but also look for labelled lines
-        val spaceDate = Regex("""(\d{2})\s+(\d{2})\s+(\d{4})""")
+        // Passport dates: "30 JUL 1983" (Nepal), "02 04 1991" (Bhutan),
+        // or "15/11/1990" (India). Try named-month first, then numeric.
+        fun extractDateNearLabel(labelKeywords: List<String>): String? {
+            val idx = lines.indexOfFirst { line -> labelKeywords.any { line.contains(it, ignoreCase = true) } }
+            if (idx < 0) return null
+            for (offset in 0..2) {
+                val candidate = lines.getOrNull(idx + offset) ?: continue
+                normalizeDate(candidate)?.let { return it }
+            }
+            return null
+        }
         if (!result.containsKey("date_of_birth")) {
-            val dobLine = lines.indexOfFirst { it.contains("DATE OF BIRTH", ignoreCase = true) }
-            if (dobLine >= 0) {
-                val candidate = lines.getOrNull(dobLine + 1) ?: lines[dobLine]
-                spaceDate.find(candidate)?.let { m ->
-                    result["date_of_birth"] = "${m.groupValues[1]}/${m.groupValues[2]}/${m.groupValues[3]}"
-                }
+            extractDateNearLabel(listOf("DATE OF BIRTH", "जन्म तिथि", "जन्म दिनांक", "जन्म मिति"))?.let {
+                result["date_of_birth"] = it
             }
         }
         if (!result.containsKey("date_of_expiry")) {
-            val expiryLine = lines.indexOfFirst { it.contains("DATE OF EXPIRY", ignoreCase = true) }
-            if (expiryLine >= 0) {
-                val candidate = lines.getOrNull(expiryLine + 1) ?: lines[expiryLine]
-                spaceDate.find(candidate)?.let { m ->
-                    result["date_of_expiry"] = "${m.groupValues[1]}/${m.groupValues[2]}/${m.groupValues[3]}"
-                }
+            extractDateNearLabel(listOf("DATE OF EXPIRY", "अन्तिम तिथि", "म्याद सकिने"))?.let {
+                result["date_of_expiry"] = it
             }
         }
         if (!result.containsKey("date_of_issue")) {
-            val issueLine = lines.indexOfFirst { it.contains("DATE OF ISSUE", ignoreCase = true) }
-            if (issueLine >= 0) {
-                val candidate = lines.getOrNull(issueLine + 1) ?: lines[issueLine]
-                spaceDate.find(candidate)?.let { m ->
-                    result["date_of_issue"] = "${m.groupValues[1]}/${m.groupValues[2]}/${m.groupValues[3]}"
-                }
+            extractDateNearLabel(listOf("DATE OF ISSUE", "जारी करने की तिथि", "जारी तिथि", "जारी मिति"))?.let {
+                result["date_of_issue"] = it
+            }
+        }
+
+        // Nepal passport: personal number
+        if (!result.containsKey("personal_number")) {
+            val pnIdx = lines.indexOfFirst {
+                it.contains("PERSONAL NO", ignoreCase = true) || it.contains("व्यक्तिगत नं", ignoreCase = false)
+            }
+            if (pnIdx >= 0) {
+                val candidate = lines.getOrNull(pnIdx)?.let {
+                    Regex("""(?:PERSONAL\s*NO\.?|व्यक्तिगत\s*नं\.?)\s*[:/]?\s*(\d{3,10})""", RegexOption.IGNORE_CASE).find(it)?.groupValues?.get(1)
+                } ?: lines.getOrNull(pnIdx + 1)?.trim()?.takeIf { Regex("""^\d{3,10}$""").matches(it) }
+                candidate?.let { result["personal_number"] = it }
             }
         }
 
@@ -771,6 +1103,214 @@ object DocumentOcrExtractor {
                 lower.contains("republic of india") || lower.contains("india") || lower.contains("भारत") -> "INDIAN"
                 lower.contains("bangladesh") -> "BANGLADESHI"
                 else -> "UNKNOWN"
+            }
+        }
+    }
+
+    private fun extractBhutanCitizenshipCard(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // CID number: 11 digits (e.g., 10712002883)
+        if (!result.containsKey("document_number")) {
+            val cidPattern = Regex("""\b(\d{11})\b""")
+            for (line in lines) {
+                if (line.contains("CID", ignoreCase = true) || line.contains("Citizenship", ignoreCase = true)) {
+                    cidPattern.find(line)?.let {
+                        result["document_number"] = it.groupValues[1]
+                        result["cid_number"] = it.groupValues[1]
+                    }
+                }
+            }
+            if (!result.containsKey("cid_number")) {
+                for (line in lines) {
+                    cidPattern.find(line)?.let {
+                        if (it.groupValues[1].length == 11) {
+                            result["document_number"] = it.groupValues[1]
+                            result["cid_number"] = it.groupValues[1]
+                            return@let
+                        }
+                    }
+                }
+            }
+        }
+
+        // Inline "Name: Phuntsho Tashi" pattern
+        val nameInlinePattern = Regex("""(?:Name|NAME)\s*[:\-]\s*(.+)""", RegexOption.IGNORE_CASE)
+        if (!result.containsKey("full_name")) {
+            for (line in lines) {
+                nameInlinePattern.find(line)?.let {
+                    val candidate = it.groupValues[1].trim()
+                    if (isLikelyPersonName(candidate)) {
+                        result["full_name"] = candidate.uppercase()
+                    }
+                }
+            }
+        }
+
+        // Dzongkhag (district)
+        val dzongkhagPattern = Regex("""(?:Dzongkhag|District)\s*[:\-]\s*(.+)""", RegexOption.IGNORE_CASE)
+        for (line in lines) {
+            dzongkhagPattern.find(line)?.let {
+                result["place_of_birth"] = it.groupValues[1].trim()
+            }
+        }
+
+        // Sex/Gender
+        if (!result.containsKey("sex")) {
+            val sexPattern = Regex("""(?:Sex|Gender)\s*[:\-]\s*(M|F|Male|Female)""", RegexOption.IGNORE_CASE)
+            for (line in lines) {
+                sexPattern.find(line)?.let {
+                    result["sex"] = when (it.groupValues[1].uppercase().first()) {
+                        'M' -> "M"
+                        'F' -> "F"
+                        else -> it.groupValues[1].uppercase()
+                    }
+                }
+            }
+        }
+
+        // Date of birth, date of issue
+        for ((i, line) in lines.withIndex()) {
+            val lower = line.lowercase()
+            if (lower.contains("date of birth") || lower.contains("dob")) {
+                for (offset in 0..2) {
+                    normalizeDate(lines.getOrElse(i + offset) { "" })?.let {
+                        result["date_of_birth"] = it
+                        return@let
+                    }
+                    if (result.containsKey("date_of_birth")) break
+                }
+            }
+            if (lower.contains("date of issue")) {
+                for (offset in 0..2) {
+                    normalizeDate(lines.getOrElse(i + offset) { "" })?.let {
+                        result["date_of_issue"] = it
+                        return@let
+                    }
+                    if (result.containsKey("date_of_issue")) break
+                }
+            }
+        }
+    }
+
+    private fun extractNepalNidFields(text: String, result: MutableMap<String, String>) {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // Full name from "FULL NAME" / "पूरा नाम" label
+        for ((i, line) in lines.withIndex()) {
+            val lower = line.lowercase()
+            if (lower.contains("full name") || line.contains("पूरा नाम")) {
+                // Value might be on same line after label or next line
+                val afterLabel = line.substringAfter("FULL NAME", line)
+                    .substringAfter("पूरा नाम", "")
+                    .replace(Regex("^[:\\-/\\s]+"), "").trim()
+                if (afterLabel.isNotBlank() && isLikelyPersonName(afterLabel)) {
+                    result["full_name"] = afterLabel.uppercase()
+                } else {
+                    val nextLine = lines.getOrNull(i + 1)
+                    if (nextLine != null && isLikelyPersonName(nextLine)) {
+                        result["full_name"] = nextLine.uppercase()
+                    }
+                }
+                break
+            }
+        }
+
+        // Surname / Given Name
+        for ((i, line) in lines.withIndex()) {
+            val lower = line.lowercase()
+            if ((lower.contains("surname") || lower.contains("थर")) && !result.containsKey("surname")) {
+                val afterLabel = line.replace(Regex("""(?i)(surname|थर)\s*[:\-/]?\s*"""), "").trim()
+                if (afterLabel.isNotBlank() && isLikelyPersonName(afterLabel)) {
+                    result["surname"] = afterLabel.uppercase()
+                } else {
+                    lines.getOrNull(i + 1)?.let {
+                        if (isLikelyPersonName(it)) result["surname"] = it.uppercase()
+                    }
+                }
+            }
+            if ((lower.contains("given name") || lower.contains("नाम")) &&
+                !lower.contains("full name") && !lower.contains("पूरा") &&
+                !lower.contains("surname") && !lower.contains("father") && !lower.contains("mother") &&
+                !result.containsKey("given_name")) {
+                val afterLabel = line.replace(Regex("""(?i)(given\s*names?|नाम)\s*[:\-/]?\s*"""), "").trim()
+                if (afterLabel.isNotBlank() && isLikelyPersonName(afterLabel)) {
+                    result["given_name"] = afterLabel.uppercase()
+                } else {
+                    lines.getOrNull(i + 1)?.let {
+                        if (isLikelyPersonName(it)) result["given_name"] = it.uppercase()
+                    }
+                }
+            }
+        }
+
+        // Father's name / Mother's name
+        for ((i, line) in lines.withIndex()) {
+            val lower = line.lowercase()
+            if ((lower.contains("father") || line.contains("बाबुको नाम")) && !result.containsKey("fathers_name")) {
+                val afterLabel = line.replace(Regex("""(?i)(father'?s?\s*name|बाबुको नाम)\s*[:\-/]?\s*"""), "").trim()
+                if (afterLabel.isNotBlank() && isLikelyPersonName(afterLabel)) {
+                    result["fathers_name"] = afterLabel.uppercase()
+                } else {
+                    lines.getOrNull(i + 1)?.let {
+                        if (isLikelyPersonName(it)) result["fathers_name"] = it.uppercase()
+                    }
+                }
+            }
+            if ((lower.contains("mother") || line.contains("आमाको नाम")) && !result.containsKey("mothers_name")) {
+                val afterLabel = line.replace(Regex("""(?i)(mother'?s?\s*name|आमाको नाम)\s*[:\-/]?\s*"""), "").trim()
+                if (afterLabel.isNotBlank() && isLikelyPersonName(afterLabel)) {
+                    result["mothers_name"] = afterLabel.uppercase()
+                } else {
+                    lines.getOrNull(i + 1)?.let {
+                        if (isLikelyPersonName(it)) result["mothers_name"] = it.uppercase()
+                    }
+                }
+            }
+        }
+
+        // Date of birth (YYYY-MM-DD format common on Nepal NID)
+        for ((i, line) in lines.withIndex()) {
+            val lower = line.lowercase()
+            if ((lower.contains("date of birth") || lower.contains("जन्म मिति") || lower.contains("dob")) &&
+                !result.containsKey("date_of_birth")) {
+                for (offset in 0..2) {
+                    normalizeDate(lines.getOrElse(i + offset) { "" })?.let {
+                        result["date_of_birth"] = it
+                        return@let
+                    }
+                    if (result.containsKey("date_of_birth")) break
+                }
+            }
+        }
+
+        // Date of issue
+        for ((i, line) in lines.withIndex()) {
+            val lower = line.lowercase()
+            if ((lower.contains("date of issue") || lower.contains("जारी मिति")) && !result.containsKey("date_of_issue")) {
+                for (offset in 0..2) {
+                    normalizeDate(lines.getOrElse(i + offset) { "" })?.let {
+                        result["date_of_issue"] = it
+                        return@let
+                    }
+                    if (result.containsKey("date_of_issue")) break
+                }
+            }
+        }
+
+        // Sex/Gender
+        if (!result.containsKey("sex")) {
+            for (line in lines) {
+                val sexMatch = Regex("""(?:Sex|Gender|लिङ्ग)\s*[:\-]\s*(M|F|Male|Female|पुरुष|महिला)""", RegexOption.IGNORE_CASE).find(line)
+                if (sexMatch != null) {
+                    val v = sexMatch.groupValues[1].uppercase()
+                    result["sex"] = when {
+                        v.startsWith("M") || v.contains("पुरुष") -> "M"
+                        v.startsWith("F") || v.contains("महिला") -> "F"
+                        else -> v
+                    }
+                    break
+                }
             }
         }
     }
@@ -825,14 +1365,47 @@ object DocumentOcrExtractor {
             ppRef.find(text)?.let { result["passport_number"] = it.groupValues[1] }
         }
 
-        // Validity dates
+        // Validity dates — handle both "27/12/2016" and "15 MAY 2025"
+        val visaLines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        fun visaDateNearLabel(keywords: List<String>): String? {
+            val idx = visaLines.indexOfFirst { line -> keywords.any { line.contains(it, ignoreCase = true) } }
+            if (idx < 0) return null
+            for (offset in 0..1) {
+                val candidate = visaLines.getOrNull(idx + offset) ?: continue
+                normalizeDate(candidate)?.let { return it }
+            }
+            return null
+        }
         if (!result.containsKey("date_of_issue")) {
-            val issueP = Regex("""(?:(?:Date\s*of\s*)?Issue(?:d)?|Valid\s*From|From)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
-            issueP.find(text)?.let { normalizeDate(it.groupValues[1])?.let { d -> result["date_of_issue"] = d } }
+            visaDateNearLabel(listOf("Date of Issue", "Issued on", "Issue Date", "Valid From", "जारी"))?.let {
+                result["date_of_issue"] = it
+            }
         }
         if (!result.containsKey("date_of_expiry")) {
-            val expiryP = Regex("""(?:(?:Date\s*of\s*)?Expiry|Valid\s*(?:Until|Till)|Until|To)\s*[:/]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})""", RegexOption.IGNORE_CASE)
-            expiryP.find(text)?.let { normalizeDate(it.groupValues[1])?.let { d -> result["date_of_expiry"] = d } }
+            visaDateNearLabel(listOf("Date of Expiry", "Visa Expiration", "Expiry", "Valid Until", "Valid Till"))?.let {
+                result["date_of_expiry"] = it
+            }
+        }
+
+        // Nepal visa: "Issued at" = place of issue
+        if (!result.containsKey("issuing_authority")) {
+            val issuedAtPattern = Regex("""(?:Issued\s*at)\s*[:/]?\s*([A-Za-z\s,]+)""", RegexOption.IGNORE_CASE)
+            issuedAtPattern.find(text)?.let {
+                val place = it.groupValues[1].trim().take(50)
+                if (place.length >= 2) result["issuing_authority"] = place
+            }
+        }
+
+        // Nepal visa: "Passport No :" on visa sticker
+        if (!result.containsKey("passport_number")) {
+            val ppOnVisa = Regex("""Passport\s*No\.?\s*[:/]?\s*([A-Z]{1,2}\d{5,8})""", RegexOption.IGNORE_CASE)
+            ppOnVisa.find(text)?.let { result["passport_number"] = it.groupValues[1] }
+        }
+
+        // Duration / validity period
+        if (!result.containsKey("duration")) {
+            val durPattern = Regex("""(\d+)\s*Days?\s*(?:Tourist\s*)?(?:Entry\s*)?Visa""", RegexOption.IGNORE_CASE)
+            durPattern.find(text)?.let { result["duration"] = "${it.groupValues[1]} Days" }
         }
 
         // Nationality inference from visa
@@ -1086,11 +1659,26 @@ object DocumentOcrExtractor {
     }
 
     private fun joinedLabelledName(text: String): String? {
-        fun value(labels: String): String? = text.lines().firstNotNullOfOrNull { line ->
-            Regex("""(?i)^\s*(?:$labels)\s*[:\-]\s*(.+?)\s*$""").find(line)?.groupValues?.get(1)
+        val allLines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        fun value(labels: String): String? {
+            // First try same-line: "Surname: PAUL"
+            text.lines().firstNotNullOfOrNull { line ->
+                Regex("""(?i)^\s*(?:$labels)\s*[:\-]\s*(.+?)\s*$""").find(line)?.groupValues?.get(1)
+            }?.let { return it }
+            // Fallback: label on one line, value on the next (Indian bilingual passports)
+            val labelRegex = Regex("""(?i)(?:$labels)""")
+            for ((i, line) in allLines.withIndex()) {
+                if (!labelRegex.containsMatchIn(line)) continue
+                val afterLabel = line.substringAfter(labelRegex.find(line)!!.value).trim()
+                    .removePrefix("/").removePrefix(":").removePrefix("-").trim()
+                if (afterLabel.isNotBlank() && isLikelyPersonName(afterLabel)) return afterLabel
+                val nextLine = allLines.getOrNull(i + 1) ?: continue
+                if (isLikelyPersonName(nextLine)) return nextLine
+            }
+            return null
         }
         val surname = value("surname|last name|family name")
-        val given = value("given names?|first names?")
+        val given = value("given names?|first names?|name of bearer|name of beafer")
         if (surname.isNullOrBlank() || given.isNullOrBlank()) return null
         return "$given $surname".uppercase().replace(Regex("\\s+"), " ")
     }
@@ -1308,6 +1896,12 @@ object DocumentOcrExtractor {
         "nationality", "sex", "date of birth", "date of expiry", "date of issue",
         "place of birth", "place of issue", "passport no", "passport number",
         "type", "country code", "citizenship id no", "authority", "issuing authority",
+        "personal no", "holder's signature", "holder signature",
+        "permit number", "permit no", "purpose of visit", "place of visit",
+        "valid from", "valid till", "valid until", "valid upto",
+        "driving licence", "driving license", "license no", "licence no",
+        "blood group", "vehicle classes", "category", "address",
+        "registration no", "owner name", "father's name", "mother's name",
     )
 
     private fun isLabelOnlyLine(line: String): Boolean {
@@ -1315,13 +1909,36 @@ object DocumentOcrExtractor {
         return LABEL_ONLY_PATTERNS.any { trimmed == it || trimmed.startsWith("$it ") || trimmed.startsWith("$it:") }
     }
 
+    private val MONTH_NAMES = mapOf(
+        "jan" to 1, "feb" to 2, "mar" to 3, "apr" to 4, "may" to 5, "jun" to 6,
+        "jul" to 7, "aug" to 8, "sep" to 9, "oct" to 10, "nov" to 11, "dec" to 12,
+        "january" to 1, "february" to 2, "march" to 3, "april" to 4,
+        "june" to 6, "july" to 7, "august" to 8, "september" to 9,
+        "october" to 10, "november" to 11, "december" to 12,
+    )
+    private val NAMED_MONTH_DATE = Regex("""(\d{1,2})\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\s+(\d{4})""", RegexOption.IGNORE_CASE)
+
+    private val ISO_DATE = Regex("""(\d{4})-(\d{2})-(\d{2})""")
+
     private fun normalizeDate(text: String): String? {
+        // Try "DD MON YYYY" first (Nepal passports: "30 JUL 1983")
+        NAMED_MONTH_DATE.find(text)?.let { m ->
+            val day = m.groupValues[1].toIntOrNull() ?: return@let
+            val month = MONTH_NAMES[m.groupValues[2].lowercase()] ?: return@let
+            val year = m.groupValues[3]
+            if (day in 1..31 && month in 1..12) return "%02d/%02d/%s".format(day, month, year)
+        }
+        // Try ISO YYYY-MM-DD (Nepal NID: "1987-09-26")
+        ISO_DATE.find(text)?.let { m ->
+            val year = m.groupValues[1]
+            val month = m.groupValues[2].toIntOrNull() ?: return@let
+            val day = m.groupValues[3].toIntOrNull() ?: return@let
+            if (day in 1..31 && month in 1..12 && year.toInt() in 1900..2100)
+                return "%02d/%02d/%s".format(day, month, year)
+        }
+        // Then try numeric DD/MM/YYYY, DD.MM.YYYY, DD-MM-YYYY, DD MM YYYY
         val match = DATE_PATTERN.find(text) ?: return null
         val (a, b, year) = match.destructured
-        // Heuristic only: if the first group can't be a day (>31) but the
-        // second can, assume MM/DD input and swap — otherwise assume the
-        // already-correct DD/MM order. Genuinely ambiguous without a
-        // locale hint; documented as a best-effort guess.
         val (day, month) = if (a.toInt() > 31 && b.toInt() <= 31) b to a else a to b
         val dayInt = day.toInt()
         val monthInt = month.toInt()

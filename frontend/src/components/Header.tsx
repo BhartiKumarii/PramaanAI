@@ -48,21 +48,27 @@ export function Header() {
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-sm">
       <h1 className="text-lg font-semibold text-foreground">{sectionTitle(location.pathname)}</h1>
       <div className="flex items-center gap-4 text-sm">
-        <span
-          className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
-          title="Live backend reachability — checked via GET /health, never assumed"
-        >
-          {health === 'online' ? (
-            <Wifi className="h-3.5 w-3.5 text-status-clear" />
-          ) : health === 'weak' ? (
-            <Wifi className="h-3.5 w-3.5 text-status-review" />
-          ) : health === 'checking' ? (
-            <Wifi className="h-3.5 w-3.5 animate-pulse text-muted-foreground" />
-          ) : (
-            <WifiOff className="h-3.5 w-3.5 text-status-high" />
-          )}
-          {health === 'online' ? 'Online' : health === 'weak' ? 'Slow' : health === 'checking' ? 'Waking server…' : 'Offline'}
-        </span>
+        {health !== 'online' && (
+          <span
+            className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${
+              health === 'checking'
+                ? 'border-border text-muted-foreground'
+                : health === 'weak'
+                  ? 'border-status-review/40 text-status-review'
+                  : 'border-status-high/40 text-status-high'
+            }`}
+            title="Live backend reachability — checked via GET /health"
+          >
+            {health === 'checking' ? (
+              <Wifi className="h-3 w-3 animate-pulse" />
+            ) : health === 'weak' ? (
+              <Wifi className="h-3 w-3" />
+            ) : (
+              <WifiOff className="h-3 w-3" />
+            )}
+            {health === 'checking' ? 'Connecting…' : health === 'weak' ? 'Slow' : 'Offline'}
+          </span>
+        )}
         <span className="hidden text-muted-foreground sm:inline">Officer</span>
         <span className="font-medium text-foreground">{user.username}</span>
         <button

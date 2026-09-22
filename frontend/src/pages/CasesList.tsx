@@ -17,8 +17,8 @@ const STATUS_FILTERS: { label: string; value: CaseStatus | '' }[] = [
   { label: 'Manual Verification', value: 'HOLD_REFER' },
 ]
 
-const ALERT_STATUSES: CaseStatus[] = ['REVIEW_REQUIRED', 'SECONDARY_REVIEW', 'HOLD_REFER']
-const REQUEST_STATUSES: CaseStatus[] = ['PENDING_SYNC', 'PENDING', 'SENT', 'REVIEW_REQUIRED']
+const ALERT_STATUSES: CaseStatus[] = ['REVIEW_REQUIRED']
+const REQUEST_STATUSES: CaseStatus[] = ['PENDING_SYNC', 'PENDING', 'SENT']
 const RESULT_STATUSES: CaseStatus[] = ['CLEAR', 'SECONDARY_REVIEW', 'HOLD_REFER']
 
 type View = 'all' | 'alerts' | 'requests' | 'results'
@@ -91,13 +91,9 @@ function ViewSummary({ cases, view }: { cases: CaseListItem[]; view: View }) {
   }
   if (view === 'alerts') {
     const high = cases.filter((c) => c.priority === 'HIGH').length
-    const review = cases.filter((c) => c.status === 'REVIEW_REQUIRED').length
-    const manual = cases.filter((c) => c.status === 'HOLD_REFER').length
     return (
       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-        <span><span className="font-semibold text-foreground">{cases.length}</span> total</span>
-        <span><span className="font-semibold text-status-review">{review}</span> flagged</span>
-        <span><span className="font-semibold text-status-high">{manual}</span> manual verification</span>
+        <span><span className="font-semibold text-foreground">{cases.length}</span> flagged for review</span>
         {high > 0 && <span><span className="font-semibold text-status-high">{high}</span> high priority</span>}
       </div>
     )
