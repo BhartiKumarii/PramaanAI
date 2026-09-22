@@ -452,15 +452,22 @@ object DocumentOcrExtractor {
     private fun extractIndianDocumentNumbers(text: String): Map<String, String> {
         val result = mutableMapOf<String, String>()
         val isPassportDoc = isPassport(text)
+        val isVisaDoc = isVisa(text)
 
-        findBestAadhaarNumber(text)?.let { aadhaar ->
-            result["document_number"] = aadhaar
-            result["aadhaar_number"] = aadhaar
+        // Aadhaar 12-digit pattern must NOT run on passports/visas — MRZ digit
+        // sequences produce false positives.
+        if (!isPassportDoc && !isVisaDoc) {
+            findBestAadhaarNumber(text)?.let { aadhaar ->
+                result["document_number"] = aadhaar
+                result["aadhaar_number"] = aadhaar
+            }
         }
 
-        PAN_PATTERN.find(text)?.let { match ->
-            result["document_number"] = match.groupValues[1]
-            result["pan_number"] = match.groupValues[1]
+        if (!isPassportDoc && !isVisaDoc) {
+            PAN_PATTERN.find(text)?.let { match ->
+                result["document_number"] = match.groupValues[1]
+                result["pan_number"] = match.groupValues[1]
+            }
         }
 
         // Run passport-specific extraction first so G000000 / Z1234567 style
@@ -488,26 +495,26 @@ object DocumentOcrExtractor {
             }
         }
 
-        // DL number extraction — Indian format
-        DL_NUMBER_PATTERN.find(text)?.let { match ->
-            val dlNum = match.groupValues[1].replace(Regex("[\\s\\-]"), "")
-            if (!result.containsKey("document_number")) result["document_number"] = dlNum
-            result["dl_number"] = dlNum
-        }
-        // Nepal DL number: DD-DD-DDDDDDDD
-        if (!result.containsKey("dl_number")) {
-            NEPAL_DL_PATTERN.find(text)?.let { match ->
-                val dlNum = match.groupValues[1]
+        // DL number extraction — skip on passports/visas (MRZ false positives)
+        if (!isPassportDoc && !isVisaDoc) {
+            DL_NUMBER_PATTERN.find(text)?.let { match ->
+                val dlNum = match.groupValues[1].replace(Regex("[\\s\\-]"), "")
                 if (!result.containsKey("document_number")) result["document_number"] = dlNum
                 result["dl_number"] = dlNum
             }
-        }
-        // Bhutan DL License No: X-DDDDD
-        if (!result.containsKey("dl_number")) {
-            BHUTAN_DL_PATTERN.find(text)?.let { match ->
-                val dlNum = match.groupValues[1]
-                if (!result.containsKey("document_number")) result["document_number"] = dlNum
-                result["dl_number"] = dlNum
+            if (!result.containsKey("dl_number")) {
+                NEPAL_DL_PATTERN.find(text)?.let { match ->
+                    val dlNum = match.groupValues[1]
+                    if (!result.containsKey("document_number")) result["document_number"] = dlNum
+                    result["dl_number"] = dlNum
+                }
+            }
+            if (!result.containsKey("dl_number")) {
+                BHUTAN_DL_PATTERN.find(text)?.let { match ->
+                    val dlNum = match.groupValues[1]
+                    if (!result.containsKey("document_number")) result["document_number"] = dlNum
+                    result["dl_number"] = dlNum
+                }
             }
         }
 
