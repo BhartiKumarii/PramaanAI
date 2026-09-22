@@ -14,9 +14,10 @@ import { Card } from '../components/StatTile'
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge'
 import { CaseNetworkPanel } from '../components/CaseNetworkPanel'
 import { EvidenceImages } from '../components/EvidenceImages'
+import { baseURL } from '../api/client'
 import type { DecisionValue, VerificationRecordResponse } from '../api/types'
 
-type Tab = 'evidence' | 'identity' | 'network' | 'timeline'
+type Tab = 'overview' | 'evidence' | 'risk' | 'timeline' | 'history'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,8 @@ interface FindingCard {
   tone: FindingTone
   summary: string
   action: string
-  detail?: string  // raw backend text — shown only in diagnostics
+  detail?: string
+  category?: 'document' | 'identity' | 'security'
 }
 
 const SIGNAL_LABELS: Record<string, string> = {
@@ -60,6 +62,19 @@ const SIGNAL_LABELS: Record<string, string> = {
   identity_graph:     'Identity Records',
   duplicate_document: 'Document History',
   citizen_registry:   'Identity Database Check',
+}
+
+const SIGNAL_CATEGORY: Record<string, 'document' | 'identity' | 'security'> = {
+  checksum: 'document',
+  forensics: 'document',
+  face_match: 'identity',
+  face_detection: 'identity',
+  deepfake: 'identity',
+  liveness: 'identity',
+  blacklist: 'security',
+  identity_graph: 'security',
+  duplicate_document: 'security',
+  citizen_registry: 'identity',
 }
 
 const SUMMARIES: Record<string, Record<FindingTone, string>> = {
@@ -192,7 +207,6 @@ function translateRawReason(signal: string, reason: string): string {
   if (!reason) return ''
   const lower = reason.toLowerCase()
 
-  // Expiry
   if (signal === 'checksum' && lower.includes('expir')) {
     const m = reason.match(/(\d{4}-\d{2}-\d{2})/)
     if (m) {
@@ -208,18 +222,15 @@ function translateRawReason(signal: string, reason: string): string {
     return 'Document has expired.'
   }
 
-  // MRZ checksum
   if (signal === 'checksum' && (lower.includes('check digit') || lower.includes('mrz') || lower.includes('checksum'))) {
     if (lower.includes('valid') || lower.includes('pass')) return 'Machine-readable zone integrity confirmed.'
     return 'The machine-readable zone on this document contains an error — possible alteration.'
   }
 
-  // Cross-field mismatch
   if (signal === 'checksum' && lower.includes('mismatch')) {
     return 'A data field on the document does not match what the machine-readable zone contains — possible alteration.'
   }
 
-  // Face match
   if (signal === 'face_match') {
     if (lower.includes('above threshold') || lower.includes('match')) return 'Live photo is consistent with document photo.'
     if (lower.includes('below threshold')) {
@@ -233,14 +244,12 @@ function translateRawReason(signal: string, reason: string): string {
     }
   }
 
-  // Identity cluster
   if (signal === 'identity_graph' && lower.includes('cluster')) {
     const m = reason.match(/(\d+)\s+face/i)
     const count = m ? m[1] : 'multiple'
     return `Similar facial identity found in ${count} other record(s). The same person may have crossed using different documents.`
   }
 
-  // Forensics
   if (signal === 'forensics') {
     if (lower.includes('hologram') || lower.includes('security feature')) return 'A security feature on the document appears to be missing or altered.'
     if (lower.includes('opacity') || lower.includes('ink') || lower.includes('stamp')) return 'Ink or stamp patterns appear inconsistent with a genuine document.'
@@ -249,7 +258,6 @@ function translateRawReason(signal: string, reason: string): string {
     return 'Document appearance has characteristics that require physical examination.'
   }
 
-  // Deepfake
   if (signal === 'deepfake') {
     const m = reason.match(/probability[:\s]+([\d.]+)/i)
     if (m) {
@@ -260,19 +268,16 @@ function translateRawReason(signal: string, reason: string): string {
     }
   }
 
-  // Liveness
   if (signal === 'liveness') {
     if (lower.includes('artificial') || lower.includes('spoof')) return 'The photo may have been taken from a screen or printed image.'
     if (lower.includes('live')) return 'Live person confirmed.'
   }
 
-  // Watchlist
   if (signal === 'blacklist') {
     if (lower.includes('no match') || lower.includes('no hit') || lower.includes('no_hit')) return 'No alerts found in security records.'
     if (lower.includes('hit') || lower.includes('match') || lower.includes('found')) return 'Security alert: this document is flagged in our records.'
   }
 
-  // Citizen registry
   if (signal === 'citizen_registry') {
     if (lower.includes('match') && !lower.includes('mis')) return 'Document details match our identity records.'
     if (lower.includes('mismatch') || lower.includes('differ')) return 'The document details do not match our records.'
@@ -281,26 +286,24 @@ function translateRawReason(signal: string, reason: string): string {
     if (lower.includes('expir')) return 'This document is recorded as expired in our database.'
   }
 
-  return reason  // fallback — raw
+  return reason
 }
 
 function signalToFinding(signal: string, rawRisk: number, reason: string): FindingCard {
   const label = SIGNAL_LABELS[signal] ?? signal.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-  // More realistic thresholds: only flag genuine issues, not every minor anomaly
   const tone: FindingTone = rawRisk >= 0.7 ? 'alert' : rawRisk >= 0.4 ? 'review' : 'clear'
   const s = SUMMARIES[signal]
   const a = ACTIONS[signal]
   const summary = s ? s[tone] : tone === 'clear' ? 'Check passed.' : tone === 'review' ? 'Requires review.' : 'Issue detected.'
   const action = a ? a[tone] : 'Consult your supervisor.'
   const translatedDetail = translateRawReason(signal, reason)
-
-  // Include actual risk score in detail for transparency
   const riskPercent = Math.round(rawRisk * 100)
   const detailWithScore = rawRisk > 0 && tone !== 'clear'
     ? `${translatedDetail} (${riskPercent}% risk score)`
     : translatedDetail
+  const category = SIGNAL_CATEGORY[signal] ?? 'document'
 
-  return { label, tone, summary, action, detail: detailWithScore }
+  return { label, tone, summary, action, detail: detailWithScore, category }
 }
 
 function buildFindings(v: VerificationRecordResponse): FindingCard[] {
@@ -366,182 +369,6 @@ function FindingRow({ f }: { f: FindingCard }) {
   )
 }
 
-// ── Overall status banner ────────────────────────────────────────────────────
-
-function VerificationStatusBanner({ v }: { v: VerificationRecordResponse }) {
-  const level = v.risk.level
-  const isHigh = level === 'HIGH_RISK'
-  const isMed = level === 'MEDIUM_RISK'
-  const config = isHigh
-    ? { label: 'Review Required', icon: '⚑', cls: 'border-status-high/50 bg-status-high-bg text-status-high' }
-    : isMed
-      ? { label: 'Review Recommended', icon: '⚠', cls: 'border-status-review/50 bg-status-review-bg text-status-review' }
-      : { label: 'All Checks Passed', icon: '✓', cls: 'border-status-clear/50 bg-status-clear-bg text-status-clear' }
-
-  const findings = buildFindings(v)
-  const issues = findings.filter((f) => f.tone === 'alert' || f.tone === 'review')
-
-  return (
-    <div className={`rounded-lg border px-4 py-3 ${config.cls}`}>
-      <div className="flex items-center gap-2">
-        <span className="text-lg font-bold" aria-hidden="true">{config.icon}</span>
-        <p className="text-sm font-semibold">{config.label}</p>
-      </div>
-      {issues.length > 0 ? (
-        <ul className="mt-2 space-y-0.5 pl-1">
-          {issues.map((f) => (
-            <li key={f.label} className="text-xs">• {f.label}: {f.summary}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-1 text-xs opacity-80">No issues detected. Verification can proceed.</p>
-      )}
-    </div>
-  )
-}
-
-// ── Decision & timeline labels ───────────────────────────────────────────────
-
-const DECISION_LABELS: Record<string, string> = {
-  CLEAR:            'Identity Verified',
-  SECONDARY_REVIEW: 'Re-capture Requested',
-  HOLD_REFER:       'Referred for Manual Verification',
-}
-
-const TIMELINE_LABELS: Record<string, string> = {
-  CREATED:                     'Document scanned and analyzed',
-  VIEWED:                      'Case opened for review',
-  SENT:                        'Case submitted for admin review',
-  DECISION_CLEAR:              'Identity verified by reviewer',
-  DECISION_SECONDARY_REVIEW:  'Re-capture requested by reviewer',
-  DECISION_HOLD_REFER:         'Referred for manual verification by reviewer',
-  NOTE_ADDED:                  'Note added',
-}
-
-// ── Admin decision panel ─────────────────────────────────────────────────────
-
-type AdminAction = 'CLEAR' | 'SECONDARY_REVIEW' | 'HOLD_REFER' | null
-
-const RECAPTURE_REASONS = [
-  'Poor lighting — retake in better light',
-  'Face partially visible — ensure full face is in frame',
-  'Blurry image — hold device steady and retake',
-  'Incorrect document captured — recapture the correct document',
-  'Face too close to edge — centre the face in frame',
-  'Photo taken from screen or printed image — retake in person',
-  'Other',
-]
-
-function AdminDecisionPanel({ caseId, onDecisionRecorded }: { caseId: string; onDecisionRecorded: () => void }) {
-  const [action, setAction] = useState<AdminAction>(null)
-  const [reason, setReason] = useState('')
-  const [selectedReasons, setSelectedReasons] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-
-  async function submit(decision: DecisionValue, finalReason: string) {
-    if (decision !== 'CLEAR' && !finalReason.trim()) { setError('Please provide a reason.'); return }
-    setSaving(true); setError(null)
-    try {
-      await decideCase(caseId, decision, finalReason || undefined)
-      setAction(null); onDecisionRecorded()
-    } catch (err) {
-      const detail = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-      setError(detail ?? 'Could not record decision — please try again.')
-    } finally { setSaving(false) }
-  }
-
-  if (action === 'CLEAR') return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">Confirm that you have reviewed all evidence and the identity is verified.</p>
-      <textarea className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-ring focus:outline-none" rows={2}
-        placeholder="Optional reviewer note…" value={reason} onChange={(e) => setReason(e.target.value)} />
-      {error && <p className="text-xs text-status-high">{error}</p>}
-      <div className="flex gap-2">
-        <button onClick={() => submit('CLEAR', reason)} disabled={saving}
-          className="flex-1 rounded-md bg-status-clear px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50">
-          {saving ? 'Saving…' : 'Confirm — Verify Identity'}
-        </button>
-        <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-secondary">Cancel</button>
-      </div>
-    </div>
-  )
-
-  if (action === 'SECONDARY_REVIEW') {
-    const finalReason = [...selectedReasons, ...(reason ? [reason] : [])].join('; ')
-    return (
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">Select the reason(s) why a new photo or document is needed:</p>
-        <div className="space-y-1.5">
-          {RECAPTURE_REASONS.map((r) => (
-            <label key={r} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={selectedReasons.includes(r)} className="accent-accent"
-                onChange={(e) => setSelectedReasons((prev) => e.target.checked ? [...prev, r] : prev.filter((x) => x !== r))} />
-              {r}
-            </label>
-          ))}
-        </div>
-        <textarea className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-ring focus:outline-none"
-          rows={2} placeholder="Additional details…" value={reason} onChange={(e) => setReason(e.target.value)} />
-        {error && <p className="text-xs text-status-high">{error}</p>}
-        <div className="flex gap-2">
-          <button onClick={() => submit('SECONDARY_REVIEW', finalReason)}
-            disabled={saving || (selectedReasons.length === 0 && !reason.trim())}
-            className="flex-1 rounded-md bg-status-review px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50">
-            {saving ? 'Saving…' : 'Request Re-capture'}
-          </button>
-          <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-secondary">Cancel</button>
-        </div>
-      </div>
-    )
-  }
-
-  if (action === 'HOLD_REFER') return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">Refer for manual verification. Provide a reason — this is permanently recorded.</p>
-      <textarea className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-ring focus:outline-none"
-        rows={3} placeholder="Reason for manual verification referral…" value={reason} onChange={(e) => setReason(e.target.value)} />
-      {error && <p className="text-xs text-status-high">{error}</p>}
-      <div className="flex gap-2">
-        <button onClick={() => submit('HOLD_REFER', reason)} disabled={saving || !reason.trim()}
-          className="flex-1 rounded-md bg-status-high px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50">
-          {saving ? 'Saving…' : 'Refer for Manual Verification'}
-        </button>
-        <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-secondary">Cancel</button>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="flex flex-col gap-2">
-      <button onClick={() => { setAction('CLEAR'); setReason(''); setError(null) }}
-        className="flex items-center gap-2 rounded-md border border-status-clear/40 bg-status-clear-bg px-3 py-2.5 text-sm font-medium text-status-clear hover:bg-status-clear/10">
-        <span className="text-base font-bold">✓</span><span>Verify Identity</span>
-      </button>
-      <button onClick={() => { setAction('SECONDARY_REVIEW'); setReason(''); setSelectedReasons([]); setError(null) }}
-        className="flex items-center gap-2 rounded-md border border-status-review/40 bg-status-review-bg px-3 py-2.5 text-sm font-medium text-status-review hover:bg-status-review/10">
-        <span className="text-base">↺</span><span>Request Re-capture</span>
-      </button>
-      <button onClick={() => { setAction('HOLD_REFER'); setReason(''); setError(null) }}
-        className="flex items-center gap-2 rounded-md border border-status-high/40 bg-status-high-bg px-3 py-2.5 text-sm font-medium text-status-high hover:bg-status-high/10">
-        <span className="text-base">⚑</span><span>Refer for Manual Verification</span>
-      </button>
-    </div>
-  )
-}
-
-// ── Detail field (single-column key-value row) ──────────────────────────
-
-function DetailField({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
-  if (!value) return null
-  return (
-    <div className="flex items-baseline justify-between py-1.5 border-b border-border/50 last:border-0">
-      <span className="text-xs text-muted-foreground shrink-0 w-36">{label}</span>
-      <span className={`text-sm text-foreground text-right ${mono ? 'font-mono' : ''} whitespace-pre-line`}>{value}</span>
-    </div>
-  )
-}
-
 // ── Humanize technical reason text ──────────────────────────────────────
 
 function humanizeReason(raw: string | null | undefined): string {
@@ -581,6 +408,207 @@ function humanizeReason(raw: string | null | undefined): string {
   return text.trim()
 }
 
+// ── Decision & timeline labels ───────────────────────────────────────────────
+
+const DECISION_LABELS: Record<string, string> = {
+  CLEAR:            'Identity Verified',
+  SECONDARY_REVIEW: 'Re-capture Requested',
+  HOLD_REFER:       'Referred for Manual Verification',
+}
+
+const TIMELINE_LABELS: Record<string, string> = {
+  CREATED:                     'Document scanned and analyzed',
+  VIEWED:                      'Case opened for review',
+  SENT:                        'Case submitted for admin review',
+  DECISION_CLEAR:              'Identity verified by reviewer',
+  DECISION_SECONDARY_REVIEW:  'Re-capture requested by reviewer',
+  DECISION_HOLD_REFER:         'Referred for manual verification by reviewer',
+  NOTE_ADDED:                  'Note added',
+}
+
+// ── Compact thumbnail for overview ──────────────────────────────────────
+
+function SmallEvidenceThumb({ verificationId, type, label }: { verificationId: string; type: string; label: string }) {
+  const [src, setSrc] = useState<string | null>(null)
+  const [err, setErr] = useState(false)
+  const url = `${baseURL}/images/${verificationId}/${type}`
+  useState(() => {
+    const token = localStorage.getItem('bsa_access_token') ?? ''
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => { if (!r.ok) throw new Error(); return r.blob() })
+      .then((b) => setSrc(URL.createObjectURL(b)))
+      .catch(() => setErr(true))
+  })
+  if (err) return (
+    <div className="h-20 w-24 rounded-md border border-border bg-secondary flex items-center justify-center">
+      <span className="text-[10px] text-muted-foreground">{label}</span>
+    </div>
+  )
+  if (!src) return (
+    <div className="h-20 w-24 rounded-md border border-border bg-secondary animate-pulse" />
+  )
+  return (
+    <div className="h-20 w-24 rounded-md border border-border bg-secondary overflow-hidden relative group">
+      <img src={src} alt={label} className="h-full w-full object-cover" />
+      <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-[9px] text-white text-center py-0.5">{label}</span>
+    </div>
+  )
+}
+
+// ── Admin decision panel ─────────────────────────────────────────────────────
+
+type AdminAction = 'CLEAR' | 'SECONDARY_REVIEW' | 'HOLD_REFER' | 'ESCALATE' | null
+
+const RECAPTURE_REASONS = [
+  'Poor lighting — retake in better light',
+  'Face partially visible — ensure full face is in frame',
+  'Blurry image — hold device steady and retake',
+  'Incorrect document captured — recapture the correct document',
+  'Face too close to edge — centre the face in frame',
+  'Photo taken from screen or printed image — retake in person',
+  'Other',
+]
+
+function AdminDecisionPanel({ caseId, onDecisionRecorded }: { caseId: string; onDecisionRecorded: () => void }) {
+  const [action, setAction] = useState<AdminAction>(null)
+  const [reason, setReason] = useState('')
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  async function submit(decision: DecisionValue, finalReason: string) {
+    if (decision !== 'CLEAR' && !finalReason.trim()) { setError('Please provide a reason.'); return }
+    setSaving(true); setError(null)
+    try {
+      await decideCase(caseId, decision, finalReason || undefined)
+      setAction(null); onDecisionRecorded()
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+      setError(detail ?? 'Could not record decision — please try again.')
+    } finally { setSaving(false) }
+  }
+
+  if (action === 'CLEAR') return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">Confirm that you have reviewed all evidence and the identity is verified.</p>
+      <textarea className="w-full rounded-md border border-border bg-background p-2 text-xs focus:border-ring focus:outline-none" rows={2}
+        placeholder="Optional reviewer note…" value={reason} onChange={(e) => setReason(e.target.value)} />
+      {error && <p className="text-xs text-status-high">{error}</p>}
+      <div className="flex gap-2">
+        <button onClick={() => submit('CLEAR', reason)} disabled={saving}
+          className="flex-1 rounded-md bg-status-clear px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+          {saving ? 'Saving…' : 'Confirm — Verify Identity'}
+        </button>
+        <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary">Cancel</button>
+      </div>
+    </div>
+  )
+
+  if (action === 'SECONDARY_REVIEW') {
+    const finalReason = [...selectedReasons, ...(reason ? [reason] : [])].join('; ')
+    return (
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">Select the reason(s) why a new photo or document is needed:</p>
+        <div className="space-y-1">
+          {RECAPTURE_REASONS.map((r) => (
+            <label key={r} className="flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={selectedReasons.includes(r)} className="accent-accent"
+                onChange={(e) => setSelectedReasons((prev) => e.target.checked ? [...prev, r] : prev.filter((x) => x !== r))} />
+              {r}
+            </label>
+          ))}
+        </div>
+        <textarea className="w-full rounded-md border border-border bg-background p-2 text-xs focus:border-ring focus:outline-none"
+          rows={2} placeholder="Additional details…" value={reason} onChange={(e) => setReason(e.target.value)} />
+        {error && <p className="text-xs text-status-high">{error}</p>}
+        <div className="flex gap-2">
+          <button onClick={() => submit('SECONDARY_REVIEW', finalReason)}
+            disabled={saving || (selectedReasons.length === 0 && !reason.trim())}
+            className="flex-1 rounded-md bg-status-review px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+            {saving ? 'Saving…' : 'Request Re-capture'}
+          </button>
+          <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary">Cancel</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (action === 'HOLD_REFER') return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">Refer for manual verification. Provide a reason — this is permanently recorded.</p>
+      <textarea className="w-full rounded-md border border-border bg-background p-2 text-xs focus:border-ring focus:outline-none"
+        rows={3} placeholder="Reason for manual verification referral…" value={reason} onChange={(e) => setReason(e.target.value)} />
+      {error && <p className="text-xs text-status-high">{error}</p>}
+      <div className="flex gap-2">
+        <button onClick={() => submit('HOLD_REFER', reason)} disabled={saving || !reason.trim()}
+          className="flex-1 rounded-md bg-status-high px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+          {saving ? 'Saving…' : 'Refer for Manual Verification'}
+        </button>
+        <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary">Cancel</button>
+      </div>
+    </div>
+  )
+
+  if (action === 'ESCALATE') return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">Escalate this case to senior authority. Provide a reason — this is permanently recorded.</p>
+      <textarea className="w-full rounded-md border border-border bg-background p-2 text-xs focus:border-ring focus:outline-none"
+        rows={3} placeholder="Reason for escalation…" value={reason} onChange={(e) => setReason(e.target.value)} />
+      {error && <p className="text-xs text-status-high">{error}</p>}
+      <div className="flex gap-2">
+        <button onClick={() => submit('HOLD_REFER', `ESCALATED: ${reason}`)} disabled={saving || !reason.trim()}
+          className="flex-1 rounded-md bg-foreground px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90 disabled:opacity-50">
+          {saving ? 'Saving…' : 'Escalate Case'}
+        </button>
+        <button onClick={() => setAction(null)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary">Cancel</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <button onClick={() => { setAction('CLEAR'); setReason(''); setError(null) }}
+        className="flex items-center justify-center gap-1.5 rounded-md border border-status-clear/40 bg-status-clear-bg px-2 py-2 text-xs font-medium text-status-clear hover:bg-status-clear/10">
+        <span className="font-bold">✓</span> Clear Case
+      </button>
+      <button onClick={() => { setAction('SECONDARY_REVIEW'); setReason(''); setSelectedReasons([]); setError(null) }}
+        className="flex items-center justify-center gap-1.5 rounded-md border border-status-review/40 bg-status-review-bg px-2 py-2 text-xs font-medium text-status-review hover:bg-status-review/10">
+        <span>↺</span> Re-capture
+      </button>
+      <button onClick={() => { setAction('HOLD_REFER'); setReason(''); setError(null) }}
+        className="flex items-center justify-center gap-1.5 rounded-md border border-status-high/40 bg-status-high-bg px-2 py-2 text-xs font-medium text-status-high hover:bg-status-high/10">
+        <span>⚑</span> Manual Review
+      </button>
+      <button onClick={() => { setAction('ESCALATE'); setReason(''); setError(null) }}
+        className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-2 text-xs font-medium text-foreground hover:bg-secondary/80">
+        <span>↑</span> Escalate
+      </button>
+    </div>
+  )
+}
+
+// ── OCR field display ────────────────────────────────────────────────────
+
+const OCR_FIELD_LABELS: Record<string, string> = {
+  name: 'Full Name', full_name: 'Full Name', owner_name: 'Owner Name',
+  passport_number: 'Passport No.', document_number: 'Document No.',
+  dl_number: 'Licence No.', visa_number: 'Visa No.', permit_number: 'Permit No.',
+  nin_number: 'NIN', cid_number: 'CID', voter_id: 'Voter ID', aadhaar_number: 'Aadhaar',
+  nationality: 'Nationality', date_of_birth: 'Date of Birth',
+  date_of_issue: 'Date of Issue', date_of_expiry: 'Date of Expiry',
+  gender: 'Gender', sex: 'Gender',
+  place_of_birth: 'Place of Birth', place_of_issue: 'Place of Issue',
+  issuing_authority: 'Issuing Authority',
+  fathers_name: "Father's Name", father_name: "Father's Name",
+  mothers_name: "Mother's Name",
+  blood_group: 'Blood Group', vehicle_classes: 'Vehicle Classes',
+  category: 'Category', citizenship_number: 'Citizenship No.',
+  permit_type: 'Permit Type', purpose: 'Purpose',
+  place_of_visit: 'Place of Visit', registration_no: 'Registration No.',
+  address: 'Address', surname: 'Surname', given_name: 'Given Name',
+  ref_number: 'Reference No.',
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CaseReview() {
@@ -589,7 +617,7 @@ export function CaseReview() {
   const { user } = useAuth()
   const isReviewer = user?.role === 'REVIEWER'
 
-  const [tab, setTab] = useState<Tab>('evidence')
+  const [tab, setTab] = useState<Tab>('overview')
   const [noteText, setNoteText] = useState('')
   const [showDiagnostics, setShowDiagnostics] = useState(false)
 
@@ -625,7 +653,7 @@ export function CaseReview() {
         }
         const msg = axErr.response?.data?.detail ?? axErr.message ?? ''
         setNoteError(msg.includes('Network') || msg.includes('timeout')
-          ? 'Server is not reachable — please check your connection and try again.'
+          ? 'Backend is waking up — wait a moment and try again.'
           : `Could not add note: ${msg || 'Unknown error'}`)
       }
     }
@@ -635,7 +663,7 @@ export function CaseReview() {
   if (caseQuery.loading) return (
     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
-      <p className="text-sm">Loading case details…</p>
+      <p className="text-sm">Loading case…</p>
     </div>
   )
   if (caseQuery.error) return (
@@ -664,121 +692,293 @@ export function CaseReview() {
   const findings = v ? buildFindings(v) : []
   const awaitingDecision = c.status === 'SENT' || c.status === 'REVIEW_REQUIRED'
 
-  // Extract useful OCR fields for the identity card
   const ocr = v?.ocr?.fields ?? {}
   const docNumber = ocr.passport_number ?? ocr.dl_number ?? ocr.license_number ?? ocr.document_number ?? ocr.visa_number ?? ocr.permit_number ?? ocr.nin_number ?? ocr.cid_number ?? null
   const displayName = c.traveler_name ?? ocr.full_name ?? ocr.name ?? ocr.owner_name ?? null
   const displayDocType = DOC_TYPE_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type
   const displayGender = ocr.sex ?? ocr.gender ?? null
 
+  const issues = findings.filter((f) => f.tone === 'alert' || f.tone === 'review')
+  const topIssues = issues.slice(0, 4)
+
+  const riskLabel = v?.risk.level === 'HIGH_RISK' ? 'High Risk'
+    : v?.risk.level === 'MEDIUM_RISK' ? 'Medium Risk' : 'Low Risk'
+  const riskColor = v?.risk.level === 'HIGH_RISK' ? 'status-high'
+    : v?.risk.level === 'MEDIUM_RISK' ? 'status-review' : 'status-clear'
+
+  // Waiting time
+  const waitingMs = c.sent_at ? Date.now() - new Date(c.sent_at).getTime() : Date.now() - new Date(c.created_at).getTime()
+  const waitingHours = Math.floor(waitingMs / 3600000)
+  const waitingMins = Math.floor((waitingMs % 3600000) / 60000)
+  const waitingLabel = waitingHours > 0 ? `${waitingHours}h ${waitingMins}m` : `${waitingMins}m`
+  const isOverdue = waitingHours >= 24
+
   return (
-    <div className="space-y-4">
-      <button onClick={() => navigate(-1)} className="text-xs text-accent hover:underline">← Back to cases</button>
-
-      {/* ── Identity card header — single column layout ── */}
-      <div className="rounded-lg border border-border bg-card p-5">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Case {c.case_number}</p>
-            <h1 className="text-2xl font-bold text-foreground mt-1">
-              {displayName ?? 'Name not extracted'}
-            </h1>
-          </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            <StatusBadge status={c.status} />
-            <PriorityBadge priority={c.priority} />
-            {v && (
-              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                v.risk.level === 'HIGH_RISK'
-                  ? 'bg-status-high-bg text-status-high border-status-high/30'
-                  : v.risk.level === 'MEDIUM_RISK'
-                    ? 'bg-status-review-bg text-status-review border-status-review/30'
-                    : 'bg-status-clear-bg text-status-clear border-status-clear/30'
-              }`}>
-                <span aria-hidden="true">{v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'}</span>
-                {v.risk.level === 'HIGH_RISK' ? 'High Risk' : v.risk.level === 'MEDIUM_RISK' ? 'Medium Risk' : 'Low Risk'}
-                {v.risk.score != null && <span className="ml-1 opacity-75">({Math.round(v.risk.score)}%)</span>}
-              </span>
-            )}
-          </div>
+    <div className="space-y-3">
+      {/* ══════════════════════════════════════════════════════════════════
+         TOP BAR — case number, status, priority, risk in one compact row
+         ══════════════════════════════════════════════════════════════════ */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="text-xs text-accent hover:underline shrink-0">← Back</button>
+          <div className="h-4 w-px bg-border" />
+          <span className="text-sm font-semibold text-foreground">{c.case_number}</span>
+          <StatusBadge status={c.status} />
+          <PriorityBadge priority={c.priority} />
         </div>
-
-        {/* Single-column extracted document details */}
-        <div className="grid grid-cols-1 gap-0 border-t border-border pt-3">
-          <DetailField label="Document Type" value={displayDocType} />
-          {docNumber && <DetailField label="Document Number" value={maskDocNumber(docNumber)} mono />}
-          <DetailField label="Nationality" value={c.nationality || ocr.nationality} />
-          {ocr.date_of_birth && <DetailField label="Date of Birth" value={ocr.date_of_birth} />}
-          {ocr.date_of_expiry && <DetailField label="Date of Expiry" value={ocr.date_of_expiry} />}
-          {ocr.date_of_issue && <DetailField label="Date of Issue" value={ocr.date_of_issue} />}
-          {displayGender && /^(m|f|male|female|other|transgender)$/i.test(displayGender.trim()) && (
-            <DetailField label="Gender" value={displayGender.trim().charAt(0).toUpperCase() === 'M' ? 'Male' : displayGender.trim().charAt(0).toUpperCase() === 'F' ? 'Female' : displayGender.trim()} />
+        <div className="flex items-center gap-3">
+          {v && (
+            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold
+              bg-${riskColor}-bg text-${riskColor} border-${riskColor}/30`}>
+              {v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'} {riskLabel}
+            </span>
           )}
-          {ocr.place_of_birth && <DetailField label="Place of Birth" value={ocr.place_of_birth} />}
-          {ocr.place_of_issue && <DetailField label="Place of Issue" value={ocr.place_of_issue} />}
-          {ocr.issuing_authority && <DetailField label="Issuing Authority" value={ocr.issuing_authority} />}
-          {ocr.mrz_line1 && <DetailField label="MRZ" value={`${ocr.mrz_line1}${ocr.mrz_line2 ? '\n' + ocr.mrz_line2 : ''}`} mono />}
-          {ocr.voter_id && <DetailField label="Voter ID" value={ocr.voter_id} mono />}
-          {ocr.aadhaar_number && <DetailField label="Aadhaar" value={ocr.aadhaar_number} mono />}
-          {(ocr.fathers_name || ocr.father_name) && <DetailField label="Father's Name" value={ocr.fathers_name ?? ocr.father_name} />}
-          {ocr.mothers_name && <DetailField label="Mother's Name" value={ocr.mothers_name} />}
-          {ocr.blood_group && <DetailField label="Blood Group" value={ocr.blood_group} />}
-          {ocr.vehicle_classes && <DetailField label="Vehicle Classes" value={ocr.vehicle_classes} />}
-          {ocr.category && <DetailField label="Category" value={ocr.category} />}
-          {ocr.citizenship_number && <DetailField label="Citizenship No." value={ocr.citizenship_number} mono />}
-          {ocr.permit_type && <DetailField label="Permit Type" value={ocr.permit_type} />}
-          {ocr.purpose && <DetailField label="Purpose" value={ocr.purpose} />}
-          {ocr.place_of_visit && <DetailField label="Place of Visit" value={ocr.place_of_visit} />}
-          {ocr.registration_no && <DetailField label="Registration No." value={ocr.registration_no} mono />}
-          {ocr.address && <DetailField label="Address" value={ocr.address} />}
-          <div className="border-t border-border mt-2 pt-2">
-            <DetailField label="Checkpoint" value={c.checkpoint_code} />
-            <DetailField label="Submitted by" value={c.field_officer_username} />
-            <DetailField label="Screened at" value={new Date(c.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
-          </div>
+          <span className={`text-xs ${isOverdue ? 'text-status-high font-semibold' : 'text-muted-foreground'}`}>
+            {isOverdue ? '⚠ ' : ''}Waiting: {waitingLabel}
+          </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* ── Main content — left 2 columns ── */}
-        <div className="space-y-4 lg:col-span-2">
-          <div className="flex gap-1 border-b border-border">
-            {(['evidence', 'identity', 'network', 'timeline'] as const).map((key) => {
+      {/* ══════════════════════════════════════════════════════════════════
+         TWO-COLUMN LAYOUT
+         ══════════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+
+        {/* ── LEFT: Tabbed workspace (3/5 = 60%) ── */}
+        <div className="space-y-3 lg:col-span-3">
+          {/* Tab bar */}
+          <div className="flex gap-0.5 border-b border-border overflow-x-auto">
+            {(['overview', 'evidence', 'risk', 'timeline', 'history'] as const).map((key) => {
               const labels: Record<Tab, string> = {
-                evidence: 'Evidence & Findings',
-                identity: 'Identity History',
-                network:  'Connections',
-                timeline: 'Case Timeline',
+                overview:  'Overview',
+                evidence:  'Evidence',
+                risk:      'Risk Analysis',
+                timeline:  'Timeline',
+                history:   'History',
               }
+              const hasIssue = key === 'risk' && issues.length > 0
               return (
                 <button key={key} onClick={() => setTab(key)}
-                  className={`px-3 py-2 text-sm font-medium ${tab === key ? 'border-b-2 border-accent text-accent' : 'text-muted-foreground hover:text-foreground'}`}>
+                  className={`relative px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    tab === key
+                      ? 'border-b-2 border-accent text-accent'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}>
                   {labels[key]}
+                  {hasIssue && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-status-high" />
+                  )}
                 </button>
               )
             })}
           </div>
 
+          {/* ── OVERVIEW TAB ── */}
+          {tab === 'overview' && (
+            <div className="space-y-4">
+              {/* Identity summary */}
+              <Card>
+                <div className="flex items-start gap-4">
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Identity</p>
+                      <h2 className="text-xl font-bold text-foreground mt-0.5">{displayName ?? 'Name not extracted'}</h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Document</p>
+                        <p className="font-medium text-foreground">{displayDocType}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Nationality</p>
+                        <p className="font-medium text-foreground">{c.nationality || ocr.nationality || '—'}</p>
+                      </div>
+                      {ocr.date_of_birth && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Date of Birth</p>
+                          <p className="font-medium text-foreground">{ocr.date_of_birth}</p>
+                        </div>
+                      )}
+                      {docNumber && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Document No.</p>
+                          <p className="font-medium text-foreground font-mono">{maskDocNumber(docNumber)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Small evidence thumbnails */}
+                  {v && (
+                    <div className="hidden sm:flex gap-2 shrink-0">
+                      <SmallEvidenceThumb verificationId={v.id} type="document" label="Document" />
+                      <SmallEvidenceThumb verificationId={v.id} type="selfie" label="Live Photo" />
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Risk summary banner */}
+              {v && (
+                <div className={`rounded-lg border px-4 py-3 ${
+                  v.risk.level === 'HIGH_RISK'
+                    ? 'border-status-high/50 bg-status-high-bg'
+                    : v.risk.level === 'MEDIUM_RISK'
+                      ? 'border-status-review/50 bg-status-review-bg'
+                      : 'border-status-clear/50 bg-status-clear-bg'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-lg font-bold text-${riskColor}`}>
+                      {v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'}
+                    </span>
+                    <div>
+                      <p className={`text-sm font-semibold text-${riskColor}`}>
+                        {v.risk.level === 'HIGH_RISK' ? 'Immediate Review Required'
+                          : v.risk.level === 'MEDIUM_RISK' ? 'Review Recommended'
+                          : 'All Checks Passed'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {humanizeReason(v.risk.top_reason)}
+                      </p>
+                    </div>
+                  </div>
+                  {topIssues.length > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Why this needs attention</p>
+                      {topIssues.map((f) => (
+                        <div key={f.label} className="flex items-start gap-2">
+                          <span className={`mt-0.5 text-xs ${f.tone === 'alert' ? 'text-status-high' : 'text-status-review'}`}>
+                            {f.tone === 'alert' ? '✕' : '⚠'}
+                          </span>
+                          <div>
+                            <span className="text-xs font-medium text-foreground">{f.label}:</span>{' '}
+                            <span className="text-xs text-muted-foreground">{f.summary}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Key findings — only non-clear ones */}
+              {findings.length > 0 && (
+                <Card title="Key Findings">
+                  <div className="divide-y divide-border">
+                    {findings.filter((f) => f.tone !== 'none').slice(0, 6).map((f) => (
+                      <FindingRow key={f.label} f={f} />
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* ── EVIDENCE TAB ── */}
           {tab === 'evidence' && (
             <div className="space-y-4">
-              {/* Evidence images */}
               {v ? (
                 <EvidenceImages verificationId={v.id} caseCreatedAt={c.created_at} />
               ) : (
-                <Card>
-                  <p className="text-sm text-muted-foreground">No document or photo captured for this case.</p>
+                <Card><p className="text-sm text-muted-foreground">No document or photo captured for this case.</p></Card>
+              )}
+
+              {/* OCR extracted fields as a clean grid */}
+              {Object.keys(ocr).length > 0 && (
+                <Card title="Extracted Document Fields">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
+                    {Object.entries(ocr).map(([key, value]) => {
+                      if (!value || key.startsWith('mrz_')) return null
+                      const label = OCR_FIELD_LABELS[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+                      return (
+                        <div key={key} className="flex items-baseline justify-between border-b border-border/40 py-1.5">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <span className="text-xs font-medium text-foreground text-right max-w-[60%] truncate">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* MRZ section */}
+                  {(ocr.mrz_line1 || ocr.mrz_line2) && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Machine-Readable Zone</p>
+                      <div className="rounded-md bg-background border border-border p-3 font-mono text-xs text-accent leading-relaxed">
+                        {ocr.mrz_line1 && <div>{ocr.mrz_line1}</div>}
+                        {ocr.mrz_line2 && <div>{ocr.mrz_line2}</div>}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               )}
 
               {/* Verification findings */}
-              {v ? (
-                <Card title="Verification Findings">
-                  <VerificationStatusBanner v={v} />
-                  <div className="mt-4 divide-y divide-border">
+              {v && findings.length > 0 && (
+                <Card title="Verification Checks">
+                  <div className="divide-y divide-border">
                     {findings.map((f) => <FindingRow key={f.label} f={f} />)}
                   </div>
-                  {/* System diagnostics — clearly labelled */}
-                  <div className="mt-4 border-t border-border pt-3">
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* ── RISK ANALYSIS TAB ── */}
+          {tab === 'risk' && (
+            <div className="space-y-4">
+              {v ? (
+                <>
+                  {/* Overall status */}
+                  <div className={`rounded-lg border px-4 py-3 ${
+                    v.risk.level === 'HIGH_RISK'
+                      ? 'border-status-high/50 bg-status-high-bg'
+                      : v.risk.level === 'MEDIUM_RISK'
+                        ? 'border-status-review/50 bg-status-review-bg'
+                        : 'border-status-clear/50 bg-status-clear-bg'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg font-bold text-${riskColor}`}>
+                        {v.risk.level === 'HIGH_RISK' ? '⚑' : v.risk.level === 'MEDIUM_RISK' ? '⚠' : '✓'}
+                      </span>
+                      <p className={`text-sm font-semibold text-${riskColor}`}>
+                        {v.risk.level === 'HIGH_RISK' ? 'Immediate Review Required'
+                          : v.risk.level === 'MEDIUM_RISK' ? 'Review Recommended'
+                          : 'All Checks Passed'}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{humanizeReason(v.risk.top_reason)}</p>
+                  </div>
+
+                  {/* Grouped findings by category */}
+                  {(() => {
+                    const docFindings = findings.filter((f) => f.category === 'document')
+                    const idFindings = findings.filter((f) => f.category === 'identity')
+                    const secFindings = findings.filter((f) => f.category === 'security')
+                    const groups: { title: string; icon: string; items: FindingCard[] }[] = [
+                      { title: 'Document Issues', icon: '📄', items: docFindings },
+                      { title: 'Identity Concerns', icon: '👤', items: idFindings },
+                      { title: 'Security Alerts', icon: '🛡', items: secFindings },
+                    ]
+                    return groups.filter((g) => g.items.length > 0).map((g) => (
+                      <Card key={g.title}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span>{g.icon}</span>
+                          <h3 className="text-sm font-semibold text-foreground">{g.title}</h3>
+                          {g.items.some((f) => f.tone === 'alert') && (
+                            <span className="text-[10px] bg-status-high-bg text-status-high px-1.5 py-0.5 rounded-full font-medium">
+                              Action needed
+                            </span>
+                          )}
+                        </div>
+                        <div className="divide-y divide-border">
+                          {g.items.map((f) => <FindingRow key={f.label} f={f} />)}
+                        </div>
+                      </Card>
+                    ))
+                  })()}
+
+                  {/* Diagnostics */}
+                  <div className="border-t border-border pt-3">
                     <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
                       onClick={() => setShowDiagnostics((x) => !x)}>
                       <span>{showDiagnostics ? '▲' : '▶'}</span>
@@ -815,91 +1015,14 @@ export function CaseReview() {
                       </div>
                     )}
                   </div>
-                </Card>
+                </>
               ) : (
                 <Card><p className="text-sm text-muted-foreground">No verification data available for this case.</p></Card>
               )}
             </div>
           )}
 
-          {tab === 'identity' && (
-            <Card>
-              {identityHistory.loading && <p className="text-sm text-muted-foreground">Loading identity history…</p>}
-              {identityHistory.data && identityHistory.data.length === 0 && (
-                <div className="py-4 text-center space-y-2">
-                  <p className="text-2xl">🪪</p>
-                  <p className="text-sm font-medium text-foreground">No prior crossing records</p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    No other cases share a similar facial identity with this record. This appears to be a first-time or new entry — no biometric history available.
-                  </p>
-                </div>
-              )}
-              {identityHistory.data && identityHistory.data.length > 0 && (
-                <>
-                  <div className="mb-5 rounded-lg border border-status-review/40 bg-status-review-bg px-4 py-3 text-sm text-status-review">
-                    <p className="font-semibold">⚠ {identityHistory.data.length} prior crossing record(s) found</p>
-                    <p className="mt-1 text-xs">
-                      These cases share similar facial characteristics with this person. Review each entry to confirm consistent identity.
-                    </p>
-                  </div>
-                  {/* Timeline view */}
-                  <ol className="relative border-l-2 border-border space-y-0">
-                    {[...identityHistory.data]
-                      .sort((a, b) => new Date(b.occurred_at ?? 0).getTime() - new Date(a.occurred_at ?? 0).getTime())
-                      .map((r, i) => {
-                        const isStrong = (r.similarity ?? 0) >= 0.75
-                        return (
-                          <li key={r.record_id ?? i} className="ml-4 pb-6">
-                            <div className="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border-2 border-border bg-card flex items-center justify-center">
-                              <div className={`h-1.5 w-1.5 rounded-full ${isStrong ? 'bg-status-review' : 'bg-muted-foreground'}`} />
-                            </div>
-                            <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
-                              <div className="flex items-center justify-between flex-wrap gap-2">
-                                <span className="font-mono text-xs font-semibold text-foreground bg-secondary px-2 py-0.5 rounded border border-border">
-                                  {r.case_number ?? '—'}
-                                </span>
-                                {r.similarity != null ? (
-                                  <span className={`text-xs font-medium ${isStrong ? 'text-status-review' : 'text-muted-foreground'}`}>
-                                    {isStrong ? '⚠ Strong match' : 'Partial match'} · {Math.round(r.similarity * 100)}%
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">Not directly compared</span>
-                                )}
-                              </div>
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                                <div><span className="text-muted-foreground">Name on record: </span><span className="font-medium text-foreground">{r.declared_name}</span></div>
-                                <div><span className="text-muted-foreground">Document: </span><span className="text-foreground">{r.masked_document_number ?? '—'}</span></div>
-                                <div><span className="text-muted-foreground">Checkpoint: </span><span className="text-foreground">{r.checkpoint_code ?? '—'}</span></div>
-                                <div><span className="text-muted-foreground">Status: </span><span className="text-foreground">{r.review_status ?? '—'}</span></div>
-                              </div>
-                              {r.occurred_at && (
-                                <p className="text-xs text-muted-foreground">
-                                  Screened: {new Date(r.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                              )}
-                            </div>
-                          </li>
-                        )
-                      })}
-                  </ol>
-                </>
-              )}
-            </Card>
-          )}
-
-          {tab === 'network' && (
-            <div className="space-y-3">
-              <Card>
-                <p className="mb-1 text-sm font-medium text-foreground">Identity & Travel Connections</p>
-                <p className="text-xs text-muted-foreground">
-                  This view shows relationships the system recorded between people, documents, checkpoints, and travel events.
-                  A connection here is an observation — not an accusation. Use it as supporting context when reviewing the case.
-                </p>
-              </Card>
-              <CaseNetworkPanel caseId={c.id} />
-            </div>
-          )}
-
+          {/* ── TIMELINE TAB ── */}
           {tab === 'timeline' && (
             <Card title="Case Timeline">
               {timeline.loading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -907,26 +1030,45 @@ export function CaseReview() {
                 <p className="text-sm text-muted-foreground">No events recorded for this case yet.</p>
               )}
               {timeline.data && timeline.data.length > 0 && (
-                <ol className="space-y-4 border-l-2 border-border pl-4">
+                <ol className="space-y-0 border-l-2 border-border pl-4">
                   {timeline.data.map((event, i) => {
                     const label = TIMELINE_LABELS[event.event_type] ?? event.action
-                    const dotColor = event.event_type?.includes('CLEAR') ? 'bg-status-clear border-status-clear/50'
-                      : event.event_type?.includes('HOLD') || event.event_type?.includes('FLAG') ? 'bg-status-high border-status-high/50'
-                      : event.event_type?.includes('REVIEW') || event.event_type?.includes('SENT') ? 'bg-status-review border-status-review/50'
+                    const isDecision = event.event_type?.includes('DECISION')
+                    const isClear = event.event_type?.includes('CLEAR')
+                    const isHold = event.event_type?.includes('HOLD') || event.event_type?.includes('FLAG')
+                    const isReview = event.event_type?.includes('REVIEW') || event.event_type?.includes('SENT')
+                    const dotColor = isClear ? 'bg-status-clear border-status-clear/50'
+                      : isHold ? 'bg-status-high border-status-high/50'
+                      : isReview ? 'bg-status-review border-status-review/50'
                       : 'bg-accent border-accent/50'
+                    const icon = isClear ? '✓' : isHold ? '⚑' : isReview ? '➤'
+                      : event.event_type === 'CREATED' ? '◉'
+                      : event.event_type === 'VIEWED' ? '👁'
+                      : event.event_type === 'NOTE_ADDED' ? '✎' : '●'
                     return (
-                      <li key={i} className="relative">
-                        <div className={`absolute -left-[1.3rem] mt-1 h-3 w-3 rounded-full border-2 ${dotColor}`} />
-                        <p className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</p>
-                        <p className="text-sm font-medium text-foreground">{label}</p>
-                        {event.actor_username && (
-                          <p className="text-xs text-muted-foreground">by {event.actor_username}</p>
-                        )}
-                        {event.detail && (
-                          <p className="mt-1 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
-                            {humanizeReason(event.detail)}
-                          </p>
-                        )}
+                      <li key={i} className="relative pb-5 last:pb-0">
+                        <div className={`absolute -left-[1.35rem] mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[8px] ${dotColor}`}>
+                          <span className="text-white">{isDecision ? '' : ''}</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-sm shrink-0 mt-0">{icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <p className="text-sm font-medium text-foreground">{label}</p>
+                              <p className="text-[10px] text-muted-foreground shrink-0">
+                                {new Date(event.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                            {event.actor_username && (
+                              <p className="text-xs text-muted-foreground">by {event.actor_username}</p>
+                            )}
+                            {event.detail && (
+                              <p className="mt-1 rounded bg-secondary px-2 py-1 text-xs text-muted-foreground leading-relaxed">
+                                {humanizeReason(event.detail)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </li>
                     )
                   })}
@@ -934,23 +1076,188 @@ export function CaseReview() {
               )}
             </Card>
           )}
+
+          {/* ── HISTORY TAB ── */}
+          {tab === 'history' && (
+            <div className="space-y-4">
+              {/* Identity history */}
+              <Card title="Previous Screenings">
+                {identityHistory.loading && <p className="text-sm text-muted-foreground">Loading identity history…</p>}
+                {identityHistory.data && identityHistory.data.length === 0 && (
+                  <div className="py-4 text-center space-y-2">
+                    <p className="text-sm font-medium text-foreground">No prior crossing records</p>
+                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                      No other cases share a similar facial identity with this record. This appears to be a first-time entry.
+                    </p>
+                  </div>
+                )}
+                {identityHistory.data && identityHistory.data.length > 0 && (
+                  <>
+                    <div className="mb-4 rounded-lg border border-status-review/40 bg-status-review-bg px-4 py-2.5 text-sm text-status-review">
+                      <p className="font-semibold">⚠ {identityHistory.data.length} prior crossing record(s) found</p>
+                      <p className="mt-0.5 text-xs">
+                        These cases share similar facial characteristics. Review each entry to confirm consistent identity.
+                      </p>
+                    </div>
+                    <ol className="relative border-l-2 border-border space-y-0">
+                      {[...identityHistory.data]
+                        .sort((a, b) => new Date(b.occurred_at ?? 0).getTime() - new Date(a.occurred_at ?? 0).getTime())
+                        .map((r, i) => {
+                          const isStrong = (r.similarity ?? 0) >= 0.75
+                          return (
+                            <li key={r.record_id ?? i} className="ml-4 pb-5">
+                              <div className="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border-2 border-border bg-card flex items-center justify-center">
+                                <div className={`h-1.5 w-1.5 rounded-full ${isStrong ? 'bg-status-review' : 'bg-muted-foreground'}`} />
+                              </div>
+                              <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                  <span className="font-mono text-xs font-semibold text-foreground bg-secondary px-2 py-0.5 rounded border border-border">
+                                    {r.case_number ?? '—'}
+                                  </span>
+                                  {r.similarity != null ? (
+                                    <span className={`text-xs font-medium ${isStrong ? 'text-status-review' : 'text-muted-foreground'}`}>
+                                      {isStrong ? '⚠ Strong match' : 'Partial match'} · {Math.round(r.similarity * 100)}%
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">Not directly compared</span>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                  <div><span className="text-muted-foreground">Name: </span><span className="font-medium text-foreground">{r.declared_name}</span></div>
+                                  <div><span className="text-muted-foreground">Document: </span><span className="text-foreground">{r.masked_document_number ?? '—'}</span></div>
+                                  <div><span className="text-muted-foreground">Checkpoint: </span><span className="text-foreground">{r.checkpoint_code ?? '—'}</span></div>
+                                  <div><span className="text-muted-foreground">Status: </span><span className="text-foreground">{r.review_status ?? '—'}</span></div>
+                                </div>
+                                {r.occurred_at && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Screened: {new Date(r.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                )}
+                              </div>
+                            </li>
+                          )
+                        })}
+                    </ol>
+                  </>
+                )}
+              </Card>
+
+              {/* Decision history */}
+              {c.decisions.length > 0 && (
+                <Card title="Previous Decisions">
+                  <ul className="space-y-2">
+                    {c.decisions.map((d, i) => {
+                      const isClearD = d.decision === 'CLEAR'
+                      const isHoldD = d.decision === 'HOLD_REFER'
+                      const icon = isClearD ? '✓' : isHoldD ? '⚑' : '⚠'
+                      const accentClass = isClearD ? 'text-status-clear' : isHoldD ? 'text-status-high' : 'text-status-review'
+                      const bgClass = isClearD ? 'bg-status-clear/5 border-status-clear/20' : isHoldD ? 'bg-status-high/5 border-status-high/20' : 'bg-status-review/5 border-status-review/20'
+                      return (
+                        <li key={i} className={`rounded-lg border p-3 ${bgClass}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-base ${accentClass}`}>{icon}</span>
+                            <p className={`text-sm font-semibold ${accentClass}`}>
+                              {DECISION_LABELS[d.decision] ?? d.decision.replace(/_/g, ' ')}
+                            </p>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            by {d.officer_username ?? 'reviewer'} · {new Date(d.created_at).toLocaleString()}
+                          </p>
+                          {d.reason && (
+                            <p className="mt-1.5 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
+                              {humanizeReason(d.reason)}
+                            </p>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Network panel */}
+              <div className="space-y-2">
+                <Card>
+                  <p className="mb-1 text-sm font-medium text-foreground">Identity & Travel Connections</p>
+                  <p className="text-xs text-muted-foreground">
+                    Relationships between people, documents, checkpoints, and travel events.
+                    A connection here is an observation — not an accusation.
+                  </p>
+                </Card>
+                <CaseNetworkPanel caseId={c.id} />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ── Sidebar ── */}
-        <div className="space-y-4">
+        {/* ── RIGHT: Sticky sidebar (2/5 = 40%) ── */}
+        <div className="lg:col-span-2 space-y-3 lg:sticky lg:top-20 lg:self-start">
+          {/* Identity card */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Identity</p>
+            <h2 className="text-lg font-bold text-foreground leading-tight">{displayName ?? 'Name not extracted'}</h2>
+            <div className="mt-3 space-y-1.5">
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted-foreground">Document</span>
+                <span className="font-medium text-foreground">{displayDocType}</span>
+              </div>
+              {docNumber && (
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="text-muted-foreground">Number</span>
+                  <span className="font-medium text-foreground font-mono">{maskDocNumber(docNumber)}</span>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted-foreground">Nationality</span>
+                <span className="font-medium text-foreground">{c.nationality || ocr.nationality || '—'}</span>
+              </div>
+              {displayGender && /^(m|f|male|female|other|transgender)$/i.test(displayGender.trim()) && (
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="text-muted-foreground">Gender</span>
+                  <span className="font-medium text-foreground">
+                    {displayGender.trim().charAt(0).toUpperCase() === 'M' ? 'Male' : displayGender.trim().charAt(0).toUpperCase() === 'F' ? 'Female' : displayGender.trim()}
+                  </span>
+                </div>
+              )}
+              {ocr.date_of_birth && (
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="text-muted-foreground">DOB</span>
+                  <span className="font-medium text-foreground">{ocr.date_of_birth}</span>
+                </div>
+              )}
+              <div className="border-t border-border/50 my-1.5" />
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted-foreground">Checkpoint</span>
+                <span className="font-medium text-foreground">{c.checkpoint_code}</span>
+              </div>
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted-foreground">Officer</span>
+                <span className="font-medium text-foreground">{c.field_officer_username}</span>
+              </div>
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted-foreground">Screened</span>
+                <span className="font-medium text-foreground">
+                  {new Date(c.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Decision panel */}
           {isReviewer && awaitingDecision && (
-            <Card title="Verification Decision">
-              <p className="mb-3 text-xs text-muted-foreground">
-                Review all evidence on the left before recording your decision. Every decision is permanently logged.
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Take Action</p>
+              <p className="text-[10px] text-muted-foreground mb-3">
+                Review all evidence before recording your decision. Every action is permanently logged.
               </p>
               <AdminDecisionPanel caseId={c.id} onDecisionRecorded={() => caseQuery.refetch()} />
-            </Card>
+            </div>
           )}
 
           {!isReviewer && c.status === 'PENDING' && (
             <Card title="Submit for Review">
               <p className="mb-2 text-xs text-muted-foreground">
-                Forward this case to the admin review queue. The reviewer will examine the evidence and make the final decision.
+                Forward this case to the admin review queue.
               </p>
               <button
                 onClick={async () => { await submitCase(c.id); caseQuery.refetch() }}
@@ -960,61 +1267,29 @@ export function CaseReview() {
             </Card>
           )}
 
-          {c.decisions.length > 0 && (
-            <Card title="Decision History">
-              <ul className="space-y-3 text-sm">
-                {c.decisions.map((d, i) => {
-                  const isClear = d.decision === 'CLEAR'
-                  const isHold = d.decision === 'HOLD_REFER'
-                  const icon = isClear ? '✓' : isHold ? '⚑' : '⚠'
-                  const accentClass = isClear ? 'text-status-clear' : isHold ? 'text-status-high' : 'text-status-review'
-                  const bgClass = isClear ? 'bg-status-clear/5 border-status-clear/20' : isHold ? 'bg-status-high/5 border-status-high/20' : 'bg-status-review/5 border-status-review/20'
-                  return (
-                    <li key={i} className={`rounded-lg border p-3 ${bgClass}`}>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-base ${accentClass}`}>{icon}</span>
-                        <p className={`font-semibold ${accentClass}`}>
-                          {DECISION_LABELS[d.decision] ?? d.decision.replace(/_/g, ' ')}
-                        </p>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Recorded by {d.officer_username ?? 'reviewer'} · {new Date(d.created_at).toLocaleString()}
-                      </p>
-                      {d.reason && (
-                        <p className="mt-2 rounded bg-secondary px-2 py-1.5 text-xs text-muted-foreground leading-relaxed">
-                          {humanizeReason(d.reason)}
-                        </p>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </Card>
-          )}
-
-          <Card title="Notes">
-            <ul className="mb-3 space-y-2 text-sm">
+          {/* Notes */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Notes</p>
+            <ul className="mb-3 space-y-2 max-h-48 overflow-y-auto">
               {c.notes.map((n) => (
-                <li key={n.id} className="border-b border-border pb-2 last:border-0">
-                  <p className="text-xs text-muted-foreground">
-                    {n.author_username} · {new Date(n.created_at).toLocaleString()}
+                <li key={n.id} className="border-b border-border/40 pb-2 last:border-0">
+                  <p className="text-[10px] text-muted-foreground">
+                    {n.author_username} · {new Date(n.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </p>
-                  <p className="mt-1 whitespace-pre-line text-sm">{n.note}</p>
+                  <p className="mt-0.5 whitespace-pre-line text-xs text-foreground">{n.note}</p>
                 </li>
               ))}
-              {c.notes.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
+              {c.notes.length === 0 && <p className="text-xs text-muted-foreground">No notes yet.</p>}
             </ul>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground">Add a note</span>
+              <span className="text-[10px] text-muted-foreground">Add a note</span>
               <button
                 onClick={() => {
-                  // Auto-generate a human-readable note from case data
                   const risk = v?.risk
                   const checkpoint = c.checkpoint_code ?? 'this checkpoint'
                   const docType = DOC_TYPE_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type ?? 'document'
                   const nat = c.nationality ?? ''
                   const riskLevel = risk?.level === 'HIGH_RISK' ? 'High risk' : risk?.level === 'MEDIUM_RISK' ? 'Medium risk' : 'Low risk'
-                  // Humanise top reason
                   let reason = humanizeReason(risk?.top_reason ?? '')
                   if (reason.length > 120) reason = reason.slice(0, 120) + '…'
                   const actionMap: Record<string, string> = {
@@ -1022,25 +1297,24 @@ export function CaseReview() {
                     MEDIUM_RISK: 'Secondary review recommended before permitting entry.',
                     LOW_RISK: 'No issues detected. Document appears valid.',
                   }
-                  const action = actionMap[risk?.level ?? ''] ?? 'Further review recommended.'
-                  const generated = `Document reviewed at ${checkpoint}. ${riskLevel} — ${docType}${nat ? ` (${nat})` : ''}. ${reason ? reason + '. ' : ''}${action}`
-                  setNoteText(generated)
+                  const actionText = actionMap[risk?.level ?? ''] ?? 'Further review recommended.'
+                  setNoteText(`Document reviewed at ${checkpoint}. ${riskLevel} — ${docType}${nat ? ` (${nat})` : ''}. ${reason ? reason + '. ' : ''}${actionText}`)
                 }}
-                className="text-xs text-accent hover:text-accent/80 border border-accent/30 px-2 py-0.5 rounded hover:bg-accent/10 transition-colors"
+                className="text-[10px] text-accent hover:text-accent/80 border border-accent/30 px-1.5 py-0.5 rounded hover:bg-accent/10 transition-colors"
               >
-                ✨ Generate note
+                Generate
               </button>
             </div>
             <textarea
-              className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-ring focus:outline-none"
-              rows={3} placeholder="Add a note…" value={noteText}
+              className="w-full rounded-md border border-border bg-background p-2 text-xs focus:border-ring focus:outline-none"
+              rows={2} placeholder="Add a note…" value={noteText}
               onChange={(e) => setNoteText(e.target.value)} />
-            {noteError && <p className="mt-1 text-xs text-status-high">{noteError}</p>}
+            {noteError && <p className="mt-1 text-[10px] text-status-high">{noteError}</p>}
             <button onClick={handleAddNote} disabled={noteLoading || !noteText.trim()}
-              className="mt-2 w-full rounded-md border border-border py-1.5 text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50">
+              className="mt-1.5 w-full rounded-md border border-border py-1.5 text-xs font-medium text-foreground hover:bg-secondary disabled:opacity-50">
               {noteLoading ? 'Saving…' : 'Add Note'}
             </button>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Wifi, WifiOff, LogOut } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
-import { useHealthPing, type HealthState } from '../hooks/useHealthPing'
+import { useHealthPing } from '../hooks/useHealthPing'
 
 const TITLE_BY_PATH: { test: (p: string) => boolean; label: string }[] = [
   { test: (p) => p === '/console', label: 'Overview' },

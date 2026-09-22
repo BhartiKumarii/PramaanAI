@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { listCases, listAdminCheckpoints } from '../api/resources'
 import { useAsync } from '../hooks/useAsync'
-import { StatTile } from '../components/StatTile'
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge'
 import type { CaseListItem, CaseStatus, CasePriority } from '../api/types'
 

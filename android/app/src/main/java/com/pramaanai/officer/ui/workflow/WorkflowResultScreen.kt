@@ -233,7 +233,6 @@ private fun documentFieldSchema(docType: String, ocrFields: Map<String, String>)
             "place_of_birth"    to "Place of birth",
             "place_of_issue"    to "Place of issue",
             "issuing_authority" to "Issuing authority",
-            "personal_number"   to "Personal number",       // Nepal passports
             "cid_number"        to "Citizenship ID",        // Bhutan passports
             "citizenship_id"    to "Citizenship ID",
         )
