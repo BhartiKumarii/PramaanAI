@@ -1,0 +1,101 @@
+{
+  "schema": "pramaan.document_reference.v1",
+  "country": "NEPAL",
+  "document_type": "NEPAL_VISA",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "note": "Prototype layout descriptor. expected_region values are approximate relative coordinates [x0,y0,x1,y1] used only for template-consistency scoring; they must be calibrated on authorised specimens before operational use. No security artwork is stored.",
+  "versions": [
+    {
+      "version": "tourist-visa-sticker",
+      "validity_period": {
+        "from": null,
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "Department of Immigration, Nepal",
+          "url": "https://www.immigration.gov.np/"
+        }
+      ],
+      "layout_anchors": {
+        "QR_CODE": [
+          0.62,
+          0.2,
+          0.92,
+          0.75
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "qr_or_barcode",
+          "expected_region": [
+            0.62,
+            0.2,
+            0.92,
+            0.75
+          ],
+          "verification_method": "deterministic_decoder",
+          "expected_text_patterns": [],
+          "visually_checkable": true,
+          "note": "Where decodable, content is compared with the printed fields."
+        },
+        {
+          "feature_name": "guilloche_background",
+          "expected_region": [
+            0.05,
+            0.25,
+            0.6,
+            0.95
+          ],
+          "verification_method": "visual_texture_indicator",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "uv_features",
+          "expected_region": null,
+          "verification_method": "requires_uv_illumination",
+          "expected_text_patterns": [],
+          "visually_checkable": false
+        }
+      ],
+      "field_patterns": {
+        "visa_number": "^[A-Z]?[0-9]{5,12}$"
+      },
+      "expected_text_patterns": [
+        "GOVERNMENT OF NEPAL",
+        "VISA"
+      ]
+    },
+    {
+      "version": "entry-visa-stamp",
+      "validity_period": {
+        "from": null,
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "Department of Immigration, Nepal",
+          "url": "https://www.immigration.gov.np/"
+        }
+      ],
+      "layout_anchors": {},
+      "features": [
+        {
+          "feature_name": "uv_features",
+          "expected_region": null,
+          "verification_method": "requires_uv_illumination",
+          "expected_text_patterns": [],
+          "visually_checkable": false
+        }
+      ],
+      "field_patterns": {
+        "visa_number": "^[0-9]{4,10}$"
+      },
+      "expected_text_patterns": [
+        "NEPAL IMMIGRATION",
+        "ENTRY VISA"
+      ]
+    }
+  ]
+}

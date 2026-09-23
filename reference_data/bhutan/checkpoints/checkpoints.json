@@ -1,0 +1,114 @@
+{
+  "schema": "pramaan.checkpoints.v1",
+  "border": "INDIA_BHUTAN",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "checkpoints": [
+    {
+      "checkpoint_id": "BT-PHUENTSHOLING",
+      "country": "BHUTAN",
+      "checkpoint_name": "PHUENTSHOLING",
+      "aliases": [
+        "PHUNTSHOLING",
+        "PHUENTSOLING"
+      ],
+      "border_country": "INDIA",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "dzongkhag": "Chhukha"
+      },
+      "authority": "Department of Immigration, Royal Government of Bhutan",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "IN-JAIGAON",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "BT-SAMDRUP_JONGKHAR",
+      "country": "BHUTAN",
+      "checkpoint_name": "SAMDRUP JONGKHAR",
+      "aliases": [
+        "SAMDRUPJONGKHAR",
+        "S/JONGKHAR"
+      ],
+      "border_country": "INDIA",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "dzongkhag": "Samdrup Jongkhar"
+      },
+      "authority": "Department of Immigration, Royal Government of Bhutan",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "IN-DARRANGA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "BT-GELEPHU",
+      "country": "BHUTAN",
+      "checkpoint_name": "GELEPHU",
+      "aliases": [
+        "SARPANG/GELEPHU",
+        "GELEGPHU"
+      ],
+      "border_country": "INDIA",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "dzongkhag": "Sarpang"
+      },
+      "authority": "Department of Immigration, Royal Government of Bhutan",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": null,
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "BT-SAMTSE",
+      "country": "BHUTAN",
+      "checkpoint_name": "SAMTSE",
+      "aliases": [
+        "SAMCHI"
+      ],
+      "border_country": "INDIA",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "dzongkhag": "Samtse"
+      },
+      "authority": "Department of Immigration, Royal Government of Bhutan",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": null,
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    }
+  ]
+}

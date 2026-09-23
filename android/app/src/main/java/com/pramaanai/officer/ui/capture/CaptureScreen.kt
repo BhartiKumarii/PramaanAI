@@ -712,6 +712,26 @@ fun CaptureScreen(
                         }
                     }
 
+                    // On-device face similarity (cosine) between document and selfie embeddings
+                    if (de.isNotEmpty() && le.isNotEmpty() && de.size == le.size) {
+                        var dot = 0.0
+                        var normA = 0.0
+                        var normB = 0.0
+                        for (i in de.indices) {
+                            dot += de[i] * le[i]
+                            normA += de[i] * de[i]
+                            normB += le[i] * le[i]
+                        }
+                        val similarity = if (normA > 0 && normB > 0) dot / (Math.sqrt(normA) * Math.sqrt(normB)) else 0.0
+                        val pct = (similarity * 100).toInt()
+                        Log.d("CaptureScreen", "Face similarity: ${"%.4f".format(similarity)} ($pct%)")
+                        when {
+                            similarity >= 0.70 -> allChecks.add(vc("Face match (document ↔ selfie)", PASS, "Similarity $pct% — faces appear to match"))
+                            similarity >= 0.55 -> allChecks.add(vc("Face match (document ↔ selfie)", WARN, "Similarity $pct% — low confidence, officer review recommended"))
+                            else -> allChecks.add(vc("Face match (document ↔ selfie)", FAIL, "Similarity $pct% — faces do not appear to match"))
+                        }
+                    }
+
                     // Tampering checks
                     if (tp.tamperingRisk < 0.2) {
                         allChecks.add(vc("Document integrity check", PASS, "Document appears unaltered"))
@@ -913,6 +933,7 @@ fun CaptureScreen(
                     tamperingResult = tamperingResultState,
                     deepfakeResult = deepfakeResultState,
                     livenessResult = livenessDto,
+                    detectedDocumentType = detectedDocType,
                 )
                 if (item.status == ScreeningStatus.OFFLINE_QUEUED) {
                     PendingSubmissionWorker.enqueue(context)

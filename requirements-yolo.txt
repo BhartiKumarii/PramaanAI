@@ -1,0 +1,8 @@
+# Optional: server-side YOLO11 region detection and model training/export.
+# The API falls back to the classical OpenCV detector when these are absent
+# (e.g. on a small Render instance). CPU wheels:
+#   pip install -r requirements-yolo.txt --extra-index-url https://download.pytorch.org/whl/cpu
+-r requirements.txt
+torch>=2.4
+torchvision>=0.19
+ultralytics>=8.3,<9

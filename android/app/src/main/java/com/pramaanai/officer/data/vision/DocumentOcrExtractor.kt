@@ -126,7 +126,17 @@ object DocumentOcrExtractor {
             }
             putAll(extractIndianDocumentNumbers(combinedText))
             joinedLabelledName(combinedText)?.let { put("name", it) }
+            val printedPpNum = get("passport_number")
             mrz?.let { putAll(it.fields) }
+            // If MRZ and printed text passport numbers differ only in the first char
+            // (common OCR-B misread like P↔R), prefer the printed text first letter
+            // since printed text uses a more readable font.
+            if (printedPpNum != null && mrz?.fields?.get("passport_number") != null) {
+                val mrzPp = mrz.fields["passport_number"]!!
+                if (printedPpNum.length == mrzPp.length && printedPpNum.substring(1) == mrzPp.substring(1) && printedPpNum[0] != mrzPp[0]) {
+                    put("passport_number", printedPpNum)
+                }
+            }
         }
         val mrzLines = mrz?.lines ?: emptyList()
         val docType = detectDocumentType(combinedText)
@@ -899,8 +909,8 @@ object DocumentOcrExtractor {
         if (!result.containsKey("passport_number")) {
             val ppPatterns = listOf(
                 // Explicit label match — most reliable
-                Regex("""(?:PASSPORT\s*NO\.?|Passport\s*(?:No\.?|Number))\s*[:/]?\s*([A-Z]\d{5,8})""", RegexOption.IGNORE_CASE),
-                Regex("""(?:No\.?\s*du\s*passeport|राहदानी\s*नं\.?\s*[:/]?\s*)([A-Z]\d{5,8})""", RegexOption.IGNORE_CASE),
+                Regex("""(?:PASSPORT\s*NO\.?|Passport\s*(?:No\.?|Number))\s*[:/]?\s*([A-Z]{1,2}\d{5,8})""", RegexOption.IGNORE_CASE),
+                Regex("""(?:No\.?\s*du\s*passeport|राहदानी\s*नं\.?\s*[:/]?\s*)([A-Z]{1,2}\d{5,8})""", RegexOption.IGNORE_CASE),
                 // Label on one line, value on next (Bhutan passport layout)
             )
             // First try label-based patterns
@@ -918,7 +928,7 @@ object DocumentOcrExtractor {
                     val afterLabel = ls[ppLabelIdx].uppercase().substringAfter("PASSPORT NO").trim().trimStart(':', '.', ' ')
                     val nextLine = ls.getOrNull(ppLabelIdx + 1)?.trim() ?: ""
                     val candidate = afterLabel.ifBlank { nextLine }
-                    Regex("""([A-Z]\d{5,8})""").find(candidate)?.let { m ->
+                    Regex("""([A-Z]{1,2}\d{5,8})""").find(candidate)?.let { m ->
                         result["passport_number"] = m.groupValues[1]
                         if (!result.containsKey("document_number")) result["document_number"] = m.groupValues[1]
                     }
@@ -927,7 +937,7 @@ object DocumentOcrExtractor {
         }
         // Fallback: any [A-Z]\d{5,8} standalone token that isn't from the MRZ
         if (!result.containsKey("passport_number")) {
-            Regex("""\b([A-Z]\d{5,8})\b""").findAll(text).forEach { m ->
+            Regex("""\b([A-Z]{1,2}\d{5,8})\b""").findAll(text).forEach { m ->
                 val v = m.groupValues[1]
                 // Skip tokens that appear inside the MRZ line (MRZ starts with P<)
                 val inMrz = text.lines().any { it.contains("P<") && it.contains(v) }
@@ -1788,31 +1798,45 @@ object DocumentOcrExtractor {
     private fun parseTd3Mrz(text: String): MrzParse? {
         // Try line-based parsing first (standard case)
         val normalized = text.lines().map { normalizeMrzLine(it) }
+        Log.d(TAG, "MRZ: ${normalized.size} lines, lengths=${normalized.map { it.length }}")
+        for (line in normalized) {
+            if (line.contains('<') || line.length > 30) Log.d(TAG, "MRZ candidate: [${line.length}] $line")
+        }
         for (i in 0 until normalized.size - 1) {
             val rawL1 = normalized[i]
             val l2 = normalized[i + 1]
-            if (l2.length !in 28..50 || rawL1.length !in 36..50) continue
+            if (l2.length !in 28..50 || rawL1.length !in 15..50) continue
+            Log.d(TAG, "MRZ trying pair: L1[${rawL1.length}]=$rawL1 L2[${l2.length}]=$l2")
             val result = tryParseMrzPair(rawL1, l2)
-            if (result != null) return result
+            if (result != null) {
+                Log.d(TAG, "MRZ parsed! lines=${result.lines.size} fields=${result.fields.keys}")
+                return result
+            }
         }
         // Fallback 1: try non-adjacent lines (OCR may insert blank/short
         // lines between the two MRZ rows)
-        for (i in normalized.indices) {
-            val rawL1 = normalized[i]
-            if (rawL1.length !in 36..50) continue
-            if (rawL1.getOrNull(0)?.let { it == 'P' || it == 'V' } != true) continue
-            for (j in i + 1..minOf(i + 3, normalized.size - 1)) {
-                val l2 = normalized[j]
-                if (l2.length !in 28..50) continue
-                val result = tryParseMrzPair(rawL1, l2)
-                if (result != null) return result
+        // Collect all P</V< lines (potential L1) and long alphanumeric lines (potential L2)
+        val l1Candidates = normalized.indices.filter { idx ->
+            val l = normalized[idx]
+            l.length in 15..50 && (l[0] == 'P' || l[0] == 'V') && l.getOrNull(1)?.let { it == '<' || it.isLetter() } == true
+        }
+        val l2Candidates = normalized.indices.filter { normalized[it].length in 28..50 }
+        for (i in l1Candidates) {
+            for (j in l2Candidates) {
+                if (j <= i) continue
+                Log.d(TAG, "MRZ wide trying L1[$i]+L2[$j]: ${normalized[i].take(20)}... + ${normalized[j].take(20)}...")
+                val result = tryParseMrzPair(normalized[i], normalized[j])
+                if (result != null) {
+                    Log.d(TAG, "MRZ wide parsed! lines=${result.lines.size} fields=${result.fields.keys}")
+                    return result
+                }
             }
         }
         // Fallback 2: search for P< pattern in flat text — handles cases
         // where OCR merges MRZ lines with surrounding text.
         val flat = normalizeMrzLine(text.replace("\n", " "))
         // Find L1 start: P<XXX followed by name characters
-        val l1Match = Regex("""P<[A-Z]{3}[A-Z<]{30,}""").find(flat) ?: return null
+        val l1Match = Regex("""P<[A-Z]{3}[A-Z<]{8,}""").find(flat) ?: return null
         val l1Raw = flat.substring(l1Match.range.first)
         val l1 = l1Raw.take(44)
         if (l1.length < 44) return null
@@ -1830,10 +1854,16 @@ object DocumentOcrExtractor {
 
     private fun tryParseMrzPair(rawL1: String, rawL2: String): MrzParse? {
         val l1 = rawL1.padEnd(44, '<').take(44)
-        val l2 = rawL2.padEnd(44, '<').take(44)
+        var l2 = rawL2.padEnd(44, '<').take(44)
         if (l1[0] != 'P' && l1[0] != 'V') return null
         if (l1[1] != '<' && !l1[1].isLetter()) return null
         if (l2.length < 28) return null
+        // Fix OCR artifact: extra < between check digit (pos 9) and nationality (pos 10-12).
+        // If pos 10 is < but pos 11-13 are letters (nationality), remove the extra <.
+        if (l2[10] == '<' && l2.length > 13 && l2[11].isLetter() && l2[12].isLetter() && l2[13].isLetter()) {
+            l2 = (l2.substring(0, 10) + l2.substring(11)).padEnd(44, '<').take(44)
+            Log.d(TAG, "MRZ L2 fixed extra <: $l2")
+        }
         if (l2[20] != 'M' && l2[20] != 'F' && l2[20] != '<') return null
         val dob = mrzDate(fixDigits(l2.substring(13, 19)), isBirth = true)
         val exp = mrzDate(fixDigits(l2.substring(21, 27)), isBirth = false)
@@ -1845,14 +1875,15 @@ object DocumentOcrExtractor {
         val fields = LinkedHashMap<String, String>()
         listOf(given, surname).filter { it.isNotBlank() }.joinToString(" ").takeIf { it.isNotBlank() }
             ?.let { fields["name"] = it }
-        l2.substring(0, 9).replace("<", "").takeIf { it.isNotBlank() }?.let { fields["passport_number"] = it }
+        l2.substring(0, 9).replace("<", "").takeIf { it.isNotBlank() }?.let { raw ->
+            fields["passport_number"] = raw[0] + fixDigits(raw.substring(1))
+        }
         l2.substring(10, 13).takeIf { it.all { c -> c.isLetter() } }?.let { fields["nationality"] = NATIONALITY_BY_ICAO[it] ?: it }
         dob?.let { fields["date_of_birth"] = it }
         exp?.let { fields["date_of_expiry"] = it }
         when (l2[20]) { 'M' -> fields["gender"] = "M"; 'F' -> fields["gender"] = "F" }
-        val complete = rawL1.length == 44 && rawL2.length == 44
         val checkDigits = if (rawL2.length >= 44) validateMrzCheckDigits(rawL2) else null
-        return MrzParse(if (complete) listOf(l1, l2) else emptyList(), fields, checkDigits)
+        return MrzParse(listOf(l1, l2), fields, checkDigits)
     }
 
     /** Extract fields using regex patterns */

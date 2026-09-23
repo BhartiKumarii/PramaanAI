@@ -1,0 +1,52 @@
+{
+  "schema": "pramaan.document_reference.v1",
+  "country": "BHUTAN",
+  "document_type": "BHUTAN_VISA",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "note": "Prototype layout descriptor. expected_region values are approximate relative coordinates [x0,y0,x1,y1] used only for template-consistency scoring; they must be calibrated on authorised specimens before operational use. No security artwork is stored.",
+  "versions": [
+    {
+      "version": "e-Visa-letter",
+      "validity_period": {
+        "from": "2022-09-23",
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "Department of Immigration, Bhutan",
+          "url": "https://www.doi.gov.bt/"
+        }
+      ],
+      "layout_anchors": {
+        "QR_CODE": [
+          0.7,
+          0.0,
+          1.0,
+          0.3
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "qr_or_barcode",
+          "expected_region": [
+            0.7,
+            0.0,
+            1.0,
+            0.3
+          ],
+          "verification_method": "deterministic_decoder",
+          "expected_text_patterns": [],
+          "visually_checkable": true,
+          "note": "Where present, decoded content is compared with the printed fields."
+        }
+      ],
+      "field_patterns": {
+        "visa_number": "^[A-Z0-9/-]{5,20}$"
+      },
+      "expected_text_patterns": [
+        "BHUTAN",
+        "VISA"
+      ]
+    }
+  ]
+}

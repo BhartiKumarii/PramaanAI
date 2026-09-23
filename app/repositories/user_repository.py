@@ -23,11 +23,10 @@ def officer_roster(db: Session) -> list[dict]:
             .order_by(User.created_at.desc())
         ).scalars()
     )
-    counts = dict(
-        db.execute(
-            select(Case.field_officer_id, func.count()).group_by(Case.field_officer_id)
-        ).all()
-    )
+    # cases.field_officer_id is a native UUID while users.id is a hyphenated
+    # string — normalise both to str so the lookup actually matches.
+    counts = {str(officer_id): n for officer_id, n in db.execute(
+        select(Case.field_officer_id, func.count()).group_by(Case.field_officer_id)).all()}
     checkpoints = {cp.id: cp.code for cp in db.execute(select(Checkpoint)).scalars()}
     return [
         {
@@ -36,7 +35,7 @@ def officer_roster(db: Session) -> list[dict]:
             "role": o.role.value,
             "checkpoint_code": checkpoints.get(o.checkpoint_id) if o.checkpoint_id else None,
             "is_active": o.is_active,
-            "case_count": counts.get(o.id, 0),
+            "case_count": counts.get(str(o.id), 0),
         }
         for o in officers
     ]

@@ -1,3 +1,4 @@
+import re
 from sqlalchemy.orm import Session
 
 from app.repositories.network_repository import find_persons_by_document_hash
@@ -24,9 +25,15 @@ def check_duplicate_document(
             status="NO_MATCH", match_count=0, reason="no prior record found for this document number"
         )
 
-    declared = (declared_name or "UNKNOWN").strip().upper()
-    same_identity = [p for p in prior if p.full_name.strip().upper() == declared]
-    different_identity = [p for p in prior if p.full_name.strip().upper() != declared]
+    # Compared on letters only: OCR sometimes drops the spaces of a printed
+    # name ("ANANYASYNTHETIC SHARMA" vs "ANANYA SYNTHETIC SHARMA"), which is
+    # the same name, not a different identity.
+    def key(name: str | None) -> str:
+        return re.sub(r"[^A-Z]", "", (name or "UNKNOWN").upper())
+
+    declared = key(declared_name)
+    same_identity = [p for p in prior if key(p.full_name) == declared]
+    different_identity = [p for p in prior if key(p.full_name) != declared]
 
     if different_identity:
         other_names = sorted({p.full_name for p in different_identity})

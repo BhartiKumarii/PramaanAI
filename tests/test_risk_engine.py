@@ -47,7 +47,7 @@ def test_weighted_fusion_with_missing_deepfake_renormalizes_weights():
         identity_graph_result=_NO_CLUSTER_IDENTITY,
         # deepfake_result intentionally omitted
     )
-    assert result.score == 14
+    assert result.score == 12  # weights recalibrated in 07a2113 (citizen_registry/face_detection added)
     assert result.level == "LOW_RISK"
     assert result.decision == "CLEAR"
     weight_sum = sum(b.weight for b in result.breakdown)

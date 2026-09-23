@@ -10,6 +10,7 @@ import {
   Smartphone,
   BarChart3,
   ScrollText,
+  ScanSearch,
   Users,
   Settings,
   ChevronLeft,
@@ -23,6 +24,7 @@ import logoIcon from '../assets/logo-icon.png'
 const NAV_ICON: Record<string, LucideIcon> = {
   Overview: LayoutDashboard,
   'Verification Desk': ShieldCheck,
+  'Document Verification': ScanSearch,
   'Case Intelligence': FileSearch,
   'Identity Intelligence': Fingerprint,
   Checkpoints: MapPin,
@@ -39,7 +41,8 @@ interface NavItem { label: string; to: string; dividerAfter?: boolean }
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Overview', to: '/console' },
-  { label: 'Verification Desk', to: '/console/verification', dividerAfter: true },
+  { label: 'Verification Desk', to: '/console/verification' },
+  { label: 'Document Verification', to: '/console/document-verification', dividerAfter: true },
   { label: 'Identity Intelligence', to: '/console/identity' },
   { label: 'Checkpoints', to: '/console/checkpoints' },
   { label: 'Area Monitoring', to: '/console/area-monitoring' },

@@ -1,0 +1,60 @@
+{
+  "schema": "pramaan.stamp_reference.v1",
+  "country": "INDIA",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "note": "Text-pattern reference only. Stamp artwork, colour and shape are NOT stored and are NEVER used to identify country or border type.",
+  "versions": [
+    {
+      "version": "2026.09-prototype",
+      "validity_period": {
+        "from": null,
+        "to": null
+      },
+      "country_text_patterns": [
+        "INDIA",
+        "BHARAT",
+        "INDIAN"
+      ],
+      "authority_text_patterns": [
+        "BUREAU OF IMMIGRATION",
+        "IMMIGRATION CHECK POST",
+        "IMMIGRATION"
+      ],
+      "direction_patterns": {
+        "ENTRY": [
+          "ARRIVAL",
+          "ARRIVED",
+          "ENTRY",
+          "ENTERED",
+          "ADMITTED",
+          "IN"
+        ],
+        "EXIT": [
+          "DEPARTURE",
+          "DEPARTED",
+          "EXIT",
+          "EXITED",
+          "OUT"
+        ]
+      },
+      "stamp_type_patterns": {
+        "VISA_STAMP": [
+          "VISA"
+        ],
+        "PERMIT_MARKING": [
+          "PERMIT"
+        ],
+        "IMMIGRATION_STAMP": [
+          "IMMIGRATION"
+        ]
+      },
+      "verification_method": "region_detection + region_ocr + checkpoint_reference_lookup",
+      "official_reference": [
+        {
+          "title": "Bureau of Immigration, Government of India",
+          "url": "https://boi.gov.in/"
+        }
+      ]
+    }
+  ]
+}

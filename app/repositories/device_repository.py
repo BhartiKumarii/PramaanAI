@@ -20,6 +20,10 @@ def register_device(db: Session, device_identifier: str, officer_id: uuid.UUID, 
         db.commit()
         db.refresh(existing)
         return existing
+    # User.id is a String(36) column while Device.officer_id is a Uuid: the
+    # SQLite Uuid binder needs a real UUID (Postgres accepts either).
+    if not isinstance(officer_id, uuid.UUID):
+        officer_id = uuid.UUID(str(officer_id))
     device = Device(device_identifier=device_identifier, officer_id=officer_id, app_version=app_version)
     db.add(device)
     db.commit()

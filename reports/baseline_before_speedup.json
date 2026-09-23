@@ -1,0 +1,2768 @@
+{
+  "generated_at": "2026-09-23T18:05:41+00:00",
+  "synthetic": {
+    "cases": [
+      {
+        "case_id": "GEN-001",
+        "description": "Genuine synthetic Indian passport (matching mock registry record)",
+        "seconds": 17.51,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "mrz_check_digits": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "mrz_consistency": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "registry": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "GEN-002",
+        "description": "Genuine synthetic Nepal visa with passport and Kakarbhitta arrival stamp (third-country traveller)",
+        "seconds": 17.98,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 5,
+        "document_types": [
+          "FOREIGN_PASSPORT",
+          "NEPAL_VISA",
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [],
+        "checks": {
+          "cross_document": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "visa_requirement": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "checkpoint_match": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "GEN-003",
+        "description": "Genuine synthetic Indian driving licence (signed QR, yellow/gold visual feature, mock registry VALID)",
+        "seconds": 3.63,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 5,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [],
+        "checks": {
+          "digital_signature": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "qr_consistency": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "registry": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "yellow_gold_feature": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "GEN-004",
+        "description": "Genuine synthetic Bhutan entry permit (signed QR, mock registry ISSUED)",
+        "seconds": 4.14,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 10,
+        "document_types": [
+          "BHUTAN_ENTRY_PERMIT"
+        ],
+        "flags": [],
+        "checks": {
+          "digital_signature": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "registry": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "GEN-005",
+        "description": "Synthetic Aadhaar-like card: must route to official verification, never self-verify",
+        "seconds": 3.01,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "OFFICIAL_VERIFICATION_REQUIRED",
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 23,
+        "document_types": [
+          "AADHAAR"
+        ],
+        "flags": [
+          "possible_text_manipulation"
+        ],
+        "checks": {
+          "aadhaar_official": {
+            "expected": [
+              "OFFICIAL_VERIFICATION_REQUIRED"
+            ],
+            "got": [
+              "OFFICIAL_VERIFICATION_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-001",
+        "description": "OCR/MRZ mismatch: printed passport number differs from MRZ",
+        "seconds": 6.2,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED",
+          "FAIL"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "document_number_mismatch"
+        ],
+        "checks": {
+          "mrz_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-002",
+        "description": "Passport/visa mismatch: visa quotes a different passport number",
+        "seconds": 15.25,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 25,
+        "document_types": [
+          "FOREIGN_PASSPORT",
+          "NEPAL_VISA",
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [
+          "passport_number_mismatch"
+        ],
+        "checks": {
+          "cross_document": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-003",
+        "description": "DOB mismatch: printed DOB differs from the (mock) registry record",
+        "seconds": 3.69,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 25,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [
+          "date_of_birth_mismatch",
+          "qr_missing"
+        ],
+        "checks": {
+          "registry_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-004",
+        "description": "Expired document",
+        "seconds": 6.24,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED",
+          "FAIL"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 35,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "document_expired"
+        ],
+        "checks": {
+          "document_validity": {
+            "expected": [
+              "FAIL"
+            ],
+            "got": [
+              "FAIL"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-005",
+        "description": "QR/OCR mismatch: unsigned QR DOB differs from printed DOB",
+        "seconds": 3.54,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 25,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [
+          "qr_data_mismatch"
+        ],
+        "checks": {
+          "qr_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-006",
+        "description": "Missing QR on a template version that carries one",
+        "seconds": 3.85,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": false,
+        "attention_required": true,
+        "predicted_attention": false,
+        "risk_score": 5,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [
+          "qr_missing"
+        ],
+        "checks": {
+          "machine_readable_code": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-007",
+        "description": "Stamp detection: Nepal immigration arrival stamp, Kakarbhitta",
+        "seconds": 6.28,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": false,
+        "attention_required": false,
+        "predicted_attention": true,
+        "risk_score": 6,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [],
+        "checks": {
+          "stamp_detection": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          },
+          "stamp_identification": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "NOT_VERIFIED"
+            ],
+            "ok": false
+          }
+        }
+      },
+      {
+        "case_id": "TST-008",
+        "description": "Unknown stamp: impression with no identifiable authority, checkpoint or direction",
+        "seconds": 10.41,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED",
+          "NOT_VERIFIED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 18,
+        "document_types": [
+          "DOCUMENT_TYPE_UNCERTAIN"
+        ],
+        "flags": [
+          "unknown_stamp"
+        ],
+        "checks": {}
+      },
+      {
+        "case_id": "TST-009",
+        "description": "Land-border checkpoint match: Birgunj (India\u2013Nepal) arrival stamp",
+        "seconds": 6.31,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [],
+        "checks": {
+          "checkpoint_match": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-010",
+        "description": "Checkpoint mismatch: stamp says NEPAL immigration but names an Indian (India\u2013Bhutan) post",
+        "seconds": 6.14,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [
+          "checkpoint_mismatch"
+        ],
+        "checks": {
+          "stamp_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-011",
+        "description": "Synthetic photo replacement: portrait swapped with a re-compressed, noisier photo",
+        "seconds": 6.47,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": false,
+        "attention_required": true,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "tampering_analysis": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": false
+          }
+        }
+      },
+      {
+        "case_id": "TST-012",
+        "description": "Image manipulation: DOB text region overwritten with a pasted, re-compressed patch",
+        "seconds": 3.6,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": false,
+        "attention_required": true,
+        "predicted_attention": false,
+        "risk_score": 5,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [],
+        "checks": {
+          "tampering_analysis": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": false
+          }
+        }
+      },
+      {
+        "case_id": "TST-013",
+        "description": "Registry unavailable: genuine licence, DL registry disabled",
+        "seconds": 3.5,
+        "overall_status": "REGISTRY_NOT_AVAILABLE",
+        "expected_overall": [
+          "REGISTRY_NOT_AVAILABLE"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 5,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [],
+        "checks": {
+          "registry": {
+            "expected": [
+              "REGISTRY_NOT_AVAILABLE"
+            ],
+            "got": [
+              "REGISTRY_NOT_AVAILABLE"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-014",
+        "description": "Poor-quality image: blurred, dark, low resolution",
+        "seconds": 2.61,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "NOT_VERIFIED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 24,
+        "document_types": [
+          "DOCUMENT_TYPE_UNCERTAIN"
+        ],
+        "flags": [],
+        "checks": {
+          "image_quality": {
+            "expected": [
+              "NOT_VERIFIED"
+            ],
+            "got": [
+              "NOT_VERIFIED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-015",
+        "description": "Offline verification: genuine passport verified with no connectivity",
+        "seconds": 6.05,
+        "overall_status": "REGISTRY_NOT_AVAILABLE",
+        "expected_overall": [
+          "REGISTRY_NOT_AVAILABLE"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "registry": {
+            "expected": [
+              "REGISTRY_NOT_AVAILABLE"
+            ],
+            "got": [
+              "REGISTRY_NOT_AVAILABLE"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-016",
+        "description": "Name mismatch: printed surname differs from MRZ",
+        "seconds": 6.32,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "name_mismatch"
+        ],
+        "checks": {
+          "mrz_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-017",
+        "description": "Expiry mismatch: printed expiry differs from MRZ",
+        "seconds": 6.35,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "date_of_expiry_mismatch"
+        ],
+        "checks": {
+          "mrz_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-018",
+        "description": "MRZ mismatch: DOB check digit does not validate",
+        "seconds": 5.97,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED",
+          "FAIL"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 12,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "mrz_check_digit_failure"
+        ],
+        "checks": {
+          "mrz_check_digits": {
+            "expected": [
+              "FAIL",
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-019",
+        "description": "Photo-position anomaly: portrait printed where the template expects text",
+        "seconds": 3.54,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 17,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [],
+        "checks": {
+          "photo": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-020",
+        "description": "Face mismatch: presented person differs from the passport photo",
+        "seconds": 6.25,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "face_verification": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-021",
+        "description": "Face match control: presented person is the passport holder (different capture)",
+        "seconds": 6.84,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "face_verification": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-022",
+        "description": "Stamp-reference mismatch: Kakarbhitta arrival stamp with geometry unlike its (synthetic) reference",
+        "seconds": 5.58,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 18,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [
+          "stamp_reference_mismatch"
+        ],
+        "checks": {
+          "stamp_reference": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-023",
+        "description": "Stamp image-forensics anomaly: stamp pasted as a re-compressed patch and duplicated",
+        "seconds": 7.24,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 24,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [
+          "possible_stamp_compositing"
+        ],
+        "checks": {
+          "stamp_forensics": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-024",
+        "description": "Digital-signature failure: signed QR data altered after signing",
+        "seconds": 4.17,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED",
+          "FAIL"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 60,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [
+          "date_of_birth_mismatch"
+        ],
+        "checks": {
+          "digital_signature": {
+            "expected": [
+              "FAIL"
+            ],
+            "got": [
+              "FAIL"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-025",
+        "description": "Unregistered document: well-formed licence with no record in the mock registry",
+        "seconds": 6.18,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "NOT_VERIFIED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 11,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [],
+        "checks": {
+          "registry": {
+            "expected": [
+              "NOT_VERIFIED"
+            ],
+            "got": [
+              "NOT_VERIFIED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-026",
+        "description": "Multiple simultaneous inconsistencies: expired + MRZ check digit + DOB mismatch",
+        "seconds": 8.53,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "FAIL",
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 87,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "date_of_birth_mismatch",
+          "document_expired",
+          "mrz_check_digit_failure",
+          "registry_mismatch"
+        ],
+        "checks": {
+          "document_validity": {
+            "expected": [
+              "FAIL"
+            ],
+            "got": [
+              "FAIL"
+            ],
+            "ok": true
+          },
+          "mrz_check_digits": {
+            "expected": [
+              "FAIL",
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-027",
+        "description": "India\u2013Nepal treaty national: Indian passport, no visa/stamp \u2014 must NOT be flagged",
+        "seconds": 7.66,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "visa_requirement": {
+            "expected": [
+              "NOT_APPLICABLE"
+            ],
+            "got": [
+              "NOT_APPLICABLE"
+            ],
+            "ok": true
+          },
+          "stamp_requirement": {
+            "expected": [
+              "NOT_APPLICABLE"
+            ],
+            "got": [
+              "NOT_APPLICABLE"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-028",
+        "description": "India\u2013Nepal third-country national without the required Nepal visa",
+        "seconds": 7.76,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 24,
+        "document_types": [
+          "FOREIGN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "visa_requirement": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-029",
+        "description": "India\u2013Bhutan (post-2022 rules): Indian passport, no physical stamp \u2014 must NOT be flagged",
+        "seconds": 7.19,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "stamp_requirement": {
+            "expected": [
+              "NOT_APPLICABLE"
+            ],
+            "got": [
+              "NOT_APPLICABLE"
+            ],
+            "ok": true
+          },
+          "visa_requirement": {
+            "expected": [
+              "NOT_APPLICABLE"
+            ],
+            "got": [
+              "NOT_APPLICABLE"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-030",
+        "description": "Modified nationality: document says NEPALI, the (mock) registry record says INDIAN",
+        "seconds": 7.33,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [
+          "registry_mismatch"
+        ],
+        "checks": {
+          "registry": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-031",
+        "description": "Damaged/unreadable QR: part of the code is covered",
+        "seconds": 4.86,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "NOT_VERIFIED",
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 11,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [],
+        "checks": {
+          "machine_readable_code": {
+            "expected": [
+              "NOT_VERIFIED",
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "NOT_VERIFIED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-032",
+        "description": "Missing MRZ on a passport data page",
+        "seconds": 4.76,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "NOT_VERIFIED",
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 6,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "mrz_structure": {
+            "expected": [
+              "NOT_VERIFIED",
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "NOT_VERIFIED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-033",
+        "description": "Missing photo: licence with an empty photo area",
+        "seconds": 4.78,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED",
+          "NOT_VERIFIED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 17,
+        "document_types": [
+          "DRIVING_LICENCE"
+        ],
+        "flags": [
+          "photo_missing"
+        ],
+        "checks": {
+          "photo": {
+            "expected": [
+              "REVIEW_REQUIRED",
+              "NOT_VERIFIED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-034",
+        "description": "Low-quality live face capture: blurred, dark, tiny \u2014 retake, not a mismatch",
+        "seconds": 7.29,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "NOT_VERIFIED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 6,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "face_verification": {
+            "expected": [
+              "NOT_VERIFIED"
+            ],
+            "got": [
+              "NOT_VERIFIED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-035",
+        "description": "Stamp date inconsistency: entry stamped before the visa's validity began",
+        "seconds": 19.85,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 25,
+        "document_types": [
+          "FOREIGN_PASSPORT",
+          "NEPAL_VISA",
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [
+          "stamp_date_mismatch"
+        ],
+        "checks": {
+          "stamp_consistency": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-036",
+        "description": "Unexpected checkpoint: foreigner stamped at a post not designated for foreigners",
+        "seconds": 22.8,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 17,
+        "document_types": [
+          "FOREIGN_PASSPORT",
+          "NEPAL_VISA",
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [],
+        "checks": {
+          "designated_crossing": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-037",
+        "description": "Indian immigration marking (Raxaul) identified from text + checkpoint reference",
+        "seconds": 8.04,
+        "overall_status": "NOT_VERIFIED",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": false,
+        "attention_required": false,
+        "predicted_attention": true,
+        "risk_score": 6,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [],
+        "checks": {
+          "checkpoint_match": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-038",
+        "description": "Bhutan immigration marking (Phuentsholing) identified from text + checkpoint reference",
+        "seconds": 8.46,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "IMMIGRATION_STAMP"
+        ],
+        "flags": [],
+        "checks": {
+          "checkpoint_match": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-039",
+        "description": "Live face matches the document, but the authorised reference photo shows someone else",
+        "seconds": 9.83,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 20,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "face_verification": {
+            "expected": [
+              "REVIEW_REQUIRED"
+            ],
+            "got": [
+              "REVIEW_REQUIRED"
+            ],
+            "ok": true
+          }
+        }
+      },
+      {
+        "case_id": "TST-040",
+        "description": "Cropped document: right side and part of the MRZ outside the frame",
+        "seconds": 5.3,
+        "overall_status": "REVIEW_REQUIRED",
+        "expected_overall": [
+          "NOT_VERIFIED",
+          "REVIEW_REQUIRED"
+        ],
+        "overall_ok": true,
+        "attention_required": true,
+        "predicted_attention": true,
+        "risk_score": 12,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {}
+      },
+      {
+        "case_id": "TST-041",
+        "description": "Visual signature only: an image of a signature is not treated as a digital signature",
+        "seconds": 6.13,
+        "overall_status": "PASS",
+        "expected_overall": [
+          "PASS"
+        ],
+        "overall_ok": true,
+        "attention_required": false,
+        "predicted_attention": false,
+        "risk_score": 0,
+        "document_types": [
+          "INDIAN_PASSPORT"
+        ],
+        "flags": [],
+        "checks": {
+          "mrz_check_digits": {
+            "expected": [
+              "PASS"
+            ],
+            "got": [
+              "PASS"
+            ],
+            "ok": true
+          }
+        }
+      }
+    ],
+    "pipeline_attention": {
+      "n": 46,
+      "tp": 31,
+      "tn": 10,
+      "fp": 2,
+      "fn": 3,
+      "accuracy": 0.891,
+      "precision": 0.939,
+      "recall": 0.912,
+      "f1": 0.925,
+      "false_positive_rate": 0.167,
+      "false_negative_rate": 0.088
+    },
+    "overall_status_exact_match": 0.891,
+    "expected_check_accuracy": {
+      "hits": 53,
+      "total": 56,
+      "accuracy": 0.946
+    },
+    "document_type_accuracy": {
+      "hits": 52,
+      "total": 54,
+      "accuracy": 0.963
+    },
+    "ocr_field_accuracy": {
+      "hits": 18,
+      "total": 18,
+      "accuracy": 1.0
+    },
+    "tampering": {
+      "n": 46,
+      "tp": 1,
+      "tn": 42,
+      "fp": 1,
+      "fn": 2,
+      "accuracy": 0.935,
+      "precision": 0.5,
+      "recall": 0.333,
+      "f1": 0.4,
+      "false_positive_rate": 0.023,
+      "false_negative_rate": 0.667
+    },
+    "validation": {
+      "n": 25,
+      "tp": 13,
+      "tn": 12,
+      "fp": 0,
+      "fn": 0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    },
+    "face_end_to_end": {
+      "n": 3,
+      "tp": 2,
+      "tn": 1,
+      "fp": 0,
+      "fn": 0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    }
+  },
+  "face_pairs": {
+    "n": 78,
+    "tp": 30,
+    "tn": 12,
+    "fp": 0,
+    "fn": 36,
+    "accuracy": 0.538,
+    "precision": 1.0,
+    "recall": 0.455,
+    "f1": 0.625,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.545,
+    "note": "12 drawn synthetic identities: 12 same-person pairs, 66 different-person pairs; positive = 'no match'. Drawn faces are NOT representative of real photographs."
+  },
+  "robustness": {
+    "rows": [
+      {
+        "subject": "passport",
+        "condition": "clear",
+        "overall_status": "REGISTRY_NOT_AVAILABLE",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.982,
+        "regions": 3,
+        "ocr_confidence": 0.9758,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.72
+      },
+      {
+        "subject": "passport",
+        "condition": "low_resolution",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.98,
+        "regions": 3,
+        "ocr_confidence": 0.9072,
+        "ocr_lines": 24,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 9.12
+      },
+      {
+        "subject": "passport",
+        "condition": "blur",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.966,
+        "regions": 3,
+        "ocr_confidence": 0.9647,
+        "ocr_lines": 14,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 6.18
+      },
+      {
+        "subject": "passport",
+        "condition": "rotation_5deg",
+        "overall_status": "REGISTRY_NOT_AVAILABLE",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.98,
+        "regions": 4,
+        "ocr_confidence": 0.9668,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.9
+      },
+      {
+        "subject": "passport",
+        "condition": "rotation_90deg",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.982,
+        "regions": 4,
+        "ocr_confidence": 0.9739,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": 90,
+        "processing_seconds": 27.6
+      },
+      {
+        "subject": "passport",
+        "condition": "rotation_180deg",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.752,
+        "regions": 2,
+        "ocr_confidence": 0.9748,
+        "ocr_lines": 23,
+        "face_found": false,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 7.35
+      },
+      {
+        "subject": "passport",
+        "condition": "dark",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.978,
+        "regions": 3,
+        "ocr_confidence": 0.9658,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 10.5
+      },
+      {
+        "subject": "passport",
+        "condition": "bright",
+        "overall_status": "REGISTRY_NOT_AVAILABLE",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.954,
+        "regions": 3,
+        "ocr_confidence": 0.9814,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 8.51
+      },
+      {
+        "subject": "passport",
+        "condition": "shadow",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.984,
+        "regions": 3,
+        "ocr_confidence": 0.9723,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 9.56
+      },
+      {
+        "subject": "passport",
+        "condition": "glare",
+        "overall_status": "REGISTRY_NOT_AVAILABLE",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.98,
+        "regions": 3,
+        "ocr_confidence": 0.978,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.96
+      },
+      {
+        "subject": "passport",
+        "condition": "low_quality_camera",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.859,
+        "regions": 3,
+        "ocr_confidence": 0.9725,
+        "ocr_lines": 25,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.38
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "clear",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.962,
+        "regions": 4,
+        "ocr_confidence": 0.9486,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 5.43
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "low_resolution",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.966,
+        "regions": 4,
+        "ocr_confidence": 0.8958,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 5.46
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "blur",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.961,
+        "regions": 4,
+        "ocr_confidence": 0.9831,
+        "ocr_lines": 9,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "NOT_VERIFIED",
+        "rotation_corrected": null,
+        "processing_seconds": 4.56
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "rotation_5deg",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.967,
+        "regions": 4,
+        "ocr_confidence": 0.9455,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 4.78
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "rotation_90deg",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.508,
+        "regions": 4,
+        "ocr_confidence": 0.9543,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 16.37
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "rotation_180deg",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.852,
+        "regions": 4,
+        "ocr_confidence": 0.9453,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 5.28
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "dark",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.957,
+        "regions": 4,
+        "ocr_confidence": 0.9492,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 4.39
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "bright",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.964,
+        "regions": 4,
+        "ocr_confidence": 0.9606,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 4.71
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "shadow",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.954,
+        "regions": 4,
+        "ocr_confidence": 0.9509,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 5.59
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "glare",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.964,
+        "regions": 4,
+        "ocr_confidence": 0.9463,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 5.26
+      },
+      {
+        "subject": "driving_licence",
+        "condition": "low_quality_camera",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.917,
+        "regions": 4,
+        "ocr_confidence": 0.9554,
+        "ocr_lines": 17,
+        "face_found": true,
+        "stamps_identified": 0,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 4.61
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "clear",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.918,
+        "regions": 2,
+        "ocr_confidence": 0.9912,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 7.98
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "low_resolution",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.944,
+        "regions": 2,
+        "ocr_confidence": 0.9903,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 9.27
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "blur",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.878,
+        "regions": 2,
+        "ocr_confidence": 0.9932,
+        "ocr_lines": 5,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "NOT_VERIFIED",
+        "rotation_corrected": 180,
+        "processing_seconds": 18.16
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "rotation_5deg",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.946,
+        "regions": 2,
+        "ocr_confidence": 0.9683,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.52
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "rotation_90deg",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.92,
+        "regions": 2,
+        "ocr_confidence": 0.9911,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": 90,
+        "processing_seconds": 18.41
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "rotation_180deg",
+        "overall_status": "NOT_VERIFIED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.777,
+        "regions": 3,
+        "ocr_confidence": 0.9913,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.33
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "dark",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.964,
+        "regions": 2,
+        "ocr_confidence": 0.9708,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 10.14
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "bright",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.94,
+        "regions": 2,
+        "ocr_confidence": 0.9907,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "REVIEW_REQUIRED",
+        "rotation_corrected": null,
+        "processing_seconds": 7.82
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "shadow",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.94,
+        "regions": 2,
+        "ocr_confidence": 0.974,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.29
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "glare",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.944,
+        "regions": 2,
+        "ocr_confidence": 0.9914,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.11
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "low_quality_camera",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.948,
+        "regions": 3,
+        "ocr_confidence": 0.9834,
+        "ocr_lines": 6,
+        "face_found": true,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.13
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "faded_stamp",
+        "overall_status": "REVIEW_REQUIRED",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.939,
+        "regions": 2,
+        "ocr_confidence": 0.9736,
+        "ocr_lines": 6,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 8.11
+      },
+      {
+        "subject": "stamp_page",
+        "condition": "overlapping_rotated_stamps",
+        "overall_status": "PASS",
+        "document_type_correct": true,
+        "detection_confidence_mean": 0.792,
+        "regions": 3,
+        "ocr_confidence": 0.9717,
+        "ocr_lines": 10,
+        "face_found": false,
+        "stamps_identified": 1,
+        "quality_flag": "PASS",
+        "rotation_corrected": null,
+        "processing_seconds": 7.21
+      }
+    ],
+    "document_type_accuracy": 1.0,
+    "processing_seconds": {
+      "mean": 8.82,
+      "max": 27.6
+    }
+  },
+  "region_detection": {
+    "held_out_real_images": 21,
+    "iou_threshold": 0.5,
+    "detectors": {
+      "classical": {
+        "per_class": {
+          "barcode": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 1,
+            "precision": null,
+            "recall": 0.0
+          },
+          "document": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 20,
+            "precision": null,
+            "recall": 0.0
+          },
+          "mrz": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 2,
+            "precision": 1.0,
+            "recall": 0.6
+          },
+          "photograph": {
+            "tp": 14,
+            "fp": 0,
+            "fn": 4,
+            "precision": 1.0,
+            "recall": 0.778
+          },
+          "qr_code": {
+            "tp": 1,
+            "fp": 2,
+            "fn": 3,
+            "precision": 0.333,
+            "recall": 0.25
+          },
+          "stamp": {
+            "tp": 4,
+            "fp": 14,
+            "fn": 9,
+            "precision": 0.222,
+            "recall": 0.308
+          },
+          "yellow_gold_feature": {
+            "tp": 5,
+            "fp": 1,
+            "fn": 2,
+            "precision": 0.833,
+            "recall": 0.714
+          }
+        },
+        "overall": {
+          "tp": 27,
+          "fp": 17,
+          "fn": 41,
+          "precision": 0.614,
+          "recall": 0.397
+        }
+      },
+      "yolo11n": {
+        "per_class": {
+          "barcode": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 1,
+            "precision": null,
+            "recall": 0.0
+          },
+          "document": {
+            "tp": 20,
+            "fp": 2,
+            "fn": 0,
+            "precision": 0.909,
+            "recall": 1.0
+          },
+          "mrz": {
+            "tp": 5,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "photograph": {
+            "tp": 16,
+            "fp": 3,
+            "fn": 2,
+            "precision": 0.842,
+            "recall": 0.889
+          },
+          "qr_code": {
+            "tp": 3,
+            "fp": 3,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.75
+          },
+          "stamp": {
+            "tp": 8,
+            "fp": 2,
+            "fn": 5,
+            "precision": 0.8,
+            "recall": 0.615
+          },
+          "yellow_gold_feature": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        },
+        "overall": {
+          "tp": 59,
+          "fp": 10,
+          "fn": 9,
+          "precision": 0.855,
+          "recall": 0.868
+        }
+      }
+    }
+  },
+  "real": {
+    "labels_status": "Claude (visual inspection of thumbnails) \u2014 PENDING USER CONFIRMATION",
+    "n": 57,
+    "document_type_accuracy": 0.86,
+    "per_type": {
+      "INDIAN_VISA": {
+        "n": 2,
+        "correct": 2
+      },
+      "NEPAL_VISA": {
+        "n": 10,
+        "correct": 10
+      },
+      "FOREIGN_PASSPORT": {
+        "n": 6,
+        "correct": 6
+      },
+      "DOCUMENT_TYPE_UNCERTAIN": {
+        "n": 2,
+        "correct": 2
+      },
+      "INDIAN_PASSPORT": {
+        "n": 5,
+        "correct": 3
+      },
+      "BHUTAN_ENTRY_PERMIT": {
+        "n": 3,
+        "correct": 3
+      },
+      "OTHER_TRAVEL_DOCUMENT": {
+        "n": 5,
+        "correct": 5
+      },
+      "DRIVING_LICENCE": {
+        "n": 16,
+        "correct": 11
+      },
+      "AADHAAR": {
+        "n": 1,
+        "correct": 1
+      },
+      "IDENTITY_DOCUMENT": {
+        "n": 6,
+        "correct": 5
+      },
+      "IMMIGRATION_STAMP": {
+        "n": 1,
+        "correct": 1
+      }
+    },
+    "ocr_vs_validated_mrz": {
+      "hits": 12,
+      "total": 18,
+      "accuracy": 0.667
+    },
+    "overall_status_distribution": {
+      "NOT_VERIFIED": 25,
+      "PASS": 6,
+      "REGISTRY_NOT_AVAILABLE": 1,
+      "REVIEW_REQUIRED": 25
+    },
+    "rows": [
+      {
+        "file": "01.jpg",
+        "expected": "INDIAN_VISA",
+        "got": "INDIAN_VISA",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "01_Nepal_Visa_On_Arrival.png",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "02_Nepal_Entry_Visa.png",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260921_113553.jpg",
+        "expected": "FOREIGN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260921_184707.jpg",
+        "expected": "FOREIGN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_112041.png",
+        "expected": "DOCUMENT_TYPE_UNCERTAIN",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": true,
+        "expected_country": null,
+        "got_country": null,
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_115655.jpg",
+        "expected": "INDIAN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": false,
+        "expected_country": "INDIA",
+        "got_country": "NDP",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_141824.jpg",
+        "expected": "FOREIGN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REGISTRY_NOT_AVAILABLE"
+      },
+      {
+        "file": "IMG_20260922_202359.jpg",
+        "expected": "FOREIGN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202438.jpg",
+        "expected": "BHUTAN_ENTRY_PERMIT",
+        "got": "BHUTAN_ENTRY_PERMIT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202501.jpg",
+        "expected": "BHUTAN_ENTRY_PERMIT",
+        "got": "BHUTAN_ENTRY_PERMIT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202511.jpg",
+        "expected": "BHUTAN_ENTRY_PERMIT",
+        "got": "BHUTAN_ENTRY_PERMIT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202524.jpg",
+        "expected": "OTHER_TRAVEL_DOCUMENT",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": null,
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202536.jpg",
+        "expected": "OTHER_TRAVEL_DOCUMENT",
+        "got": "OTHER_TRAVEL_DOCUMENT",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202606.jpg",
+        "expected": "OTHER_TRAVEL_DOCUMENT",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": null,
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202625.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202637.jpg",
+        "expected": "OTHER_TRAVEL_DOCUMENT",
+        "got": "OTHER_TRAVEL_DOCUMENT",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": null,
+        "overall_status": "PASS"
+      },
+      {
+        "file": "IMG_20260922_202649.jpg",
+        "expected": "OTHER_TRAVEL_DOCUMENT",
+        "got": "OTHER_TRAVEL_DOCUMENT",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202748.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202808.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202821.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202832.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202924.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_202940.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_202952.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_203006.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_203022.jpg",
+        "expected": "AADHAAR",
+        "got": "AADHAAR",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_203037.jpg",
+        "expected": "IDENTITY_DOCUMENT",
+        "got": "IDENTITY_DOCUMENT",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "PASS"
+      },
+      {
+        "file": "IMG_20260922_203050.jpg",
+        "expected": "IDENTITY_DOCUMENT",
+        "got": "IDENTITY_DOCUMENT",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "PASS"
+      },
+      {
+        "file": "IMG_20260922_203109.jpg",
+        "expected": "NEPAL_VISA",
+        "got": "IMMIGRATION_STAMP",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": null,
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_203123.jpg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_203136.jpg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_203150.jpg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260922_203207.jpg",
+        "expected": "INDIAN_VISA",
+        "got": "INDIAN_VISA",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "IMG_20260922_203247.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260923_011319.jpg",
+        "expected": "DOCUMENT_TYPE_UNCERTAIN",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": true,
+        "expected_country": null,
+        "got_country": null,
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "IMG_20260923_155802.jpg",
+        "expected": "IMMIGRATION_STAMP",
+        "got": "IMMIGRATION_STAMP",
+        "ok": true,
+        "expected_country": null,
+        "got_country": null,
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "Nepal-visa.jpg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "bhutan_passport.jpeg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "concept-design-for-an-updated-indian-passport-v0-zb81kta3ffwg1.png",
+        "expected": "INDIAN_PASSPORT",
+        "got": "INDIAN_PASSPORT",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "dl_1.jpeg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "dl_10.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "dl_13.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "dl_14.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "dl_18.jpg",
+        "expected": "DRIVING_LICENCE",
+        "got": "DRIVING_LICENCE",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "file_0000000059248211b82a7ab67156eee1.png",
+        "expected": "FOREIGN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "images (1) (1).jpeg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "images (1).jpeg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "images (2) (1).jpeg",
+        "expected": "IDENTITY_DOCUMENT",
+        "got": "IDENTITY_DOCUMENT",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "PASS"
+      },
+      {
+        "file": "images (2) (2).jpeg",
+        "expected": "IDENTITY_DOCUMENT",
+        "got": "IDENTITY_DOCUMENT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "PASS"
+      },
+      {
+        "file": "images (2).jpeg",
+        "expected": "NEPAL_VISA",
+        "got": "NEPAL_VISA",
+        "ok": true,
+        "expected_country": "NEPAL",
+        "got_country": "NEPAL",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "images (3) (1).jpeg",
+        "expected": "IDENTITY_DOCUMENT",
+        "got": "IDENTITY_DOCUMENT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "PASS"
+      },
+      {
+        "file": "images (4).jpeg",
+        "expected": "IDENTITY_DOCUMENT",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "NEPAL",
+        "got_country": null,
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "images.jpeg",
+        "expected": "INDIAN_PASSPORT",
+        "got": "INDIAN_PASSPORT",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "passport_quality_enhanced.jpg",
+        "expected": "INDIAN_PASSPORT",
+        "got": "INDIAN_PASSPORT",
+        "ok": true,
+        "expected_country": "INDIA",
+        "got_country": "INDIA",
+        "overall_status": "REVIEW_REQUIRED"
+      },
+      {
+        "file": "passport_text_legibility_enhanced.jpg",
+        "expected": "INDIAN_PASSPORT",
+        "got": "DOCUMENT_TYPE_UNCERTAIN",
+        "ok": false,
+        "expected_country": "INDIA",
+        "got_country": null,
+        "overall_status": "NOT_VERIFIED"
+      },
+      {
+        "file": "visa-requirement.jpeg",
+        "expected": "FOREIGN_PASSPORT",
+        "got": "FOREIGN_PASSPORT",
+        "ok": true,
+        "expected_country": "BHUTAN",
+        "got_country": "BHUTAN",
+        "overall_status": "REVIEW_REQUIRED"
+      }
+    ]
+  }
+}

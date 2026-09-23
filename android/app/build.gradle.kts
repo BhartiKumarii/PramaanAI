@@ -14,11 +14,33 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
+        // Backend URL. Default: the Render deployment. For a local test build
+        // pass -Ppramaan.apiUrl=http://127.0.0.1:8000/ (with `adb reverse
+        // tcp:8000 tcp:8000`) or the laptop's LAN address.
+        val apiUrl = (project.findProperty("pramaan.apiUrl") as String?)
+            ?: "https://bordershield-pramaan-api.onrender.com/"
+        buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
+        // Phones are ARM; the x86 libraries (ONNX Runtime, ML Kit) only serve
+        // emulators and roughly double the APK. -Ppramaan.emulatorAbis=true
+        // adds them back for emulator testing.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            if (project.findProperty("pramaan.emulatorAbis") == "true") {
+                abiFilters += listOf("x86", "x86_64")
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 removes unused library code; the app's own classes are kept
+            // whole (Gson/Retrofit read them by reflection) — proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Demo/test builds are signed with the local debug key so they
+            // install directly; a production release needs its own keystore.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -91,6 +113,11 @@ dependencies {
     // codes (e.g., Aadhaar QR, e-Visa barcodes). Decoded content is compared
     // against OCR-extracted fields as an independent verification signal.
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    // On-device YOLO11n region detector (document / photo / MRZ / QR / stamp /
+    // yellow-gold feature), exported to ONNX from scripts/docverify/yolo.
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
+
+    testImplementation("junit:junit:4.13.2")
 
     // Offline submission queue. Plain WorkManager (no Room integration)
     // needs no annotation processor, so it doesn't hit the same AGP

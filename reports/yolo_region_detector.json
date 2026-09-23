@@ -1,0 +1,61 @@
+{
+  "model": "YOLO11n (ultralytics), fine-tuned from COCO weights",
+  "epochs": 60,
+  "imgsz": 640,
+  "train": {
+    "real_images": 36,
+    "synthetic_images": 300
+  },
+  "evaluated_on": "21 held-out REAL images only (no synthetic images in val)",
+  "overall": {
+    "precision": 0.922,
+    "recall": 0.703,
+    "mAP50": 0.757,
+    "mAP50_95": 0.486
+  },
+  "per_class": {
+    "document": {
+      "precision": 0.896,
+      "recall": 1.0,
+      "mAP50": 0.986,
+      "mAP50_95": 0.765
+    },
+    "photograph": {
+      "precision": 0.924,
+      "recall": 0.833,
+      "mAP50": 0.957,
+      "mAP50_95": 0.387
+    },
+    "mrz": {
+      "precision": 0.976,
+      "recall": 0.8,
+      "mAP50": 0.92,
+      "mAP50_95": 0.529
+    },
+    "qr_code": {
+      "precision": 0.941,
+      "recall": 0.75,
+      "mAP50": 0.745,
+      "mAP50_95": 0.546
+    },
+    "barcode": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "mAP50": 0.0,
+      "mAP50_95": 0.0
+    },
+    "stamp": {
+      "precision": 0.755,
+      "recall": 0.538,
+      "mAP50": 0.695,
+      "mAP50_95": 0.333
+    },
+    "yellow_gold_feature": {
+      "precision": 0.959,
+      "recall": 1.0,
+      "mAP50": 0.995,
+      "mAP50_95": 0.844
+    }
+  },
+  "caveat": "Small held-out set; boxes were labelled by Claude (auto-proposals reviewed image-by-image), not by an independent annotator. Treat as indicative."
+}

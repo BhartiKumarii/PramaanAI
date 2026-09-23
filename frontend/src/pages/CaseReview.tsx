@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DocVerifyCasePanel } from '../components/DocVerifyCasePanel'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   addCaseNote,
@@ -620,6 +621,9 @@ export function CaseReview() {
   const [tab, setTab] = useState<Tab>('overview')
   const [noteText, setNoteText] = useState('')
   const [showDiagnostics, setShowDiagnostics] = useState(false)
+  // Cases from Verify document carry a full document verification; the older
+  // screening summary blocks below would only repeat it less precisely.
+  const [hasDocVerify, setHasDocVerify] = useState(false)
 
   const caseQuery = useAsync(() => getCase(caseId!), [caseId])
   const identityHistory = useAsync(() => getCaseIdentityHistory(caseId!), [caseId])
@@ -776,6 +780,7 @@ export function CaseReview() {
           {/* ── OVERVIEW TAB ── */}
           {tab === 'overview' && (
             <div className="space-y-4">
+              <DocVerifyCasePanel caseId={c.id} onLoaded={setHasDocVerify} />
               {/* Identity summary */}
               <Card>
                 <div className="flex items-start gap-4">
@@ -818,7 +823,7 @@ export function CaseReview() {
               </Card>
 
               {/* Risk summary banner */}
-              {v && (
+              {v && !hasDocVerify && (
                 <div className={`rounded-lg border px-4 py-3 ${
                   v.risk.level === 'HIGH_RISK'
                     ? 'border-status-high/50 bg-status-high-bg'
@@ -861,7 +866,7 @@ export function CaseReview() {
               )}
 
               {/* Key findings — only non-clear ones */}
-              {findings.length > 0 && (
+              {findings.length > 0 && !hasDocVerify && (
                 <Card title="Key Findings">
                   <div className="divide-y divide-border">
                     {findings.filter((f) => f.tone !== 'none').slice(0, 6).map((f) => (

@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
         // Drain anything left queued from a previous session as soon as
         // WorkManager sees a connected network.
         PendingSubmissionWorker.enqueue(applicationContext)
+        com.pramaanai.officer.data.docverify.DocVerifySyncWorker.enqueue(applicationContext)
 
         setContent {
             PramaanAiTheme {

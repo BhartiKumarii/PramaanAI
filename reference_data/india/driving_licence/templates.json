@@ -1,0 +1,191 @@
+{
+  "schema": "pramaan.document_reference.v1",
+  "country": "INDIA",
+  "document_type": "DRIVING_LICENCE",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "note": "Prototype layout descriptor. expected_region values are approximate relative coordinates [x0,y0,x1,y1] used only for template-consistency scoring; they must be calibrated on authorised specimens before operational use. No security artwork is stored.",
+  "versions": [
+    {
+      "version": "Form-7-smart-card",
+      "validity_period": {
+        "from": "2019-03-01",
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "Central Motor Vehicles Rules, 1989 \u2014 Form 7 (uniform driving licence), as amended",
+          "url": "https://morth.nic.in/"
+        }
+      ],
+      "layout_anchors": {
+        "PHOTOGRAPH": [
+          0.73,
+          0.2,
+          0.97,
+          0.66
+        ],
+        "QR_CODE": [
+          0.78,
+          0.66,
+          0.98,
+          0.98
+        ],
+        "YELLOW_GOLD_FEATURE": [
+          0.04,
+          0.3,
+          0.2,
+          0.56
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "photograph",
+          "expected_region": [
+            0.73,
+            0.2,
+            0.97,
+            0.66
+          ],
+          "verification_method": "face_detection",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "qr_code",
+          "expected_region": [
+            0.78,
+            0.66,
+            0.98,
+            0.98
+          ],
+          "verification_method": "deterministic_decoder",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "yellow_gold_visual_feature",
+          "expected_region": [
+            0.04,
+            0.3,
+            0.2,
+            0.56
+          ],
+          "verification_method": "visual_feature_consistency",
+          "expected_text_patterns": [],
+          "visually_checkable": true,
+          "note": "Yellow/gold rectangular chip-like VISUAL security feature. Treated only as a visual feature: position, size, shape, orientation, colour/appearance and texture are compared with this template. It is never assumed to be an electronic chip and colour alone is never evidence of genuineness."
+        },
+        {
+          "feature_name": "electronic_chip",
+          "expected_region": null,
+          "verification_method": "official_reader_required",
+          "expected_text_patterns": [],
+          "visually_checkable": false,
+          "note": "Any electronic/contactless component is only verifiable through an authorised reader. It is never read, cloned or bypassed here."
+        },
+        {
+          "feature_name": "guilloche_background",
+          "expected_region": [
+            0.22,
+            0.2,
+            0.72,
+            0.95
+          ],
+          "verification_method": "visual_texture_indicator",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "hologram_region",
+          "expected_region": [
+            0.04,
+            0.6,
+            0.2,
+            0.92
+          ],
+          "verification_method": "visual_specular_indicator",
+          "expected_text_patterns": [],
+          "visually_checkable": true,
+          "note": "A hologram can only be indicated (colour/specular variation), never authenticated, from a single photo."
+        },
+        {
+          "feature_name": "microprinting",
+          "expected_region": null,
+          "verification_method": "requires_magnification",
+          "expected_text_patterns": [],
+          "visually_checkable": false
+        },
+        {
+          "feature_name": "uv_features",
+          "expected_region": null,
+          "verification_method": "requires_uv_illumination",
+          "expected_text_patterns": [],
+          "visually_checkable": false
+        }
+      ],
+      "field_patterns": {
+        "document_number": "^[A-Z]{2}[0-9]{2}[ -]?(19|20)[0-9]{2}[0-9]{7}$",
+        "vehicle_class_tokens": [
+          "MCWOG",
+          "MCWG",
+          "LMV",
+          "LMV-NT",
+          "LMV-TR",
+          "HMV",
+          "HGMV",
+          "HPMV",
+          "TRANS",
+          "MGV",
+          "INVCRG",
+          "E-RIKSHAW",
+          "ADPVEH"
+        ]
+      },
+      "expected_text_patterns": [
+        "DRIVING LICEN",
+        "UNION OF INDIA"
+      ]
+    },
+    {
+      "version": "legacy-state-format",
+      "validity_period": {
+        "from": null,
+        "to": "2019-02-28"
+      },
+      "official_reference": [
+        {
+          "title": "State transport department legacy licence formats (pre-uniform format)",
+          "url": "https://parivahan.gov.in/"
+        }
+      ],
+      "layout_anchors": {
+        "PHOTOGRAPH": [
+          0.02,
+          0.15,
+          0.32,
+          0.85
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "photograph",
+          "expected_region": [
+            0.02,
+            0.15,
+            0.32,
+            0.85
+          ],
+          "verification_method": "face_detection",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        }
+      ],
+      "field_patterns": {
+        "document_number": "^[A-Z]{2}[0-9]{2}[ -/]?[0-9A-Z/-]{6,14}$"
+      },
+      "expected_text_patterns": [
+        "DRIVING LICEN"
+      ]
+    }
+  ]
+}

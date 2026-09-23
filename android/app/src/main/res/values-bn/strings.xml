@@ -486,8 +486,6 @@
     <string name="cd_officer_profile">অফিসার প্রোফাইল</string>
     <string name="tour_nav_title">অ্যাপ নেভিগেট করুন</string>
     <string name="tour_nav_body">আপনার ড্যাশবোর্ড, স্ক্রিনিং কিউ, ইতিহাস এবং অ্যালার্টের মধ্যে যেতে এই ট্যাবগুলি ব্যবহার করুন।</string>
-    <string name="tour_new_screening_title">নতুন স্ক্রিনিং শুরু করুন</string>
-    <string name="tour_new_screening_body">যখনই কোনো যাত্রী আপনার চেকপয়েন্টে আসেন, এখানে ট্যাপ করুন।</string>
     <string name="tour_daily_numbers_title">আপনার দৈনিক সংখ্যা</string>
     <string name="tour_daily_numbers_body">এগুলি আজকের আসল স্ক্রিনিং থেকে রিয়েল-টাইমে আপডেট হয়।</string>
     <string name="tour_risk_title">এক নজরে ঝুঁকি</string>

@@ -31,14 +31,34 @@ class ConnectivityMonitor(
     }
 
     /** The actual live check: OS-reported network presence, PLUS a real
-     * GET /health round trip with a short timeout to tell "online" apart
-     * from "device thinks it has signal but the backend isn't actually
-     * reachable" (weak/flaky connection, captive portal, backend down). */
+     * GET /health round trip, timed.
+     *   ONLINE  — the server answered quickly (< [WEAK_THRESHOLD_MS])
+     *   WEAK    — the server answered, but slowly
+     *   OFFLINE — no network, or the server could not be reached at all
+     * [lastDetail] says which, in plain words, for the status indicator. */
     suspend fun check(): ConnectivityState {
-        if (!hasNetworkCapability()) return ConnectivityState.OFFLINE
-        val reachable = withTimeoutOrNull(3_000L) {
+        if (!hasNetworkCapability()) {
+            lastDetail = "no network"
+            return ConnectivityState.OFFLINE
+        }
+        val started = System.nanoTime()
+        val reachable = withTimeoutOrNull(5_000L) {
             runCatching { api.health() }.isSuccess
         } ?: false
-        return if (reachable) ConnectivityState.ONLINE else ConnectivityState.WEAK
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        return when {
+            !reachable -> ConnectivityState.OFFLINE.also { lastDetail = "server not reachable" }
+            elapsedMs >= WEAK_THRESHOLD_MS -> ConnectivityState.WEAK.also { lastDetail = "slow response · ${elapsedMs} ms" }
+            else -> ConnectivityState.ONLINE.also { lastDetail = "${elapsedMs} ms" }
+        }
+    }
+
+    companion object {
+        const val WEAK_THRESHOLD_MS = 1_500L
+
+        /** Plain-language reason for the most recent [check] result. */
+        @Volatile
+        var lastDetail: String = ""
+            private set
     }
 }

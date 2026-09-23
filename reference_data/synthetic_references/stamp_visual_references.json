@@ -1,0 +1,12 @@
+{
+  "schema": "pramaan.stamp_visual_reference.v1",
+  "data_classification": "SYNTHETIC_TEST_REFERENCE",
+  "notice": "Invented geometry descriptors for the SYNTHETIC test stamps produced by scripts/docverify/generate_synthetic_testset.py. They describe no real government stamp and exist only so the stamp-reference comparison can be evaluated. Real stamps have no entry here and correctly return REFERENCE_NOT_AVAILABLE.",
+  "references": [
+    {"reference_id": "SYN-NP-KAKARBHITTA-ENTRY", "checkpoint_id": "NP-KAKARBHITTA", "direction": "ENTRY", "shape": "rectangular", "aspect_ratio_range": [1.3, 2.3], "text_arrangement": "linear", "border_structure": "double_outline"},
+    {"reference_id": "SYN-NP-KAKARBHITTA-EXIT", "checkpoint_id": "NP-KAKARBHITTA", "direction": "EXIT", "shape": "rectangular", "aspect_ratio_range": [1.3, 2.3], "text_arrangement": "linear", "border_structure": "double_outline"},
+    {"reference_id": "SYN-NP-BIRGUNJ-ENTRY", "checkpoint_id": "NP-BIRGUNJ", "direction": "ENTRY", "shape": "rectangular", "aspect_ratio_range": [1.3, 2.3], "text_arrangement": "linear", "border_structure": "double_outline"},
+    {"reference_id": "SYN-NP-BHAIRAHAWA-ENTRY", "checkpoint_id": "NP-BHAIRAHAWA", "direction": "ENTRY", "shape": "rectangular", "aspect_ratio_range": [1.3, 2.3], "text_arrangement": "linear", "border_structure": "double_outline"},
+    {"reference_id": "SYN-BT-PHUENTSHOLING-ENTRY", "checkpoint_id": "BT-PHUENTSHOLING", "direction": "ENTRY", "shape": "rectangular", "aspect_ratio_range": [1.3, 2.3], "text_arrangement": "linear", "border_structure": "double_outline"}
+  ]
+}

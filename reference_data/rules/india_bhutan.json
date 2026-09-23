@@ -1,0 +1,129 @@
+{
+  "schema": "pramaan.border_rules.v1",
+  "route": "INDIA_BHUTAN",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "disclaimer": "Decision-support configuration compiled from public sources for a prototype. It does not replace the officer's current standing orders, and must be re-validated against current official notifications before operational use. Bhutan's entry procedures have changed over time (e.g. the September 2022 reopening), so rules are version/date aware.",
+  "versions": [
+    {
+      "version": "pre-2022-09-23",
+      "effective_from": null,
+      "effective_to": "2022-09-22",
+      "sources": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "nationality_rules": {
+        "INDIAN": {
+          "basis": "Visa-free travel for Indian nationals; entry permit issued at port of entry",
+          "visa_required": false,
+          "entry_permit_required": true,
+          "physical_stamp_expected": false,
+          "accepted_identity_documents": ["INDIAN_PASSPORT", "VOTER_ID"],
+          "not_accepted_as_travel_document": ["AADHAAR"],
+          "age_exemptions": [
+            {"min_age": null, "max_age": 18, "note": "Birth certificate (in English) or passport; must be accompanied by a legal guardian."}
+          ],
+          "missing_visa_is_finding": false,
+          "missing_stamp_is_finding": false
+        },
+        "BHUTANESE": {
+          "basis": "Visa-free travel for Bhutanese nationals into India",
+          "visa_required": false,
+          "entry_permit_required": false,
+          "physical_stamp_expected": false,
+          "accepted_identity_documents": ["FOREIGN_PASSPORT", "IDENTITY_DOCUMENT"],
+          "not_accepted_as_travel_document": [],
+          "age_exemptions": [],
+          "missing_visa_is_finding": false,
+          "missing_stamp_is_finding": false
+        },
+        "THIRD_COUNTRY": {
+          "basis": "Foreign nationals other than Indian/Bhutanese citizens",
+          "visa_required": true,
+          "required_visa": {"INDIA_TO_BHUTAN": ["BHUTAN_VISA"], "BHUTAN_TO_INDIA": ["INDIAN_VISA"]},
+          "entry_permit_required": false,
+          "physical_stamp_expected": true,
+          "accepted_identity_documents": ["FOREIGN_PASSPORT"],
+          "not_accepted_as_travel_document": [],
+          "age_exemptions": [],
+          "missing_visa_is_finding": true,
+          "missing_stamp_is_finding": true
+        }
+      },
+      "finding_policy": {
+        "missing_required_visa": "REVIEW_REQUIRED",
+        "missing_entry_permit": "REVIEW_REQUIRED",
+        "missing_expected_stamp": "REVIEW_REQUIRED",
+        "document_not_in_accepted_list": "REVIEW_REQUIRED"
+      }
+    },
+    {
+      "version": "2022-09-23-onward",
+      "effective_from": "2022-09-23",
+      "effective_to": null,
+      "sources": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        },
+        {
+          "title": "Department of Immigration, Bhutan — Entry Permit (for nationals of India)",
+          "url": "https://www.doi.gov.bt/?page_id=609&lang=en",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "nationality_rules": {
+        "INDIAN": {
+          "basis": "Visa-free travel for Indian nationals; entry permit (in person at Phuentsholing Pedestrian Terminal, or online e-permit) required beyond the border towns",
+          "visa_required": false,
+          "entry_permit_required": true,
+          "entry_permit_forms": ["BHUTAN_ENTRY_PERMIT", "BHUTAN_E_PERMIT"],
+          "physical_stamp_expected": false,
+          "physical_stamp_note": "Permits may be issued online; the absence of a physical stamp is not evidence of irregularity.",
+          "accepted_identity_documents": ["INDIAN_PASSPORT", "VOTER_ID"],
+          "not_accepted_as_travel_document": ["AADHAAR"],
+          "age_exemptions": [
+            {"min_age": null, "max_age": 18, "note": "Birth certificate (in English) or passport; must be accompanied by a legal guardian."}
+          ],
+          "border_town_free_movement": ["PHUENTSHOLING", "GELEPHU", "SAMDRUP JONGKHAR"],
+          "missing_visa_is_finding": false,
+          "missing_stamp_is_finding": false
+        },
+        "BHUTANESE": {
+          "basis": "Visa-free travel for Bhutanese nationals into India",
+          "visa_required": false,
+          "entry_permit_required": false,
+          "physical_stamp_expected": false,
+          "accepted_identity_documents": ["FOREIGN_PASSPORT", "IDENTITY_DOCUMENT"],
+          "not_accepted_as_travel_document": [],
+          "age_exemptions": [],
+          "missing_visa_is_finding": false,
+          "missing_stamp_is_finding": false
+        },
+        "THIRD_COUNTRY": {
+          "basis": "Foreign nationals other than Indian/Bhutanese citizens — Bhutan visa (e-visa) and Indian visa for transit through India",
+          "visa_required": true,
+          "required_visa": {"INDIA_TO_BHUTAN": ["BHUTAN_VISA"], "BHUTAN_TO_INDIA": ["INDIAN_VISA"]},
+          "entry_permit_required": false,
+          "physical_stamp_expected": false,
+          "physical_stamp_note": "Bhutan visas are issued electronically; a physical stamp may not be present.",
+          "accepted_identity_documents": ["FOREIGN_PASSPORT"],
+          "not_accepted_as_travel_document": [],
+          "age_exemptions": [],
+          "missing_visa_is_finding": true,
+          "missing_stamp_is_finding": false
+        }
+      },
+      "finding_policy": {
+        "missing_required_visa": "REVIEW_REQUIRED",
+        "missing_entry_permit": "REVIEW_REQUIRED",
+        "missing_expected_stamp": "REVIEW_REQUIRED",
+        "document_not_in_accepted_list": "REVIEW_REQUIRED"
+      }
+    }
+  ]
+}

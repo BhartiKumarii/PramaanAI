@@ -1,0 +1,11 @@
+{
+  "schema": "pramaan.mock_registry.v1",
+  "registry": "VISA_AND_PERMIT",
+  "data_classification": "SYNTHETIC_TEST_DATA",
+  "notice": "FICTIONAL MOCK REGISTRY for the SIH prototype. Every record is invented. This is NOT a government visa/permit system and is never presented as one.",
+  "records": [
+    {"record_type": "VISA", "issuing_country": "NEPAL", "visa_number": "T260044110", "passport_number": "X1234567", "name": "ELENA SYNTHETIC ROSSI", "nationality": "ITA", "valid_from": "2026-09-01", "valid_until": "2026-11-29", "visa_type": "TOURIST", "entries": "MULTIPLE", "status": "ISSUED", "synthetic": true},
+    {"record_type": "VISA", "issuing_country": "INDIA", "visa_number": "IV2026117788", "passport_number": "X1234567", "name": "ELENA SYNTHETIC ROSSI", "nationality": "ITA", "valid_from": "2026-08-15", "valid_until": "2027-02-14", "visa_type": "TOURIST", "entries": "MULTIPLE", "status": "ISSUED", "synthetic": true},
+    {"record_type": "PERMIT", "issuing_country": "BHUTAN", "permit_number": "EP-2026-558812", "document_number": "N0123456", "name": "KAVYA SYNTHETIC IYER", "nationality": "IND", "valid_from": "2026-09-20", "valid_until": "2026-09-27", "status": "ISSUED", "synthetic": true}
+  ]
+}

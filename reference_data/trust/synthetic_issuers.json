@@ -1,0 +1,16 @@
+{
+  "schema": "pramaan.trust_store.v1",
+  "data_classification": "SYNTHETIC_TEST_TRUST_ANCHOR",
+  "notice": "Fictional test issuer keys used only to sign and verify the synthetic test documents. The matching private key is derived from a public test seed and has no secrecy. A real deployment must replace this file with issuing authorities' published certificates.",
+  "keys": [
+    {
+      "key_id": "SYNTHETIC-ISSUER-1",
+      "algorithm": "Ed25519",
+      "public_key_b64": "+Di1/cfrCNdQFGhe6t0y2h935yscgWvL1Mc0aO1wmXE=",
+      "issuer": "SYNTHETIC TEST ISSUER (fictional)",
+      "valid_from": "2020-01-01",
+      "valid_to": "2030-12-31",
+      "revoked": false
+    }
+  ]
+}

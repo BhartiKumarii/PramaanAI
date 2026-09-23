@@ -1,4 +1,16 @@
+import io
+
+from scripts.docverify.synthetic_faces import synthetic_face
 from tests.synthetic_documents import generate_face_like_image
+
+
+def _drawn_face(seed: int) -> bytes:
+    """A procedurally drawn synthetic face (no real person) that InsightFace
+    can actually detect — the flat pattern from generate_face_like_image is
+    rightly rejected as 'no face' by the current detector."""
+    buf = io.BytesIO()
+    synthetic_face(seed).save(buf, "PNG")
+    return buf.getvalue()
 
 
 def _login(client, db_session):
@@ -16,7 +28,7 @@ def _login(client, db_session):
 
 def test_face_verify_matches_same_identity(client, db_session):
     token = _login(client, db_session)
-    image_bytes = generate_face_like_image(1)
+    image_bytes = _drawn_face(0)
 
     response = client.post(
         "/face/verify",
@@ -31,7 +43,7 @@ def test_face_verify_matches_same_identity(client, db_session):
     body = response.json()
     assert body["match"] is True
     assert body["similarity"] > 0.99
-    assert "cosine similarity" in body["reason"]
+    assert "similarity" in body["reason"]
 
 
 def test_face_verify_flags_different_identities(client, db_session):
@@ -41,8 +53,8 @@ def test_face_verify_flags_different_identities(client, db_session):
         "/face/verify",
         headers={"Authorization": f"Bearer {token}"},
         files={
-            "document_face": ("doc.png", generate_face_like_image(1), "image/png"),
-            "presented_face": ("live.png", generate_face_like_image(9), "image/png"),
+            "document_face": ("doc.png", _drawn_face(0), "image/png"),
+            "presented_face": ("live.png", _drawn_face(5), "image/png"),
         },
     )
 

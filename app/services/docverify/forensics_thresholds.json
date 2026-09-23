@@ -1,0 +1,74 @@
+{
+  "generated_by": "scripts/docverify/calibrate_forensics.py",
+  "calibration_images": 30,
+  "holdout_images": 24,
+  "method": "per-family P97*1.1 (high) / P3*0.9 (low), never tighter than built-in defaults",
+  "families": {
+    "TEXT": {
+      "sharpness": {
+        "high": 6.0,
+        "low": 0.12,
+        "n": 32
+      },
+      "noise": {
+        "high": 3.2,
+        "low": 0.25,
+        "n": 32
+      },
+      "compression": {
+        "high": 5.335,
+        "low": 0.213,
+        "n": 32
+      },
+      "jpeg_grid": {
+        "high": 2.764,
+        "low": 0.0,
+        "n": 32
+      }
+    },
+    "PHOTOGRAPH": {
+      "sharpness": {
+        "high": 6.0,
+        "low": 0.119,
+        "n": 29
+      },
+      "noise": {
+        "high": 3.2,
+        "low": 0.216,
+        "n": 29
+      },
+      "compression": {
+        "high": 2.6,
+        "low": 0.3,
+        "n": 29
+      },
+      "jpeg_grid": {
+        "high": 2.581,
+        "low": 0.0,
+        "n": 29
+      }
+    },
+    "STAMP": {
+      "sharpness": {
+        "high": 6.0,
+        "low": 0.062,
+        "n": 20
+      },
+      "noise": {
+        "high": 3.2,
+        "low": 0.25,
+        "n": 20
+      },
+      "compression": {
+        "high": 2.6,
+        "low": 0.3,
+        "n": 20
+      },
+      "jpeg_grid": {
+        "high": 2.2,
+        "low": 0.0,
+        "n": 20
+      }
+    }
+  }
+}

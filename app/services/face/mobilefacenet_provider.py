@@ -48,12 +48,26 @@ def _image_to_bgr(image_bytes: bytes) -> np.ndarray:
     return cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
 
 
+def _detection_variants(bgr: np.ndarray):
+    """The SCRFD detector misses a face that fills the whole frame (a tight
+    document-photo region or a face crop): retry with a neutral border, and
+    enlarged when small. Measured: a real passport photo region and a face
+    crop of the same person returned "no face" (similarity 0.0) until padded."""
+    yield bgr
+    h, w = bgr.shape[:2]
+    pad = int(0.5 * max(h, w))
+    padded = cv2.copyMakeBorder(bgr, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=(128, 128, 128))
+    yield padded
+    if max(h, w) < 320:
+        yield cv2.resize(padded, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
+
+
 def _extract_embedding_insightface(app, bgr: np.ndarray) -> np.ndarray | None:
-    faces = app.get(bgr)
-    if not faces:
-        return None
-    best = max(faces, key=lambda f: f.det_score)
-    return best.normed_embedding
+    for image in _detection_variants(bgr):
+        faces = app.get(image)
+        if faces:
+            return max(faces, key=lambda f: f.det_score).normed_embedding
+    return None
 
 
 def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -147,10 +161,12 @@ class MobileFaceNetProvider(FaceProvider):
                            f"quality issues: {'; '.join(doc_quality.issues) or 'none detected'}",
                     location=None,
                 )
+            # A face that cannot be found is never evidence of a different person.
             return FaceMatchResult(
                 match=False, similarity=0.0, confidence=0.0,
+                inconclusive=True,
                 quality_issues=all_issues,
-                reason="MobileFaceNet: no face detected in document image",
+                reason="INCONCLUSIVE: no face could be found in the document image",
                 location=None,
             )
 
@@ -166,8 +182,9 @@ class MobileFaceNetProvider(FaceProvider):
                 )
             return FaceMatchResult(
                 match=False, similarity=0.0, confidence=0.0,
+                inconclusive=True,
                 quality_issues=all_issues,
-                reason="MobileFaceNet: no face detected in live capture",
+                reason="INCONCLUSIVE: no face could be found in the live capture",
                 location=None,
             )
 

@@ -287,8 +287,6 @@
     <string name="cd_officer_profile">འགོ་དཔོན་གི་རྣམ་ཐར།</string>
     <string name="tour_nav_title">ཨེབ་གྲུབ་ལུ་འགྲོ་ལུགས།</string>
     <string name="tour_nav_body">ཚད་སྒྲིག་ཤེལ་ · ཞིབ་དཔྱད་སྟར · ལོ་རྒྱུས་ · ཐུལ་ཤར་གྱི་བར་ལུ་འགྲོ་ལུ་ཤོག་ཡིག་འདི་ཚུ་བེད་སྤྱོད་འབད།</string>
-    <string name="tour_new_screening_title">ཞིབ་དཔྱད་གསར་པ་འགོ་བཙུགས།</string>
-    <string name="tour_new_screening_body">ཉེ་ལམ་ལས་འབྱུང་ བལྟ་ཆོག་ཚར་ཚར་ཁག་ཚུར་འོང་བ་ཅིན། འདིར་གནོན།</string>
     <string name="tour_daily_numbers_title">ཁྱོད་ཀྱི་ཉིན་རེ་གྱི་ཨང་གྲངས།</string>
     <string name="tour_daily_numbers_body">འདི་ཚུ་ད་རེས་ཀྱི་ཞིབ་དཔྱད་ལས་ཐད་ཀར་གསར་བཅོས་འབདཝ།</string>
     <string name="tour_risk_title">ཞིབ་དཔྱད་གི་ཉེན་ཁ།</string>

@@ -1,14 +1,16 @@
 package com.pramaanai.officer.ui.dashboard
 
-import com.pramaanai.officer.ui.theme.CardDark
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,295 +18,293 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.MarkEmailUnread
 import androidx.compose.material.icons.filled.PendingActions
-import androidx.compose.material.icons.filled.Today
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pramaanai.officer.R
 import com.pramaanai.officer.data.ScreeningRepository
-import com.pramaanai.officer.data.humanLabel
-import com.pramaanai.officer.data.humanTopReason
-import com.pramaanai.officer.data.computeAnalytics
-import com.pramaanai.officer.data.dailyActivity
-import com.pramaanai.officer.data.hourlyActivity
-import com.pramaanai.officer.data.model.ScreeningQueueItem
-import com.pramaanai.officer.ui.components.MonoBarChart
-import com.pramaanai.officer.ui.components.MonoRibbonBar
-import com.pramaanai.officer.ui.components.RiskBadge
-import com.pramaanai.officer.ui.tour.tourAnchor
+import com.pramaanai.officer.data.docverify.DocVerifyRepository
+import com.pramaanai.officer.data.docverify.VerificationListItem
+import com.pramaanai.officer.data.remote.AuthSession
 import com.pramaanai.officer.ui.theme.AccentGreen
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.BorderDark
+import com.pramaanai.officer.ui.theme.CardDark
+import com.pramaanai.officer.ui.theme.ChartBlue
+import com.pramaanai.officer.ui.theme.DestructiveRed
+import com.pramaanai.officer.ui.theme.MutedForeground
+import com.pramaanai.officer.ui.theme.SecondaryDark
 import com.pramaanai.officer.ui.theme.SuccessGreen
 import com.pramaanai.officer.ui.theme.WarningAmber
-import com.pramaanai.officer.ui.theme.DestructiveRed
-import com.pramaanai.officer.ui.theme.Gray100
-import com.pramaanai.officer.ui.theme.Gray500
-import com.pramaanai.officer.ui.theme.Gray600
-import com.pramaanai.officer.ui.theme.Ink900
-import com.pramaanai.officer.ui.theme.White
+import com.pramaanai.officer.ui.tour.tourAnchor
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+/** Officer dashboard over the officer's own document verifications
+ * (GET /api/v1/verification?mine=true). Every number is counted from real
+ * records — nothing is estimated or hardcoded; an empty state says so. */
 @Composable
 fun DashboardScreen(
-    repository: ScreeningRepository,
+    @Suppress("UNUSED_PARAMETER") repository: ScreeningRepository,
     padding: PaddingValues,
-    onNewScreening: () -> Unit,
+    onVerifyDocument: () -> Unit,
     onOpenScreening: (String) -> Unit,
     onViewQueue: () -> Unit,
     onViewHistory: () -> Unit,
     onViewAnalytics: () -> Unit,
 ) {
-    val items by repository.observeQueue().collectAsStateWithLifecycle(initialValue = emptyList())
-    val alerts by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
-    // Pulls in other officers'/devices' screenings from the shared backend
-    // queue — silent no-op if the backend is unreachable, so the local
-    // cache this device already has still renders.
-    androidx.compose.runtime.LaunchedEffect(Unit) { repository.syncFromBackend() }
-    val stats = remember(items) { computeAnalytics(items) }
-    var chartRange by remember { mutableStateOf(ChartRange.WEEKLY) }
-    val chartData = remember(items, chartRange) {
-        when (chartRange) {
-            ChartRange.TODAY -> hourlyActivity(items)
-            ChartRange.WEEKLY -> dailyActivity(items, 7)
-            ChartRange.MONTHLY -> dailyActivity(items, 30)
-        }
+    val context = LocalContext.current
+    val repo = remember { DocVerifyRepository(context.applicationContext) }
+    var items by remember { mutableStateOf<List<VerificationListItem>?>(null) }
+    var pending by remember { mutableIntStateOf(0) }
+    var days by remember { mutableIntStateOf(7) }
+    LaunchedEffect(Unit) {
+        pending = repo.pendingCount()
+        repo.listMine().onSuccess { items = it }.onFailure { if (items == null) items = emptyList() }
     }
+    val all = items ?: emptyList()
+    val zone = ZoneId.systemDefault()
+    val today = LocalDate.now(zone)
+    fun dateOf(it: VerificationListItem): LocalDate? = runCatching {
+        val iso = it.createdAt!!
+        Instant.parse(if (iso.endsWith("Z") || iso.contains('+')) iso else "${iso}Z").atZone(zone).toLocalDate()
+    }.getOrNull()
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    // A LazyColumn only composes visible items, so an off-screen tour
-    // anchor (e.g. the Quick Actions button, several cards down) would
-    // never register — scroll it into view whenever the tour steps onto it.
-    androidx.compose.runtime.LaunchedEffect(com.pramaanai.officer.ui.tour.TourState.stepIndex, com.pramaanai.officer.ui.tour.TourState.active) {
+    LaunchedEffect(com.pramaanai.officer.ui.tour.TourState.stepIndex, com.pramaanai.officer.ui.tour.TourState.active) {
         if (!com.pramaanai.officer.ui.tour.TourState.active) return@LaunchedEffect
-        val targetIndex = when (com.pramaanai.officer.ui.tour.TourState.currentStep?.anchorId) {
-            "stat_cards" -> 0
-            "risk_overview" -> 2
-            "new_screening_button" -> 4
+        // LazyColumn item indices: 0 greeting, 1 verify CTA, 2 today tiles, 3 chart, 4 risk.
+        val target = when (com.pramaanai.officer.ui.tour.TourState.currentStep?.anchorId) {
+            "verify_document_button" -> 1
+            "stat_cards" -> 2
+            "activity_chart" -> 3
+            "risk_overview" -> 4
             else -> null
         }
-        if (targetIndex != null) listState.animateScrollToItem(targetIndex)
+        if (target != null) listState.animateScrollToItem(target)
     }
 
-    // AppShell now draws the green grid backdrop once for every bottom-nav
-    // tab, so this screen only needs its own scaffold padding, not a
-    // second nested GridPatternBackground.
-    LazyColumn(
-        state = listState,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // The single most important action on this screen — a screening
-        // request always starts here, so it's the first thing an officer
-        // sees, not a button buried below five other cards.
+    LazyColumn(Modifier.fillMaxSize().padding(padding), state = listState, contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
-            NewScreeningCta(onClick = onNewScreening, modifier = Modifier.tourAnchor("new_screening_button"))
+            val hour = java.time.LocalTime.now().hour
+            Column {
+                Text("${if (hour < 12) "Good morning" else if (hour < 17) "Good afternoon" else "Good evening"}, ${AuthSession.username ?: "officer"}",
+                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(listOfNotNull(AuthSession.checkpointName?.let { "Post: $it" },
+                    today.format(DateTimeFormatter.ofPattern("EEEE, dd MMM"))).joinToString(" · "),
+                    color = MutedForeground, style = MaterialTheme.typography.bodyMedium)
+            }
         }
-
         item {
-            // Plain rows, not a fixed-height lazy grid: the grid's 340dp cap
-            // clipped the third row on phones and left the cards mostly empty.
-            Column(modifier = Modifier.tourAnchor("stat_cards"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                listOf(
-                    StatCardData(stringResource(R.string.dashboard_total_screenings), stats.total, Icons.Filled.Description),
-                    StatCardData(stringResource(R.string.dashboard_screenings_today), stats.today, Icons.Filled.Today, trendPct = stats.todayVsYesterdayPct),
-                    StatCardData(stringResource(R.string.dashboard_high_risk_cases), stats.highRisk, Icons.Filled.Warning),
-                    StatCardData(stringResource(R.string.dashboard_pending_reviews), stats.pending, Icons.Filled.PendingActions),
-                    StatCardData(stringResource(R.string.dashboard_documents_scanned), stats.documentsScanned, Icons.Filled.CameraAlt),
-                    StatCardData(stringResource(R.string.dashboard_needs_attention), alerts.size, Icons.Filled.NotificationsActive),
-                ).chunked(2).forEach { pair ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        pair.forEach { data -> Box(Modifier.weight(1f)) { StatCard(data) } }
-                    }
+            com.pramaanai.officer.ui.docverify.VerifyDocumentCta(onClick = onVerifyDocument,
+                modifier = Modifier.tourAnchor("verify_document_button"))
+        }
+        item {
+            val todays = all.filter { dateOf(it) == today }
+            Column(Modifier.tourAnchor("stat_cards"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Today", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Kpi("Checked today", todays.size, "${todays.count { it.overallStatus == "PASS" }} passed all checks",
+                        Icons.Filled.CheckCircle, AccentGreen, Modifier.weight(1f), onViewHistory)
+                    Kpi("Needs your decision", all.count { it.officerAction == "PENDING" && it.caseStatus in setOf("PENDING", "REVIEW_REQUIRED", null) },
+                        "across all days", Icons.Filled.PendingActions, WarningAmber, Modifier.weight(1f), onViewQueue)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Kpi("With admin", all.count { it.caseStatus == "SENT" }, "awaiting a response",
+                        Icons.AutoMirrored.Filled.Send, ChartBlue, Modifier.weight(1f), onViewQueue)
+                    Kpi("Admin responded", all.count { it.reviewerResponded == true }, "open to read",
+                        Icons.Filled.MarkEmailUnread, SuccessGreen, Modifier.weight(1f), onViewQueue)
                 }
             }
         }
-
         item {
-            SectionCard(title = stringResource(R.string.dashboard_screening_activity)) {
+            Panel("Activity", Modifier.tourAnchor("activity_chart")) {
+                val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = AccentGreen, selectedLabelColor = BackgroundDark)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChartRange.entries.forEach { range ->
-                        FilterChip(
-                            selected = chartRange == range,
-                            onClick = { chartRange = range },
-                            label = { Text(stringResource(range.labelRes)) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = AccentGreen.copy(alpha = 0.18f),
-                                selectedLabelColor = AccentGreen,
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = chartRange == range,
-                                borderColor = BorderDark,
-                                selectedBorderColor = AccentGreen,
-                            ),
-                        )
+                    listOf(7 to "7 days", 30 to "30 days").forEach { (d, l) ->
+                        FilterChip(selected = days == d, onClick = { days = d }, label = { Text(l) }, colors = chipColors)
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-                MonoBarChart(
-                    chartData,
-                    // Hourly view opens on the current hour, not on 23:00 —
-                    // the future — which would always read "0 screenings".
-                    initialSelected = if (chartRange == ChartRange.TODAY) {
-                        java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-                    } else {
-                        chartData.lastIndex
-                    },
-                )
+                Spacer(Modifier.height(8.dp))
+                val range = (days - 1 downTo 0).map { today.minusDays(it.toLong()) }
+                val byDay = all.groupBy { dateOf(it) }
+                val bars = range.map { d ->
+                    val rows = byDay[d] ?: emptyList()
+                    Bar(d, rows.count { it.overallStatus == "PASS" },
+                        rows.count { it.overallStatus in setOf("REVIEW_REQUIRED", "FAIL") },
+                        rows.count { it.overallStatus !in setOf("PASS", "REVIEW_REQUIRED", "FAIL") })
+                }
+                StackedChart(bars)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Legend("Verified", SuccessGreen); Legend("Needs attention", WarningAmber); Legend("Not verified", MutedForeground)
+                }
             }
         }
-
         item {
-            SectionCard(title = stringResource(R.string.dashboard_risk_overview), modifier = Modifier.tourAnchor("risk_overview")) {
-                Text(
-                    stringResource(R.string.dashboard_total_risk_assessments, stats.total),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600,
-                )
+            Panel("Risk distribution", Modifier.tourAnchor("risk_overview")) {
+                val high = all.count { it.riskLevel == "HIGH" }
+                val med = all.count { it.riskLevel == "MEDIUM" }
+                val low = all.count { it.riskLevel == "LOW" || it.riskLevel == null }
+                val total = (high + med + low).coerceAtLeast(1)
+                Row(Modifier.fillMaxWidth().height(14.dp).background(SecondaryDark, RoundedCornerShape(7.dp))) {
+                    listOf(high to DestructiveRed, med to WarningAmber, low to SuccessGreen).forEach { (n, c) ->
+                        if (n > 0) Box(Modifier.weight(n.toFloat() / total).fillMaxWidth().height(14.dp).background(c, RoundedCornerShape(7.dp)))
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
-                MonoRibbonBar(stringResource(R.string.dashboard_low_risk), stats.lowRisk, stats.total, color = SuccessGreen)
-                MonoRibbonBar(stringResource(R.string.dashboard_medium_risk), stats.mediumRisk, stats.total, color = WarningAmber)
-                MonoRibbonBar(stringResource(R.string.dashboard_high_risk), stats.highRisk, stats.total, color = DestructiveRed)
+                listOf(Triple("High risk", high, DestructiveRed), Triple("Medium risk", med, WarningAmber),
+                    Triple("Low risk", low, SuccessGreen)).forEach { (l, n, c) ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(10.dp).background(c, CircleShape))
+                        Spacer(Modifier.width(8.dp))
+                        Text(l, modifier = Modifier.weight(1f))
+                        Text("$n", fontWeight = FontWeight.Bold, color = c)
+                        Text("  ${(n * 100 / total)}%", color = MutedForeground, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                Text("A risk indicator explains which checks need attention — it is never a verdict about the traveller.",
+                    color = MutedForeground, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
             }
         }
-
+        if (pending > 0) item {
+            Card(colors = CardDefaults.cardColors(containerColor = ChartBlue.copy(alpha = 0.12f)),
+                border = BorderStroke(1.dp, ChartBlue.copy(alpha = 0.45f)), shape = RoundedCornerShape(12.dp)) {
+                Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.CloudOff, null, tint = ChartBlue)
+                    Spacer(Modifier.width(10.dp))
+                    Text("$pending verification(s) saved offline — sent automatically when the connection returns.")
+                }
+            }
+        }
         item {
-            SectionCard(title = stringResource(R.string.dashboard_recent_screenings)) {
-                if (items.isEmpty()) {
-                    Text(stringResource(R.string.dashboard_no_screenings), style = MaterialTheme.typography.bodySmall, color = Gray600)
-                } else {
-                    items.take(5).forEach { item -> RecentRow(item, onClick = { onOpenScreening(item.id) }) }
+            Panel("Recent verifications") {
+                if (items == null) Text("Loading…", color = MutedForeground)
+                else if (all.isEmpty()) Text("No verifications yet. Tap Verify document to start.", color = MutedForeground)
+                all.take(5).forEach { v -> RecentRow(v) { onOpenScreening(v.id) } }
+                if (all.size > 5) TextButton(onClick = onViewHistory) {
+                    Text("See all in History", color = AccentGreen)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = AccentGreen)
                 }
             }
         }
-
         item {
-            SectionCard(title = stringResource(R.string.dashboard_more_section)) {
-                QuickActionButton(stringResource(R.string.dashboard_view_queue), onViewQueue)
-                Spacer(Modifier.height(8.dp))
-                QuickActionButton(stringResource(R.string.dashboard_view_history), onViewHistory)
-                Spacer(Modifier.height(8.dp))
-                QuickActionButton(stringResource(R.string.dashboard_view_analytics), onViewAnalytics)
-            }
+            TextButton(onClick = onViewAnalytics) { Text("Open analytics", color = MutedForeground) }
         }
     }
 }
 
-private enum class ChartRange(val labelRes: Int) {
-    TODAY(R.string.chart_today),
-    WEEKLY(R.string.chart_weekly),
-    MONTHLY(R.string.chart_monthly),
+private data class Bar(val day: LocalDate, val ok: Int, val attention: Int, val notVerified: Int) {
+    val total get() = ok + attention + notVerified
 }
 
-// Prominent, full-width CTA pinned at the very top of the dashboard — a
-// screening always starts by picking a document type (see
-// NewScreeningScreen), so this is the first thing an officer should see,
-// not a button five cards down.
 @Composable
-private fun NewScreeningCta(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = AccentGreen),
-        shape = RoundedCornerShape(12.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.AddCircle, contentDescription = null, tint = BackgroundDark, modifier = Modifier.size(28.dp))
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(stringResource(R.string.dashboard_new_screening), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = BackgroundDark)
-                    Text(stringResource(R.string.scan_document_prompt), style = MaterialTheme.typography.labelSmall, color = BackgroundDark.copy(alpha = 0.7f))
+private fun StackedChart(bars: List<Bar>) {
+    var selected by remember(bars.size) { mutableIntStateOf(bars.lastIndex) }
+    val top = (bars.maxOfOrNull { it.total } ?: 0).coerceAtLeast(1)
+    val sel = bars.getOrNull(selected)
+    sel?.let {
+        Text("${it.day.format(DateTimeFormatter.ofPattern("EEE, dd MMM"))}: ${it.total} checked · ${it.ok} passed · " +
+            "${it.attention} needed attention · ${it.notVerified} not verified", color = MutedForeground, style = MaterialTheme.typography.bodySmall)
+    }
+    Spacer(Modifier.height(6.dp))
+    Canvas(Modifier.fillMaxWidth().height(150.dp).pointerInput(bars) {
+        detectTapGestures { pos -> selected = (pos.x / (size.width / bars.size)).toInt().coerceIn(0, bars.lastIndex) }
+    }) {
+        val slot = size.width / bars.size
+        val barW = (slot * 0.62f).coerceAtMost(28.dp.toPx())
+        bars.forEachIndexed { i, b ->
+            val x = i * slot + (slot - barW) / 2
+            var y = size.height
+            listOf(b.ok to SuccessGreen, b.attention to WarningAmber, b.notVerified to MutedForeground).forEach { (n, c) ->
+                if (n > 0) {
+                    val h = size.height * n / top
+                    drawRoundRect(if (i == selected) c else c.copy(alpha = 0.55f), topLeft = Offset(x, y - h), size = Size(barW, h),
+                        cornerRadius = CornerRadius(4f))
+                    y -= h
                 }
             }
+            if (b.total == 0) drawRoundRect(SecondaryDark, topLeft = Offset(x, size.height - 4f), size = Size(barW, 4f))
+        }
+    }
+    Row(Modifier.fillMaxWidth()) {
+        val step = if (bars.size > 7) bars.size / 6 else 1
+        bars.forEachIndexed { i, b ->
+            Text(if (i % step == 0) b.day.format(DateTimeFormatter.ofPattern(if (bars.size > 7) "dd" else "EEE")) else "",
+                color = if (i == selected) AccentGreen else MutedForeground, style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f), maxLines = 1)
         }
     }
 }
 
-private data class StatCardData(val label: String, val value: Int, val icon: ImageVector, val trendPct: Int? = null)
+@Composable
+private fun Legend(label: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(10.dp).background(color, RoundedCornerShape(3.dp)))
+        Spacer(Modifier.width(5.dp))
+        Text(label, color = MutedForeground, style = MaterialTheme.typography.labelSmall)
+    }
+}
 
 @Composable
-private fun StatCard(data: StatCardData) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Gray100),
-        border = androidx.compose.foundation.BorderStroke(1.dp, com.pramaanai.officer.ui.theme.BorderDark),
-        shape = RoundedCornerShape(12.dp),
-    ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                Text(data.label, style = MaterialTheme.typography.labelMedium, color = Gray600, modifier = Modifier.weight(1f))
-                Icon(data.icon, contentDescription = null, tint = Gray600, modifier = Modifier.size(16.dp))
-            }
+private fun Kpi(label: String, value: Int, sub: String, icon: ImageVector, color: Color, modifier: Modifier, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = modifier, colors = CardDefaults.cardColors(containerColor = CardDark),
+        border = BorderStroke(1.dp, BorderDark), shape = RoundedCornerShape(14.dp)) {
+        Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${data.value}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Ink900)
-                // Only rendered when a real prior-day baseline exists — never
-                // a fabricated trend on a fresh install with no history.
-                data.trendPct?.let { pct ->
-                    Spacer(Modifier.width(8.dp))
-                    val arrow = if (pct >= 0) "▲" else "▼"
-                    Text(
-                        "$arrow ${kotlin.math.abs(pct)}%",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Gray600,
-                        fontWeight = FontWeight.SemiBold,
-                    )
+                Box(Modifier.size(30.dp).background(color.copy(alpha = 0.15f), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
                 }
+                Spacer(Modifier.width(8.dp))
+                Text(label, color = MutedForeground, style = MaterialTheme.typography.labelMedium, maxLines = 2)
             }
+            Spacer(Modifier.height(8.dp))
+            Text("$value", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(sub, color = MutedForeground, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
 
 @Composable
-private fun SectionCard(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardDark),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
-        shape = RoundedCornerShape(10.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+private fun Panel(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Card(modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = CardDark),
+        border = BorderStroke(1.dp, BorderDark), shape = RoundedCornerShape(14.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(10.dp))
             content()
@@ -313,36 +313,23 @@ private fun SectionCard(
 }
 
 @Composable
-private fun RecentRow(item: ScreeningQueueItem, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(item.travelerName, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
-            val docLabel = item.documentType.replace("_", " ").replaceFirstChar { it.uppercase() }
-            Text(
-                "${item.nationality} · $docLabel · ${item.status.humanLabel()}",
-                style = MaterialTheme.typography.labelSmall,
-                color = Gray500,
-            )
-        }
-        RiskBadge(level = item.risk?.level ?: "PENDING")
+private fun RecentRow(item: VerificationListItem, onClick: () -> Unit) {
+    val (label, color) = when (item.overallStatus) {
+        "PASS" -> "Verified" to SuccessGreen
+        "REVIEW_REQUIRED" -> "Review required" to WarningAmber
+        "FAIL" -> "Check failed" to DestructiveRed
+        "OFFICIAL_VERIFICATION_REQUIRED", "REGISTRY_NOT_AVAILABLE" -> "Official check needed" to ChartBlue
+        else -> "Not verified" to MutedForeground
     }
-}
-
-@Composable
-private fun QuickActionButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(48.dp),
-        shape = RoundedCornerShape(8.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Ink900),
-    ) {
-        Text(label, color = Ink900, fontWeight = FontWeight.Medium)
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(10.dp).background(color, CircleShape))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(item.documentTypes?.joinToString(" + ") { it.replace('_', ' ').lowercase().replaceFirstChar { c -> c.uppercase() } } ?: "Document",
+                fontWeight = FontWeight.Medium)
+            Text(listOfNotNull(item.caseNumber, item.country?.lowercase()?.replaceFirstChar { it.uppercase() }).joinToString(" · "),
+                color = MutedForeground, style = MaterialTheme.typography.bodySmall)
+        }
+        Text(label, color = color, style = MaterialTheme.typography.labelMedium)
     }
 }

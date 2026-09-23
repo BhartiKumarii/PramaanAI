@@ -39,7 +39,7 @@ def _resolve_node(db: Session, entity_type: EntityType, entity_id: uuid.UUID) ->
             detail={"masked_document_number": row.masked_document_number, "nationality": row.nationality},
         )
     if entity_type == EntityType.CHECKPOINT:
-        row = db.get(Checkpoint, entity_id)
+        row = db.get(Checkpoint, str(entity_id))  # checkpoints.id is a hyphenated string
         if row is None:
             return None
         return GraphNode(id=str(row.id), type="CHECKPOINT", label=row.name, detail={"code": row.code})

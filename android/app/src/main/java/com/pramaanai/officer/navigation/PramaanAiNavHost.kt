@@ -37,23 +37,17 @@ import com.pramaanai.officer.ui.alerts.AlertsScreen
 import com.pramaanai.officer.ui.analytics.AnalyticsScreen
 import com.pramaanai.officer.ui.audit.AuditLogScreen
 import com.pramaanai.officer.ui.auth.LoginScreen
-import com.pramaanai.officer.ui.capture.CaptureScreen
 import com.pramaanai.officer.ui.dashboard.DashboardScreen
 import com.pramaanai.officer.ui.history.HistoryScreen
 import com.pramaanai.officer.ui.more.MoreScreen
-import com.pramaanai.officer.ui.newscreening.NewScreeningScreen
-import com.pramaanai.officer.ui.newscreening.ScreeningData
-import com.pramaanai.officer.ui.newscreening.DocumentType
 import com.pramaanai.officer.ui.profile.OfficerProfileScreen
 import com.pramaanai.officer.ui.queue.QueueScreen
 import com.pramaanai.officer.ui.review.ReviewScreen
-import com.google.gson.Gson
 import com.pramaanai.officer.ui.settings.SettingsScreen
 import com.pramaanai.officer.ui.shell.AppShell
 import com.pramaanai.officer.ui.shell.ShellTab
 import com.pramaanai.officer.ui.splash.SplashScreen
 import com.pramaanai.officer.ui.traveler.TravelerProfileScreen
-import com.pramaanai.officer.ui.workflow.WorkflowResultScreen
 
 object Routes {
     const val SPLASH = "splash"
@@ -67,37 +61,24 @@ object Routes {
     const val AUDIT_LOG = "audit_log"
     const val OFFICER_PROFILE = "officer_profile"
     const val SETTINGS = "settings"
-    const val NEW_SCREENING = "new_screening"
-    const val CAPTURE = "capture/{screeningDataJson}"
-    const val WORKFLOW = "workflow/{screeningId}"
     const val REVIEW = "review/{screeningId}"
     const val TRAVELER_PROFILE = "traveler_profile/{travelerName}"
     const val PRACTICE_WORKFLOW = "practice_workflow"
+    const val DOC_VERIFY = "doc_verify"
+    const val VERIFICATION_DETAIL = "verification/{verificationId}"
+    fun verification(id: String) = "verification/$id"
 
-    fun workflow(id: String) = "workflow/$id"
     fun review(id: String) = "review/$id"
     fun travelerProfile(name: String) = "traveler_profile/${Uri.encode(name)}"
 }
 
-private val gson = Gson()
-
 private val SHELL_TAB_ROUTES = mapOf(
     ShellTab.DASHBOARD to Routes.DASHBOARD,
+    ShellTab.VERIFY to Routes.DOC_VERIFY,
     ShellTab.QUEUE to Routes.QUEUE,
     ShellTab.HISTORY to Routes.HISTORY,
     ShellTab.MORE to Routes.MORE,
 )
-
-private fun getSelectedCheckpointFromAuth(): com.pramaanai.officer.data.remote.CheckpointResponse? {
-    val code = com.pramaanai.officer.data.remote.AuthSession.checkpointCode
-    val name = com.pramaanai.officer.data.remote.AuthSession.checkpointName
-    if (code != null && name != null) {
-        return com.pramaanai.officer.data.remote.CheckpointResponse(
-            id = "", code = code, name = name, location = null, isActive = true
-        )
-    }
-    return null
-}
 
 /** Sequential spotlights over the real, live Dashboard, followed by a
  * hands-on practice run with two dedicated concept spotlights (Detected vs
@@ -113,10 +94,10 @@ private fun buildTourSteps(ctx: android.content.Context, navController: androidx
         body = ctx.getString(R.string.tour_nav_body),
     ),
     TourStep(
-        id = "new_screening",
-        anchorId = "new_screening_button",
-        title = ctx.getString(R.string.tour_new_screening_title),
-        body = ctx.getString(R.string.tour_new_screening_body),
+        id = "verify_document",
+        anchorId = "verify_document_button",
+        title = ctx.getString(R.string.tour_verify_document_title),
+        body = ctx.getString(R.string.tour_verify_document_body),
     ),
     TourStep(
         id = "stat_cards",
@@ -131,40 +112,67 @@ private fun buildTourSteps(ctx: android.content.Context, navController: androidx
         body = ctx.getString(R.string.tour_risk_body),
     ),
     TourStep(
-        id = "practice_intro",
-        title = ctx.getString(R.string.tour_practice_title),
-        body = ctx.getString(R.string.tour_practice_body),
-        ctaLabel = ctx.getString(R.string.tour_practice_cta),
+        id = "activity_chart",
+        anchorId = "activity_chart",
+        title = ctx.getString(R.string.tour_activity_title),
+        body = ctx.getString(R.string.tour_activity_body),
+    ),
+    TourStep(
+        id = "status_bar",
+        anchorId = "status_bar",
+        title = ctx.getString(R.string.tour_status_title),
+        body = ctx.getString(R.string.tour_status_body),
+    ),
+    TourStep(
+        id = "notifications_bell",
+        anchorId = "notifications_bell",
+        title = ctx.getString(R.string.tour_bell_title),
+        body = ctx.getString(R.string.tour_bell_body),
+    ),
+    TourStep(
+        id = "verify_flow",
+        title = ctx.getString(R.string.tour_flow_title),
+        body = ctx.getString(R.string.tour_flow_body),
+        ctaLabel = ctx.getString(R.string.tour_flow_cta),
         onCta = {
-            navController.navigate(Routes.PRACTICE_WORKFLOW)
+            navController.navigate(Routes.DOC_VERIFY) { popUpTo(Routes.DASHBOARD); launchSingleTop = true }
+            com.pramaanai.officer.ui.tour.VerifyPractice.start()
             TourState.next()
         },
     ),
-    TourStep(
-        id = "detected_example",
-        anchorId = "detected_example",
-        title = ctx.getString(R.string.tour_detected_title),
-        body = ctx.getString(R.string.tour_detected_body),
-    ),
-    TourStep(
-        id = "verified_example",
-        anchorId = "verified_example",
-        title = ctx.getString(R.string.tour_verified_title),
-        body = ctx.getString(R.string.tour_verified_body),
-    ),
-    TourStep(
-        id = "exact_tag_example",
-        anchorId = "exact_tag_example",
-        title = ctx.getString(R.string.tour_exact_title),
-        body = ctx.getString(R.string.tour_exact_body),
-    ),
-    TourStep(
-        id = "fuzzy_tag_example",
-        anchorId = "fuzzy_tag_example",
-        title = ctx.getString(R.string.tour_fuzzy_title),
-        body = ctx.getString(R.string.tour_fuzzy_body),
-    ),
-)
+) + buildVerifyPracticeSteps(ctx)
+
+/** The practice verification: the real Verify screens on a bundled synthetic
+ * sample (VerifyPractice), one spotlight per part of the workflow. */
+private fun buildVerifyPracticeSteps(ctx: android.content.Context): List<TourStep> {
+    val p = com.pramaanai.officer.ui.tour.VerifyPractice
+    fun step(id: String, titleRes: Int, bodyRes: Int, cta: Int = 0, action: (() -> Unit)? = null) = TourStep(
+        id = id, anchorId = id, title = ctx.getString(titleRes), body = ctx.getString(bodyRes),
+        ctaLabel = if (cta != 0) ctx.getString(cta) else null,
+        onCta = action?.let { a -> { a(); TourState.next() } })
+    return listOf(
+        step("vp_capture_frame", R.string.tour_vp_capture_frame_title, R.string.tour_vp_capture_frame_body),
+        step("vp_capture_buttons", R.string.tour_vp_capture_buttons_title, R.string.tour_vp_capture_buttons_body,
+            R.string.tour_vp_use_sample) { p.command = com.pramaanai.officer.ui.tour.VerifyPractice.Command.LOAD_DOCUMENT },
+        step("vp_regions", R.string.tour_vp_regions_title, R.string.tour_vp_regions_body),
+        step("vp_text", R.string.tour_vp_text_title, R.string.tour_vp_text_body),
+        step("vp_crossing", R.string.tour_vp_crossing_title, R.string.tour_vp_crossing_body),
+        step("vp_continue", R.string.tour_vp_continue_title, R.string.tour_vp_continue_body,
+            R.string.tour_vp_to_face) { p.command = com.pramaanai.officer.ui.tour.VerifyPractice.Command.TO_FACE },
+        step("vp_face_camera", R.string.tour_vp_face_camera_title, R.string.tour_vp_face_camera_body,
+            R.string.tour_vp_use_face) { p.command = com.pramaanai.officer.ui.tour.VerifyPractice.Command.USE_FACE },
+        step("vp_result_headline", R.string.tour_vp_result_headline_title, R.string.tour_vp_result_headline_body),
+        step("vp_decision", R.string.tour_vp_decision_title, R.string.tour_vp_decision_body),
+        step("vp_document_problems", R.string.tour_vp_document_problems_title, R.string.tour_vp_document_problems_body),
+        step("vp_fields", R.string.tour_vp_fields_title, R.string.tour_vp_fields_body),
+        step("vp_face_match", R.string.tour_vp_face_match_title, R.string.tour_vp_face_match_body),
+        step("vp_identity", R.string.tour_vp_identity_title, R.string.tour_vp_identity_body),
+        step("vp_checks", R.string.tour_vp_checks_title, R.string.tour_vp_checks_body),
+        TourStep(id = "vp_done", title = ctx.getString(R.string.tour_vp_done_title), body = ctx.getString(R.string.tour_vp_done_body),
+            ctaLabel = ctx.getString(R.string.tour_vp_finish), onCta = { p.stop(); TourState.next() }),
+    )
+}
+
 
 @Composable
 fun PramaanAiNavHost(repository: ScreeningRepository) {
@@ -175,7 +183,19 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
     val readAlertsStore = remember(context) { ReadAlertsStore.getInstance(context) }
     val allAlerts by repository.observeAlerts().collectAsStateWithLifecycle(initialValue = emptyList())
     val readIds by readAlertsStore.readIds.collectAsStateWithLifecycle()
-    val unreadAlertCount = allAlerts.count { it.id !in readIds }
+    @Suppress("UNUSED_VARIABLE") val legacyUnread = allAlerts.count { it.id !in readIds }
+    // Bell badge: reviewing-officer responses this phone has not shown yet.
+    var unreadAlertCount by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        val docRepo = com.pramaanai.officer.data.docverify.DocVerifyRepository(context.applicationContext)
+        while (true) {
+            val every = com.pramaanai.officer.data.local.AppSettings.responsePollSeconds(context)
+            if (every > 0 && AuthSession.isLoggedIn()) docRepo.listMine().onSuccess {
+                unreadAlertCount = com.pramaanai.officer.ui.verifications.ResponseTracker.unseenCount(context, it)
+            }
+            delay((if (every > 0) every else 60) * 1000L)
+        }
+    }
 
     // Real, live connectivity — polled, never assumed (see CLAUDE.md).
     // Hoisted once here since AppShell is the shared chrome for every
@@ -186,22 +206,39 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
     LaunchedEffect(connectivityMonitor) {
         while (true) {
             connectivityState = connectivityMonitor.check()
-            delay(15_000L)
+            delay(10_000L)
         }
     }
 
+    // Tabs always open at their own screen. Saving/restoring each tab's stack
+    // re-opened whatever sat on top of it (e.g. History restored with
+    // Notifications or a verification detail still open).
     fun goToTab(tab: ShellTab) {
         navController.navigate(SHELL_TAB_ROUTES.getValue(tab)) {
-            popUpTo(Routes.DASHBOARD) { saveState = true }
+            popUpTo(Routes.DASHBOARD)
             launchSingleTop = true
-            restoreState = true
         }
+    }
+
+    fun openNotifications() {
+        navController.navigate(Routes.ALERTS) {
+            popUpTo(Routes.DASHBOARD)
+            launchSingleTop = true
+        }
+    }
+
+    fun launchVerifyTour() {
+        navController.navigate(Routes.DOC_VERIFY) { popUpTo(Routes.DASHBOARD); launchSingleTop = true }
+        com.pramaanai.officer.ui.tour.VerifyPractice.start()
+        TourState.start(steps = buildVerifyPracticeSteps(context),
+            onFinished = { com.pramaanai.officer.ui.tour.VerifyPractice.stop() })
     }
 
     fun launchTour() {
         TourState.start(
             steps = buildTourSteps(context, navController),
             onFinished = {
+                com.pramaanai.officer.ui.tour.VerifyPractice.stop()
                 AuthSession.username?.let { tourPrefs.markTourSeen(it) }
                 scope.launch { repository.logTourCompleted() }
             },
@@ -268,6 +305,7 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 title = stringResource(R.string.nav_dashboard),
                 selectedTab = ShellTab.DASHBOARD,
                 onTabSelected = { goToTab(it) },
+                onAlertsClick = { openNotifications() },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
                 officerName = AuthSession.username,
@@ -276,8 +314,8 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 DashboardScreen(
                     repository = repository,
                     padding = padding,
-                    onNewScreening = { navController.navigate(Routes.NEW_SCREENING) },
-                    onOpenScreening = { id -> navController.navigate(Routes.review(id)) },
+                    onVerifyDocument = { goToTab(ShellTab.VERIFY) },
+                    onOpenScreening = { id -> navController.navigate(Routes.verification(id)) },
                     onViewQueue = { goToTab(ShellTab.QUEUE) },
                     onViewHistory = { goToTab(ShellTab.HISTORY) },
                     onViewAnalytics = { navController.navigate(Routes.ANALYTICS) },
@@ -291,12 +329,14 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 title = stringResource(R.string.nav_queue),
                 selectedTab = ShellTab.QUEUE,
                 onTabSelected = { goToTab(it) },
+                onAlertsClick = { openNotifications() },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
                 officerName = AuthSession.username,
                 alertCount = unreadAlertCount,
             ) { padding ->
-                QueueScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
+                com.pramaanai.officer.ui.verifications.VerificationListScreen(padding, com.pramaanai.officer.ui.verifications.ListMode.REVIEW,
+                    onOpen = { id -> navController.navigate(Routes.verification(id)) })
             }
         }
 
@@ -306,12 +346,14 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 title = stringResource(R.string.nav_history),
                 selectedTab = ShellTab.HISTORY,
                 onTabSelected = { goToTab(it) },
+                onAlertsClick = { openNotifications() },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
                 officerName = AuthSession.username,
                 alertCount = unreadAlertCount,
             ) { padding ->
-                HistoryScreen(repository = repository, padding = padding, onOpenScreening = { id -> navController.navigate(Routes.review(id)) })
+                com.pramaanai.officer.ui.verifications.VerificationListScreen(padding, com.pramaanai.officer.ui.verifications.ListMode.HISTORY,
+                    onOpen = { id -> navController.navigate(Routes.verification(id)) })
             }
         }
 
@@ -321,6 +363,7 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                 title = stringResource(R.string.nav_more),
                 selectedTab = ShellTab.MORE,
                 onTabSelected = { goToTab(it) },
+                onAlertsClick = { openNotifications() },
                 onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
                 onHelpClick = { launchTour() },
                 officerName = AuthSession.username,
@@ -330,6 +373,7 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                     padding = padding,
                     role = AuthSession.role,
                     onOpenAnalytics = { navController.navigate(Routes.ANALYTICS) },
+                    onOpenDocVerify = { goToTab(ShellTab.VERIFY) },
                     onOpenAuditLog = { navController.navigate(Routes.AUDIT_LOG) },
                     onOpenOfficerProfile = { navController.navigate(Routes.OFFICER_PROFILE) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -337,6 +381,47 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
                         navigateToLogin()
                     },
                 )
+            }
+        }
+
+        composable(Routes.DOC_VERIFY) {
+            AppShell(
+                connectivityState = connectivityState,
+                title = stringResource(R.string.more_doc_verify),
+                selectedTab = ShellTab.VERIFY,
+                onTabSelected = { goToTab(it) },
+                onAlertsClick = { openNotifications() },
+                onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
+                onHelpClick = { launchVerifyTour() },
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
+            ) { padding ->
+                com.pramaanai.officer.ui.docverify.DocVerifyScreen(padding = padding)
+            }
+        }
+
+        composable(Routes.ALERTS) {
+            AppShell(
+                connectivityState = connectivityState,
+                title = "Notifications",
+                selectedTab = ShellTab.QUEUE,
+                onTabSelected = { goToTab(it) },
+                onAlertsClick = {},
+                onProfileClick = { navController.navigate(Routes.OFFICER_PROFILE) },
+                onHelpClick = { launchTour() },
+                officerName = AuthSession.username,
+                alertCount = unreadAlertCount,
+            ) { padding ->
+                com.pramaanai.officer.ui.verifications.VerificationListScreen(padding, com.pramaanai.officer.ui.verifications.ListMode.NOTIFICATIONS,
+                    onOpen = { id -> navController.navigate(Routes.verification(id)) })
+            }
+        }
+        composable(
+            route = Routes.VERIFICATION_DETAIL,
+            arguments = listOf(navArgument("verificationId") { type = NavType.StringType }),
+        ) { entry ->
+            entry.arguments?.getString("verificationId")?.let { id ->
+                com.pramaanai.officer.ui.verifications.VerificationDetailScreen(id, onBack = { navController.popBackStack() })
             }
         }
 
@@ -350,6 +435,7 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
             OfficerProfileScreen(
                 repository = repository,
                 onBack = { navController.popBackStack() },
+                onReplayTour = { navController.navigate(Routes.DASHBOARD) { popUpTo(Routes.DASHBOARD) { inclusive = true } }; launchTour() },
                 onLogout = {
                     navigateToLogin()
                 },
@@ -360,52 +446,6 @@ fun PramaanAiNavHost(repository: ScreeningRepository) {
             SettingsScreen(repository = repository, onBack = { navController.popBackStack() })
         }
 
-        composable(Routes.NEW_SCREENING) {
-            val selectedCheckpoint = getSelectedCheckpointFromAuth()
-            NewScreeningScreen(
-                repository = repository,
-                selectedCheckpoint = selectedCheckpoint,
-                onContinue = { screeningData ->
-                    val json = gson.toJson(screeningData)
-                    navController.navigate("capture/${Uri.encode(json)}")
-                },
-            )
-        }
-        composable(
-            route = Routes.CAPTURE,
-            arguments = listOf(navArgument("screeningDataJson") { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val args = backStackEntry.arguments
-            val json = args?.getString("screeningDataJson") ?: ""
-            val screeningData = if (json.isNotBlank()) {
-                try { gson.fromJson(json, ScreeningData::class.java) } catch (_: Exception) {
-                    ScreeningData(DocumentType.PASSPORT, null)
-                }
-            } else {
-                ScreeningData(DocumentType.PASSPORT, null)
-            }
-            CaptureScreen(
-                repository = repository,
-                documentType = screeningData.documentType.value,
-                checkpointCode = screeningData.checkpointCode,
-                onSubmitted = { screeningId ->
-                    navController.navigate(Routes.workflow(screeningId)) { popUpTo(Routes.DASHBOARD) }
-                },
-            )
-        }
-        composable(
-            route = Routes.WORKFLOW,
-            arguments = listOf(navArgument("screeningId") { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("screeningId")
-            if (id != null) {
-                WorkflowResultScreen(
-                    repository = repository,
-                    screeningId = id,
-                    onComplete = { goToTab(ShellTab.QUEUE) },
-                )
-            }
-        }
         composable(
             route = Routes.REVIEW,
             arguments = listOf(navArgument("screeningId") { type = NavType.StringType }),

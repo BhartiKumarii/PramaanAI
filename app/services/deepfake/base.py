@@ -1,4 +1,4 @@
-"""Deepfake detection interface (Module — see heuristic_provider.py for
+"""Deepfake detection interface (Module — see advanced_provider.py for
 the real implementation and its honest scope/limits)."""
 from abc import ABC, abstractmethod
 

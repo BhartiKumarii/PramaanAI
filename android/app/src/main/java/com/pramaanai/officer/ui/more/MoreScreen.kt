@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Logout
@@ -41,12 +42,15 @@ fun MoreScreen(
     padding: PaddingValues,
     role: String?,
     onOpenAnalytics: () -> Unit,
+    onOpenDocVerify: () -> Unit,
     onOpenAuditLog: () -> Unit,
     onOpenOfficerProfile: () -> Unit,
     onOpenSettings: () -> Unit,
     onLogout: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
+        MoreRow(stringResource(R.string.more_doc_verify), Icons.Filled.DocumentScanner, onOpenDocVerify)
+        Spacer(Modifier.height(8.dp))
         MoreRow(stringResource(R.string.more_analytics), Icons.Filled.Analytics, onOpenAnalytics)
         Spacer(Modifier.height(8.dp))
         MoreRow(stringResource(R.string.more_audit_log), Icons.Filled.History, onOpenAuditLog)

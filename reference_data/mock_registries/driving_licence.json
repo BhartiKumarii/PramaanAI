@@ -1,0 +1,12 @@
+{
+  "schema": "pramaan.mock_registry.v1",
+  "registry": "DRIVING_LICENCE",
+  "data_classification": "SYNTHETIC_TEST_DATA",
+  "notice": "FICTIONAL MOCK REGISTRY for the SIH prototype. Every record is invented. This is NOT a government database and is never presented as one.",
+  "records": [
+    {"licence_number": "MH1220190012345", "name": "ARJUN SYNTHETIC MEHTA", "dob": "1994-03-15", "issue_date": "2019-06-10", "expiry_date": "2039-03-14", "vehicle_classes": ["MCWG", "LMV"], "status": "VALID", "synthetic": true},
+    {"licence_number": "UP3220210098765", "name": "SYNTHETIC TEST PERSON", "dob": "2002-06-12", "issue_date": "2021-02-01", "expiry_date": "2041-06-11", "vehicle_classes": ["LMV"], "status": "VALID", "synthetic": true},
+    {"licence_number": "BR0120150045678", "name": "PRIYA SYNTHETIC KUMARI", "dob": "1990-11-02", "issue_date": "2015-08-20", "expiry_date": "2025-08-19", "vehicle_classes": ["MCWG"], "status": "EXPIRED", "synthetic": true},
+    {"licence_number": "WB2420200033344", "name": "RAHUL SYNTHETIC DAS", "dob": "1988-01-30", "issue_date": "2020-01-15", "expiry_date": "2038-01-29", "vehicle_classes": ["LMV", "TRANS"], "status": "SUSPENDED", "synthetic": true}
+  ]
+}

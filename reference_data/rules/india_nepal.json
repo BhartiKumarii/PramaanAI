@@ -1,0 +1,101 @@
+{
+  "schema": "pramaan.border_rules.v1",
+  "route": "INDIA_NEPAL",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "disclaimer": "Decision-support configuration compiled from public sources for a prototype. It does not replace the officer's current standing orders, and must be re-validated against current official notifications before operational use.",
+  "versions": [
+    {
+      "version": "2026.09-prototype",
+      "effective_from": null,
+      "effective_to": null,
+      "sources": [
+        {
+          "title": "Embassy of India, Kathmandu — Valid travel documents",
+          "url": "https://www.indembkathmandu.gov.in/valid-travel-documents",
+          "retrieved": "2026-09-23"
+        },
+        {
+          "title": "Department of Immigration, Nepal — Information for Indian Nationals",
+          "url": "https://www.immigration.gov.np/en/post/information-for-indian-nationals",
+          "retrieved": "2026-09-23"
+        },
+        {
+          "title": "Department of Immigration, Nepal — Entry/Exit Points for foreigners",
+          "url": "https://gaddachauki.immigration.gov.np/en/post/entry-exit-points-10",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "nationality_rules": {
+        "INDIAN": {
+          "basis": "Treaty-based open border (India–Nepal Treaty of Peace and Friendship, 1950)",
+          "visa_required": false,
+          "immigration_stamp_expected": false,
+          "designated_crossing_required": false,
+          "accepted_identity_documents": [
+            "INDIAN_PASSPORT",
+            "VOTER_ID",
+            "GOVERNMENT_EMPLOYEE_PHOTO_ID",
+            "EMERGENCY_CERTIFICATE",
+            "IDENTITY_CERTIFICATE"
+          ],
+          "not_accepted_as_travel_document": ["AADHAAR"],
+          "age_exemptions": [
+            {
+              "min_age": 65,
+              "max_age": null,
+              "note": "Exempt from approved-ID requirement; must carry some photo document establishing age and identity."
+            },
+            {
+              "min_age": null,
+              "max_age": 15,
+              "note": "Exempt from approved-ID requirement; must carry some photo document establishing age and identity."
+            },
+            {
+              "min_age": 15,
+              "max_age": 18,
+              "note": "May travel on an identity certificate from the school principal in the prescribed format."
+            }
+          ],
+          "missing_visa_is_finding": false,
+          "missing_stamp_is_finding": false
+        },
+        "NEPALI": {
+          "basis": "Treaty-based open border (India–Nepal Treaty of Peace and Friendship, 1950)",
+          "visa_required": false,
+          "immigration_stamp_expected": false,
+          "designated_crossing_required": false,
+          "accepted_identity_documents": [
+            "FOREIGN_PASSPORT",
+            "IDENTITY_DOCUMENT"
+          ],
+          "not_accepted_as_travel_document": [],
+          "age_exemptions": [],
+          "missing_visa_is_finding": false,
+          "missing_stamp_is_finding": false
+        },
+        "THIRD_COUNTRY": {
+          "basis": "Foreign nationals other than Indian/Nepali citizens",
+          "visa_required": true,
+          "required_visa": {
+            "INDIA_TO_NEPAL": ["NEPAL_VISA"],
+            "NEPAL_TO_INDIA": ["INDIAN_VISA"]
+          },
+          "immigration_stamp_expected": true,
+          "designated_crossing_required": true,
+          "designated_crossing_note": "Nepal requires foreigners to complete arrival/departure formalities at designated entry/exit points (checkpoints with foreigner_immigration_point=true).",
+          "accepted_identity_documents": ["FOREIGN_PASSPORT"],
+          "not_accepted_as_travel_document": [],
+          "age_exemptions": [],
+          "missing_visa_is_finding": true,
+          "missing_stamp_is_finding": true
+        }
+      },
+      "finding_policy": {
+        "missing_required_visa": "REVIEW_REQUIRED",
+        "missing_expected_stamp": "REVIEW_REQUIRED",
+        "document_not_in_accepted_list": "REVIEW_REQUIRED",
+        "note": "Absent evidence is routed to officer review — never treated as proof of fraud."
+      }
+    }
+  ]
+}

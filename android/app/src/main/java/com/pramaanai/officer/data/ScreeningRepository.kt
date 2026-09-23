@@ -378,6 +378,7 @@ class ScreeningRepository(
         tamperingResult: com.pramaanai.officer.data.model.TamperingResult? = null,
         deepfakeResult: com.pramaanai.officer.data.remote.DeepfakeResult? = null,
         livenessResult: com.pramaanai.officer.data.remote.LivenessResult? = null,
+        detectedDocumentType: String? = null,
     ): ScreeningQueueItem {
         val request = ScreeningSubmissionRequest(
             documentType = documentType,
@@ -437,7 +438,7 @@ class ScreeningRepository(
             }
         }
         val item = screeningResponseToQueueItem(
-            response, travelerName, documentType, nationality, effectiveCheckpoint, persistedImagePath, persistedBackImagePath, persistedSelfiePath, mrzText,
+            response, travelerName, documentType, nationality, effectiveCheckpoint, persistedImagePath, persistedBackImagePath, persistedSelfiePath, mrzText, detectedDocumentType,
         )
         store.upsert(item)
 

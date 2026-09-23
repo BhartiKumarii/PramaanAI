@@ -46,6 +46,33 @@ class Settings(BaseSettings):
     # Directory to store uploaded images for web dashboard review
     images_dir: str = "images"
 
+    # --- Modular document-verification pipeline (/api/v1/verify/*) ---
+    # Versioned reference data (checkpoints, border rules, templates, mock registries).
+    pramaan_reference_data_dir: str = "reference_data"
+    # Trained YOLO11 weights for region detection. Empty = the classical
+    # OpenCV detector is used and every result says so.
+    pramaan_yolo_weights: str = ""
+    pramaan_yolo_conf: float = 0.35
+    # "mock" = fictional synthetic registry; "disabled" = REGISTRY_NOT_AVAILABLE.
+    pramaan_dl_registry_mode: str = "mock"
+    pramaan_travel_registry_mode: str = "mock"
+    # Optional vision-language reasoner (OpenAI-compatible chat endpoint, e.g.
+    # a self-hosted Qwen-VL or Gemini's OpenAI-compatible API). Advisory text
+    # only — it never changes a check status. Empty base URL = disabled.
+    pramaan_vlm_base_url: str = ""
+    pramaan_vlm_model: str = ""
+    pramaan_vlm_api_key: str = ""
+    # Images are only sent to the VLM when this is explicitly enabled.
+    pramaan_vlm_send_image: bool = False
+    pramaan_vlm_timeout_seconds: float = 20.0
+    # Concurrency: pipelines running at once per process (0 = auto: half the
+    # CPU cores, capped at 4) and how many more may wait before 503.
+    pramaan_max_concurrent_verifications: int = 0
+    # ONNX Runtime threads per PP-OCR engine; 0 = auto (half the cores, max 4).
+    # Using every core oversubscribes the CPU and measured ~2x slower.
+    pramaan_ocr_threads: int = 0
+    pramaan_max_queued_verifications: int = 16
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list[str]) -> list[str]:

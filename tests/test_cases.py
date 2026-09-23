@@ -163,7 +163,8 @@ def test_decision_requires_reason_unless_clear(client, db_session):
 
     checkpoint = _checkpoint(db_session)
     _make_user(db_session, "field4", UserRole.OFFICER, checkpoint)
-    _make_user(db_session, "immig4", UserRole.OFFICER, checkpoint)
+    # Final case decisions belong to the REVIEWER role (migration 0016).
+    _make_user(db_session, "immig4", UserRole.REVIEWER, checkpoint)
     field_token = _token(client, "field4")
     immig_token = _token(client, "immig4")
 
@@ -189,23 +190,24 @@ def test_decision_requires_reason_unless_clear(client, db_session):
     assert body["decisions"][0]["reason"] == "Document number does not match MRZ"
 
 
-def test_officer_can_record_a_decision(client, db_session):
+def test_reviewer_records_decision_and_field_officer_cannot(client, db_session):
     from app.models.user import UserRole
 
     checkpoint = _checkpoint(db_session)
     _make_user(db_session, "officer1", UserRole.OFFICER, checkpoint)
+    _make_user(db_session, "reviewer1", UserRole.REVIEWER, checkpoint)
     token = _token(client, "officer1")
+    reviewer = _token(client, "reviewer1")
     case_id = _screen(client, token).json()["case_id"]
-
-    # Submit the case first
     client.post(f"/cases/{case_id}/submit", json={}, headers={"Authorization": f"Bearer {token}"})
 
-    # Then record a decision
-    resp = client.post(
-        f"/cases/{case_id}/decision",
-        json={"decision": "CLEAR"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    # Final decisions are a REVIEWER action (migration 0016); a field officer is refused.
+    denied = client.post(f"/cases/{case_id}/decision", json={"decision": "CLEAR"},
+                         headers={"Authorization": f"Bearer {token}"})
+    assert denied.status_code == 403
+
+    resp = client.post(f"/cases/{case_id}/decision", json={"decision": "CLEAR"},
+                       headers={"Authorization": f"Bearer {reviewer}"})
     assert resp.status_code == 200
     assert resp.json()["status"] == "CLEAR"
 
@@ -254,7 +256,7 @@ def test_timeline_merges_audit_events_and_notes_in_order(client, db_session):
 
     checkpoint = _checkpoint(db_session)
     _make_user(db_session, "field8", UserRole.OFFICER, checkpoint)
-    _make_user(db_session, "immig8", UserRole.OFFICER, checkpoint)
+    _make_user(db_session, "immig8", UserRole.REVIEWER, checkpoint)
     field_token = _token(client, "field8")
     immig_token = _token(client, "immig8")
 

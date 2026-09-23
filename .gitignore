@@ -35,3 +35,16 @@ images/*.jpeg
 test_headless*.js
 node_modules/
 package-lock.json
+
+# Real identity-document images (personal data) — never commit
+data/dataset/
+data/dataset_1/
+# Built YOLO dataset (contains real images) and training runs
+data/yolo/
+runs/
+yolo11n.pt
+*.db.bak*
+
+# Local model weights (face models ~270 MB, YOLO training weights). The Android
+# app ships its own on-device YOLO model in android/app/src/main/assets/.
+models/

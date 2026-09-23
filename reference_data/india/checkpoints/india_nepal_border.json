@@ -1,0 +1,604 @@
+{
+  "schema": "pramaan.checkpoints.v1",
+  "border": "INDIA_NEPAL",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "checkpoints": [
+    {
+      "checkpoint_id": "IN-SUKHIA_POKHARI",
+      "country": "INDIA",
+      "checkpoint_name": "SUKHIA POKHARI",
+      "aliases": [
+        "SUKHIAPOKHRI"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "West Bengal"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-PASHUPATINAGAR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-PANITANKI",
+      "country": "INDIA",
+      "checkpoint_name": "PANITANKI",
+      "aliases": [
+        "NAXALBARI",
+        "NAXALBARI/PANITANKI"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "West Bengal"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-KAKARBHITTA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-GALGALIA",
+      "country": "INDIA",
+      "checkpoint_name": "GALGALIA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-BHADRAPUR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-JOGBANI",
+      "country": "INDIA",
+      "checkpoint_name": "JOGBANI",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-BIRATNAGAR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-BHIMNAGAR",
+      "country": "INDIA",
+      "checkpoint_name": "BHIMNAGAR",
+      "aliases": [
+        "BHIMNNAGAR"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-SETOBADHA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-KUNAULI",
+      "country": "INDIA",
+      "checkpoint_name": "KUNAULI",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-RAJBIRAJ",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-JAYNAGAR",
+      "country": "INDIA",
+      "checkpoint_name": "JAYNAGAR",
+      "aliases": [
+        "PIPRAUN",
+        "PIPRAUN/JAYNAGAR",
+        "JAINAGAR"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-JATAHI",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-BHITAMORE",
+      "country": "INDIA",
+      "checkpoint_name": "BHITAMORE",
+      "aliases": [
+        "BHITAMORE (SURSAND)",
+        "SURSAND"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-JALESWAR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-SONBARSA",
+      "country": "INDIA",
+      "checkpoint_name": "SONBARSA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-MALANGAWA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-BAIRGANIA",
+      "country": "INDIA",
+      "checkpoint_name": "BAIRGANIA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-GAUR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-RAXAUL",
+      "country": "INDIA",
+      "checkpoint_name": "RAXAUL",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-BIRGUNJ",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-SUNAULI",
+      "country": "INDIA",
+      "checkpoint_name": "SUNAULI",
+      "aliases": [
+        "NAUTANWA",
+        "NAUTANWA/SUNAULI",
+        "SONAULI"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-BHAIRAHAWA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-KHUNWA",
+      "country": "INDIA",
+      "checkpoint_name": "KHUNWA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-TAULIHAWA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-BARHNI",
+      "country": "INDIA",
+      "checkpoint_name": "BARHNI",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-KRISHNANAGAR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-JARWA",
+      "country": "INDIA",
+      "checkpoint_name": "JARWA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-KOILABAS",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-NEPALGUNJ_ROAD",
+      "country": "INDIA",
+      "checkpoint_name": "NEPALGUNJ ROAD",
+      "aliases": [
+        "NELPALGUNJ ROAD",
+        "RUPAIDIHA"
+      ],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-NEPALGUNJ",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-KATERNIYAGHAT",
+      "country": "INDIA",
+      "checkpoint_name": "KATERNIYAGHAT",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-RAJAPUR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-TIKONIA",
+      "country": "INDIA",
+      "checkpoint_name": "TIKONIA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-PRITHVIPUR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-GAURIPHANTA",
+      "country": "INDIA",
+      "checkpoint_name": "GAURIPHANTA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttar Pradesh"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-DHANGADHI",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-BANBASA",
+      "country": "INDIA",
+      "checkpoint_name": "BANBASA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttarakhand"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-MAHENDRANAGAR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-JHULAGHAT",
+      "country": "INDIA",
+      "checkpoint_name": "JHULAGHAT",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttarakhand"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-MAHAKALI",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-DHARCHULA",
+      "country": "INDIA",
+      "checkpoint_name": "DHARCHULA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Uttarakhand"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-DARCHULA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-SIKTA",
+      "country": "INDIA",
+      "checkpoint_name": "SIKTA",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-VISHUWA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-ADAPUR",
+      "country": "INDIA",
+      "checkpoint_name": "ADAPUR",
+      "aliases": [],
+      "border_country": "NEPAL",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Bihar"
+      },
+      "authority": "Indian border check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "NP-MATIARWA",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Birgunj — list of Nepal border check posts and corresponding Indian border check posts",
+          "url": "https://cgibirgunj.gov.in/docs/16209874855.pdf",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    }
+  ]
+}

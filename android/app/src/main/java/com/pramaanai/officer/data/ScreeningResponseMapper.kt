@@ -19,6 +19,7 @@ fun screeningResponseToQueueItem(
     documentBackImagePath: String? = null,
     selfieImagePath: String? = null,
     mrzText: String? = null,
+    detectedDocumentType: String? = null,
 ): ScreeningQueueItem = ScreeningQueueItem(
     id = response.verificationId,
     caseId = response.caseId,
@@ -49,6 +50,7 @@ fun screeningResponseToQueueItem(
             mrzLines = serverLines.ifEmpty {
                 mrzText?.lines().orEmpty().map { it.trim() }.filter { line -> line.length == 44 && line.all { it in 'A'..'Z' || it in '0'..'9' || it == '<' } }
             },
+            detectedDocumentType = detectedDocumentType ?: o.detectedDocumentType,
         )
     },
     validation = response.validation,

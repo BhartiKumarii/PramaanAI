@@ -6,7 +6,7 @@ Why not a deep embedding model (FaceNet/ArcFace/dlib's ResNet)?  This
 sandbox has no `cmake` (dlib requires it, no passwordless sudo available
 to install it) and no GPU/CUDA budget (a torch-based model would repeat
 the exact multi-GB footprint problem that already ruled out PaddleOCR and
-EasyOCR for this build — see app/services/ocr/tesseract_provider.py).
+EasyOCR for this build).
 HOG-over-Sobel-gradients is a real, deterministic, well-established
 pre-deep-learning face descriptor (this is the feature basis Dalal &
 Triggs used for detection, and a direct ancestor of early face-recognition

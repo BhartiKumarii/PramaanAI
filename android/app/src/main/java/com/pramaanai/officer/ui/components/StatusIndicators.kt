@@ -99,11 +99,13 @@ fun MatchTypeTag(matchType: String, modifier: Modifier = Modifier) {
  * color alone), matching this app's severity-signaling convention. */
 @Composable
 fun SystemStatusIndicator(state: ConnectivityState, modifier: Modifier = Modifier) {
-    val (color, label) = when (state) {
-        ConnectivityState.ONLINE -> SuccessGreen to stringResource(R.string.system_operational)
+    val detail = com.pramaanai.officer.data.connectivity.ConnectivityMonitor.lastDetail
+    val (color, base) = when (state) {
+        ConnectivityState.ONLINE -> SuccessGreen to "Online"
         ConnectivityState.WEAK -> WarningAmber to "Weak connection"
         ConnectivityState.OFFLINE -> DestructiveRed to "Offline"
     }
+    val label = if (detail.isNotBlank()) "$base · $detail" else base
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(8.dp).background(color, CircleShape))
         Spacer(Modifier.width(6.dp))

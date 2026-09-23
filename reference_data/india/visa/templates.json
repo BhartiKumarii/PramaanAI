@@ -1,0 +1,141 @@
+{
+  "schema": "pramaan.document_reference.v1",
+  "country": "INDIA",
+  "document_type": "INDIAN_VISA",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "note": "Prototype layout descriptor. expected_region values are approximate relative coordinates [x0,y0,x1,y1] used only for template-consistency scoring; they must be calibrated on authorised specimens before operational use. No security artwork is stored.",
+  "versions": [
+    {
+      "version": "MRV-A-sticker",
+      "validity_period": {
+        "from": null,
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "ICAO Doc 9303 \u2014 Machine Readable Travel Documents (layout of TD1/TD3 and MRV-A/MRV-B, MRZ check digits)",
+          "url": "https://www.icao.int/publications/pages/publication.aspx?docnum=9303"
+        }
+      ],
+      "layout_anchors": {
+        "PHOTOGRAPH": [
+          0.02,
+          0.15,
+          0.28,
+          0.72
+        ],
+        "MRZ": [
+          0.0,
+          0.76,
+          1.0,
+          1.0
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "photograph",
+          "expected_region": [
+            0.02,
+            0.15,
+            0.28,
+            0.72
+          ],
+          "verification_method": "face_detection",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "mrz",
+          "expected_region": [
+            0.0,
+            0.76,
+            1.0,
+            1.0
+          ],
+          "verification_method": "icao_9303_check_digits",
+          "expected_text_patterns": [
+            "^V.IND"
+          ],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "guilloche_background",
+          "expected_region": [
+            0.3,
+            0.1,
+            1.0,
+            0.72
+          ],
+          "verification_method": "visual_texture_indicator",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "qr_or_barcode",
+          "expected_region": null,
+          "verification_method": "deterministic_decoder",
+          "expected_text_patterns": [],
+          "visually_checkable": true,
+          "note": "Present on some versions only \u2014 absence is not a finding by itself."
+        },
+        {
+          "feature_name": "uv_features",
+          "expected_region": null,
+          "verification_method": "requires_uv_illumination",
+          "expected_text_patterns": [],
+          "visually_checkable": false
+        }
+      ],
+      "field_patterns": {
+        "visa_number": "^[A-Z0-9]{6,12}$",
+        "mrz_document_code": "^V"
+      },
+      "expected_text_patterns": [
+        "VISA",
+        "INDIA"
+      ]
+    },
+    {
+      "version": "e-Visa-printout",
+      "validity_period": {
+        "from": null,
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "Government of India e-Visa portal",
+          "url": "https://indianvisaonline.gov.in/evisa/"
+        }
+      ],
+      "layout_anchors": {
+        "QR_CODE": [
+          0.7,
+          0.0,
+          1.0,
+          0.3
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "qr_or_barcode",
+          "expected_region": [
+            0.7,
+            0.0,
+            1.0,
+            0.3
+          ],
+          "verification_method": "deterministic_decoder",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        }
+      ],
+      "field_patterns": {
+        "visa_number": "^[A-Z0-9]{6,16}$"
+      },
+      "expected_text_patterns": [
+        "E-VISA",
+        "ELECTRONIC TRAVEL AUTHORI"
+      ]
+    }
+  ]
+}

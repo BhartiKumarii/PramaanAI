@@ -487,8 +487,6 @@
     <string name="cd_officer_profile">अधिकारी प्रोफ़ाइल</string>
     <string name="tour_nav_title">ऐप में नेविगेट करें</string>
     <string name="tour_nav_body">अपने डैशबोर्ड, स्क्रीनिंग कतार, इतिहास और अलर्ट के बीच जाने के लिए इन टैब का उपयोग करें।</string>
-    <string name="tour_new_screening_title">नई स्क्रीनिंग शुरू करें</string>
-    <string name="tour_new_screening_body">जब भी कोई यात्री आपके चेकपॉइंट पर आए, यहां टैप करें।</string>
     <string name="tour_daily_numbers_title">आपके दैनिक आंकड़े</string>
     <string name="tour_daily_numbers_body">ये आज की वास्तविक स्क्रीनिंग से रियल-टाइम में अपडेट होते हैं।</string>
     <string name="tour_risk_title">एक नज़र में जोखिम</string>

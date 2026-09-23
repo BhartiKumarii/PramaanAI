@@ -1,142 +1,219 @@
 package com.pramaanai.officer.ui.profile
 
-import com.pramaanai.officer.ui.theme.BackgroundDark
-import com.pramaanai.officer.ui.theme.AccentGreen
+import android.os.Build
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pramaanai.officer.R
-import com.pramaanai.officer.data.Permissions
+import com.pramaanai.officer.BuildConfig
 import com.pramaanai.officer.data.ScreeningRepository
+import com.pramaanai.officer.data.connectivity.ConnectivityMonitor
+import com.pramaanai.officer.data.docverify.CaptureStore
+import com.pramaanai.officer.data.docverify.DocVerifyRepository
+import com.pramaanai.officer.data.docverify.VerificationListItem
+import com.pramaanai.officer.data.remote.AuthSession
 import com.pramaanai.officer.ui.components.OfficerAvatar
-import com.pramaanai.officer.ui.theme.Gray200
-import com.pramaanai.officer.ui.theme.Gray500
-import com.pramaanai.officer.ui.theme.Gray600
-import com.pramaanai.officer.ui.theme.Ink900
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.pramaanai.officer.ui.theme.AccentGreen
+import com.pramaanai.officer.ui.theme.BackgroundDark
+import com.pramaanai.officer.ui.theme.BorderDark
+import com.pramaanai.officer.ui.theme.CardDark
+import com.pramaanai.officer.ui.theme.ChartBlue
+import com.pramaanai.officer.ui.theme.DestructiveRed
+import com.pramaanai.officer.ui.theme.MutedForeground
+import com.pramaanai.officer.ui.theme.SidebarDark
+import com.pramaanai.officer.ui.theme.SuccessGreen
+import com.pramaanai.officer.ui.theme.WarningAmber
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+/** The signed-in officer: who and where they are, their own work in numbers,
+ * this device and its connection, the data kept on this phone, and account
+ * actions. Every figure comes from the officer's stored verifications. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OfficerProfileScreen(repository: ScreeningRepository, onBack: () -> Unit, onLogout: () -> Unit, onOpenSettings: () -> Unit) {
-    val profile = repository.officerProfile()
-    val recentActivity by repository.observeAuditLog().collectAsStateWithLifecycle(initialValue = emptyList())
-    val myActivity = recentActivity.filter { it.officer == profile.officerId }.take(6)
-    val failedLoginAttempts = recentActivity.count { it.officer == profile.officerId && it.result.startsWith("FAILED") }
+fun OfficerProfileScreen(
+    @Suppress("UNUSED_PARAMETER") repository: ScreeningRepository,
+    onBack: () -> Unit,
+    onLogout: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onReplayTour: () -> Unit = {},
+) {
+    val context = LocalContext.current
+    val repo = remember { DocVerifyRepository(context.applicationContext) }
+    val scope = rememberCoroutineScope()
+    var items by remember { mutableStateOf<List<VerificationListItem>>(emptyList()) }
+    var stored by remember { mutableIntStateOf(0) }
+    var pending by remember { mutableIntStateOf(0) }
+    var period by remember { mutableIntStateOf(7) }
+    var confirmClear by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        repo.listMine().onSuccess { items = it }
+        stored = CaptureStore.get(context).count()
+        pending = repo.pendingCount()
+    }
+    val cutoff = if (period == 0) Instant.EPOCH else Instant.now().minusSeconds(period * 86_400L)
+    val inPeriod = items.filter {
+        runCatching {
+            val iso = it.createdAt!!
+            Instant.parse(if (iso.endsWith("Z") || iso.contains('+')) iso else "${iso}Z").isAfter(cutoff)
+        }.getOrDefault(false)
+    }
 
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.title_officer_profile)) }) }) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("Officer profile", fontWeight = FontWeight.Bold) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = SidebarDark))
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    OfficerAvatar(name = profile.officerId, size = 56.dp, fontSize = 20.sp)
-                    Spacer(Modifier.width(14.dp))
-                    Column {
-                        Text(profile.officerId, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text(Permissions.roleLabel(profile.role), style = MaterialTheme.typography.bodySmall, color = Gray600)
-                    }
-                }
-                Spacer(Modifier.height(20.dp))
-            }
-            item {
-                ProfileSection("Personal Information") {
-                    InfoRow("Officer ID", profile.officerId)
-                    InfoRow("Role", profile.role)
-                    InfoRow("Checkpoint", profile.checkpoint)
-                    InfoRow("Account status", "Active")
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-            item {
-                ProfileSection("Security") {
-                    InfoRow("Secure session", "Active")
-                    InfoRow(
-                        "Last login",
-                        profile.lastLoginAt?.let { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(it)) } ?: "—",
-                    )
-                    InfoRow("Session token", "Held in memory for this app session only")
-                    InfoRow("Idle timeout", "Warns after 5 min inactivity, signs out 30s later")
-                    InfoRow("Failed login attempts", "$failedLoginAttempts recorded")
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-            item {
-                ProfileSection("Account Settings") {
-                    Text(
-                        "Language, notifications, and system preferences",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray600,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onOpenSettings)
-                            .padding(vertical = 2.dp),
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-            item {
-                ProfileSection("Activity") {
-                    if (myActivity.isEmpty()) {
-                        Text(stringResource(R.string.no_activity_recorded), style = MaterialTheme.typography.bodySmall, color = Gray500)
-                    } else {
-                        myActivity.forEach { entry ->
-                            Text(
-                                "${entry.action} — ${SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()).format(Date(entry.timestamp))}",
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(vertical = 3.dp),
-                            )
+                Card(colors = CardDefaults.cardColors(containerColor = CardDark), border = BorderStroke(1.dp, BorderDark),
+                    shape = RoundedCornerShape(16.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                        OfficerAvatar(name = AuthSession.username, size = 64.dp, fontSize = 24.sp)
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text(AuthSession.username ?: "Officer", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(roleLabel(AuthSession.role), color = AccentGreen, fontWeight = FontWeight.SemiBold)
+                            Text(listOfNotNull(AuthSession.checkpointName, AuthSession.checkpointCode?.let { "($it)" }).joinToString(" ")
+                                .ifBlank { "No post assigned" }, color = MutedForeground)
+                            AuthSession.loginAt?.let {
+                                Text("Signed in ${DateTimeFormatter.ofPattern("dd MMM, HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(it))}",
+                                    color = MutedForeground, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
-                Spacer(Modifier.height(20.dp))
             }
             item {
-                Button(
-                    onClick = onLogout,
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                ) { Text(stringResource(R.string.button_log_out)) }
+                Panel("My work") {
+                    val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = AccentGreen, selectedLabelColor = BackgroundDark)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(1 to "Today", 7 to "7 days", 0 to "All time").forEach { (d, l) ->
+                            FilterChip(selected = period == d, onClick = { period = d }, label = { Text(l) }, colors = chipColors)
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    val risks = inPeriod.mapNotNull { it.riskScore }
+                    listOf(
+                        Triple("Documents checked", "${inPeriod.size}", AccentGreen),
+                        Triple("Passed all checks", "${inPeriod.count { it.overallStatus == "PASS" }}", SuccessGreen),
+                        Triple("Cleared by me", "${inPeriod.count { it.officerAction == "CLEARED" }}", SuccessGreen),
+                        Triple("Sent to admin", "${inPeriod.count { it.officerAction == "SEND_TO_OFFICER" }}", ChartBlue),
+                        Triple("Admin responses", "${inPeriod.count { it.reviewerResponded == true }}", WarningAmber),
+                        Triple("Awaiting my decision", "${inPeriod.count { it.officerAction == "PENDING" }}", WarningAmber),
+                        Triple("Average risk indicator", if (risks.isEmpty()) "–" else "${risks.average().toInt()}/100", MutedForeground),
+                    ).forEach { (k, v, c) -> Line(k, v, c) }
+                }
+            }
+            item {
+                Panel("Device and connection") {
+                    Line("Phone", "${Build.MANUFACTURER} ${Build.MODEL}")
+                    Line("Android", Build.VERSION.RELEASE)
+                    Line("App version", BuildConfig.VERSION_NAME)
+                    Line("Server", BuildConfig.API_BASE_URL.removePrefix("https://").removePrefix("http://").trimEnd('/'))
+                    Line("Connection", ConnectivityMonitor.lastDetail.ifBlank { "checking…" })
+                    Line("Waiting to sync", "$pending", if (pending > 0) ChartBlue else MutedForeground)
+                }
+            }
+            item {
+                Panel("Data on this phone") {
+                    Line("Stored captures", "$stored")
+                    Text("Document images and live photos are kept encrypted on this phone (Android Keystore) for " +
+                        "${CaptureStore.RETENTION_DAYS} days so you can review past verifications, then deleted automatically. " +
+                        "A copy is attached to each case as its evidence record.", color = MutedForeground,
+                        style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(8.dp))
+                    if (!confirmClear) OutlinedButton(onClick = { confirmClear = true }, modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)) {
+                        Icon(Icons.Filled.DeleteSweep, null, tint = WarningAmber); Spacer(Modifier.width(8.dp))
+                        Text("Clear stored images from this phone", color = WarningAmber)
+                    } else Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(onClick = { confirmClear = false }, modifier = Modifier.weight(1f)) { Text("Cancel") }
+                        OutlinedButton(onClick = {
+                            scope.launch { CaptureStore.get(context).clearAll(); stored = 0; confirmClear = false }
+                        }, modifier = Modifier.weight(1f), border = BorderStroke(1.dp, DestructiveRed)) { Text("Delete $stored", color = DestructiveRed) }
+                    }
+                }
+            }
+            item {
+                Panel("Account") {
+                    Action(Icons.Filled.Settings, "Settings (language, security, display)", AccentGreen, onOpenSettings)
+                    Action(Icons.AutoMirrored.Filled.HelpOutline, "Replay the guided tour", ChartBlue, onReplayTour)
+                    Action(Icons.AutoMirrored.Filled.Logout, "Log out", DestructiveRed, onLogout)
+                }
+            }
+            item {
+                Text("Registry lookups in this build use FICTIONAL mock data only — no real government database is accessed.",
+                    color = MutedForeground, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
 
+private fun roleLabel(role: String?) = when (role) {
+    "OFFICER" -> "Field officer"
+    "REVIEWER" -> "Reviewing officer (admin)"
+    else -> role ?: "Officer"
+}
+
 @Composable
-private fun ProfileSection(title: String, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        border = BorderStroke(1.dp, Gray200),
-        shape = RoundedCornerShape(10.dp),
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+private fun Panel(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = CardDark),
+        border = BorderStroke(1.dp, BorderDark), shape = RoundedCornerShape(14.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             content()
         }
@@ -144,9 +221,21 @@ private fun ProfileSection(title: String, content: @Composable androidx.compose.
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Gray600)
-        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+private fun Line(label: String, value: String, color: Color = Color.Unspecified) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+        Text(label, color = MutedForeground, modifier = Modifier.weight(1f))
+        Text(value, fontWeight = FontWeight.SemiBold, color = color)
+    }
+}
+
+@Composable
+private fun Action(icon: ImageVector, label: String, color: Color, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).height(52.dp),
+        shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp, BorderDark)) {
+        Box(Modifier.size(28.dp).background(color.copy(alpha = 0.15f), CircleShape), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(16.dp))
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(label, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
     }
 }

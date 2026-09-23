@@ -31,18 +31,40 @@ _NATIONALITY_ALIASES = {
     "INDIA": "INDIAN", "NEPAL": "NEPALI", "BHUTAN": "BHUTANESE",
     "BANGLADESH": "BANGLADESHI", "PAKISTAN": "PAKISTANI", "USA": "AMERICAN",
     "CANADA": "CANADIAN", "CANADIAN": "CANADIAN",
+    # ICAO 3-letter codes as printed in MRZs, and their country names
+    "ITA": "ITALIAN", "ITALY": "ITALIAN", "ITALIAN": "ITALIAN",
+    "GBR": "BRITISH", "BRITISH": "BRITISH", "UNITED KINGDOM": "BRITISH",
+    "USA": "AMERICAN", "AMERICAN": "AMERICAN", "UNITED STATES": "AMERICAN",
+    "FRA": "FRENCH", "FRANCE": "FRENCH", "FRENCH": "FRENCH",
+    "D": "GERMAN", "DEU": "GERMAN", "GERMANY": "GERMAN",
+    "ESP": "SPANISH", "SPAIN": "SPANISH",
+    "CAN": "CANADIAN", "CHN": "CHINESE", "CHINA": "CHINESE", "CHINESE": "CHINESE",
+    "JPN": "JAPANESE", "JAPAN": "JAPANESE", "JAPANESE": "JAPANESE",
+    "BGD": "BANGLADESHI", "BANGLADESHI": "BANGLADESHI", "PAK": "PAKISTANI", "PAKISTANI": "PAKISTANI",
+    "LKA": "SRI LANKAN", "SRI LANKA": "SRI LANKAN", "SRI LANKAN": "SRI LANKAN",
+    "SGP": "SINGAPOREAN", "SINGAPORE": "SINGAPOREAN", "SINGAPOREAN": "SINGAPOREAN",
+    "AUS": "AUSTRALIAN", "AUSTRALIA": "AUSTRALIAN", "AUSTRALIAN": "AUSTRALIAN",
 }
 
 
 def _names_match(declared: str, on_file: str) -> bool:
     declared_words = set(declared.upper().split())
     on_file_words = set(on_file.upper().split())
-    return bool(on_file_words) and on_file_words.issubset(declared_words)
+    if on_file_words and on_file_words.issubset(declared_words):
+        return True
+    # OCR often drops the space between names ("ANANYASYNTHETIC"): accept when
+    # the same letters tile both names exactly.
+    compact_declared = "".join(ch for ch in declared.upper() if ch.isalpha())
+    compact_file = "".join(ch for ch in on_file.upper() if ch.isalpha())
+    return (bool(on_file_words) and len(compact_declared) == len(compact_file)
+            and all(w in compact_declared for w in on_file_words))
 
 
 def _nationality_match(declared: str, on_file: str) -> bool:
     d = _NATIONALITY_ALIASES.get(declared.strip().upper(), declared.strip().upper())
     f = _NATIONALITY_ALIASES.get(on_file.strip().upper(), on_file.strip().upper())
+    if "UNSPECIFIED" in (d, f):  # a registry value of UNSPECIFIED cannot contradict anything
+        return True
     return d == f
 
 

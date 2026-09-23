@@ -55,7 +55,7 @@ def supervisor_dashboard(db: Session) -> dict:
     by_checkpoint: dict[str, dict] = {}
     checkpoints = {cp.id: cp.code for cp in db.execute(select(Checkpoint)).scalars()}
     for c in cases:
-        code = checkpoints.get(c.checkpoint_id, "UNKNOWN")
+        code = checkpoints.get(str(c.checkpoint_id), "UNKNOWN")  # checkpoints.id is a string
         bucket = by_checkpoint.setdefault(code, {"checkpoint_code": code, "pending": 0, "cleared": 0, "review_required": 0})
         if c.status in (CaseStatus.PENDING, CaseStatus.PENDING_SYNC, CaseStatus.SENT):
             bucket["pending"] += 1

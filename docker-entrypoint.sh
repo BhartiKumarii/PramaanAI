@@ -10,4 +10,8 @@ python -m scripts.seed_citizen_registry
 python -m scripts.seed_blacklist_registry
 python -m scripts.seed_demo_cases
 
-exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"
+# WEB_CONCURRENCY = uvicorn worker processes (each loads its own models;
+# ~1-1.5 GB RAM per worker with OCR + face + YOLO). The API keeps no
+# per-request state in memory, so more workers or more instances behind a
+# load balancer scale it horizontally.
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" --workers "${WEB_CONCURRENCY:-1}"

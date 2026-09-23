@@ -22,6 +22,7 @@ from app.api.routes import (
     system,
     testing,
     verification,
+    verify_v1,
 )
 from app.core.config import get_settings
 from app.utils.logging import setup_logging
@@ -83,6 +84,7 @@ app.include_router(images.router)
 app.include_router(verification.router)
 app.include_router(blockchain.router)
 app.include_router(testing.router)
+app.include_router(verify_v1.router)
 
 
 @app.get("/health", tags=["system"], summary="Liveness check")

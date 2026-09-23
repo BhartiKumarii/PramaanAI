@@ -6,6 +6,7 @@ import com.pramaanai.officer.data.local.PersistedSession
 import com.pramaanai.officer.data.local.SessionStore
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
+import com.pramaanai.officer.BuildConfig
 import okhttp3.Authenticator
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -154,18 +155,11 @@ private class TokenAuthenticator(private val refreshApi: () -> ApiService) : Aut
 }
 
 object RetrofitClient {
-    // Local dev backend (docker compose). Updated to use network IP so phone
-    // can connect over WiFi without USB debugging or adb port forwarding.
-    // This allows wireless debugging and testing without USB cable.
-    private const val LOCAL_BASE_URL = "http://10.170.126.94:8000/"
-
-    // Render deployment (see /render.yaml) — real HTTPS, no USB tether or
-    // adb tunnel needed, works over WiFi/mobile data. Free-tier service
-    // sleeps after ~15 min idle, so the first request after a gap can take
-    // 30-50s to wake it up. Swap BASE_URL below to switch.
-    private const val RENDER_BASE_URL = "https://bordershield-pramaan-api.onrender.com/"
-
-    private const val BASE_URL = RENDER_BASE_URL  // ⚡ Using Render production deployment
+    // Set at build time (app/build.gradle.kts, -Ppramaan.apiUrl=...). The
+    // default is the Render deployment (see /render.yaml): real HTTPS, works
+    // over WiFi/mobile data; its free tier sleeps after ~15 min idle, so the
+    // first request after a gap can take 30-50s.
+    private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
@@ -207,5 +201,16 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(ApiService::class.java)
+    }
+
+    // /api/v1 document verification. Region-crop verification runs server
+    // OCR + forensics on several crops, so it gets a longer read timeout.
+    val docVerifyApi: com.pramaanai.officer.data.docverify.DocVerifyApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient.newBuilder().readTimeout(180, TimeUnit.SECONDS).build())
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(com.pramaanai.officer.data.docverify.DocVerifyApi::class.java)
     }
 }

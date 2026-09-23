@@ -19,6 +19,7 @@ import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { AuditLogs } from './pages/AuditLogs'
 import { Checkpoints } from './pages/Checkpoints'
+import { DocumentVerification } from './pages/DocumentVerification'
 
 function AppRoutes() {
   const { user } = useAuth()
@@ -39,6 +40,7 @@ function AppRoutes() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/verification" element={<VerificationDesk />} />
+                <Route path="/document-verification" element={<DocumentVerification />} />
                 <Route path="/cases" element={<VerificationDesk />} />
                 <Route path="/cases/:caseId" element={<CaseReview />} />
                 {/* Legacy routes redirect to new structure */}

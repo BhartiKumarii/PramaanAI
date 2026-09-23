@@ -342,3 +342,17 @@ This project is a hackathon prototype developed for Smart India Hackathon 2026.
 <p align="center">
   <strong>PramaanAI</strong> — Empowering SSB officers with intelligent document verification at India's borders.
 </p>
+
+## Modular document verification (`/api/v1`)
+
+Evidence-based verification of passports, visas, permits, driving licences,
+Aadhaar-type cards and immigration stamps for the India–Nepal and
+India–Bhutan borders. The Android app runs a small on-device YOLO11n model
+to locate regions and sends only those crops, in one HTTPS request; OCR,
+MRZ, QR/barcode, stamps, face, forensics, registry comparison and the final
+decision run on the server. Results are PASS / REVIEW_REQUIRED / NOT_VERIFIED
+/ … with named reasons and evidence boxes — never "fake" or "real".
+
+* Architecture, API, data formats, scaling: [`Documentation/DOCUMENT_VERIFICATION.md`](Documentation/DOCUMENT_VERIFICATION.md)
+* Checklist and test-condition coverage: [`Documentation/TEST_CONDITIONS.md`](Documentation/TEST_CONDITIONS.md)
+* Latest evaluation: `reports/docverify_evaluation.md`, `reports/yolo_region_detector.json`

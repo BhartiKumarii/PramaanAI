@@ -486,8 +486,6 @@
     <string name="cd_officer_profile">বিষয়া প্ৰফাইল</string>
     <string name="tour_nav_title">এপ নেভিগেট কৰক</string>
     <string name="tour_nav_body">আপোনাৰ ড্যাশবোৰ্ড, স্ক্ৰীনিং কিউ, ইতিহাস আৰু সতৰ্কতাৰ মাজত যাবলৈ এই টেবসমূহ ব্যৱহাৰ কৰক।</string>
-    <string name="tour_new_screening_title">নতুন স্ক্ৰীনিং আৰম্ভ কৰক</string>
-    <string name="tour_new_screening_body">যেতিয়াই কোনো যাত্ৰী আপোনাৰ চেকপয়েন্টত আহে, ইয়াত টেপ কৰক।</string>
     <string name="tour_daily_numbers_title">আপোনাৰ দৈনিক সংখ্যা</string>
     <string name="tour_daily_numbers_body">এইবোৰ আজিৰ প্ৰকৃত স্ক্ৰীনিংসমূহৰ পৰা ৰিয়েল-টাইমত আপডেট হয়।</string>
     <string name="tour_risk_title">এক নজৰত বিপদ</string>

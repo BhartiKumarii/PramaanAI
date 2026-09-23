@@ -41,6 +41,12 @@ app.dependency_overrides[get_db] = _override_get_db
 
 @pytest.fixture(autouse=True)
 def _setup_db():
+    # The login rate limiter is process-global and every TestClient request
+    # comes from the same host, so without a reset the whole suite trips
+    # 429s after a few tests. Test-only reset; the production limiter is
+    # unchanged.
+    from app.api.routes.auth import _login_attempts
+    _login_attempts.clear()
     Base.metadata.create_all(bind=_engine)
     yield
     Base.metadata.drop_all(bind=_engine)

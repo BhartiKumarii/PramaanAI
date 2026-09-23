@@ -9,12 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,7 +50,8 @@ import java.util.Locale
 
 enum class ShellTab(val labelRes: Int, val icon: ImageVector) {
     DASHBOARD(R.string.nav_dashboard, Icons.Filled.Dashboard),
-    QUEUE(R.string.nav_queue, Icons.Filled.ViewList),
+    VERIFY(R.string.nav_verify, Icons.Filled.DocumentScanner),
+    QUEUE(R.string.nav_queue, Icons.AutoMirrored.Filled.ViewList),
     HISTORY(R.string.nav_history, Icons.Filled.History),
     MORE(R.string.nav_more, Icons.Filled.MoreHoriz),
 }
@@ -69,6 +71,7 @@ fun AppShell(
     onTabSelected: (ShellTab) -> Unit,
     onSearchClick: (() -> Unit)? = null,
     onProfileClick: () -> Unit,
+    onAlertsClick: (() -> Unit)? = null,
     onHelpClick: () -> Unit = {},
     officerName: String? = null,
     alertCount: Int = 0,
@@ -87,9 +90,10 @@ fun AppShell(
                             }
                         }
                         IconButton(onClick = onHelpClick) {
-                            Icon(Icons.Filled.HelpOutline, contentDescription = "Replay guided tour")
+                            Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Replay guided tour")
                         }
-                        IconButton(onClick = { onTabSelected(ShellTab.QUEUE) }) {
+                        IconButton(onClick = { onAlertsClick?.invoke() ?: onTabSelected(ShellTab.QUEUE) },
+                            modifier = Modifier.tourAnchor("notifications_bell")) {
                             BadgedBox(badge = { if (alertCount > 0) Badge { Text("$alertCount") } }) {
                                 Icon(Icons.Filled.Notifications, contentDescription = "Alerts")
                             }
@@ -103,6 +107,7 @@ fun AppShell(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .tourAnchor("status_bar")
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {

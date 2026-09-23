@@ -139,7 +139,8 @@ def test_admin_sees_real_risk_config(client, db_session):
     from app.services.risk.engine import _WEIGHTS
 
     assert body["weights"]["checksum"] == _WEIGHTS["checksum"]
-    assert body["low_risk_ceiling"] == 30
+    from app.services.risk.engine import _LOW_RISK_CEILING
+    assert body["low_risk_ceiling"] == _LOW_RISK_CEILING  # live constant (recalibrated in 07a2113)
 
 
 def test_officer_can_see_risk_config(client, db_session):

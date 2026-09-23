@@ -1,0 +1,57 @@
+{
+  "schema": "pramaan.checkpoints.v1",
+  "border": "INDIA_BHUTAN",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "checkpoints": [
+    {
+      "checkpoint_id": "IN-JAIGAON",
+      "country": "INDIA",
+      "checkpoint_name": "JAIGAON",
+      "aliases": [
+        "JAIGOAN"
+      ],
+      "border_country": "BHUTAN",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "West Bengal"
+      },
+      "authority": "Indian land check post (authority not stated in source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "BT-PHUENTSHOLING",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "Consulate General of India, Phuentsholing — Guidelines for Indians visiting Bhutan",
+          "url": "https://www.cgiphuentsholing.gov.in/page/guidelines-for-indians-visiting-bhutan/",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    },
+    {
+      "checkpoint_id": "IN-DARRANGA",
+      "country": "INDIA",
+      "checkpoint_name": "DARRANGA",
+      "aliases": [],
+      "border_country": "BHUTAN",
+      "checkpoint_type": "LAND_BORDER",
+      "region": {
+        "state": "Assam"
+      },
+      "authority": "Integrated Check Post (per cited source)",
+      "foreigner_immigration_point": null,
+      "paired_checkpoint_id": "BT-SAMDRUP_JONGKHAR",
+      "active_from": null,
+      "active_to": null,
+      "reference_source": [
+        {
+          "title": "News On AIR — first Integrated Check Post along the India-Bhutan border inaugurated (Darranga)",
+          "url": "https://www.newsonair.gov.in/first-integrated-check-post-along-the-india-bhutan-border-inaugurated",
+          "retrieved": "2026-09-23"
+        }
+      ],
+      "verification_note": "Prototype reference record compiled from the cited public source. Must be re-validated against current official notifications before operational use. active_from/active_to are null where the source does not state them — never inferred."
+    }
+  ]
+}

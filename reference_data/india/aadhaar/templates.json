@@ -1,0 +1,80 @@
+{
+  "schema": "pramaan.document_reference.v1",
+  "country": "INDIA",
+  "document_type": "AADHAAR",
+  "data_classification": "PUBLIC_REFERENCE_PROTOTYPE",
+  "note": "Prototype layout descriptor. expected_region values are approximate relative coordinates [x0,y0,x1,y1] used only for template-consistency scoring; they must be calibrated on authorised specimens before operational use. No security artwork is stored.",
+  "versions": [
+    {
+      "version": "e-aadhaar-and-pvc",
+      "validity_period": {
+        "from": null,
+        "to": null
+      },
+      "official_reference": [
+        {
+          "title": "UIDAI \u2014 Aadhaar Secure QR code (official offline verification mechanism)",
+          "url": "https://uidai.gov.in/"
+        }
+      ],
+      "layout_anchors": {
+        "PHOTOGRAPH": [
+          0.02,
+          0.18,
+          0.3,
+          0.75
+        ],
+        "QR_CODE": [
+          0.72,
+          0.15,
+          0.99,
+          0.8
+        ]
+      },
+      "features": [
+        {
+          "feature_name": "photograph",
+          "expected_region": [
+            0.02,
+            0.18,
+            0.3,
+            0.75
+          ],
+          "verification_method": "face_detection",
+          "expected_text_patterns": [],
+          "visually_checkable": true
+        },
+        {
+          "feature_name": "secure_qr",
+          "expected_region": [
+            0.72,
+            0.15,
+            0.99,
+            0.8
+          ],
+          "verification_method": "uidai_official_signature_verification",
+          "expected_text_patterns": [],
+          "visually_checkable": true,
+          "note": "Secure QR content is digitally signed by UIDAI. It is verified only through UIDAI's official mechanism \u2014 never decrypted, parsed around or bypassed here."
+        },
+        {
+          "feature_name": "aadhaar_number",
+          "expected_region": null,
+          "verification_method": "verhoeff_checksum",
+          "expected_text_patterns": [
+            "^[2-9][0-9]{3} ?[0-9]{4} ?[0-9]{4}$"
+          ],
+          "visually_checkable": true
+        }
+      ],
+      "field_patterns": {
+        "aadhaar_number": "^[2-9][0-9]{3} ?[0-9]{4} ?[0-9]{4}$"
+      },
+      "expected_text_patterns": [
+        "AADHAAR",
+        "UNIQUE IDENTIFICATION AUTHORITY",
+        "GOVERNMENT OF INDIA"
+      ]
+    }
+  ]
+}

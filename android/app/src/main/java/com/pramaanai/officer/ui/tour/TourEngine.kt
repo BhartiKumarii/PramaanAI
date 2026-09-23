@@ -1,5 +1,11 @@
 package com.pramaanai.officer.ui.tour
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.composed
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.ExperimentalFoundationApi
 import com.pramaanai.officer.R
 import com.pramaanai.officer.ui.theme.CardDark
 import com.pramaanai.officer.ui.theme.BackgroundDark
@@ -55,6 +61,21 @@ object TourAnchors {
 
 fun Modifier.tourAnchor(id: String): Modifier = this.onGloballyPositioned { coordinates ->
     TourAnchors.positions[id] = coordinates.boundsInRoot()
+}
+
+/** [tourAnchor] for a section inside a scrolling screen: when the tour
+ * reaches this step, the section is scrolled into view first. */
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.tourSection(id: String): Modifier = composed {
+    val requester = remember { BringIntoViewRequester() }
+    val current = TourState.currentStep?.anchorId
+    LaunchedEffect(TourState.active, current) {
+        if (TourState.active && current == id) {
+            kotlinx.coroutines.delay(120)
+            requester.bringIntoView()
+        }
+    }
+    this.bringIntoViewRequester(requester).tourAnchor(id)
 }
 
 data class TourStep(

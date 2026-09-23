@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.Column('image_type', sa.String(length=32), nullable=False),
         sa.Column('content_type', sa.String(length=64), nullable=False),
         sa.Column('data', sa.LargeBinary(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_index('ix_stored_images_verification_id', 'stored_images', ['verification_id'])

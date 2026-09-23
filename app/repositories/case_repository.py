@@ -151,10 +151,10 @@ def add_note(db: Session, case_id: uuid.UUID, author_id: uuid.UUID, note: str) -
 
 
 def list_notes(db: Session, case_id: uuid.UUID) -> list[tuple[CaseNote, str | None]]:
-    rows = db.execute(
-        select(CaseNote, User.username)
-        .join(User, User.id == CaseNote.author_id, isouter=True)
-        .where(CaseNote.case_id == case_id)
-        .order_by(CaseNote.created_at)
-    ).all()
-    return [(row[0], row[1]) for row in rows]
+    notes = list(db.execute(select(CaseNote).where(CaseNote.case_id == case_id)
+                            .order_by(CaseNote.created_at)).scalars())
+    # users.id (string) vs case_notes.author_id (native UUID): a SQL join never
+    # matches on SQLite, so resolve authors by normalised id instead.
+    ids = {str(n.author_id) for n in notes}
+    names = {u.id: u.username for u in db.execute(select(User).where(User.id.in_(ids))).scalars()} if ids else {}
+    return [(n, names.get(str(n.author_id))) for n in notes]
