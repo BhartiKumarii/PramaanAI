@@ -177,14 +177,24 @@ def _validate_field_value(field_name: str, value: str) -> tuple[str | None, floa
         # Names should be mostly letters, spaces, and common punctuation
         if not re.match(r"^[A-Za-z\s.'-]+$", value):
             return None, 0.0
-        # Names shouldn't be too short (< 2 chars) or too long (> 60 chars)
-        if len(value) < 2 or len(value) > 60:
+        # Names shouldn't be too short (< 2 chars) or too long (> 50 chars)
+        if len(value) < 2 or len(value) > 50:
             return None, 0.0
         # Check for common OCR garbage patterns in names
         if re.search(r"\d{4,}|[<>@#$%^&*()]", value):
             return None, 0.0
-        # Single letter is suspicious unless it's part of initialization
+        # Reject if any "word" is longer than 20 chars (sentence fragment, not a name)
         words = value.split()
+        if any(len(w) > 20 for w in words):
+            return None, 0.0
+        # Reject if more than 5 words (likely a sentence, not a name)
+        if len(words) > 5:
+            return None, 0.0
+        # Reject common false-positive patterns (OCR ran sentences together)
+        lower_val = value.lower()
+        if any(kw in lower_val for kw in ("passport", "date", "birth", "visa", "number", "valid", "issue")):
+            return None, 0.0
+        # Single letter is suspicious
         if len(words) == 1 and len(value) == 1:
             confidence = 0.3
         elif len(words) >= 2:

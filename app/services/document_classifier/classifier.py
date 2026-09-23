@@ -59,22 +59,105 @@ DOCTYPE_MAP = {
     "Permit": "permit",
 }
 
-_KEYWORD_RULES: list[tuple[str, str, list[str]]] = [
-    # (doc_type, country, keywords) — first match wins, most specific first
-    ("passport", "India", ["republic of india", "indian passport", "passport", r"type\s*p"]),
-    ("passport", "Nepal", ["nepal", "nepali passport", r"government\s*of\s*nepal"]),
-    ("passport", "Bhutan", ["bhutan", "bhutanese passport", r"kingdom\s*of\s*bhutan"]),
-    ("national_id", "India", ["aadhaar", "unique identification", "uidai", r"xxxx\s*\d{4}", r"\d{4}\s*\d{4}\s*\d{4}"]),
-    ("national_id", "India", ["election commission", "voter", "electors photo", "epic"]),
-    ("national_id", "India", ["permanent account number", "income tax", r"pan\s*card", r"[A-Z]{5}\d{4}[A-Z]"]),
-    ("national_id", "Nepal", ["nepal", r"national\s*id", r"citizenship", r"nagarikta"]),
-    ("national_id", "Bhutan", ["bhutan", r"citizen\s*id", r"cid\s*no"]),
-    ("driving_license", "India", [r"driving\s*licen[cs]e", r"motor\s*vehicle", "transport", r"dl\s*no", r"licen[cs]e\s*no"]),
-    ("driving_license", "Nepal", ["nepal", r"driving\s*licen[cs]e", r"sawari\s*chalak"]),
-    ("driving_license", "Bhutan", ["bhutan", r"driving\s*licen[cs]e"]),
-    ("visa", "India", [r"visa", r"entry\s*permit", r"valid\s*for", r"no\.\s*of\s*entries"]),
-    ("visa", "Nepal", ["nepal", r"visa", r"arrival"]),
-    ("permit", "unknown", [r"permit", r"border\s*pass", r"entry\s*pass", r"inner\s*line"]),
+_KEYWORD_SCORES: list[tuple[str, str, str, int]] = [
+    # (doc_type, country, keyword_pattern, score)
+    # Higher score = stronger signal. Classification picks the highest total score.
+    # Specific compound keywords score higher than generic single words.
+
+    # --- Passport (must say "passport", not just a country name) ---
+    ("passport", "India", "passport", 10),
+    ("passport", "India", "republic of india", 5),
+    ("passport", "India", r"type\s*p", 5),
+    ("passport", "India", r"P<IND", 15),
+    ("passport", "Nepal", "passport", 10),
+    ("passport", "Nepal", r"government\s*of\s*nepal", 3),
+    ("passport", "Nepal", r"P<NPL", 15),
+    ("passport", "Bhutan", "passport", 10),
+    ("passport", "Bhutan", r"kingdom\s*of\s*bhutan", 3),
+    ("passport", "Bhutan", r"P<BTN", 15),
+
+    # --- Visa (must say "visa" explicitly) ---
+    ("visa", "India", r"\bvisa\b", 12),
+    ("visa", "India", r"entry\s*permit", 8),
+    ("visa", "India", r"valid\s*for", 3),
+    ("visa", "India", r"no\.\s*of\s*entries", 8),
+    ("visa", "India", r"visa\s*type", 10),
+    ("visa", "India", r"visa\s*no", 10),
+    ("visa", "Nepal", r"\bvisa\b", 12),
+    ("visa", "Nepal", r"arrival", 3),
+    ("visa", "Nepal", r"government\s*of\s*nepal", 3),
+    ("visa", "Nepal", r"visa\s*on\s*arrival", 15),
+    ("visa", "Nepal", r"immigration", 5),
+    ("visa", "Nepal", r"visa\s*fee", 8),
+    ("visa", "unknown", r"\bvisa\b", 12),
+    ("visa", "unknown", r"bureau\s*of\s*immigration", 10),
+
+    # --- National ID ---
+    ("national_id", "India", "aadhaar", 15),
+    ("national_id", "India", "unique identification", 15),
+    ("national_id", "India", "uidai", 15),
+    ("national_id", "India", r"\d{4}\s*\d{4}\s*\d{4}", 10),
+    ("national_id", "India", "election commission", 12),
+    ("national_id", "India", "voter", 10),
+    ("national_id", "India", "epic", 8),
+    ("national_id", "India", "permanent account number", 15),
+    ("national_id", "India", "income tax", 10),
+    ("national_id", "India", r"pan\s*card", 15),
+    ("national_id", "Nepal", r"national\s*id", 12),
+    ("national_id", "Nepal", r"citizenship", 10),
+    ("national_id", "Nepal", r"nagarikta", 12),
+    ("national_id", "Bhutan", r"citizen\s*id", 12),
+    ("national_id", "Bhutan", r"cid\s*no", 12),
+
+    # --- Driving License ---
+    ("driving_license", "India", r"driving\s*licen[cs]e", 15),
+    ("driving_license", "India", r"motor\s*vehicle", 10),
+    ("driving_license", "India", r"transport", 5),
+    ("driving_license", "India", r"dl\s*no", 12),
+    ("driving_license", "India", r"licen[cs]e\s*no", 12),
+    ("driving_license", "India", r"\bRTO\b", 10),
+    ("driving_license", "India", r"\bLMV\b", 8),
+    ("driving_license", "India", r"\bMCWG\b", 8),
+    ("driving_license", "Nepal", r"driving\s*licen[cs]e", 15),
+    ("driving_license", "Nepal", r"sawari\s*chalak", 12),
+    ("driving_license", "Bhutan", r"driving\s*licen[cs]e", 15),
+
+    # --- Permit ---
+    ("permit", "unknown", r"\bpermit\b", 8),
+    ("permit", "unknown", r"border\s*pass", 12),
+    ("permit", "unknown", r"entry\s*pass", 12),
+    ("permit", "unknown", r"entry\s*permit", 12),
+    ("permit", "unknown", r"inner\s*line", 12),
+    ("permit", "unknown", r"travel\s*permit", 12),
+    ("permit", "unknown", r"permit\s*no", 10),
+    ("permit", "unknown", r"permit\s*number", 10),
+    ("permit", "unknown", r"purpose\s*of\s*visit", 8),
+    ("permit", "unknown", r"place\s*of\s*visit", 8),
+    ("permit", "Bhutan", r"bhutan", 3),
+    ("permit", "Bhutan", r"believe", 3),
+    ("permit", "Nepal", r"अनुमति", 15),
+    ("permit", "Nepal", r"anumati", 12),
+    ("permit", "Nepal", r"transport\s*office", 8),
+    ("permit", "Nepal", r"vehicle\s*permit", 12),
+
+    # --- Driving License (stronger compound patterns) ---
+    ("driving_license", "India", r"indian\s*union", 8),
+    ("driving_license", "India", r"union\s*driving", 12),
+    # OCR often misreads "Driving" as "Daiving/Daivine/Drving"
+    ("driving_license", "India", r"da?[ir]v[ie]n[eg]\s*licen", 15),
+    ("driving_license", "India", r"valid\s*till.*transport", 10),
+    ("driving_license", "India", r"valid\s*till.*non.?transport", 12),
+    ("driving_license", "India", r"licenced\s*to\s*drive", 15),
+    ("driving_license", "unknown", r"licenced\s*to\s*drive", 15),
+    ("driving_license", "India", r"chhattisgarh\s*state", 8),
+    ("driving_license", "India", r"[a-z]{2}\d{2}\s*\d{11}", 8),
+
+    # --- Passport (MRZ fallback — catches garbled OCR with MRZ still readable) ---
+    ("passport", "India", r"P.?IND\d{7}", 15),
+    ("passport", "unknown", r"PASSPORT\s*NO", 10),
+    # MRZ-like patterns at end of text (strong passport signal)
+    ("passport", "unknown", r"[A-Z]{2}\d{5,8}<", 12),
+    ("passport", "unknown", r"P.?[A-Z]{3}[A-Z<]+<<", 15),
 ]
 
 _COUNTRY_KEYWORDS = {
@@ -122,34 +205,43 @@ class DocumentClassifier:
             return ""
 
     def _classify_by_text(self, text: str) -> tuple[str, str, float, str] | None:
-        """Return (doc_type, country, confidence, reason) from OCR keywords."""
+        """Return (doc_type, country, confidence, reason) from OCR keywords.
+
+        Uses additive scoring: each matching keyword adds its weight to the
+        (doc_type, country) pair. The pair with the highest total wins.
+        This avoids the previous first-match-wins problem where generic country
+        names would match passport rules before more specific visa/DL rules.
+        """
         lower = text.lower()
         if len(lower.strip()) < 5:
             return None
 
-        best_match: tuple[str, str, int, str] | None = None
+        # Accumulate scores per (doc_type, country) pair
+        scores: dict[tuple[str, str], tuple[int, list[str]]] = {}
 
-        for doc_type, country, patterns in _KEYWORD_RULES:
-            hits = 0
-            matched = []
-            for pat in patterns:
-                if re.search(pat, lower):
-                    hits += 1
-                    matched.append(pat)
-            if hits >= 2 or (hits == 1 and doc_type in ("passport", "visa", "permit")):
-                if best_match is None or hits > best_match[2]:
-                    best_match = (doc_type, country, hits, ", ".join(matched))
+        for doc_type, country, pattern, weight in _KEYWORD_SCORES:
+            if re.search(pattern, lower if pattern.islower() or not pattern[0].isupper() else text):
+                key = (doc_type, country)
+                current_score, matched = scores.get(key, (0, []))
+                scores[key] = (current_score + weight, matched + [pattern])
 
-        if best_match is None:
+        if not scores:
             return None
 
-        doc_type, country, hits, matched_str = best_match
+        # Pick the highest scoring pair
+        best_key = max(scores, key=lambda k: scores[k][0])
+        best_score, best_matched = scores[best_key]
+        doc_type, country = best_key
+
+        # Require minimum score to avoid weak single-keyword matches
+        if best_score < 10:
+            return None
 
         if country == "unknown":
             country = self._detect_country_from_text(lower)
 
-        confidence = min(0.95, 0.70 + hits * 0.08)
-        reason = f"OCR text matched {country} {doc_type} (keywords: {matched_str})"
+        confidence = min(0.95, 0.65 + best_score * 0.01)
+        reason = f"OCR text matched {country} {doc_type} (score: {best_score}, keywords: {', '.join(best_matched[:5])})"
         return doc_type, country, confidence, reason
 
     def _detect_country_from_text(self, lower_text: str) -> str:
