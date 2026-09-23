@@ -160,7 +160,107 @@ _PASSPORT_NUM_PATTERN = re.compile(r"\b[A-Z]\d{7}\b")
 _DL_NUM_PATTERN = re.compile(r"\b[A-Z]{2}\d{2}\s?\d{11}\b")
 
 
-def _find_labeled_value(lines: list[str], labels: list[str]) -> str | None:
+def _validate_field_value(field_name: str, value: str) -> tuple[str | None, float]:
+    """Validate and clean extracted field value.
+
+    Returns: (cleaned_value, confidence) where confidence is 0.0-1.0
+    Returns (None, 0.0) if value is invalid for the field type.
+    """
+    if not value or len(value.strip()) < 2:
+        return None, 0.0
+
+    value = value.strip()
+    confidence = 1.0
+
+    # Name validation
+    if field_name in ("name", "full_name", "given_name", "surname", "father_name", "mother_name"):
+        # Names should be mostly letters, spaces, and common punctuation
+        if not re.match(r"^[A-Za-z\s.'-]+$", value):
+            return None, 0.0
+        # Names shouldn't be too short (< 2 chars) or too long (> 60 chars)
+        if len(value) < 2 or len(value) > 60:
+            return None, 0.0
+        # Check for common OCR garbage patterns in names
+        if re.search(r"\d{4,}|[<>@#$%^&*()]", value):
+            return None, 0.0
+        # Single letter is suspicious unless it's part of initialization
+        words = value.split()
+        if len(words) == 1 and len(value) == 1:
+            confidence = 0.3
+        elif len(words) >= 2:
+            confidence = 0.9
+        else:
+            confidence = 0.6
+        return value, confidence
+
+    # Nationality validation
+    if field_name == "nationality":
+        # Nationality should be a country name or 3-letter code
+        # Reject if it looks like a document number (contains many digits)
+        if re.search(r"\d{4,}", value):
+            return None, 0.0
+        # Reject if it contains special OCR artifacts
+        if re.search(r"[<>@#$%^&*()_+=\[\]{}|\\]", value):
+            return None, 0.0
+        # Should be reasonable length (2-30 chars)
+        if len(value) < 2 or len(value) > 30:
+            return None, 0.0
+        # 3-letter uppercase code is high confidence
+        if re.match(r"^[A-Z]{3}$", value):
+            confidence = 0.95
+        elif re.match(r"^[A-Za-z\s]+$", value):
+            confidence = 0.85
+        else:
+            confidence = 0.5
+        return value, confidence
+
+    # Document number validation
+    if field_name in ("passport_number", "document_number", "visa_number", "licence_number",
+                      "license_number", "permit_number", "aadhaar_number", "pan_number",
+                      "voter_id", "citizenship_number", "cid_number"):
+        # Should contain alphanumeric characters
+        if not re.search(r"[A-Z0-9]", value.upper()):
+            return None, 0.0
+        # Reject if it looks like a sentence (contains many spaces/words)
+        if len(value.split()) > 3:
+            return None, 0.0
+        # Clean common OCR artifacts
+        value = value.replace(" ", "").replace("-", "").upper()
+        if len(value) < 4 or len(value) > 20:
+            return None, 0.0
+        confidence = 0.9
+        return value, confidence
+
+    # Date validation
+    if "date" in field_name or field_name in ("dob", "date_of_birth", "date_of_issue",
+                                                "date_of_expiry", "expiry", "issue_date", "expiry_date"):
+        # Should match date patterns
+        if not re.search(r"\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}", value):
+            return None, 0.0
+        confidence = 0.9
+        return value, confidence
+
+    # Gender validation
+    if field_name in ("gender", "sex"):
+        upper = value.upper()
+        if upper in ("M", "MALE", "F", "FEMALE", "MALE", "FEMALE"):
+            return upper[0], 0.95  # Normalize to M/F
+        return None, 0.0
+
+    # Purpose/generic text fields - just check it's not complete garbage
+    # Remove obviously invalid patterns
+    if re.match(r"^[^A-Za-z]*$", value):  # No letters at all
+        return None, 0.0
+
+    # Default: accept but with lower confidence
+    return value, 0.7
+
+
+def _find_labeled_value(lines: list[str], labels: list[str], field_name: str) -> tuple[str | None, float]:
+    """Find value for a labeled field in OCR text.
+
+    Returns: (value, confidence) tuple.
+    """
     for line in lines:
         lower = line.lower()
         for label in labels:
@@ -175,9 +275,15 @@ def _find_labeled_value(lines: list[str], labels: list[str]) -> str | None:
                 if after and after[0] in ":-= ":
                     value = after.lstrip(":-= ").strip()
                     if value:
-                        return value
+                        # Validate the extracted value
+                        validated, confidence = _validate_field_value(field_name, value)
+                        if validated:
+                            return validated, confidence
                 elif after:
-                    return after.strip()
+                    value = after.strip()
+                    validated, confidence = _validate_field_value(field_name, value)
+                    if validated:
+                        return validated, confidence
 
             pattern = re.compile(
                 rf"(?:^|\s){re.escape(label)}\s*[:\-]\s*(.+)$",
@@ -187,18 +293,27 @@ def _find_labeled_value(lines: list[str], labels: list[str]) -> str | None:
             if match:
                 value = match.group(1).strip()
                 if value:
-                    return value
-    return None
+                    validated, confidence = _validate_field_value(field_name, value)
+                    if validated:
+                        return validated, confidence
+    return None, 0.0
 
 
-def _extract_by_labels(text: str, label_map: _LabelMap) -> dict[str, str]:
+def _extract_by_labels(text: str, label_map: _LabelMap) -> tuple[dict[str, str], dict[str, float]]:
+    """Extract fields using label matching with validation.
+
+    Returns: (fields_dict, confidence_dict) where confidence_dict maps field_name -> confidence (0.0-1.0)
+    """
     lines = [line for line in text.splitlines() if line.strip()]
     fields: dict[str, str] = {}
+    confidences: dict[str, float] = {}
+
     for field, labels in label_map.items():
-        value = _find_labeled_value(lines, labels)
+        value, confidence = _find_labeled_value(lines, labels, field)
         if value:
             fields[field] = value
-    return fields
+            confidences[field] = confidence
+    return fields, confidences
 
 
 def _extract_by_regex_fallback(text: str, doc_type: str) -> dict[str, str]:
@@ -274,16 +389,31 @@ _DOC_LABEL_MAPS: dict[str, _LabelMap] = {
 
 
 def extract_fields(document_type: str, text: str) -> dict[str, str]:
+    """Extract fields from OCR text using document-type-specific labels and validation.
+
+    Returns dict of field_name -> value. Invalid fields are filtered out.
+    """
     label_map = _DOC_LABEL_MAPS.get(document_type)
 
     if label_map:
-        fields = _extract_by_labels(text, label_map)
+        fields, confidences = _extract_by_labels(text, label_map)
+        # Log low-confidence extractions for debugging
+        for field, conf in confidences.items():
+            if conf < 0.6:
+                import logging
+                logging.getLogger("pramaan.ocr").warning(
+                    f"Low confidence extraction: {field}={fields[field]} (confidence: {conf:.2f})"
+                )
     else:
         fields = extract_generic_fields(text)
 
+    # Fallback regex extraction for missing fields
     regex_fields = _extract_by_regex_fallback(text, document_type)
     for k, v in regex_fields.items():
         if k not in fields:
-            fields[k] = v
+            # Validate regex-extracted fields too
+            validated, conf = _validate_field_value(k, v)
+            if validated and conf >= 0.5:
+                fields[k] = validated
 
     return fields

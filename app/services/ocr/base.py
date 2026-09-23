@@ -5,11 +5,13 @@ from pydantic import BaseModel, Field
 
 
 class OCRResult(BaseModel):
-    document_type: str
+    document_type: str  # The document type used for extraction (may be user-provided or auto-detected)
     fields: dict[str, str]
     ocr_confidence: float
     raw_text: str = ""
     bounding_boxes: list[dict] = Field(default_factory=list)
+    detected_document_type: str | None = None  # Auto-detected document type (if classification was run)
+    classification_confidence: float | None = None  # Confidence of auto-detection
 
 
 class OCRProvider(ABC):

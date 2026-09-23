@@ -63,9 +63,19 @@ def _severity_risk(severity: str) -> float:
 
 
 def _checksum_risk(result: ValidationResult) -> tuple[float, str, dict | None]:
+    """Calculate risk from validation findings.
+
+    Only actual validation failures (FAIL status) contribute to risk.
+    NOT_AVAILABLE, UNCERTAIN, NOT_EVALUATED do not increase risk —
+    those are extraction limitations, not validation failures.
+    """
     failed = [f for f in result.findings if f.status == "FAIL"]
     if not failed:
-        return 0.0, "all validation checks passed", None
+        # Check if there are uncertain/missing fields (for informational reason)
+        uncertain = [f for f in result.findings if f.status in ("NOT_AVAILABLE", "UNCERTAIN", "NOT_EVALUATED")]
+        if uncertain:
+            return 0.0, f"No validation failures ({len(uncertain)} fields need officer review)", None
+        return 0.0, "All validation checks passed", None
     worst = max(failed, key=lambda f: _severity_risk(f.severity))
     return _severity_risk(worst.severity), f"{worst.check}: {worst.reason}", worst.location
 

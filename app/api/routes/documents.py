@@ -123,21 +123,81 @@ def _update_network_graph(
 
 
 @router.post(
+    "/classify",
+    response_model=DocumentClassificationResponse,
+    summary="Auto-detect document type and country from image",
+)
+async def classify_document(
+    file: UploadFile = File(...),
+    _user: User = Depends(get_current_user),
+) -> DocumentClassificationResponse:
+    """Automatically classify a document by analyzing the image.
+
+    Uses OCR text keywords (most reliable) and visual features (fallback).
+    Returns document type, country, confidence score, and detection reason.
+    """
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
+    image_bytes = downscale_image_bytes(image_bytes)
+
+    classifier = _get_classifier()
+    classification = classifier.classify(image_bytes)
+
+    return DocumentClassificationResponse(
+        is_identity_document=classification.is_identity_document,
+        document_type=classification.document_type,
+        country=classification.country,
+        confidence=classification.confidence,
+        reason=classification.reason,
+    )
+
+
+@router.post(
     "/ocr",
     response_model=OCRResult,
     summary="Extract structured fields from a document image via OCR",
 )
 async def ocr_document(
-    document_type: DocumentType = Form(...),
     file: UploadFile = File(...),
+    document_type: DocumentType | None = Form(None),
     _user: User = Depends(get_current_user),
     ocr_provider: OCRProvider = Depends(get_ocr_provider),
 ) -> OCRResult:
+    """Extract structured fields from a document image.
+
+    If document_type is not provided or is 'unknown', the system will
+    auto-detect the document type before extraction.
+    """
     image_bytes = await file.read()
     if not image_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file upload")
     image_bytes = downscale_image_bytes(image_bytes)
-    return ocr_provider.extract(image_bytes, document_type.value)
+
+    # Auto-detect document type if not provided or unknown
+    doc_type_value = document_type.value if document_type else "unknown"
+    detected_type: str | None = None
+    classification_conf: float | None = None
+
+    if doc_type_value == "unknown" or document_type is None:
+        classifier = _get_classifier()
+        classification = classifier.classify(image_bytes)
+        detected_type = classification.document_type
+        classification_conf = classification.confidence
+        if classification.is_identity_document and classification.confidence >= 0.70:
+            doc_type_value = classification.document_type
+            logger.info(f"Auto-detected document type: {doc_type_value} (confidence: {classification.confidence:.2f})")
+        else:
+            logger.warning(f"Document classification uncertain: {classification.document_type} (confidence: {classification.confidence:.2f})")
+
+    ocr_result = ocr_provider.extract(image_bytes, doc_type_value)
+
+    # Populate classification fields if auto-detection was run
+    if detected_type:
+        ocr_result.detected_document_type = detected_type
+        ocr_result.classification_confidence = classification_conf
+
+    return ocr_result
 
 
 @router.post(

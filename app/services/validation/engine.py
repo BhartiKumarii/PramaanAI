@@ -129,12 +129,30 @@ class DefaultValidationEngine(ValidationEngine):
         if registry_hits is not None:
             findings.extend(self._check_registry(registry_hits, ocr_result))
 
-        overall = "FAIL" if any(f.status == "FAIL" for f in findings) else "PASS"
+        # Determine overall status:
+        # - FAIL if any check failed (actual validation failure)
+        # - UNCERTAIN if no failures but some checks are NOT_AVAILABLE or UNCERTAIN
+        # - PASS if all checks passed
+        has_fail = any(f.status == "FAIL" for f in findings)
+        has_uncertain = any(f.status in ("NOT_AVAILABLE", "UNCERTAIN") for f in findings)
+
+        if has_fail:
+            overall = "FAIL"
+        elif has_uncertain:
+            overall = "UNCERTAIN"
+        else:
+            overall = "PASS"
+
         return ValidationResult(status=overall, findings=findings)
 
     # ----- 1. Required fields -----
 
     def _check_required_fields(self, ocr_result: dict, document_type: str) -> list[ValidationFinding]:
+        """Check for required fields. Missing fields are marked NOT_AVAILABLE, not FAIL.
+
+        Rationale: If OCR couldn't extract a field, that's an extraction limitation,
+        not a document validation failure. The officer should review manually.
+        """
         findings = []
         required = _REQUIRED_FIELDS.get(document_type, [])
         present = []
@@ -149,17 +167,17 @@ class DefaultValidationEngine(ValidationEngine):
         if missing:
             findings.append(ValidationFinding(
                 check="required_fields",
-                status="FAIL",
-                severity="HIGH" if len(missing) > 2 else "MEDIUM",
-                reason=f"missing required fields for {document_type}: {', '.join(missing)} "
-                       f"(present: {', '.join(present) or 'none'})",
+                status="NOT_AVAILABLE",
+                severity="INFO",
+                reason=f"Could not extract required fields for {document_type}: {', '.join(missing)}. "
+                       f"Officer review required. (Extracted: {', '.join(present) or 'none'})",
             ))
         else:
             findings.append(ValidationFinding(
                 check="required_fields",
                 status="PASS",
                 severity="LOW",
-                reason=f"all required fields present for {document_type}: {', '.join(present)}",
+                reason=f"All required fields extracted for {document_type}: {', '.join(present)}",
             ))
         return findings
 
@@ -181,6 +199,12 @@ class DefaultValidationEngine(ValidationEngine):
         if document_type == "passport":
             number = ocr_result.get("passport_number", "").strip().upper()
             if not number:
+                findings.append(ValidationFinding(
+                    check="passport_number_format",
+                    status="NOT_EVALUATED",
+                    severity="INFO",
+                    reason="Passport number not extracted — format validation not run",
+                ))
                 return findings
             pattern = _PASSPORT_PATTERNS.get(country, _PASSPORT_PATTERNS["_DEFAULT"])
             valid = bool(pattern.match(number))
@@ -190,7 +214,7 @@ class DefaultValidationEngine(ValidationEngine):
                 check="passport_number_format",
                 status="PASS" if valid else "FAIL",
                 severity="LOW" if valid else "HIGH",
-                reason=f"passport number {number!r} {'matches' if valid else 'does not match'} "
+                reason=f"Passport number {number!r} {'matches' if valid else 'does not match'} "
                        f"expected format for {country_label}",
             ))
 

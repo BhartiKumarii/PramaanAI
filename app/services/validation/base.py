@@ -9,14 +9,14 @@ from app.services.validation.mrz import MRZResult
 
 class ValidationFinding(BaseModel):
     check: str
-    status: str  # PASS | FAIL
-    severity: str  # LOW | MEDIUM | HIGH
+    status: str  # PASS | FAIL | NOT_AVAILABLE | UNCERTAIN | NOT_EVALUATED
+    severity: str  # LOW | MEDIUM | HIGH | INFO
     reason: str  # specific values involved, never a generic string
     location: dict | None = None  # bounding box, or null when not spatial
 
 
 class ValidationResult(BaseModel):
-    status: str  # PASS | FAIL
+    status: str  # PASS | FAIL | UNCERTAIN
     findings: list[ValidationFinding]
 
 
