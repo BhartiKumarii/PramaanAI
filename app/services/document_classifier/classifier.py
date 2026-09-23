@@ -193,16 +193,33 @@ class DocumentClassifier:
         print(f"[DocumentClassifier] Loaded {len(self._profiles)} reference profiles")
 
     def _ocr_text(self, image_bytes: bytes) -> str:
+        """Extract text using PaddleOCR (same engine as field extraction)."""
         try:
-            import pytesseract
             from PIL import Image, ImageOps
             image = Image.open(io.BytesIO(image_bytes))
             image = ImageOps.exif_transpose(image)
-            gray = image.convert("L")
-            gray = ImageOps.autocontrast(gray)
-            return pytesseract.image_to_string(gray)
+            image = image.convert("RGB")
+            img_array = np.array(image)
+
+            from app.services.ocr.paddleocr_provider import _get_ocr
+            ocr = _get_ocr()
+            result = ocr(img_array)
+            data = result[0] if isinstance(result, tuple) else result
+            if not data:
+                return ""
+            return "\n".join(item[1].strip() for item in data if item[1].strip())
         except Exception:
-            return ""
+            # Fallback to Tesseract if PaddleOCR unavailable
+            try:
+                import pytesseract
+                from PIL import Image, ImageOps
+                image = Image.open(io.BytesIO(image_bytes))
+                image = ImageOps.exif_transpose(image)
+                gray = image.convert("L")
+                gray = ImageOps.autocontrast(gray)
+                return pytesseract.image_to_string(gray)
+            except Exception:
+                return ""
 
     def _classify_by_text(self, text: str) -> tuple[str, str, float, str] | None:
         """Return (doc_type, country, confidence, reason) from OCR keywords.
