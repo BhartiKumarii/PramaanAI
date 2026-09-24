@@ -1,6 +1,6 @@
 # Document-verification evaluation
 
-Generated 2026-09-24T03:04:23+00:00. **Synthetic results are measured on documents this project generated itself, with layouts matching its own templates — they are optimistic and are not evidence of real-world accuracy.**
+Generated 2026-09-24T08:41:01+00:00. **Synthetic results are measured on documents this project generated itself, with layouts matching its own templates — they are optimistic and are not evidence of real-world accuracy.**
 
 ## Synthetic suite
 
@@ -68,45 +68,45 @@ Generated 2026-09-24T03:04:23+00:00. **Synthetic results are measured on documen
 
 ## Robustness (synthetic documents under different capture conditions)
 
-Document type correct in 100% of variants; processing time mean 4.69s, max 12.1s (server CPU).
+Document type correct in 100% of variants; processing time mean 3.71s, max 11.5s (server CPU).
 
 | Subject | Condition | Status | Type ok | Det. conf | OCR conf | Face | Stamps id | Quality | Rot. | s |
 |---|---|---|---|---|---|---|---|---|---|---|
-| passport | clear | REGISTRY_NOT_AVAILABLE | yes | 0.982 | 0.9758 | yes | 0 | PASS |  | 6.56 |
-| passport | low_resolution | REVIEW_REQUIRED | yes | 0.98 | 0.9072 | yes | 0 | PASS |  | 5.9 |
-| passport | blur | REVIEW_REQUIRED | yes | 0.966 | 0.9647 | yes | 0 | REVIEW_REQUIRED |  | 3.79 |
-| passport | rotation_5deg | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.9668 | yes | 0 | PASS |  | 8.04 |
-| passport | rotation_90deg | REVIEW_REQUIRED | yes | 0.982 | 0.9739 | yes | 0 | PASS | 90 | 12.1 |
-| passport | rotation_180deg | REVIEW_REQUIRED | yes | 0.752 | 0.9748 | no | 0 | PASS |  | 3.55 |
-| passport | dark | REVIEW_REQUIRED | yes | 0.978 | 0.9658 | yes | 0 | PASS |  | 3.25 |
-| passport | bright | REGISTRY_NOT_AVAILABLE | yes | 0.954 | 0.9814 | yes | 0 | REVIEW_REQUIRED |  | 3.69 |
-| passport | shadow | REVIEW_REQUIRED | yes | 0.984 | 0.9723 | yes | 0 | PASS |  | 3.73 |
-| passport | glare | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.978 | yes | 0 | PASS |  | 4.38 |
-| passport | low_quality_camera | REVIEW_REQUIRED | yes | 0.859 | 0.9725 | yes | 0 | PASS |  | 4.61 |
-| driving_licence | clear | PASS | yes | 0.962 | 0.9486 | yes | 0 | REVIEW_REQUIRED |  | 2.56 |
-| driving_licence | low_resolution | NOT_VERIFIED | yes | 0.968 | 0.8958 | yes | 0 | REVIEW_REQUIRED |  | 3.48 |
-| driving_licence | blur | NOT_VERIFIED | yes | 0.961 | 0.9831 | yes | 0 | NOT_VERIFIED |  | 2.91 |
-| driving_licence | rotation_5deg | PASS | yes | 0.967 | 0.9455 | yes | 0 | REVIEW_REQUIRED |  | 2.9 |
-| driving_licence | rotation_90deg | REVIEW_REQUIRED | yes | 0.508 | 0.9543 | yes | 0 | REVIEW_REQUIRED |  | 8.51 |
-| driving_licence | rotation_180deg | REVIEW_REQUIRED | yes | 0.852 | 0.9453 | yes | 0 | REVIEW_REQUIRED |  | 2.14 |
-| driving_licence | dark | PASS | yes | 0.957 | 0.9492 | yes | 0 | PASS |  | 1.95 |
-| driving_licence | bright | PASS | yes | 0.964 | 0.9606 | yes | 0 | REVIEW_REQUIRED |  | 1.86 |
-| driving_licence | shadow | PASS | yes | 0.954 | 0.9509 | yes | 0 | PASS |  | 1.87 |
-| driving_licence | glare | PASS | yes | 0.964 | 0.9463 | yes | 0 | REVIEW_REQUIRED |  | 2.12 |
-| driving_licence | low_quality_camera | PASS | yes | 0.917 | 0.9554 | yes | 0 | PASS |  | 2.21 |
-| stamp_page | clear | NOT_VERIFIED | yes | 0.918 | 0.9912 | no | 1 | PASS |  | 4.69 |
-| stamp_page | low_resolution | NOT_VERIFIED | yes | 0.944 | 0.9903 | no | 1 | PASS |  | 6.42 |
-| stamp_page | blur | NOT_VERIFIED | yes | 0.878 | 0.9932 | no | 1 | NOT_VERIFIED | 180 | 9.49 |
-| stamp_page | rotation_5deg | PASS | yes | 0.946 | 0.9683 | no | 1 | PASS |  | 6.26 |
-| stamp_page | rotation_90deg | NOT_VERIFIED | yes | 0.92 | 0.9911 | no | 1 | PASS | 90 | 8.5 |
-| stamp_page | rotation_180deg | NOT_VERIFIED | yes | 0.777 | 0.9913 | no | 1 | PASS |  | 7.88 |
-| stamp_page | dark | PASS | yes | 0.964 | 0.9708 | no | 1 | PASS |  | 3.4 |
-| stamp_page | bright | REVIEW_REQUIRED | yes | 0.94 | 0.9907 | no | 1 | REVIEW_REQUIRED |  | 4.65 |
-| stamp_page | shadow | PASS | yes | 0.94 | 0.974 | no | 1 | PASS |  | 3.46 |
-| stamp_page | glare | REVIEW_REQUIRED | yes | 0.944 | 0.9914 | no | 1 | PASS |  | 5.61 |
-| stamp_page | low_quality_camera | PASS | yes | 0.948 | 0.9834 | yes | 1 | PASS |  | 5.23 |
-| stamp_page | faded_stamp | REVIEW_REQUIRED | yes | 0.939 | 0.9736 | no | 1 | PASS |  | 3.36 |
-| stamp_page | overlapping_rotated_stamps | PASS | yes | 0.792 | 0.9717 | no | 1 | PASS |  | 2.97 |
+| passport | clear | REGISTRY_NOT_AVAILABLE | yes | 0.982 | 0.9758 | yes | 0 | PASS |  | 4.42 |
+| passport | low_resolution | REVIEW_REQUIRED | yes | 0.98 | 0.9072 | yes | 0 | PASS |  | 4.41 |
+| passport | blur | REVIEW_REQUIRED | yes | 0.966 | 0.9647 | yes | 0 | REVIEW_REQUIRED |  | 3.08 |
+| passport | rotation_5deg | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.9668 | yes | 0 | PASS |  | 3.81 |
+| passport | rotation_90deg | REVIEW_REQUIRED | yes | 0.982 | 0.9739 | yes | 0 | PASS | 90 | 11.5 |
+| passport | rotation_180deg | REVIEW_REQUIRED | yes | 0.752 | 0.9748 | no | 0 | PASS |  | 4.03 |
+| passport | dark | REVIEW_REQUIRED | yes | 0.978 | 0.9658 | yes | 0 | PASS |  | 3.34 |
+| passport | bright | REGISTRY_NOT_AVAILABLE | yes | 0.954 | 0.9814 | yes | 0 | REVIEW_REQUIRED |  | 3.79 |
+| passport | shadow | REVIEW_REQUIRED | yes | 0.984 | 0.9723 | yes | 0 | PASS |  | 3.95 |
+| passport | glare | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.978 | yes | 0 | PASS |  | 4.09 |
+| passport | low_quality_camera | REVIEW_REQUIRED | yes | 0.859 | 0.9725 | yes | 0 | PASS |  | 3.53 |
+| driving_licence | clear | PASS | yes | 0.962 | 0.9486 | yes | 0 | REVIEW_REQUIRED |  | 1.97 |
+| driving_licence | low_resolution | NOT_VERIFIED | yes | 0.968 | 0.8958 | yes | 0 | REVIEW_REQUIRED |  | 2.59 |
+| driving_licence | blur | NOT_VERIFIED | yes | 0.961 | 0.9831 | yes | 0 | NOT_VERIFIED |  | 2.29 |
+| driving_licence | rotation_5deg | PASS | yes | 0.967 | 0.9455 | yes | 0 | REVIEW_REQUIRED |  | 2.21 |
+| driving_licence | rotation_90deg | REVIEW_REQUIRED | yes | 0.508 | 0.9543 | yes | 0 | REVIEW_REQUIRED |  | 5.84 |
+| driving_licence | rotation_180deg | REVIEW_REQUIRED | yes | 0.852 | 0.9453 | yes | 0 | REVIEW_REQUIRED |  | 1.87 |
+| driving_licence | dark | PASS | yes | 0.957 | 0.9492 | yes | 0 | PASS |  | 1.91 |
+| driving_licence | bright | PASS | yes | 0.964 | 0.9606 | yes | 0 | REVIEW_REQUIRED |  | 1.92 |
+| driving_licence | shadow | PASS | yes | 0.954 | 0.9509 | yes | 0 | PASS |  | 2.07 |
+| driving_licence | glare | PASS | yes | 0.964 | 0.9463 | yes | 0 | REVIEW_REQUIRED |  | 2.03 |
+| driving_licence | low_quality_camera | PASS | yes | 0.917 | 0.9554 | yes | 0 | PASS |  | 2.11 |
+| stamp_page | clear | NOT_VERIFIED | yes | 0.918 | 0.9912 | no | 1 | PASS |  | 3.4 |
+| stamp_page | low_resolution | NOT_VERIFIED | yes | 0.944 | 0.9903 | no | 1 | PASS |  | 3.58 |
+| stamp_page | blur | NOT_VERIFIED | yes | 0.878 | 0.9932 | no | 1 | NOT_VERIFIED | 180 | 6.1 |
+| stamp_page | rotation_5deg | PASS | yes | 0.946 | 0.9683 | no | 1 | PASS |  | 3.21 |
+| stamp_page | rotation_90deg | NOT_VERIFIED | yes | 0.92 | 0.9911 | no | 1 | PASS | 90 | 7.93 |
+| stamp_page | rotation_180deg | NOT_VERIFIED | yes | 0.777 | 0.9913 | no | 1 | PASS |  | 3.97 |
+| stamp_page | dark | PASS | yes | 0.964 | 0.9708 | no | 1 | PASS |  | 3.39 |
+| stamp_page | bright | REVIEW_REQUIRED | yes | 0.94 | 0.9907 | no | 1 | REVIEW_REQUIRED |  | 4.67 |
+| stamp_page | shadow | PASS | yes | 0.94 | 0.974 | no | 1 | PASS |  | 3.44 |
+| stamp_page | glare | REVIEW_REQUIRED | yes | 0.944 | 0.9914 | no | 1 | PASS |  | 4.52 |
+| stamp_page | low_quality_camera | PASS | yes | 0.948 | 0.9834 | yes | 1 | PASS |  | 4.05 |
+| stamp_page | faded_stamp | REVIEW_REQUIRED | yes | 0.939 | 0.9736 | no | 1 | PASS |  | 2.69 |
+| stamp_page | overlapping_rotated_stamps | PASS | yes | 0.792 | 0.9717 | no | 1 | PASS |  | 2.29 |
 
 ## Region detection on 21 held-out REAL images (IoU >= 0.5)
 
