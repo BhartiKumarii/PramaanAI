@@ -12,8 +12,8 @@ android {
         applicationId = "com.pramaanai.officer"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         // Backend URL. Default: the Render deployment. For a local test build
         // pass -Ppramaan.apiUrl=http://127.0.0.1:8000/ (with `adb reverse
         // tcp:8000 tcp:8000`) or the laptop's LAN address.

@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://pramaanai-703j.onrender.com">Live Website</a> &bull;
-  <a href="https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0">Download APK</a> &bull;
+  <a href="https://github.com/BhartiKumarii/PramaanAI/releases/latest">Download APK</a> &bull;
   <a href="#screenshots">Screenshots</a>
 </p>
 
@@ -18,22 +18,22 @@
 
 > **Demo Credentials (works on both website and Android app)**
 >
-> | Role | Username | Password |
-> |------|----------|----------|
-> | IT Admin (full access) | `officer1` | `BorderShield123` |
-> | Field Officer | `attari_officer` | `BorderShield123` |
+> | Use | Username | Password |
+> |-----|----------|----------|
+> | Web console — admin (answers cases sent from the app) | `it_admin` | `BorderShield123` |
+> | Android app — field officer (post: Raxaul, India–Nepal) | `raxaul_officer` | `BorderShield123` |
 >
 > **Live Dashboard:** [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com)
 > **API Docs:** [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs)
-> **Android APK:** [Download from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0)
+> **Android APK:** [Download from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/latest)
 >
 > *Note: Render free tier spins down after inactivity — first load may take 30-60 seconds.*
 
 ### Judge's Quick Start
 
-1. **Web Dashboard** — Open [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com), log in with `officer1` / `BorderShield123`. Explore cases, alerts, identity network, and audit logs.
+1. **Android App** — Download the [APK](https://github.com/BhartiKumarii/PramaanAI/releases/latest), install on an Android device (8.0+), log in with `raxaul_officer` / `BorderShield123`. Tap **Verify document**, photograph a document, take a live photo, and read the result. Then choose **Clear** or **Send to admin**. The guided tour includes a practice verification that uses a synthetic sample.
 
-2. **Android App** — Download the [APK](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0), install on an Android device (8.0+), log in with `attari_officer` / `BorderShield123`. Scan a document to see on-device OCR, MRZ validation, and verification evidence.
+2. **Web Dashboard** — Open [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com), log in with `it_admin` / `BorderShield123`. Open the case you sent. It shows the document with the problem areas marked, the live photo, the extracted fields and the identity links. Write a response, and the officer sees it in the app.
 
 3. **API** — Visit [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs) for the full Swagger UI. Authenticate via `POST /auth/login`.
 
@@ -41,7 +41,7 @@
 |----------|------|
 | Live Website | [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com) |
 | GitHub Repository | [github.com/BhartiKumarii/PramaanAI](https://github.com/BhartiKumarii/PramaanAI) |
-| Demo APK | [Download from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/tag/v1.0.0) |
+| Demo APK | [Download from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/latest) |
 | Prototype Video | [ADD VIDEO LINK] |
 | Project Report | [Documentation/PramaanAI-Report.pdf](Documentation/PramaanAI-Report.pdf) |
 | Presentation | [Documentation/PramaanAI-Presentation.pdf](Documentation/PramaanAI-Presentation.pdf) |
@@ -76,7 +76,7 @@ A three-component system:
 
 1. **Android App** — Field tool for SSB officers. Captures documents, runs on-device verification (OCR, MRZ, tampering detection, face matching), caches results offline, syncs when connectivity returns.
 
-2. **FastAPI Backend** — Central verification server. Runs registry lookups, risk scoring, identity graph analysis, and returns explainable results. All data is encrypted in transit; raw images never leave the device.
+2. **FastAPI Backend** — Central verification server. Runs OCR, MRZ, QR, stamp, face, forensics and registry checks on the region crops sent by the phone, and returns explainable results. All traffic is encrypted in transit.
 
 3. **Web Dashboard** — Combined operational console for case management, alerts, identity network visualization, audit logs, analytics, and system administration.
 
@@ -84,22 +84,33 @@ A three-component system:
 
 ## Key Features
 
-### On-Device Intelligence (Android)
-- **Dual-script OCR** — Latin + Devanagari recognition via ML Kit (fully on-device, no network)
-- **MRZ Parsing & Validation** — ICAO 9303 TD3 passport/visa MRZ with 5-field check-digit verification
-- **Document Type Detection** — Scoring system with 40+ signals across 8 document categories
-- **Country Detection** — Automatic India/Nepal/Bhutan identification from document patterns
-- **Document Mismatch Warning** — Detects when the scanned document doesn't match the selected type
-- **QR/Barcode Scanning** — Decodes Aadhaar QR, PDF417, and other machine-readable codes; cross-checks decoded data against OCR
-- **Face Detection** — ML Kit face detection on both document photo and live selfie
-- **Face Embedding & Matching** — MobileFaceNet neural embeddings with HOG fallback
-- **Tampering Analysis** — Error Level Analysis (ELA) for detecting edited regions
-- **Deepfake/Anti-spoof Detection** — On-device analysis of selfie authenticity
-- **Image Quality Gate** — Blur, glare, lighting, and shadow detection with officer guidance
-- **Perspective Correction** — Automatic document edge detection and crop
-- **Verification Evidence** — Per-check PASS/WARNING/FAIL/NOT_AVAILABLE display with reasons
-- **Offline Operation** — Full local extraction + encrypted queue with automatic sync via WorkManager
-- **7 Languages** — Full UI localization: English, Hindi, Nepali, Bengali, Assamese, Punjabi, Dzongkha (434 strings each)
+### Android app
+- **Verify document**, a single guided flow: capture (camera or gallery) → review the regions and text found on the phone → choose the crossing → live photo (front/back camera, flip, gallery for testing, or skip) → result
+- **On-device region detection**: YOLO11n (ONNX) locates the photo, MRZ, QR/barcode, stamps and text blocks. Only those crops are sent, in one HTTPS request.
+- **On-device text and MRZ**: ML Kit text recognition, with ICAO 9303 check digits verified on the phone before anything is sent
+- **Understandable results**:
+  - headline and plain-language reasons
+  - the document with each problem boxed
+  - extracted fields with their source (server OCR / MRZ / QR / phone / Devanagari)
+  - document photo next to the live photo, with the similarity score
+  - identity graph (same face under another name, same document number seen before)
+  - risk breakdown
+- **Decision stays with the officer**: **Clear**, or **Send to admin**, with a reason written automatically from the checks and editable before sending. The admin's answer appears in the app.
+- **Review, History and Notifications**:
+  - Review: cases waiting on you or on the admin
+  - History: everything, grouped by day, with search
+  - Notifications: admin responses plus high/medium/low risk alerts
+  - "Filter by" dropdowns (result, risk, document, period)
+  - each record keeps the original document, the problem locations, the live photo and the extracted fields
+- **Evidence**: the document image and live face crop are attached to the case for the admin. On the phone they are stored encrypted (Android Keystore) and deleted automatically after the retention period.
+- **Offline**: encrypted queue with automatic sync (WorkManager); retries are idempotent. Connection state (Online / Weak / Offline) is checked live.
+- **Dashboard, Analytics and Officer profile**: today's KPIs, a 7/30-day activity chart, risk distribution, common reasons for attention, and results by document type, country and time of day
+- **Guided tour + practice verification**: walks through every step on a synthetic sample. Nothing is sent or stored.
+- **Settings**:
+  - language and default crossing
+  - live-photo prompt, image retention and admin-response polling
+  - which alert levels to show, auto-lock time, and a connection test
+- **7 UI languages**: English, Hindi, Nepali, Bengali, Assamese and Punjabi are fully translated (~890 strings). Dzongkha is partial and falls back to English.
 
 ### Document Support
 | Country | Documents |
@@ -109,15 +120,26 @@ A three-component system:
 | Bhutan | Passport (MRZ), Citizen Identity Card (CID), Driving Licence (RSTA), Visa |
 
 ### Server-Side Verification
+- **OCR**: PP-OCR (PaddleOCR weights on ONNX Runtime) for Latin text, plus a PP-OCRv5 **Devanagari** recogniser for Nepali/Hindi.
+  - Devanagari fields (name, national ID / citizenship number, sex, date of birth) are kept separately and never compared against the registry.
+  - Nepali dates stay in Bikram Sambat.
+- **MRZ / QR / stamps**: ICAO 9303 parser with recomputed check digits, QR/barcode decoding and cross-check, and immigration stamps identified against official checkpoint reference data
+- **Face**: InsightFace (SCRFD detector plus an ArcFace-family embedding). Document photo vs. live photo gives Match / Possible match (review) / No match; no face found is inconclusive, never "no match". A second portrait (ghost image) on passports, licences and visas is treated as normal.
+- **Crossing rules**: India–Nepal / India–Bhutan rules are evaluated. The crossing comes from the stamp, the officer's post, or the officer's choice.
 - **Registry Lookup** — Exact (document number) and fuzzy (name) matching against mock registry
 - **Risk Scoring** — Weighted fusion of checksum, forensics, deepfake, blacklist, face match, and identity signals
 - **Identity Graph** — NetworkX connected-component analysis for multi-identity cluster detection
 - **Cross-field Validation** — MRZ vs. printed fields, front vs. back consistency
 - **HMAC-signed Records** — Every verification result is cryptographically signed; tampering is detected on read
 - **Full Audit Trail** — Every action (screen, clear, dispute, decision) is logged with officer ID and timestamp
-- **Blockchain Ledger** — Local mock hash-chained ledger with integrity verification
+- **Hash-chained records**: every verification is appended to a local tamper-evident hash chain (not a blockchain)
 
 ### Web Dashboard
+- **Case review with document evidence**:
+  - the original document with the problem areas marked (click a finding to highlight it)
+  - document photo vs. live photo
+  - extracted fields with their source, and the identity links
+  - the officer's message and suggested response wording
 - **Case Management** — Submit, review, decide (Clear / Secondary Review / Hold-Refer)
 - **Real-time Alerts** — Document review required, risk assessment, duplicates, incomplete records
 - **Identity Network** — Visual graph of identity clusters and relationships
@@ -127,30 +149,33 @@ A three-component system:
 - **Registry Management** — View and manage mock central registry entries
 - **Audit Logs** — Complete audit trail with filtering
 - **Analytics & Reports** — Risk trends, screening volume, officer activity
-- **RBAC** — Server-enforced role-based access (IT Admin / Supervisor / Immigration Officer)
+- **RBAC** — Server-enforced roles: Officer (app) and Reviewer (web admin, decides cases)
 
 ---
 
 ## System Architecture
 
 ```
-+------------------+        +-------------------+       +------------------+
-|   Android App    |  TLS   |   FastAPI Backend  |       |  Web Dashboard   |
-| (Officer Field)  |------->|  (Central Server)  |<------| (Operational)    |
-|                  |        |                    |       |                  |
-| - ML Kit OCR     |  Only  | - Tesseract OCR    |       | - React + TS     |
-| - MRZ Parser     | encoded| - ICAO Validation  |       | - Case Mgmt      |
-| - Face Detection | data   | - ELA Forensics    |       | - Identity Graph |
-| - ELA Tampering  | sent   | - Face Embedding   |       | - Alerts         |
-| - QR Scanner     |  -->   | - Registry Lookup  |       | - Audit Logs     |
-| - Offline Queue  |        | - Risk Engine      |       | - Analytics      |
-| - WorkManager    |        | - Identity Graph   |       | - RBAC           |
-+------------------+        | - Blockchain       |       +------------------+
-                             | - PostgreSQL       |
-                             +-------------------+
++--------------------+        +----------------------+       +------------------+
+|    Android App     |  TLS   |    FastAPI Backend   |       |  Web Dashboard   |
+|  (Officer, field)  |------->|   (Central Server)   |<------|  (Admin console) |
+|                    | region |                      |       |                  |
+| - YOLO11n regions  | crops +| - PP-OCR + Devanagari|       | - React + TS     |
+| - ML Kit text/MRZ  | phone  | - MRZ / QR / stamps  |       | - Case review w/ |
+| - Live photo       | text   | - Face (InsightFace) |       |   document boxes |
+| - Clear / Send to  |        | - Forensics          |       | - Admin response |
+|   admin            |        | - Registry (mock)    |       | - Identity graph |
+| - Review/History/  |        | - Crossing rules     |       | - Alerts, audit  |
+|   Notifications    |        | - Decision engine    |       | - Analytics      |
+| - Encrypted offline|        | - Hash-chained audit |       | - RBAC           |
+|   queue + sync     |        | - PostgreSQL         |       |                  |
++--------------------+        +----------------------+       +------------------+
 ```
 
-**Privacy by design:** Raw document and selfie images never leave the Android device for verification requests. Only extracted OCR fields, MRZ text, and face embedding vectors are transmitted, encrypted in transit.
+**Privacy by design:**
+- Verification sends only the detected region crops and the text read on the phone, never the full frame. The verify endpoints process them in memory and store only hashes.
+- After verification, the document image and the live face crop are attached to the case as evidence, so the admin can review them.
+- Stored results drop raw OCR text, and Aadhaar numbers are masked.
 
 ---
 
@@ -194,8 +219,8 @@ The dashboard provides a unified operational view:
 
 | Layer | Technologies |
 |-------|-------------|
-| **Backend** | Python, FastAPI, Pydantic, SQLAlchemy, PostgreSQL, Alembic, JWT/Argon2, Tesseract OCR, Pillow (ELA), NetworkX |
-| **Android** | Kotlin, Jetpack Compose, CameraX, ML Kit (Text Recognition, Face Detection, Barcode Scanning), TensorFlow Lite (MobileFaceNet), Retrofit, WorkManager, Material 3 |
+| **Backend** | Python, FastAPI, Pydantic, SQLAlchemy, PostgreSQL, Alembic, JWT/Argon2, PP-OCR (RapidOCR / ONNX Runtime) incl. Devanagari, InsightFace, OpenCV, NetworkX |
+| **Android** | Kotlin, Jetpack Compose, CameraX, ONNX Runtime (YOLO11n), ML Kit (Text Recognition, Face Detection, Barcode Scanning), Retrofit, WorkManager, Android Keystore, Material 3 |
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Axios, Recharts |
 | **Infrastructure** | Docker Compose, Render (backend + DB), GitHub Releases (APK) |
 
@@ -203,10 +228,10 @@ The dashboard provides a unified operational view:
 
 ## Security & Privacy
 
-- Raw document/selfie images **never leave the device** for verification — only extracted, encoded data is transmitted
+- Verification requests carry region crops and on-device text only, never the full frame. Evidence images are attached to a case only after verification, for admin review.
 - All network communication over TLS
 - JWT authentication with Argon2 password hashing
-- Server-enforced RBAC (IT Admin / Supervisor / Immigration Officer)
+- Server-enforced RBAC (Officer / Reviewer)
 - HMAC-signed verification records — tampering detected on read
 - On-device encryption for offline queue (Android Keystore)
 - PII redaction filter on server logs
@@ -275,9 +300,11 @@ The `ID_DOCUMENT_DATASET/` directory contains sample documents for testing:
 ## Limitations
 
 - **Mock Data Only** — Registry lookups use synthetic data. No real government database is connected.
-- **Deepfake Detection** — On-device heuristic; not a production-grade deep learning classifier.
-- **Face Matching** — MobileFaceNet (128-d) with HOG fallback; less accurate than production face recognition systems.
-- **ELA Forensics** — Single-pass Error Level Analysis has known false positives on text-dense documents.
+- **Handwriting** — Handwritten entries (e.g. dates written on visa stamps) are not read reliably. Measured: 0/7 with the current OCR, 1/7 even on hand-placed crops. The officer reads them from the document image. See `Documentation/DOCUMENT_VERIFICATION.md`.
+- **Document scripts** — Latin and Devanagari text is read. Bengali, Gurmukhi and Dzongkha (Tibetan script) document text is not.
+- **Face Matching** — A general-purpose face model; not a certified biometric system. Borderline scores are sent for officer review.
+- **Forensics** — Region-level image-manipulation indicators. Some synthetic manipulations are still missed (see the evaluation report).
+- **Dzongkha UI** — Partially translated; untranslated screens show English.
 - **Offline Mode** — Full local extraction works, but risk scoring and registry lookup require server connectivity.
 - **Render Free Tier** — Backend and database on Render's free tier may experience cold-start delays and resource limits.
 
@@ -289,7 +316,8 @@ The `ID_DOCUMENT_DATASET/` directory contains sample documents for testing:
 - Production-grade deep learning models for face recognition and deepfake detection
 - Multi-frame liveness detection with challenge-response
 - Edge deployment for Border Out Posts with limited connectivity
-- Multi-language UI expanded (currently English, Hindi, Nepali, Bengali, Assamese, Punjabi, Dzongkha — all 434 strings)
+- Handwritten-field reading: labelled handwriting boxes plus a recogniser fine-tuned on border forms
+- Complete Dzongkha UI, and Bengali/Gurmukhi/Dzongkha document text
 - Biometric integration (fingerprint, iris) where hardware is available
 - Real-time inter-checkpoint communication network
 - Progressive Web App for the dashboard
@@ -310,7 +338,7 @@ The `ID_DOCUMENT_DATASET/` directory contains sample documents for testing:
 # Docker (recommended)
 docker compose up --build
 docker compose exec app alembic upgrade head
-docker compose exec app python -m scripts.seed_admin officer1 'Str0ngPass!'
+# demo accounts (raxaul_officer, it_admin, …) are seeded on start by docker-entrypoint.sh
 
 # Without Docker
 python -m venv .venv && source .venv/bin/activate
@@ -329,7 +357,7 @@ npm run dev
 
 ### Android
 
-Open `android/` in Android Studio. Build and run on a device with camera access.
+Open `android/` in Android Studio. Build and run on a device with camera access. The app uses the Render server by default. To point it at a local server, build with `./gradlew assembleDebug -Ppramaan.apiUrl=http://<your-ip>:8000/`.
 
 ---
 
