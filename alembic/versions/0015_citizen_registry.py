@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column("document_type", sa.String(length=32), nullable=False),
         sa.Column("date_of_expiry", sa.String(length=10), nullable=True),
         sa.Column("status", sa.String(length=16), nullable=False),
-        sa.Column("added_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("added_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
