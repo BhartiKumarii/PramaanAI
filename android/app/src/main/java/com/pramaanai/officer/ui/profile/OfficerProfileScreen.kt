@@ -1,5 +1,7 @@
 package com.pramaanai.officer.ui.profile
 
+import com.pramaanai.officer.R
+import com.pramaanai.officer.ui.i18n.L
 import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -111,8 +113,8 @@ fun OfficerProfileScreen(
     }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Officer profile", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+        TopAppBar(title = { Text(L.s(R.string.pr_officer_profile), fontWeight = FontWeight.Bold) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L.s(R.string.pr_back)) } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = SidebarDark))
     }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp),
@@ -124,12 +126,12 @@ fun OfficerProfileScreen(
                         OfficerAvatar(name = AuthSession.username, size = 64.dp, fontSize = 24.sp)
                         Spacer(Modifier.width(16.dp))
                         Column {
-                            Text(AuthSession.username ?: "Officer", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(AuthSession.username ?: L.s(R.string.pr_officer), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             Text(roleLabel(AuthSession.role), color = AccentGreen, fontWeight = FontWeight.SemiBold)
                             Text(listOfNotNull(AuthSession.checkpointName, AuthSession.checkpointCode?.let { "($it)" }).joinToString(" ")
-                                .ifBlank { "No post assigned" }, color = MutedForeground)
+                                .ifBlank { L.s(R.string.pr_no_post_assigned) }, color = MutedForeground)
                             AuthSession.loginAt?.let {
-                                Text("Signed in ${DateTimeFormatter.ofPattern("dd MMM, HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(it))}",
+                                Text(L.f(R.string.pr_signed_in_at, DateTimeFormatter.ofPattern("dd MMM, HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(it))),
                                     color = MutedForeground, style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -137,65 +139,64 @@ fun OfficerProfileScreen(
                 }
             }
             item {
-                Panel("My work") {
+                Panel(L.s(R.string.pr_my_work)) {
                     val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = AccentGreen, selectedLabelColor = BackgroundDark)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(1 to "Today", 7 to "7 days", 0 to "All time").forEach { (d, l) ->
+                        listOf(1 to L.s(R.string.pr_today), 7 to L.s(R.string.pr_7_days), 0 to L.s(R.string.pr_all_time)).forEach { (d, l) ->
                             FilterChip(selected = period == d, onClick = { period = d }, label = { Text(l) }, colors = chipColors)
                         }
                     }
                     Spacer(Modifier.height(10.dp))
                     val risks = inPeriod.mapNotNull { it.riskScore }
                     listOf(
-                        Triple("Documents checked", "${inPeriod.size}", AccentGreen),
-                        Triple("Passed all checks", "${inPeriod.count { it.overallStatus == "PASS" }}", SuccessGreen),
-                        Triple("Cleared by me", "${inPeriod.count { it.officerAction == "CLEARED" }}", SuccessGreen),
-                        Triple("Sent to admin", "${inPeriod.count { it.officerAction == "SEND_TO_OFFICER" }}", ChartBlue),
-                        Triple("Admin responses", "${inPeriod.count { it.reviewerResponded == true }}", WarningAmber),
-                        Triple("Awaiting my decision", "${inPeriod.count { it.officerAction == "PENDING" }}", WarningAmber),
-                        Triple("Average risk indicator", if (risks.isEmpty()) "–" else "${risks.average().toInt()}/100", MutedForeground),
+                        Triple(L.s(R.string.pr_documents_checked), "${inPeriod.size}", AccentGreen),
+                        Triple(L.s(R.string.pr_passed_all_checks), "${inPeriod.count { it.overallStatus == "PASS" }}", SuccessGreen),
+                        Triple(L.s(R.string.pr_cleared_by_me), "${inPeriod.count { it.officerAction == "CLEARED" }}", SuccessGreen),
+                        Triple(L.s(R.string.pr_sent_to_admin), "${inPeriod.count { it.officerAction == "SEND_TO_OFFICER" }}", ChartBlue),
+                        Triple(L.s(R.string.pr_admin_responses), "${inPeriod.count { it.reviewerResponded == true }}", WarningAmber),
+                        Triple(L.s(R.string.pr_awaiting_my_decision), "${inPeriod.count { it.officerAction == "PENDING" }}", WarningAmber),
+                        Triple(L.s(R.string.pr_average_risk_indicator), if (risks.isEmpty()) "–" else "${risks.average().toInt()}/100", MutedForeground),
                     ).forEach { (k, v, c) -> Line(k, v, c) }
                 }
             }
             item {
-                Panel("Device and connection") {
-                    Line("Phone", "${Build.MANUFACTURER} ${Build.MODEL}")
-                    Line("Android", Build.VERSION.RELEASE)
-                    Line("App version", BuildConfig.VERSION_NAME)
-                    Line("Server", BuildConfig.API_BASE_URL.removePrefix("https://").removePrefix("http://").trimEnd('/'))
-                    Line("Connection", ConnectivityMonitor.lastDetail.ifBlank { "checking…" })
-                    Line("Waiting to sync", "$pending", if (pending > 0) ChartBlue else MutedForeground)
+                Panel(L.s(R.string.pr_device_and_connection)) {
+                    Line(L.s(R.string.pr_phone), "${Build.MANUFACTURER} ${Build.MODEL}")
+                    Line(L.s(R.string.pr_android), Build.VERSION.RELEASE)
+                    Line(L.s(R.string.pr_app_version), BuildConfig.VERSION_NAME)
+                    Line(L.s(R.string.pr_server), BuildConfig.API_BASE_URL.removePrefix("https://").removePrefix("http://").trimEnd('/'))
+                    Line(L.s(R.string.pr_connection), ConnectivityMonitor.lastDetail.ifBlank { L.s(R.string.pr_checking) })
+                    Line(L.s(R.string.pr_waiting_to_sync), "$pending", if (pending > 0) ChartBlue else MutedForeground)
                 }
             }
             item {
-                Panel("Data on this phone") {
-                    Line("Stored captures", "$stored")
-                    Text("Document images and live photos are kept encrypted on this phone (Android Keystore) for " +
-                        "${CaptureStore.RETENTION_DAYS} days so you can review past verifications, then deleted automatically. " +
-                        "A copy is attached to each case as its evidence record.", color = MutedForeground,
+                Panel(L.s(R.string.pr_data_on_this_phone)) {
+                    Line(L.s(R.string.pr_stored_captures), "$stored")
+                    Text(L.f(R.string.pr_data_on_phone_notice, com.pramaanai.officer.data.local.AppSettings.retentionDays(context)),
+                        color = MutedForeground,
                         style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
                     if (!confirmClear) OutlinedButton(onClick = { confirmClear = true }, modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)) {
                         Icon(Icons.Filled.DeleteSweep, null, tint = WarningAmber); Spacer(Modifier.width(8.dp))
-                        Text("Clear stored images from this phone", color = WarningAmber)
+                        Text(L.s(R.string.pr_clear_stored_images_from_this), color = WarningAmber)
                     } else Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(onClick = { confirmClear = false }, modifier = Modifier.weight(1f)) { Text("Cancel") }
+                        OutlinedButton(onClick = { confirmClear = false }, modifier = Modifier.weight(1f)) { Text(L.s(R.string.pr_cancel)) }
                         OutlinedButton(onClick = {
                             scope.launch { CaptureStore.get(context).clearAll(); stored = 0; confirmClear = false }
-                        }, modifier = Modifier.weight(1f), border = BorderStroke(1.dp, DestructiveRed)) { Text("Delete $stored", color = DestructiveRed) }
+                        }, modifier = Modifier.weight(1f), border = BorderStroke(1.dp, DestructiveRed)) { Text(L.f(R.string.pr_delete, stored), color = DestructiveRed) }
                     }
                 }
             }
             item {
-                Panel("Account") {
-                    Action(Icons.Filled.Settings, "Settings (language, security, display)", AccentGreen, onOpenSettings)
-                    Action(Icons.AutoMirrored.Filled.HelpOutline, "Replay the guided tour", ChartBlue, onReplayTour)
-                    Action(Icons.AutoMirrored.Filled.Logout, "Log out", DestructiveRed, onLogout)
+                Panel(L.s(R.string.pr_account)) {
+                    Action(Icons.Filled.Settings, L.s(R.string.pr_settings_language_security_display), AccentGreen, onOpenSettings)
+                    Action(Icons.AutoMirrored.Filled.HelpOutline, L.s(R.string.pr_replay_the_guided_tour), ChartBlue, onReplayTour)
+                    Action(Icons.AutoMirrored.Filled.Logout, L.s(R.string.pr_log_out), DestructiveRed, onLogout)
                 }
             }
             item {
-                Text("Registry lookups in this build use FICTIONAL mock data only — no real government database is accessed.",
+                Text(L.s(R.string.pr_registry_lookups_in_this_build),
                     color = MutedForeground, style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -203,9 +204,9 @@ fun OfficerProfileScreen(
 }
 
 private fun roleLabel(role: String?) = when (role) {
-    "OFFICER" -> "Field officer"
-    "REVIEWER" -> "Reviewing officer (admin)"
-    else -> role ?: "Officer"
+    "OFFICER" -> L.s(R.string.pr_field_officer)
+    "REVIEWER" -> L.s(R.string.pr_reviewing_officer_admin)
+    else -> role ?: L.s(R.string.pr_officer_2)
 }
 
 @Composable

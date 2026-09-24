@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.pramaanai.officer.ui.i18n.L.init(this)
 
         // Resume a previously signed-in officer without retyping credentials.
         com.pramaanai.officer.data.local.SessionStore.init(applicationContext)

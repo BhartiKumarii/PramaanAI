@@ -1,5 +1,6 @@
 package com.pramaanai.officer.ui.shell
 
+import com.pramaanai.officer.ui.i18n.L
 import com.pramaanai.officer.ui.theme.AccentGreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -86,16 +87,16 @@ fun AppShell(
                     actions = {
                         if (onSearchClick != null) {
                             IconButton(onClick = onSearchClick) {
-                                Icon(Icons.Filled.Search, contentDescription = "Search")
+                                Icon(Icons.Filled.Search, contentDescription = L.s(R.string.sh_search))
                             }
                         }
                         IconButton(onClick = onHelpClick) {
-                            Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Replay guided tour")
+                            Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = L.s(R.string.sh_replay_guided_tour))
                         }
                         IconButton(onClick = { onAlertsClick?.invoke() ?: onTabSelected(ShellTab.QUEUE) },
                             modifier = Modifier.tourAnchor("notifications_bell")) {
                             BadgedBox(badge = { if (alertCount > 0) Badge { Text("$alertCount") } }) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Alerts")
+                                Icon(Icons.Filled.Notifications, contentDescription = L.s(R.string.sh_alerts))
                             }
                         }
                         IconButton(onClick = onProfileClick) {

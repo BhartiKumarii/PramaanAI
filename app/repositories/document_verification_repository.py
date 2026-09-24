@@ -88,14 +88,18 @@ def create(db: Session, outcome: VerificationOutcome, *, user_id: str, source: s
             content = _content(rec)
             rec.record_hash = _hash(content)
             rec.signature = sign(content | {"record_hash": rec.record_hash})
-            db.add(rec)
-            for c in outcome.check_details:
-                ev = [e.model_dump(mode="json") for e in outcome.evidence if e.id in c.evidence_ids]
-                db.add(DocumentVerificationCheck(verification_id=rec_id, document_index=c.document_index,
-                                                 name=c.name, status=c.status.value, blocking=c.blocking,
-                                                 strong_evidence=c.strong_evidence, summary=c.summary,
-                                                 evidence_json=json.dumps(ev)))
             try:
+                # The parent row is written first: without an ORM relationship
+                # the unit of work does not order the check rows after it, and
+                # PostgreSQL enforces the foreign key (SQLite, by default, does not).
+                db.add(rec)
+                db.flush()
+                for c in outcome.check_details:
+                    ev = [e.model_dump(mode="json") for e in outcome.evidence if e.id in c.evidence_ids]
+                    db.add(DocumentVerificationCheck(verification_id=rec_id, document_index=c.document_index,
+                                                     name=c.name, status=c.status.value, blocking=c.blocking,
+                                                     strong_evidence=c.strong_evidence, summary=c.summary,
+                                                     evidence_json=json.dumps(ev)))
                 db.commit()
             except OperationalError:
                 db.rollback()  # e.g. SQLite "database is locked" under concurrent writers — retry

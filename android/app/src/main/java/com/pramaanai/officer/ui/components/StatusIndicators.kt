@@ -1,5 +1,6 @@
 package com.pramaanai.officer.ui.components
 
+import com.pramaanai.officer.ui.i18n.L
 import com.pramaanai.officer.ui.theme.BackgroundDark
 import com.pramaanai.officer.ui.theme.AccentGreen
 import androidx.compose.foundation.background
@@ -101,9 +102,9 @@ fun MatchTypeTag(matchType: String, modifier: Modifier = Modifier) {
 fun SystemStatusIndicator(state: ConnectivityState, modifier: Modifier = Modifier) {
     val detail = com.pramaanai.officer.data.connectivity.ConnectivityMonitor.lastDetail
     val (color, base) = when (state) {
-        ConnectivityState.ONLINE -> SuccessGreen to "Online"
-        ConnectivityState.WEAK -> WarningAmber to "Weak connection"
-        ConnectivityState.OFFLINE -> DestructiveRed to "Offline"
+        ConnectivityState.ONLINE -> SuccessGreen to L.s(R.string.si_online)
+        ConnectivityState.WEAK -> WarningAmber to L.s(R.string.si_weak_connection)
+        ConnectivityState.OFFLINE -> DestructiveRed to L.s(R.string.si_offline)
     }
     val label = if (detail.isNotBlank()) "$base · $detail" else base
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -116,9 +117,9 @@ fun SystemStatusIndicator(state: ConnectivityState, modifier: Modifier = Modifie
 @Composable
 fun ConfidenceTag(confidence: Double, modifier: Modifier = Modifier) {
     val label = when {
-        confidence >= 0.85 -> "Good read"
-        confidence >= 0.6 -> "Fair read"
-        else -> "Weak read"
+        confidence >= 0.85 -> L.s(R.string.si_good_read)
+        confidence >= 0.6 -> L.s(R.string.si_fair_read)
+        else -> L.s(R.string.si_weak_read)
     }
     Text(
         "$label · ${(confidence * 100).toInt()}%",

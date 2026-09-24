@@ -156,5 +156,5 @@ def list_notes(db: Session, case_id: uuid.UUID) -> list[tuple[CaseNote, str | No
     # users.id (string) vs case_notes.author_id (native UUID): a SQL join never
     # matches on SQLite, so resolve authors by normalised id instead.
     ids = {str(n.author_id) for n in notes}
-    names = {u.id: u.username for u in db.execute(select(User).where(User.id.in_(ids))).scalars()} if ids else {}
+    names = {str(u.id): u.username for u in db.execute(select(User).where(User.id.in_(ids))).scalars()} if ids else {}
     return [(n, names.get(str(n.author_id))) for n in notes]

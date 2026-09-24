@@ -89,4 +89,7 @@ app.include_router(verify_v1.router)
 
 @app.get("/health", tags=["system"], summary="Liveness check")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    # Render sets RENDER_GIT_COMMIT for each deploy — reported so a deploy can
+    # be confirmed from outside (empty when run elsewhere).
+    import os
+    return {"status": "ok", "commit": os.getenv("RENDER_GIT_COMMIT", "")[:7]}

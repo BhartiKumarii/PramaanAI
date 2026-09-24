@@ -1,5 +1,7 @@
 package com.pramaanai.officer.ui.analytics
 
+import com.pramaanai.officer.R
+import com.pramaanai.officer.ui.i18n.L
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -84,13 +86,13 @@ fun AnalyticsScreen(@Suppress("UNUSED_PARAMETER") repository: ScreeningRepositor
     val data = (items ?: emptyList()).filter { instant(it)?.isAfter(cutoff) == true }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Analytics", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+        TopAppBar(title = { Text(L.s(R.string.an_analytics), fontWeight = FontWeight.Bold) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L.s(R.string.an_back)) } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = SidebarDark))
     }) { padding ->
         if (items == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                if (failed) Text("Could not load — check the connection.", color = MutedForeground)
+                if (failed) Text(L.s(R.string.an_could_not_load_check_the), color = MutedForeground)
                 else CircularProgressIndicator(color = AccentGreen)
             }
             return@Scaffold
@@ -100,72 +102,72 @@ fun AnalyticsScreen(@Suppress("UNUSED_PARAMETER") repository: ScreeningRepositor
             item {
                 val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = AccentGreen, selectedLabelColor = BackgroundDark)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(7 to "7 days", 30 to "30 days", 90 to "90 days").forEach { (d, l) ->
+                    listOf(7 to L.s(R.string.an_7_days), 30 to L.s(R.string.an_30_days), 90 to L.s(R.string.an_90_days)).forEach { (d, l) ->
                         FilterChip(selected = days == d, onClick = { days = d }, label = { Text(l) }, colors = chipColors)
                     }
                 }
-                Text("Your verifications in the last $days days", color = MutedForeground, style = MaterialTheme.typography.bodySmall,
+                Text(L.f(R.string.an_your_verifications_in_the_last, days), color = MutedForeground, style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 4.dp))
             }
             if (data.isEmpty()) {
-                item { Text("No verifications in this period.", color = MutedForeground) }
+                item { Text(L.s(R.string.an_no_verifications_in_this_period), color = MutedForeground) }
                 return@LazyColumn
             }
             val total = data.size
             fun pct(n: Int) = if (total == 0) 0 else n * 100 / total
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Stat("Checked", "$total", "documents", AccentGreen, Modifier.weight(1f))
-                    Stat("Passed all checks", "${pct(data.count { it.overallStatus == "PASS" })}%", "of checked", SuccessGreen, Modifier.weight(1f))
+                    Stat(L.s(R.string.an_checked), "$total", L.s(R.string.an_documents), AccentGreen, Modifier.weight(1f))
+                    Stat(L.s(R.string.an_passed_all_checks), "${pct(data.count { it.overallStatus == "PASS" })}%", L.s(R.string.an_of_checked), SuccessGreen, Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Stat("Average risk", "${data.mapNotNull { it.riskScore }.average().let { if (it.isNaN()) 0 else it.toInt() }}/100",
-                        "indicator, not a verdict", WarningAmber, Modifier.weight(1f))
-                    Stat("Sent to admin", "${pct(data.count { it.caseStatus == "SENT" || it.reviewerResponded == true })}%",
-                        "${data.count { it.reviewerResponded == true }} answered", ChartBlue, Modifier.weight(1f))
+                    Stat(L.s(R.string.an_average_risk), L.f(R.string.an_100, data.mapNotNull { it.riskScore }.average().let { if (it.isNaN()) 0 else it.toInt() }),
+                        L.s(R.string.an_indicator_not_a_verdict), WarningAmber, Modifier.weight(1f))
+                    Stat(L.s(R.string.an_sent_to_admin), "${pct(data.count { it.caseStatus == "SENT" || it.reviewerResponded == true })}%",
+                        L.f(R.string.an_answered, data.count { it.reviewerResponded == true }), ChartBlue, Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Stat("Captured offline", "${data.count { it.capturedOffline == true }}", "synced later", ChartPurple, Modifier.weight(1f))
-                    Stat("High risk", "${data.count { it.riskLevel == "HIGH" }}", "need close review", DestructiveRed, Modifier.weight(1f))
+                    Stat(L.s(R.string.an_captured_offline), "${data.count { it.capturedOffline == true }}", L.s(R.string.an_synced_later), ChartPurple, Modifier.weight(1f))
+                    Stat(L.s(R.string.an_high_risk), "${data.count { it.riskLevel == "HIGH" }}", L.s(R.string.an_need_close_review), DestructiveRed, Modifier.weight(1f))
                 }
             }
             item {
-                Panel("Results") {
+                Panel(L.s(R.string.an_results)) {
                     Bars(listOf(
-                        Triple("Verified", data.count { it.overallStatus == "PASS" }, SuccessGreen),
-                        Triple("Review required", data.count { it.overallStatus == "REVIEW_REQUIRED" }, WarningAmber),
-                        Triple("Check failed", data.count { it.overallStatus == "FAIL" }, DestructiveRed),
-                        Triple("Official / registry check needed", data.count { it.overallStatus in setOf("OFFICIAL_VERIFICATION_REQUIRED", "REGISTRY_NOT_AVAILABLE") }, ChartBlue),
-                        Triple("Not verified", data.count { it.overallStatus == "NOT_VERIFIED" }, MutedForeground),
+                        Triple(L.s(R.string.an_verified), data.count { it.overallStatus == "PASS" }, SuccessGreen),
+                        Triple(L.s(R.string.an_review_required), data.count { it.overallStatus == "REVIEW_REQUIRED" }, WarningAmber),
+                        Triple(L.s(R.string.an_check_failed), data.count { it.overallStatus == "FAIL" }, DestructiveRed),
+                        Triple(L.s(R.string.an_official_registry_check_needed), data.count { it.overallStatus in setOf("OFFICIAL_VERIFICATION_REQUIRED", "REGISTRY_NOT_AVAILABLE") }, ChartBlue),
+                        Triple(L.s(R.string.an_not_verified), data.count { it.overallStatus == "NOT_VERIFIED" }, MutedForeground),
                     ), total)
                 }
             }
             item {
-                Panel("Most common reasons for attention") {
+                Panel(L.s(R.string.an_most_common_reasons_for_attention)) {
                     val reasons = data.flatMap { it.attentionChecks ?: emptyList() }.groupingBy { it }.eachCount()
                         .entries.sortedByDescending { it.value }.take(8)
-                    if (reasons.isEmpty()) Text("No check needed attention in this period.", color = MutedForeground)
+                    if (reasons.isEmpty()) Text(L.s(R.string.an_no_check_needed_attention_in), color = MutedForeground)
                     else Bars(reasons.map { Triple(checkTitle(it.key), it.value, WarningAmber) }, total)
-                    Text("Share of checked documents where the check needed the officer's attention.", color = MutedForeground,
+                    Text(L.s(R.string.an_share_of_checked_documents_where), color = MutedForeground,
                         style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
                 }
             }
             item {
-                Panel("By document type") {
-                    Bars(data.groupingBy { human(it.documentTypes?.firstOrNull() ?: "Unknown") }.eachCount().entries
+                Panel(L.s(R.string.an_by_document_type)) {
+                    Bars(data.groupingBy { human(it.documentTypes?.firstOrNull() ?: L.s(R.string.an_unknown)) }.eachCount().entries
                         .sortedByDescending { it.value }.map { Triple(it.key, it.value, AccentGreen) }, total)
                 }
             }
             item {
-                Panel("By country of document") {
-                    Bars(data.groupingBy { human(it.country ?: "Not identified") }.eachCount().entries
+                Panel(L.s(R.string.an_by_country_of_document)) {
+                    Bars(data.groupingBy { human(it.country ?: L.s(R.string.an_not_identified)) }.eachCount().entries
                         .sortedByDescending { it.value }.map { Triple(it.key, it.value, ChartBlue) }, total)
                 }
             }
             item {
-                Panel("Time of day") {
+                Panel(L.s(R.string.an_time_of_day)) {
                     val zone = ZoneId.systemDefault()
                     val slots = listOf("00–06" to 0..5, "06–12" to 6..11, "12–18" to 12..17, "18–24" to 18..23)
                     Bars(slots.map { (label, hours) ->
@@ -220,6 +222,6 @@ private fun Bars(rows: List<Triple<String, Int, Color>>, total: Int) {
             }
         }
     }
-    if (rows.isEmpty()) Text("No data.", color = MutedForeground)
+    if (rows.isEmpty()) Text(L.s(R.string.an_no_data), color = MutedForeground)
     Spacer(Modifier.size(2.dp))
 }

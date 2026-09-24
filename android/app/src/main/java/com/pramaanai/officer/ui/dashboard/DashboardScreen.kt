@@ -1,5 +1,7 @@
 package com.pramaanai.officer.ui.dashboard
 
+import com.pramaanai.officer.R
+import com.pramaanai.officer.ui.i18n.L
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -125,7 +127,7 @@ fun DashboardScreen(
             Column {
                 Text("${if (hour < 12) "Good morning" else if (hour < 17) "Good afternoon" else "Good evening"}, ${AuthSession.username ?: "officer"}",
                     style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(listOfNotNull(AuthSession.checkpointName?.let { "Post: $it" },
+                Text(listOfNotNull(AuthSession.checkpointName?.let { L.f(R.string.db_post, it) },
                     today.format(DateTimeFormatter.ofPattern("EEEE, dd MMM"))).joinToString(" · "),
                     color = MutedForeground, style = MaterialTheme.typography.bodyMedium)
             }
@@ -137,17 +139,17 @@ fun DashboardScreen(
         item {
             val todays = all.filter { dateOf(it) == today }
             Column(Modifier.tourAnchor("stat_cards"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Today", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(L.s(R.string.db_today), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Kpi("Checked today", todays.size, "${todays.count { it.overallStatus == "PASS" }} passed all checks",
+                    Kpi(L.s(R.string.db_checked_today), todays.size, L.f(R.string.db_passed_all_checks_count, todays.count { it.overallStatus == "PASS" }),
                         Icons.Filled.CheckCircle, AccentGreen, Modifier.weight(1f), onViewHistory)
-                    Kpi("Needs your decision", all.count { it.officerAction == "PENDING" && it.caseStatus in setOf("PENDING", "REVIEW_REQUIRED", null) },
-                        "across all days", Icons.Filled.PendingActions, WarningAmber, Modifier.weight(1f), onViewQueue)
+                    Kpi(L.s(R.string.db_needs_your_decision), all.count { it.officerAction == "PENDING" && it.caseStatus in setOf("PENDING", "REVIEW_REQUIRED", null) },
+                        L.s(R.string.db_across_all_days), Icons.Filled.PendingActions, WarningAmber, Modifier.weight(1f), onViewQueue)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Kpi("With admin", all.count { it.caseStatus == "SENT" }, "awaiting a response",
+                    Kpi(L.s(R.string.db_with_admin), all.count { it.caseStatus == "SENT" }, L.s(R.string.db_awaiting_a_response),
                         Icons.AutoMirrored.Filled.Send, ChartBlue, Modifier.weight(1f), onViewQueue)
-                    Kpi("Admin responded", all.count { it.reviewerResponded == true }, "open to read",
+                    Kpi(L.s(R.string.db_admin_responded), all.count { it.reviewerResponded == true }, L.s(R.string.db_open_to_read),
                         Icons.Filled.MarkEmailUnread, SuccessGreen, Modifier.weight(1f), onViewQueue)
                 }
             }
@@ -156,7 +158,7 @@ fun DashboardScreen(
             Panel("Activity", Modifier.tourAnchor("activity_chart")) {
                 val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = AccentGreen, selectedLabelColor = BackgroundDark)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(7 to "7 days", 30 to "30 days").forEach { (d, l) ->
+                    listOf(7 to L.s(R.string.db_7_days), 30 to L.s(R.string.db_30_days)).forEach { (d, l) ->
                         FilterChip(selected = days == d, onClick = { days = d }, label = { Text(l) }, colors = chipColors)
                     }
                 }
@@ -172,7 +174,7 @@ fun DashboardScreen(
                 StackedChart(bars)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Legend("Verified", SuccessGreen); Legend("Needs attention", WarningAmber); Legend("Not verified", MutedForeground)
+                    Legend(L.s(R.string.db_verified), SuccessGreen); Legend(L.s(R.string.db_needs_attention), WarningAmber); Legend(L.s(R.string.db_not_verified), MutedForeground)
                 }
             }
         }
@@ -188,8 +190,8 @@ fun DashboardScreen(
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                listOf(Triple("High risk", high, DestructiveRed), Triple("Medium risk", med, WarningAmber),
-                    Triple("Low risk", low, SuccessGreen)).forEach { (l, n, c) ->
+                listOf(Triple(L.s(R.string.db_high_risk), high, DestructiveRed), Triple(L.s(R.string.db_medium_risk), med, WarningAmber),
+                    Triple(L.s(R.string.db_low_risk), low, SuccessGreen)).forEach { (l, n, c) ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(10.dp).background(c, CircleShape))
                         Spacer(Modifier.width(8.dp))
@@ -198,7 +200,7 @@ fun DashboardScreen(
                         Text("  ${(n * 100 / total)}%", color = MutedForeground, style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                Text("A risk indicator explains which checks need attention — it is never a verdict about the traveller.",
+                Text(L.s(R.string.db_a_risk_indicator_explains_which),
                     color = MutedForeground, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
             }
         }
@@ -208,23 +210,23 @@ fun DashboardScreen(
                 Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.CloudOff, null, tint = ChartBlue)
                     Spacer(Modifier.width(10.dp))
-                    Text("$pending verification(s) saved offline — sent automatically when the connection returns.")
+                    Text(L.f(R.string.db_verification_s_saved_offline_sent, pending))
                 }
             }
         }
         item {
-            Panel("Recent verifications") {
-                if (items == null) Text("Loading…", color = MutedForeground)
-                else if (all.isEmpty()) Text("No verifications yet. Tap Verify document to start.", color = MutedForeground)
+            Panel(L.s(R.string.db_recent_verifications)) {
+                if (items == null) Text(L.s(R.string.db_loading), color = MutedForeground)
+                else if (all.isEmpty()) Text(L.s(R.string.db_no_verifications_yet_tap_verify), color = MutedForeground)
                 all.take(5).forEach { v -> RecentRow(v) { onOpenScreening(v.id) } }
                 if (all.size > 5) TextButton(onClick = onViewHistory) {
-                    Text("See all in History", color = AccentGreen)
+                    Text(L.s(R.string.db_see_all_in_history), color = AccentGreen)
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = AccentGreen)
                 }
             }
         }
         item {
-            TextButton(onClick = onViewAnalytics) { Text("Open analytics", color = MutedForeground) }
+            TextButton(onClick = onViewAnalytics) { Text(L.s(R.string.db_open_analytics), color = MutedForeground) }
         }
     }
 }
@@ -239,8 +241,8 @@ private fun StackedChart(bars: List<Bar>) {
     val top = (bars.maxOfOrNull { it.total } ?: 0).coerceAtLeast(1)
     val sel = bars.getOrNull(selected)
     sel?.let {
-        Text("${it.day.format(DateTimeFormatter.ofPattern("EEE, dd MMM"))}: ${it.total} checked · ${it.ok} passed · " +
-            "${it.attention} needed attention · ${it.notVerified} not verified", color = MutedForeground, style = MaterialTheme.typography.bodySmall)
+        Text(L.f(R.string.db_day_summary, it.day.format(DateTimeFormatter.ofPattern("EEE, dd MMM")), it.total, it.ok,
+            it.attention, it.notVerified), color = MutedForeground, style = MaterialTheme.typography.bodySmall)
     }
     Spacer(Modifier.height(6.dp))
     Canvas(Modifier.fillMaxWidth().height(150.dp).pointerInput(bars) {
@@ -315,17 +317,17 @@ private fun Panel(title: String, modifier: Modifier = Modifier, content: @Compos
 @Composable
 private fun RecentRow(item: VerificationListItem, onClick: () -> Unit) {
     val (label, color) = when (item.overallStatus) {
-        "PASS" -> "Verified" to SuccessGreen
-        "REVIEW_REQUIRED" -> "Review required" to WarningAmber
-        "FAIL" -> "Check failed" to DestructiveRed
-        "OFFICIAL_VERIFICATION_REQUIRED", "REGISTRY_NOT_AVAILABLE" -> "Official check needed" to ChartBlue
-        else -> "Not verified" to MutedForeground
+        "PASS" -> L.s(R.string.db_verified_2) to SuccessGreen
+        "REVIEW_REQUIRED" -> L.s(R.string.db_review_required) to WarningAmber
+        "FAIL" -> L.s(R.string.db_check_failed) to DestructiveRed
+        "OFFICIAL_VERIFICATION_REQUIRED", "REGISTRY_NOT_AVAILABLE" -> L.s(R.string.db_official_check_needed) to ChartBlue
+        else -> L.s(R.string.db_not_verified_2) to MutedForeground
     }
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(10.dp).background(color, CircleShape))
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(item.documentTypes?.joinToString(" + ") { it.replace('_', ' ').lowercase().replaceFirstChar { c -> c.uppercase() } } ?: "Document",
+            Text(item.documentTypes?.joinToString(" + ") { it.replace('_', ' ').lowercase().replaceFirstChar { c -> c.uppercase() } } ?: L.s(R.string.db_document),
                 fontWeight = FontWeight.Medium)
             Text(listOfNotNull(item.caseNumber, item.country?.lowercase()?.replaceFirstChar { it.uppercase() }).joinToString(" · "),
                 color = MutedForeground, style = MaterialTheme.typography.bodySmall)

@@ -191,11 +191,12 @@ def get_case_route(case_id: uuid.UUID, user: User = Depends(get_current_user), d
     ]
     decisions_rows = list_decisions(db, case_id)
     officer_ids = {d.officer_id for d in decisions_rows}
-    officers = {u.id: u for u in db.query(User).filter(User.id.in_(officer_ids))} if officer_ids else {}
+    # str() on both sides: users.id is a string on SQLite, a UUID on PostgreSQL.
+    officers = {str(u.id): u for u in db.query(User).filter(User.id.in_({str(i) for i in officer_ids}))} if officer_ids else {}
     decisions = [
         CaseDecisionSummary(
             decision=d.decision,
-            officer_username=officers[d.officer_id].username if d.officer_id in officers else None,
+            officer_username=officers[str(d.officer_id)].username if str(d.officer_id) in officers else None,
             reason=d.reason,
             created_at=d.created_at.isoformat(),
         )

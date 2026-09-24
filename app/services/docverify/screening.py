@@ -159,7 +159,9 @@ def case_summary(db: Session, rec) -> dict[str, Any] | None:
                             .order_by(CaseNote.created_at)).scalars())
     from app.models.user import User as U
     ids = {str(d.officer_id) for d in decisions} | {str(n.author_id) for n in notes}
-    users = {u.id: u for u in db.execute(select(U).where(U.id.in_(ids))).scalars()} if ids else {}
+    # users.id is a string column on SQLite but a native UUID on PostgreSQL:
+    # key by the normalised string so the lookup works on both.
+    users = {str(u.id): u for u in db.execute(select(U).where(U.id.in_(ids))).scalars()} if ids else {}
 
     def who(uid) -> dict[str, Any]:
         u = users.get(str(uid))

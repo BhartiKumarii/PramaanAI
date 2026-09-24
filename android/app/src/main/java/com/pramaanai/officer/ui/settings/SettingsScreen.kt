@@ -1,5 +1,6 @@
 package com.pramaanai.officer.ui.settings
 
+import com.pramaanai.officer.ui.i18n.L
 import android.app.Activity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -93,7 +94,7 @@ fun SettingsScreen(@Suppress("UNUSED_PARAMETER") repository: ScreeningRepository
 
     Scaffold(topBar = {
         TopAppBar(title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L.s(R.string.st_back)) } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = SidebarDark))
     }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp),
@@ -109,31 +110,31 @@ fun SettingsScreen(@Suppress("UNUSED_PARAMETER") repository: ScreeningRepository
                         LocaleManager.setSavedLanguageTag(context, tag)
                         (context as? Activity)?.recreate()
                     }
-                    Hint("Screens change language immediately. Document text is read in its own script regardless of this setting.")
+                    Hint(L.s(R.string.st_screens_change_language_immediately_document))
                 }
             }
             item {
-                Section(Icons.Filled.DocumentScanner, "Verification") {
-                    Choice("Default crossing", route ?: "POST", listOf("POST" to "From my post", "INDIA_NEPAL" to "India–Nepal",
-                        "INDIA_BHUTAN" to "India–Bhutan")) { v ->
+                Section(Icons.Filled.DocumentScanner, L.s(R.string.st_verification)) {
+                    Choice(L.s(R.string.st_default_crossing), route ?: "POST", listOf("POST" to L.s(R.string.st_from_my_post), "INDIA_NEPAL" to L.s(R.string.st_india_nepal),
+                        "INDIA_BHUTAN" to L.s(R.string.st_india_bhutan))) { v ->
                         route = if (v == "POST") null else v
                         AppSettings.setDefaultRoute(context, route)
                     }
-                    Toggle("Ask for a live photo (face match)", askLive) { askLive = it; AppSettings.setAskLivePhoto(context, it) }
-                    Hint("When off, verification goes straight from the document to the result; the face is not compared.")
-                    Choice("Keep captures on this phone", retention, listOf(7 to "7 days", 30 to "30 days", 90 to "90 days")) {
+                    Toggle(L.s(R.string.st_ask_for_a_live_photo), askLive) { askLive = it; AppSettings.setAskLivePhoto(context, it) }
+                    Hint(L.s(R.string.st_when_off_verification_goes_straight))
+                    Choice(L.s(R.string.st_keep_captures_on_this_phone), retention, listOf(7 to L.s(R.string.st_7_days), 30 to L.s(R.string.st_30_days), 90 to L.s(R.string.st_90_days))) {
                         retention = it; AppSettings.setRetentionDays(context, it)
                     }
-                    Hint(if (stored >= 0) "$stored capture(s) stored now, encrypted with the Android Keystore." else "")
+                    Hint(if (stored >= 0) L.f(R.string.st_capture_s_stored_now_encrypted, stored) else "")
                 }
             }
             item {
-                Section(Icons.Filled.Notifications, "Notifications") {
-                    Choice("Check for admin responses", poll, listOf(15 to "Every 15 seconds", 30 to "Every 30 seconds",
-                        120 to "Every 2 minutes", 0 to "Only when I open a list")) { poll = it; AppSettings.setResponsePollSeconds(context, it) }
-                    Text("Risk alerts to show", color = MutedForeground, style = MaterialTheme.typography.labelMedium,
+                Section(Icons.Filled.Notifications, L.s(R.string.st_notifications)) {
+                    Choice(L.s(R.string.st_check_for_admin_responses), poll, listOf(15 to L.s(R.string.st_every_15_seconds), 30 to L.s(R.string.st_every_30_seconds),
+                        120 to L.s(R.string.st_every_2_minutes), 0 to L.s(R.string.st_only_when_i_open_a))) { poll = it; AppSettings.setResponsePollSeconds(context, it) }
+                    Text(L.s(R.string.st_risk_alerts_to_show), color = MutedForeground, style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(top = 8.dp))
-                    listOf("HIGH" to "High risk", "MEDIUM" to "Medium risk", "LOW" to "Low risk").forEach { (lvl, label) ->
+                    listOf("HIGH" to L.s(R.string.st_high_risk), "MEDIUM" to L.s(R.string.st_medium_risk), "LOW" to L.s(R.string.st_low_risk)).forEach { (lvl, label) ->
                         Toggle(label, lvl in levels) { on ->
                             levels = if (on) levels + lvl else levels - lvl
                             AppSettings.setAlertLevels(context, levels)
@@ -142,44 +143,44 @@ fun SettingsScreen(@Suppress("UNUSED_PARAMETER") repository: ScreeningRepository
                 }
             }
             item {
-                Section(Icons.Filled.Lock, "Security") {
-                    Choice("Lock after inactivity", lock, listOf(5 to "5 minutes", 10 to "10 minutes", 15 to "15 minutes",
-                        30 to "30 minutes")) { lock = it; AppSettings.setAutoLockMinutes(context, it) }
-                    Hint("You are warned first, then signed out. Tokens are stored encrypted; passwords are never stored on the phone.")
+                Section(Icons.Filled.Lock, L.s(R.string.st_security)) {
+                    Choice(L.s(R.string.st_lock_after_inactivity), lock, listOf(5 to L.s(R.string.st_5_minutes), 10 to L.s(R.string.st_10_minutes), 15 to L.s(R.string.st_15_minutes),
+                        30 to L.s(R.string.st_30_minutes))) { lock = it; AppSettings.setAutoLockMinutes(context, it) }
+                    Hint(L.s(R.string.st_you_are_warned_first_then))
                     OutlinedButton(onClick = { scope.launch { CaptureStore.get(context).clearAll(); stored = 0 } },
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp), shape = RoundedCornerShape(10.dp),
                         border = BorderStroke(1.dp, WarningAmber)) {
-                        Text("Clear stored document images and live photos", color = WarningAmber)
+                        Text(L.s(R.string.st_clear_stored_document_images_and), color = WarningAmber)
                     }
                 }
             }
             item {
-                Section(Icons.Filled.Wifi, "Connection") {
+                Section(Icons.Filled.Wifi, L.s(R.string.st_connection)) {
                     Row(Modifier.fillMaxWidth()) {
-                        Text("Server", color = MutedForeground, modifier = Modifier.weight(1f))
+                        Text(L.s(R.string.st_server), color = MutedForeground, modifier = Modifier.weight(1f))
                         Text(BuildConfig.API_BASE_URL.removePrefix("https://").removePrefix("http://").trimEnd('/'),
                             fontWeight = FontWeight.SemiBold)
                     }
                     OutlinedButton(onClick = {
-                        testResult = "Testing…"
+                        testResult = L.s(R.string.st_testing)
                         scope.launch {
                             val state = ConnectivityMonitor(context, RetrofitClient.apiService).check()
                             testResult = "${state.name.lowercase().replaceFirstChar { it.uppercase() }} — ${ConnectivityMonitor.lastDetail}"
                         }
                     }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(10.dp)) {
-                        Text("Test connection", color = AccentGreen)
+                        Text(L.s(R.string.st_test_connection), color = AccentGreen)
                     }
                     testResult?.let { Hint(it) }
                 }
             }
             item {
-                Section(Icons.Filled.Info, "About") {
-                    Info("App version", BuildConfig.VERSION_NAME)
-                    Info("Region detector (on phone)", OnDeviceRegionDetector.NAME)
-                    Info("Text reading (on phone)", "ML Kit text recognition")
-                    Info("Server checks", "PP-OCR, MRZ (ICAO 9303), QR/signature, stamps, forensics, face, registry")
-                    Hint("Registry lookups in this build use FICTIONAL mock data only — no real government database is accessed. " +
-                        "The system assists; the officer decides.")
+                Section(Icons.Filled.Info, L.s(R.string.st_about)) {
+                    Info(L.s(R.string.st_app_version), BuildConfig.VERSION_NAME)
+                    Info(L.s(R.string.st_region_detector_on_phone), OnDeviceRegionDetector.NAME)
+                    Info(L.s(R.string.st_text_reading_on_phone), L.s(R.string.st_ml_kit_text_recognition))
+                    Info(L.s(R.string.st_server_checks), L.s(R.string.st_pp_ocr_mrz_icao_9303))
+                    Hint(L.s(R.string.st_registry_lookups_in_this_build) + " " +
+                        L.s(R.string.st_the_system_assists_the_officer))
                 }
             }
         }

@@ -1,5 +1,7 @@
 package com.pramaanai.officer.ui.verifications
 
+import com.pramaanai.officer.R
+import com.pramaanai.officer.ui.i18n.L
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -100,24 +102,26 @@ object ResponseTracker {
     fun unseenCount(context: Context, items: List<VerificationListItem>) = items.count { isNew(context, it) }
 }
 
-private data class Stage(val label: String, val color: Color, val icon: ImageVector)
+private enum class StageKind { SENT, RESPONDED, CLEARED, DECIDED, NEEDS_DECISION }
+
+private data class Stage(val kind: StageKind, val label: String, val color: Color, val icon: ImageVector)
 
 private fun stageOf(item: VerificationListItem): Stage = when {
-    item.caseStatus == "SENT" -> Stage("Sent — awaiting admin", ChartBlue, Icons.AutoMirrored.Filled.Send)
-    item.reviewerResponded == true -> Stage("Admin responded: ${com.pramaanai.officer.ui.docverify.caseStatusLabel(item.caseStatus)}",
+    item.caseStatus == "SENT" -> Stage(StageKind.SENT, L.s(R.string.vl_sent_awaiting_admin), ChartBlue, Icons.AutoMirrored.Filled.Send)
+    item.reviewerResponded == true -> Stage(StageKind.RESPONDED, L.f(R.string.vl_admin_responded, com.pramaanai.officer.ui.docverify.caseStatusLabel(item.caseStatus)),
         if (item.caseStatus == "CLEAR") SuccessGreen else WarningAmber, Icons.Filled.MarkEmailUnread)
-    item.caseStatus == "CLEAR" || item.officerAction == "CLEARED" -> Stage("Cleared by you", SuccessGreen, Icons.Filled.CheckCircle)
-    item.caseStatus in setOf("SECONDARY_REVIEW", "HOLD_REFER") -> Stage(com.pramaanai.officer.ui.docverify.caseStatusLabel(item.caseStatus), WarningAmber, Icons.Filled.Warning)
-    else -> Stage("Needs your decision", AccentGreen, Icons.Filled.Info)
+    item.caseStatus == "CLEAR" || item.officerAction == "CLEARED" -> Stage(StageKind.CLEARED, L.s(R.string.vl_cleared_by_you), SuccessGreen, Icons.Filled.CheckCircle)
+    item.caseStatus in setOf("SECONDARY_REVIEW", "HOLD_REFER") -> Stage(StageKind.DECIDED, com.pramaanai.officer.ui.docverify.caseStatusLabel(item.caseStatus), WarningAmber, Icons.Filled.Warning)
+    else -> Stage(StageKind.NEEDS_DECISION, L.s(R.string.vl_needs_your_decision), AccentGreen, Icons.Filled.Info)
 }
 
 private fun resultUi(status: String): Pair<String, Color> = when (status) {
-    "PASS" -> "Verified" to SuccessGreen
-    "REVIEW_REQUIRED" -> "Review required" to WarningAmber
-    "FAIL" -> "Check failed" to DestructiveRed
-    "REGISTRY_NOT_AVAILABLE" -> "Registry not available" to ChartBlue
-    "OFFICIAL_VERIFICATION_REQUIRED" -> "Official verification required" to ChartBlue
-    else -> "Not verified" to MutedForeground
+    "PASS" -> L.s(R.string.vl_verified) to SuccessGreen
+    "REVIEW_REQUIRED" -> L.s(R.string.vl_review_required) to WarningAmber
+    "FAIL" -> L.s(R.string.vl_check_failed) to DestructiveRed
+    "REGISTRY_NOT_AVAILABLE" -> L.s(R.string.vl_registry_not_available) to ChartBlue
+    "OFFICIAL_VERIFICATION_REQUIRED" -> L.s(R.string.vl_official_verification_required) to ChartBlue
+    else -> L.s(R.string.vl_not_verified) to MutedForeground
 }
 
 private fun humanize(s: String) = s.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
@@ -133,8 +137,8 @@ private data class Filters(val result: String? = null, val risk: String? = null,
 }
 
 private val DOC_GROUPS = listOf(
-    "PASSPORT" to "Passport", "VISA" to "Visa", "DRIVING_LICENCE" to "Driving licence",
-    "AADHAAR" to "Aadhaar", "PERMIT" to "Permit", "STAMP" to "Stamp page", "OTHER" to "Other",
+    "PASSPORT" to L.s(R.string.vl_passport), "VISA" to L.s(R.string.vl_visa), "DRIVING_LICENCE" to L.s(R.string.vl_driving_licence),
+    "AADHAAR" to L.s(R.string.vl_aadhaar), "PERMIT" to L.s(R.string.vl_permit), "STAMP" to L.s(R.string.vl_stamp_page), "OTHER" to L.s(R.string.vl_other),
 )
 
 private fun docGroup(types: List<String>?): String {
@@ -175,22 +179,22 @@ private fun FilterBar(filters: Filters, showPeriod: Boolean, shown: Int, total: 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.FilterList, contentDescription = null, tint = AccentGreen, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Filter by", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Text("$shown of $total", color = MutedForeground, style = MaterialTheme.typography.labelMedium)
+                Text(L.s(R.string.vl_filter_by), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(L.f(R.string.vl_of, shown, total), color = MutedForeground, style = MaterialTheme.typography.labelMedium)
                 if (filters.active > 0) androidx.compose.material3.TextButton(onClick = { onChange(Filters()) }) {
-                    Text("Clear", color = AccentGreen)
+                    Text(L.s(R.string.vl_clear), color = AccentGreen)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                Dropdown("Result", filters.result, listOf("VERIFIED" to "Verified", "ATTENTION" to "Needs attention",
-                    "NOT_VERIFIED" to "Not verified"), Modifier.weight(1f)) { onChange(filters.copy(result = it)) }
-                Dropdown("Risk", filters.risk, listOf("HIGH" to "High", "MEDIUM" to "Medium", "LOW" to "Low"),
+                Dropdown(L.s(R.string.vl_result), filters.result, listOf("VERIFIED" to L.s(R.string.vl_verified_2), "ATTENTION" to L.s(R.string.vl_needs_attention),
+                    "NOT_VERIFIED" to L.s(R.string.vl_not_verified_2)), Modifier.weight(1f)) { onChange(filters.copy(result = it)) }
+                Dropdown(L.s(R.string.vl_risk), filters.risk, listOf("HIGH" to L.s(R.string.vl_high), "MEDIUM" to L.s(R.string.vl_medium), "LOW" to L.s(R.string.vl_low)),
                     Modifier.weight(1f)) { onChange(filters.copy(risk = it)) }
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                Dropdown("Document", filters.doc, DOC_GROUPS, Modifier.weight(1f)) { onChange(filters.copy(doc = it)) }
-                if (showPeriod) Dropdown("Period", filters.periodDays, listOf(1 to "Today", 7 to "Last 7 days", 30 to "Last 30 days"),
+                Dropdown(L.s(R.string.vl_document), filters.doc, DOC_GROUPS, Modifier.weight(1f)) { onChange(filters.copy(doc = it)) }
+                if (showPeriod) Dropdown(L.s(R.string.vl_period), filters.periodDays, listOf(1 to L.s(R.string.vl_today), 7 to L.s(R.string.vl_last_7_days), 30 to L.s(R.string.vl_last_30_days)),
                     Modifier.weight(1f)) { onChange(filters.copy(periodDays = it)) }
             }
         }
@@ -209,13 +213,13 @@ private fun <T> Dropdown(label: String, selected: T?, options: List<Pair<T, Stri
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)) {
             Column(Modifier.weight(1f)) {
                 Text(label, color = MutedForeground, style = MaterialTheme.typography.labelSmall)
-                Text(current ?: "Any", color = if (current != null) AccentGreen else MaterialTheme.colorScheme.onSurface,
+                Text(current ?: L.s(R.string.vl_any), color = if (current != null) AccentGreen else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Choose $label", tint = MutedForeground)
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = L.f(R.string.vl_choose, label), tint = MutedForeground)
         }
         androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            androidx.compose.material3.DropdownMenuItem(text = { Text("Any") }, onClick = { onPick(null); open = false })
+            androidx.compose.material3.DropdownMenuItem(text = { Text(L.s(R.string.vl_any_2)) }, onClick = { onPick(null); open = false })
             options.forEach { (v, l) ->
                 androidx.compose.material3.DropdownMenuItem(
                     text = { Text(l, fontWeight = if (v == selected) FontWeight.Bold else FontWeight.Normal,
@@ -239,7 +243,7 @@ fun VerificationListScreen(padding: PaddingValues, mode: ListMode, onOpen: (Stri
 
     fun load() = scope.launch {
         pending = repo.pendingCount()
-        repo.listMine().fold({ items = it; error = null }, { error = "Could not load — check the connection, then tap Refresh." })
+        repo.listMine().fold({ items = it; error = null }, { error = L.s(R.string.vl_could_not_load_check_the) })
     }
     LaunchedEffect(Unit) { load() }
     val everything = items ?: emptyList()
@@ -252,43 +256,43 @@ fun VerificationListScreen(padding: PaddingValues, mode: ListMode, onOpen: (Stri
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(when (mode) {
-                        ListMode.REVIEW -> "Waiting on you or the admin"
-                        ListMode.HISTORY -> "Verification history"
-                        ListMode.NOTIFICATIONS -> "Admin responses and risk alerts"
+                        ListMode.REVIEW -> L.s(R.string.vl_waiting_on_you_or_the)
+                        ListMode.HISTORY -> L.s(R.string.vl_verification_history)
+                        ListMode.NOTIFICATIONS -> L.s(R.string.vl_admin_responses_and_risk_alerts)
                     }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(when (mode) {
-                        ListMode.REVIEW -> "Decide, or follow what you sent to the admin"
-                        ListMode.HISTORY -> "Everything you verified, newest first"
-                        ListMode.NOTIFICATIONS -> "New responses first, then results by risk level"
+                        ListMode.REVIEW -> L.s(R.string.vl_decide_or_follow_what_you)
+                        ListMode.HISTORY -> L.s(R.string.vl_everything_you_verified_newest_first)
+                        ListMode.NOTIFICATIONS -> L.s(R.string.vl_new_responses_first_then_results)
                     }, color = MutedForeground, style = MaterialTheme.typography.bodySmall)
                 }
-                IconButton(onClick = { load() }) { Icon(Icons.Filled.Refresh, contentDescription = "Refresh", tint = AccentGreen) }
+                IconButton(onClick = { load() }) { Icon(Icons.Filled.Refresh, contentDescription = L.s(R.string.vl_refresh), tint = AccentGreen) }
             }
         }
         if (pending > 0) item {
-            Banner("$pending verification(s) saved offline", "Encrypted on this phone. Sent automatically when the connection returns.",
+            Banner(L.f(R.string.vl_verification_s_saved_offline, pending), L.s(R.string.vl_encrypted_on_this_phone_sent),
                 ChartBlue, Icons.Filled.CloudOff)
         }
         when {
             items == null && error == null -> item {
                 Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = AccentGreen) }
             }
-            error != null && items == null -> item { Banner("Not loaded", error!!, WarningAmber, Icons.Filled.Warning) }
+            error != null && items == null -> item { Banner(L.s(R.string.vl_not_loaded), error!!, WarningAmber, Icons.Filled.Warning) }
             else -> when (mode) {
                 ListMode.REVIEW -> {
-                    val decide = all.filter { stageOf(it).label.startsWith("Needs") }
+                    val decide = all.filter { stageOf(it).kind == StageKind.NEEDS_DECISION }
                     val sent = all.filter { it.caseStatus == "SENT" }
                     val responded = all.filter { it.reviewerResponded == true }
-                    item { SummaryRow(listOf(Triple("Needs decision", decide.size, AccentGreen),
-                        Triple("With admin", sent.size, ChartBlue), Triple("Admin responded", responded.size, WarningAmber))) }
+                    item { SummaryRow(listOf(Triple(L.s(R.string.vl_needs_decision), decide.size, AccentGreen),
+                        Triple(L.s(R.string.vl_with_admin), sent.size, ChartBlue), Triple(L.s(R.string.vl_admin_responded_2), responded.size, WarningAmber))) }
                     item { FilterBar(filters, showPeriod = false, shown = decide.size + sent.size + responded.size,
-                        total = everything.count { stageOf(it).label.startsWith("Needs") || it.caseStatus == "SENT" || it.reviewerResponded == true }) { filters = it } }
+                        total = everything.count { stageOf(it).kind == StageKind.NEEDS_DECISION || it.caseStatus == "SENT" || it.reviewerResponded == true }) { filters = it } }
                     if (decide.isEmpty() && sent.isEmpty() && responded.isEmpty()) item {
-                        EmptyText("Nothing waiting. Cleared verifications are in History.")
+                        EmptyText(L.s(R.string.vl_nothing_waiting_cleared_verifications_are))
                     }
-                    section(this, "Needs your decision", decide, AccentGreen) { ReviewCard(it, ResponseTracker.isNew(context, it)) { open(it) } }
-                    section(this, "Sent — awaiting admin", sent, ChartBlue) { ReviewCard(it, false) { open(it) } }
-                    section(this, "Admin responded", responded.sortedByDescending { ResponseTracker.isNew(context, it) }, WarningAmber) {
+                    section(this, L.s(R.string.vl_needs_your_decision_2), decide, AccentGreen) { ReviewCard(it, ResponseTracker.isNew(context, it)) { open(it) } }
+                    section(this, L.s(R.string.vl_sent_awaiting_admin_2), sent, ChartBlue) { ReviewCard(it, false) { open(it) } }
+                    section(this, L.s(R.string.vl_admin_responded_3), responded.sortedByDescending { ResponseTracker.isNew(context, it) }, WarningAmber) {
                         ReviewCard(it, ResponseTracker.isNew(context, it)) { open(it) }
                     }
                 }
@@ -296,14 +300,14 @@ fun VerificationListScreen(padding: PaddingValues, mode: ListMode, onOpen: (Stri
                     item {
                         OutlinedTextField(value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth(),
                             leadingIcon = { Icon(Icons.Filled.Search, null) }, singleLine = true,
-                            placeholder = { Text("Search case number, country, document") })
+                            placeholder = { Text(L.s(R.string.vl_search_case_number_country_document)) })
                     }
                     val filtered = all.filter { item ->
                         query.isBlank() || listOfNotNull(item.caseNumber, item.country, item.documentTypes?.joinToString())
                             .any { it.contains(query.trim(), ignoreCase = true) }
                     }
                     item { FilterBar(filters, showPeriod = true, shown = filtered.size, total = everything.size) { filters = it } }
-                    if (filtered.isEmpty()) item { EmptyText("No verifications match.") }
+                    if (filtered.isEmpty()) item { EmptyText(L.s(R.string.vl_no_verifications_match)) }
                     filtered.groupBy { day(it.createdAt) }.forEach { (d, rows) ->
                         item(key = "h-$d") {
                             Text("$d · ${rows.size}", color = MutedForeground, style = MaterialTheme.typography.labelLarge,
@@ -317,14 +321,14 @@ fun VerificationListScreen(padding: PaddingValues, mode: ListMode, onOpen: (Stri
                     val levels = com.pramaanai.officer.data.local.AppSettings.alertLevels(context)
                     val byLevel = all.filter { it.reviewerResponded != true && (it.riskLevel ?: "LOW") in levels }
                         .groupBy { it.riskLevel ?: "LOW" }
-                    item { SummaryRow(listOf(Triple("High risk", byLevel["HIGH"]?.size ?: 0, DestructiveRed),
-                        Triple("Medium risk", byLevel["MEDIUM"]?.size ?: 0, WarningAmber),
-                        Triple("Low risk", byLevel["LOW"]?.size ?: 0, SuccessGreen))) }
-                    section(this, "Admin responses", responses, WarningAmber) { ReviewCard(it, ResponseTracker.isNew(context, it)) { open(it) } }
-                    section(this, "High risk", byLevel["HIGH"] ?: emptyList(), DestructiveRed) { ReviewCard(it, false) { open(it) } }
-                    section(this, "Medium risk", byLevel["MEDIUM"] ?: emptyList(), WarningAmber) { ReviewCard(it, false) { open(it) } }
-                    section(this, "Low risk", (byLevel["LOW"] ?: emptyList()).take(10), SuccessGreen) { HistoryRow(it) { open(it) } }
-                    if (all.isEmpty()) item { EmptyText("No notifications yet.") }
+                    item { SummaryRow(listOf(Triple(L.s(R.string.vl_high_risk), byLevel["HIGH"]?.size ?: 0, DestructiveRed),
+                        Triple(L.s(R.string.vl_medium_risk), byLevel["MEDIUM"]?.size ?: 0, WarningAmber),
+                        Triple(L.s(R.string.vl_low_risk), byLevel["LOW"]?.size ?: 0, SuccessGreen))) }
+                    section(this, L.s(R.string.vl_admin_responses), responses, WarningAmber) { ReviewCard(it, ResponseTracker.isNew(context, it)) { open(it) } }
+                    section(this, L.s(R.string.vl_high_risk_2), byLevel["HIGH"] ?: emptyList(), DestructiveRed) { ReviewCard(it, false) { open(it) } }
+                    section(this, L.s(R.string.vl_medium_risk_2), byLevel["MEDIUM"] ?: emptyList(), WarningAmber) { ReviewCard(it, false) { open(it) } }
+                    section(this, L.s(R.string.vl_low_risk_2), (byLevel["LOW"] ?: emptyList()).take(10), SuccessGreen) { HistoryRow(it) { open(it) } }
+                    if (all.isEmpty()) item { EmptyText(L.s(R.string.vl_no_notifications_yet)) }
                 }
             }
         }
@@ -352,8 +356,8 @@ private fun day(iso: String?): String = runCatching {
     val instant = Instant.parse(if (iso!!.endsWith("Z") || iso.contains('+')) iso else "${iso}Z")
     val d = instant.atZone(ZoneId.systemDefault()).toLocalDate()
     val today = java.time.LocalDate.now()
-    when (d) { today -> "Today"; today.minusDays(1) -> "Yesterday"; else -> DAY.format(instant) }
-}.getOrDefault("Earlier")
+    when (d) { today -> L.s(R.string.vl_today_2); today.minusDays(1) -> L.s(R.string.vl_yesterday); else -> DAY.format(instant) }
+}.getOrDefault(L.s(R.string.vl_earlier))
 
 @Composable
 private fun HistoryRow(item: VerificationListItem, onClick: () -> Unit) {
@@ -364,7 +368,7 @@ private fun HistoryRow(item: VerificationListItem, onClick: () -> Unit) {
         Box(Modifier.size(10.dp).background(resultColor, CircleShape))
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(item.documentTypes?.joinToString(" + ") { humanize(it) } ?: "Document", fontWeight = FontWeight.Medium)
+            Text(item.documentTypes?.joinToString(" + ") { humanize(it) } ?: L.s(R.string.vl_document_2), fontWeight = FontWeight.Medium)
             Text(listOfNotNull(time(item.createdAt).substringAfter(", ", ""), item.caseNumber, item.country?.let { humanize(it) })
                 .filter { it.isNotBlank() }.joinToString(" · "), color = MutedForeground, style = MaterialTheme.typography.bodySmall)
         }
@@ -400,7 +404,7 @@ private fun ReviewCard(item: VerificationListItem, isNew: Boolean, onClick: () -
         border = BorderStroke(if (isNew) 2.dp else 1.dp, if (isNew) WarningAmber else BorderDark), shape = RoundedCornerShape(12.dp)) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(item.documentTypes?.joinToString(" + ") { humanize(it) } ?: "Document", fontWeight = FontWeight.SemiBold,
+                Text(item.documentTypes?.joinToString(" + ") { humanize(it) } ?: L.s(R.string.vl_document_3), fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f))
                 if (isNew) Box(Modifier.background(WarningAmber, RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
                     Text("NEW", color = BackgroundDark, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
@@ -413,7 +417,7 @@ private fun ReviewCard(item: VerificationListItem, isNew: Boolean, onClick: () -
                 Box(Modifier.size(8.dp).background(resultColor, CircleShape))
                 Spacer(Modifier.width(6.dp))
                 Text(resultLabel, color = resultColor, style = MaterialTheme.typography.labelMedium)
-                item.riskScore?.let { Text("  ·  risk $it/100", color = MutedForeground, style = MaterialTheme.typography.labelMedium) }
+                item.riskScore?.let { Text("  ·  " + L.f(R.string.vl_risk_100, it), color = MutedForeground, style = MaterialTheme.typography.labelMedium) }
             }
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -449,18 +453,18 @@ fun VerificationDetailScreen(verificationId: String, onBack: () -> Unit) {
     var outcome by remember { mutableStateOf<VerificationOutcome?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(verificationId) {
-        repo.load(verificationId).fold({ outcome = it }, { error = "Could not load this verification — check the connection." })
+        repo.load(verificationId).fold({ outcome = it }, { error = L.s(R.string.vl_could_not_load_this_verification) })
     }
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Verification", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+        TopAppBar(title = { Text(L.s(R.string.vl_verification), fontWeight = FontWeight.Bold) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = L.s(R.string.vl_back)) } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = SidebarDark))
     }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             val o = outcome
             when {
                 o != null -> DocVerifyResultView(o, bitmap = null, repo = repo)
-                error != null -> Box(Modifier.padding(16.dp)) { Banner("Not loaded", error!!, WarningAmber, Icons.Filled.Error) }
+                error != null -> Box(Modifier.padding(16.dp)) { Banner(L.s(R.string.vl_not_loaded_2), error!!, WarningAmber, Icons.Filled.Error) }
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = AccentGreen) }
             }
         }
