@@ -12,8 +12,8 @@ android {
         applicationId = "com.pramaanai.officer"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.3.1"
+        versionCode = 6
+        versionName = "1.3.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Backend URL. Default: the Render deployment. For a local test build
         // pass -Ppramaan.apiUrl=http://127.0.0.1:8000/ (with `adb reverse
