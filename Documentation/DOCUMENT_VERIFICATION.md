@@ -207,6 +207,43 @@ the officer to read on the document image (shown in Review/History). A real
 solution needs labelled handwritten-field boxes (a YOLO class) and a
 recogniser fine-tuned on these forms.
 
+## Liveness of the live photo
+
+* **Active (phone):** two prompts in random order, *blink* and *turn the head to one side and back*. ML Kit face
+  classification and tracking check them frame by frame. The same tracked face must complete both, and a
+  different face restarts them. A printed photo or a still on a screen cannot blink.
+* **Passive (phone):** MiniFASNet-V2 (minivision Silent-Face-Anti-Spoofing, Apache-2.0, 1.7 MB ONNX) runs on the
+  captured frame, using the upstream 2.7x face crop with raw BGR 0–255 input; class 1 = real. An on-device
+  instrumentation test (`PassiveAntiSpoofParityTest`) matches the Python reference within 0.05.
+* **Server:** the phone sends `liveness` (`active`, `challenges`, `passive_score`, `source`), and the server adds an
+  advisory `liveness` check:
+  - PASS when the prompts were done and the score is at least 0.5
+  - REVIEW_REQUIRED ("confirm the traveller is present in person") when the prompts were not done or the score is low
+  - NOT_VERIFIED for a gallery photo
+  
+  It never blocks and never accuses. The score is uncalibrated on field captures: a clean digital passport
+  photo scored "real" in a small check.
+
+## Electronic documents
+
+`app/services/docverify/electronic.py` recognises e-Visa / ETA, e-Aadhaar, DigiLocker / mParivahan licences and
+online permits from their printed markers (restricted to matching document types). It adds an advisory
+`electronic_document` check (OFFICIAL_VERIFICATION_REQUIRED) that names the official service confirming the
+document, and a "Form: Electronic — …" fact. No government service is queried. In the app, **Choose PDF** renders
+the first page (PdfRenderer, ~2000 px) and verifies it like a photo.
+
+## Memory on small instances
+
+Measured with `scripts` profiling: 3 verifications plus 2 in parallel peaked at **685 MB** before the changes and
+about **420 MB** after:
+* MediaPipe (plus matplotlib) is imported lazily and can be switched off (`PRAMAAN_MEDIAPIPE=false`). InsightFace
+  SCRFD then detects faces, and liveness comes from the phone.
+* OCR engines are pooled, one per running verification, instead of a copy per worker thread.
+* `malloc_trim` runs after each verification.
+* The Docker image defaults to one verification at a time, one ONNX thread and `MALLOC_ARENA_MAX=2`.
+
+Phone-path accuracy is unchanged (38/39 status, 39/39 type).
+
 ## Reference data (`reference_data/`)
 
 ```
