@@ -1020,4 +1020,7 @@
     <string name="dv_choose_pdf">PDF चुनें (ई-आधार, ई-वीज़ा, डिजिलॉकर)</string>
     <string name="dv_pdf_not_opened">यह PDF नहीं खुल सका — यह पासवर्ड से सुरक्षित हो सकता है। इसके बजाय इसकी फ़ोटो लें।</string>
     <string name="dv_electronic_document">इलेक्ट्रॉनिक दस्तावेज़</string>
+    <string name="db_good_morning">सुप्रभात, %1$s</string>
+    <string name="db_good_afternoon">नमस्कार, %1$s</string>
+    <string name="db_good_evening">शुभ संध्या, %1$s</string>
 </resources>

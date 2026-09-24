@@ -1020,4 +1020,7 @@
     <string name="dv_choose_pdf">PDF বাছক (ই-আধাৰ, ই-ভিছা, ডিজিলকাৰ)</string>
     <string name="dv_pdf_not_opened">এই PDF খুলিব পৰা নগ\'ল — ই পাছৱৰ্ড-সুৰক্ষিত হ\'ব পাৰে। সলনি ইয়াৰ ফটো লওক।</string>
     <string name="dv_electronic_document">ইলেক্ট্ৰনিক নথিপত্ৰ</string>
+    <string name="db_good_morning">শুভ পুৱা, %1$s</string>
+    <string name="db_good_afternoon">শুভ আবেলি, %1$s</string>
+    <string name="db_good_evening">শুভ সন্ধিয়া, %1$s</string>
 </resources>

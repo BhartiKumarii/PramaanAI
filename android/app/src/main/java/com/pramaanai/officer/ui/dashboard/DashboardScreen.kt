@@ -125,7 +125,7 @@ fun DashboardScreen(
         item {
             val hour = java.time.LocalTime.now().hour
             Column {
-                Text("${if (hour < 12) "Good morning" else if (hour < 17) "Good afternoon" else "Good evening"}, ${AuthSession.username ?: "officer"}",
+                Text(com.pramaanai.officer.ui.i18n.L.f(if (hour < 12) com.pramaanai.officer.R.string.db_good_morning else if (hour < 17) com.pramaanai.officer.R.string.db_good_afternoon else com.pramaanai.officer.R.string.db_good_evening, AuthSession.username ?: "officer"),
                     style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(listOfNotNull(AuthSession.checkpointName?.let { L.f(R.string.db_post, it) },
                     today.format(DateTimeFormatter.ofPattern("EEEE, dd MMM"))).joinToString(" · "),

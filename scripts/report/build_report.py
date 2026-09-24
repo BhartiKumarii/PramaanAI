@@ -81,6 +81,20 @@ def shot(name: str, width_mm: float, caption: str) -> KeepTogether:
     return KeepTogether([img, Paragraph(caption, SMALL), Spacer(1, 6)])
 
 
+APP_SHOTS = ROOT / "Screenshots" / "App"
+
+
+def phone_grid(items: list[tuple[str, str]]) -> Table:
+    """Three phone screenshots side by side with captions."""
+    w = 52 * mm
+    cells = [[Image(str(APP_SHOTS / f), width=w, height=w * 1200 / 540) for f, _ in items],
+             [Paragraph(c, SMALL) for _, c in items]]
+    t = Table(cells, colWidths=[57 * mm] * len(items))
+    t.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                           ("BOTTOMPADDING", (0, 0), (-1, -1), 6)]))
+    return t
+
+
 def architecture() -> Drawing:
     d = Drawing(170 * mm, 78 * mm)
     W = 170 * mm
@@ -482,7 +496,17 @@ def build() -> None:
               shot("02-overview.png", 170, "Overview — live operational status."),
               shot("09-area-monitoring.png", 170, "Area Monitoring — per-post activity at Jaigaon, Raxaul and "
                                                   "Sunauli."),
-              shot("11-analytics.png", 170, "Analytics & Intelligence.")]
+              shot("11-analytics.png", 170, "Analytics & Intelligence."),
+              PageBreak(),
+              Paragraph("Android app (synthetic data)", H2),
+              phone_grid([("01-login.png", "Sign in"), ("02-dashboard.png", "Dashboard"),
+                          ("04-result.png", "Result and decision")]),
+              phone_grid([("05-result-document.png", "Problem marked on the document"),
+                          ("06-result-fields-face.png", "Fields and face match"),
+                          ("07-review.png", "Review — sent / admin responded")]),
+              PageBreak(),
+              phone_grid([("08-history.png", "History"), ("09-notifications.png", "Notifications and risk alerts"),
+                          ("11-settings-hindi.png", "Settings in Hindi")])]
 
     # ---------------------------------------------------------------- 12 future
     story += [PageBreak(), Paragraph("13. Future work", H1),

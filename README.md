@@ -296,6 +296,23 @@ Captured on a server holding synthetic data only (no real person's data).
 |:---:|:---:|:---:|
 | ![Officers](Screenshots/Web/10-officers-monitoring.png) | ![Analytics](Screenshots/Web/11-analytics.png) | ![Audit](Screenshots/Web/12-audit-trail.png) |
 
+
+### Android app
+
+Captured on an emulator with synthetic data only.
+
+| Sign in | Dashboard | Result |
+|:---:|:---:|:---:|
+| <img src="Screenshots/App/01-login.png" width="230"> | <img src="Screenshots/App/02-dashboard.png" width="230"> | <img src="Screenshots/App/04-result.png" width="230"> |
+
+| Problem marked on the document | Fields and face match | Review |
+|:---:|:---:|:---:|
+| <img src="Screenshots/App/05-result-document.png" width="230"> | <img src="Screenshots/App/06-result-fields-face.png" width="230"> | <img src="Screenshots/App/07-review.png" width="230"> |
+
+| History | Notifications | Settings (Hindi) |
+|:---:|:---:|:---:|
+| <img src="Screenshots/App/08-history.png" width="230"> | <img src="Screenshots/App/09-notifications.png" width="230"> | <img src="Screenshots/App/11-settings-hindi.png" width="230"> |
+
 ---
 
 ## Limitations

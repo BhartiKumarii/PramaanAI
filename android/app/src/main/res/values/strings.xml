@@ -1036,4 +1036,7 @@
     <string name="dv_choose_pdf">Choose PDF (e-Aadhaar, e-Visa, DigiLocker)</string>
     <string name="dv_pdf_not_opened">This PDF could not be opened — it may be password-protected. Take a photo of it instead.</string>
     <string name="dv_electronic_document">Electronic document</string>
+    <string name="db_good_morning">Good morning, %1$s</string>
+    <string name="db_good_afternoon">Good afternoon, %1$s</string>
+    <string name="db_good_evening">Good evening, %1$s</string>
 </resources>
