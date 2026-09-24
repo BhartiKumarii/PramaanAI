@@ -27,7 +27,7 @@ DEMO_ENTRIES = [
 
     # ── Synthetic Indian names ───────────────────────────────────────────────
     ("D5566778", "RAKESH KUMAR MALHOTRA",
-     "reported lost/stolen document — filed at Attari-Wagah checkpoint (synthetic)",
+     "reported lost/stolen document — filed at Sunauli checkpoint (synthetic)",
      "MEDIUM"),
     ("D9988112", "VIJAY PRATAP SINGH",
      "forged document history — same number appeared on two different identity records (synthetic)",

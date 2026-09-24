@@ -43,7 +43,7 @@ services:
       # manually in the dashboard after the first deploy from the blueprint.
       - key: ENCRYPTION_KEY
         sync: false
-      # Shared login password for the two demo accounts (attari_officer /
+      # Shared login password for the two demo accounts (sunauli_officer /
       # OFFICER, officer1 / ADMIN) that scripts/seed_demo_users.py creates
       # on first boot. Change here (not in code) if you want a different
       # demo password.

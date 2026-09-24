@@ -16,17 +16,17 @@ from app.models.verification import VerificationRecord
 DEMO_CASES = [
     # (case_number, status, priority, checkpoint_code, field_officer_username,
     #  document_type, nationality, traveler_name, created_days_ago, decided_days_ago)
-    ("BSA-20260916-0001", CaseStatus.CLEAR, CasePriority.LOW, "ATW", "attari_officer",
+    ("BSA-20260916-0001", CaseStatus.CLEAR, CasePriority.LOW, "SUN", "sunauli_officer",
      "passport", "INDIAN", "JOHN MICHAEL SMITH", 5, 4),
-    ("BSA-20260916-0002", CaseStatus.REVIEW_REQUIRED, CasePriority.HIGH, "ATW", "attari_officer",
+    ("BSA-20260916-0002", CaseStatus.REVIEW_REQUIRED, CasePriority.HIGH, "SUN", "sunauli_officer",
      "passport", "INDIAN", "BLACKLISTED PERSON", 3, None),
-    ("BSA-20260916-0003", CaseStatus.SENT, CasePriority.MEDIUM, "ATW", "attari_officer",
+    ("BSA-20260916-0003", CaseStatus.SENT, CasePriority.MEDIUM, "SUN", "sunauli_officer",
      "passport", "INDIAN", "RAKESH KUMAR MALHOTRA", 2, None),
-    ("BSA-20260916-0004", CaseStatus.PENDING, CasePriority.LOW, "PET", "petrapole_officer",
+    ("BSA-20260916-0004", CaseStatus.PENDING, CasePriority.LOW, "JGN", "jaigaon_officer",
      "passport", "INDIAN", "PRIYA RAMESH NAIR", 1, None),
-    ("BSA-20260916-0005", CaseStatus.CLEAR, CasePriority.LOW, "PET", "petrapole_officer",
+    ("BSA-20260916-0005", CaseStatus.CLEAR, CasePriority.LOW, "JGN", "jaigaon_officer",
      "passport", "NEPALI", "BIKRAM THAPA MAGAR", 7, 6),
-    ("BSA-20260916-0006", CaseStatus.SECONDARY_REVIEW, CasePriority.HIGH, "PET", "petrapole_officer",
+    ("BSA-20260916-0006", CaseStatus.SECONDARY_REVIEW, CasePriority.HIGH, "JGN", "jaigaon_officer",
      "visa", "INDIAN", "SURESH CHANDRA GUPTA", 4, None),
     ("BSA-20260916-0007", CaseStatus.HOLD_REFER, CasePriority.HIGH, "RAX", "raxaul_officer",
      "passport", "INDIAN", "VIJAY PRATAP SINGH", 2, None),
@@ -34,9 +34,9 @@ DEMO_CASES = [
      "national_id", "INDIAN", "ARUN PRAKASH TIWARI", 6, 5),
     ("BSA-20260916-0009", CaseStatus.PENDING_SYNC, CasePriority.LOW, "RAX", "raxaul_officer",
      "passport", "BHUTANESE", "TASHI WANGCHUK DORJI", 0, None),
-    ("BSA-20260916-0010", CaseStatus.SENT, CasePriority.MEDIUM, "ATW", "officer1",
+    ("BSA-20260916-0010", CaseStatus.SENT, CasePriority.MEDIUM, "SUN", "officer1",
      "driving_licence", "INDIAN", "SANJAY DUTT BHATIA", 3, None),
-    ("BSA-20260916-0011", CaseStatus.REVIEW_REQUIRED, CasePriority.HIGH, "PET", "officer1",
+    ("BSA-20260916-0011", CaseStatus.REVIEW_REQUIRED, CasePriority.HIGH, "JGN", "officer1",
      "passport", "INDIAN", "ASHOK KUMAR PANDEY", 1, None),
     ("BSA-20260916-0012", CaseStatus.CLEAR, CasePriority.LOW, "RAX", "officer1",
      "visa", "INDIAN", "DEEPIKA RANI VERMA", 8, 7),
@@ -136,9 +136,11 @@ def seed_demo_cases() -> None:
                 case_number=case_number,
                 status=status,
                 priority=priority,
-                checkpoint_id=checkpoint.id,
-                field_officer_id=field_officer.id,
-                assigned_officer_id=field_officer.id,
+                # Checkpoint/User ids are strings; Case columns are UUIDs
+                # (SQLite rejects the plain string, PostgreSQL casts it).
+                checkpoint_id=uuid.UUID(str(checkpoint.id)),
+                field_officer_id=uuid.UUID(str(field_officer.id)),
+                assigned_officer_id=uuid.UUID(str(field_officer.id)),
                 verification_id=verification.id,
                 document_type=document_type,
                 nationality=nationality,
@@ -159,17 +161,28 @@ def seed_demo_cases() -> None:
 
 
 DEMO_DEVICES = [
-    ("SM-G998B_ATW01", "attari_officer", "1.0.0"),
-    ("SM-A545F_ATW02", "attari_officer", "1.0.0"),
-    ("Pixel_8_PET01", "petrapole_officer", "1.0.0"),
+    ("SM-G998B_SUN01", "sunauli_officer", "1.0.0"),
+    ("SM-A545F_SUN02", "sunauli_officer", "1.0.0"),
+    ("Pixel_8_JGN01", "jaigaon_officer", "1.0.0"),
     ("SM-G991B_RAX01", "raxaul_officer", "0.9.2"),
     ("Redmi_Note_JAI01", "jaigaon_officer", "1.0.0"),
     ("OnePlus_12_GEL01", "gelephu_officer", "1.0.0"),
 ]
 
 
+# Device IDs of the earlier (non-SSB) demo posts, renamed in place.
+RENAMED_DEVICES = {"SM-G998B_ATW01": "SM-G998B_SUN01", "SM-A545F_ATW02": "SM-A545F_SUN02",
+                   "Pixel_8_PET01": "Pixel_8_JGN01"}
+
+
 def _seed_demo_devices(db):
     from app.models.device import Device
+
+    for old, new in RENAMED_DEVICES.items():
+        row = db.query(Device).filter(Device.device_identifier == old).first()
+        if row and not db.query(Device).filter(Device.device_identifier == new).first():
+            row.device_identifier = new
+    db.commit()
 
     for dev_id, officer_username, app_ver in DEMO_DEVICES:
         existing = db.query(Device).filter(Device.device_identifier == dev_id).first()

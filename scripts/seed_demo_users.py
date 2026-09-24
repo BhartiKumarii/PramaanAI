@@ -19,15 +19,15 @@ from app.models.checkpoint import Checkpoint
 from app.models.user import User, UserRole
 
 DEMO_CHECKPOINTS = [
-    ("ATW", "Attari-Wagah", "Punjab, India / Pakistan border"),
-    ("PET", "Petrapole", "West Bengal, India / Bangladesh border"),
+    ("SUN", "Sunauli", "Uttar Pradesh, India / Nepal border"),
+    ("JGN", "Jaigaon", "West Bengal, India / Bhutan border"),
     ("RAX", "Raxaul", "Bihar, India / Nepal border"),
 ]
 
 # (username, checkpoint_code | None, role)
 DEMO_ACCOUNTS: list[tuple[str, str | None, UserRole]] = [
-    ("attari_officer", "ATW", UserRole.OFFICER),
-    ("petrapole_officer", "PET", UserRole.OFFICER),
+    ("sunauli_officer", "SUN", UserRole.OFFICER),
+    ("jaigaon_officer", "JGN", UserRole.OFFICER),
     ("raxaul_officer", "RAX", UserRole.OFFICER),
     ("officer1", None, UserRole.OFFICER),  # backward compatibility
     ("admin_reviewer", None, UserRole.REVIEWER),  # web admin / verifier
@@ -35,10 +35,34 @@ DEMO_ACCOUNTS: list[tuple[str, str | None, UserRole]] = [
 ]
 
 
+# Earlier demo posts were outside SSB's borders (Attari-Wagah: Pakistan,
+# Petrapole: Bangladesh). Existing rows are renamed in place so their cases,
+# devices and audit history stay linked; nothing is deleted.
+RENAMED_CHECKPOINTS = {"ATW": "SUN", "PET": "JGN"}
+RENAMED_USERS = {"attari_officer": "sunauli_officer", "petrapole_officer": "jaigaon_officer"}
+
+
+def _rename_earlier_demo_posts(db) -> None:
+    new_by_code = {code: (name, location) for code, name, location in DEMO_CHECKPOINTS}
+    for old, new in RENAMED_CHECKPOINTS.items():
+        row = db.query(Checkpoint).filter(Checkpoint.code == old).first()
+        if row and not db.query(Checkpoint).filter(Checkpoint.code == new).first():
+            row.code, (row.name, row.location) = new, new_by_code[new]
+            db.commit()
+            print(f"Renamed checkpoint '{old}' to '{new}' ({row.name}).")
+    for old, new in RENAMED_USERS.items():
+        row = db.query(User).filter(User.username == old).first()
+        if row and not db.query(User).filter(User.username == new).first():
+            row.username = new
+            db.commit()
+            print(f"Renamed user '{old}' to '{new}'.")
+
+
 def seed_demo_users() -> None:
     password = os.environ.get("DEMO_USER_PASSWORD", "BorderShield123")
     db = SessionLocal()
     try:
+        _rename_earlier_demo_posts(db)
         checkpoints_by_code: dict[str, Checkpoint] = {}
         for code, name, location in DEMO_CHECKPOINTS:
             existing = db.query(Checkpoint).filter(Checkpoint.code == code).first()

@@ -33,8 +33,8 @@ const DOC_LABELS: Record<string, string> = {
 }
 
 const CHECKPOINT_NAMES: Record<string, string> = {
-  ATW: 'Attari-Wagah',
-  PET: 'Petrapole',
+  SUN: 'Sunauli',
+  JGN: 'Jaigaon',
   RAX: 'Raxaul',
   JAI: 'Jaigaon / Phuentsholing',
   GEL: 'Gelephu',

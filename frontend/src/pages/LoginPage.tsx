@@ -79,16 +79,16 @@ export function LoginPage() {
           <button
             type="button"
             className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
-            onClick={() => { setUsername('attari_officer'); setPassword('BorderShield123'); }}
+            onClick={() => { setUsername('sunauli_officer'); setPassword('BorderShield123'); }}
           >
-            Attari Officer
+            Sunauli Officer
           </button>
           <button
             type="button"
             className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
-            onClick={() => { setUsername('petrapole_officer'); setPassword('BorderShield123'); }}
+            onClick={() => { setUsername('jaigaon_officer'); setPassword('BorderShield123'); }}
           >
-            Petrapole Officer
+            Jaigaon Officer
           </button>
           <button
             type="button"
