@@ -23,6 +23,10 @@ depends_on = None
 
 
 def upgrade() -> None:
+    if op.get_bind().dialect.name != "postgresql":
+        # SQLite: role is plain text; only the values change.
+        op.execute("UPDATE users SET role = 'OFFICER'")
+        return
     op.execute("ALTER TABLE users ALTER COLUMN role DROP DEFAULT")
     op.execute("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(32) USING role::text")
     op.execute("UPDATE users SET role = 'OFFICER'")
@@ -33,6 +37,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    if op.get_bind().dialect.name != "postgresql":
+        op.execute("UPDATE users SET role = 'FIELD_OFFICER'")
+        return
     op.execute("ALTER TABLE users ALTER COLUMN role DROP DEFAULT")
     op.execute("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(32) USING role::text")
     op.execute("DROP TYPE user_role")

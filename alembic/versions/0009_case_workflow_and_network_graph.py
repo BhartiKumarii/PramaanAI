@@ -22,10 +22,12 @@ depends_on = None
 
 def upgrade() -> None:
     # --- user_role: OFFICER/ADMIN split into the four BorderShieldAI roles ---
-    with op.get_context().autocommit_block():
-        op.execute("ALTER TYPE user_role RENAME VALUE 'OFFICER' TO 'FIELD_OFFICER'")
-        op.execute("ALTER TYPE user_role RENAME VALUE 'ADMIN' TO 'IT_ADMIN'")
-        op.execute("ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'IMMIGRATION_OFFICER'")
+    # PostgreSQL only: SQLite stores the role as plain text (no enum type).
+    if op.get_bind().dialect.name == "postgresql":
+        with op.get_context().autocommit_block():
+            op.execute("ALTER TYPE user_role RENAME VALUE 'OFFICER' TO 'FIELD_OFFICER'")
+            op.execute("ALTER TYPE user_role RENAME VALUE 'ADMIN' TO 'IT_ADMIN'")
+            op.execute("ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'IMMIGRATION_OFFICER'")
 
     # --- checkpoints ---
     op.create_table(
@@ -38,7 +40,11 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
-    op.add_column("users", sa.Column("checkpoint_id", sa.Uuid(), sa.ForeignKey("checkpoints.id"), nullable=True))
+    # batch mode: SQLite can't add a foreign-key column in place (the table is
+    # rebuilt there); PostgreSQL gets a plain ALTER TABLE.
+    with op.batch_alter_table("users") as batch:
+        batch.add_column(sa.Column("checkpoint_id", sa.Uuid(), nullable=True))
+        batch.create_foreign_key("fk_users_checkpoint_id", "checkpoints", ["checkpoint_id"], ["id"])
 
     # --- devices ---
     op.create_table(
@@ -173,9 +179,13 @@ def upgrade() -> None:
     op.create_index("ix_network_relationships_target_id", "network_relationships", ["target_id"])
 
     # --- audit_events: case-centric events, verification_id no longer required ---
-    op.add_column("audit_events", sa.Column("case_id", sa.Uuid(), sa.ForeignKey("cases.id"), nullable=True))
+    with op.batch_alter_table("audit_events") as batch:
+        batch.add_column(sa.Column("case_id", sa.Uuid(), nullable=True))
+        batch.create_foreign_key("fk_audit_events_case_id", "cases", ["case_id"], ["id"])
     op.create_index("ix_audit_events_case_id", "audit_events", ["case_id"])
-    op.alter_column("audit_events", "verification_id", nullable=True)
+    # PostgreSQL only here; SQLite is relaxed by revision 0019 (batch rebuild).
+    if op.get_bind().dialect.name == "postgresql":
+        op.alter_column("audit_events", "verification_id", nullable=True)
 
 
 def downgrade() -> None:

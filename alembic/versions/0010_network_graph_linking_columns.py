@@ -14,9 +14,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "identity_embeddings", sa.Column("case_id", sa.Uuid(), sa.ForeignKey("cases.id"), nullable=True)
-    )
+    # batch mode: SQLite can't add a foreign-key column in place.
+    with op.batch_alter_table("identity_embeddings") as batch:
+        batch.add_column(sa.Column("case_id", sa.Uuid(), nullable=True))
+        batch.create_foreign_key("fk_identity_embeddings_case_id", "cases", ["case_id"], ["id"])
     op.add_column(
         "person_entities", sa.Column("document_number_hash", sa.String(length=64), nullable=True)
     )
