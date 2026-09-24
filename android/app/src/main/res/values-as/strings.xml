@@ -1017,4 +1017,7 @@
     <string name="st_signing_out_in">%1$d ছেকেণ্ডত ছাইন আউট</string>
     <string name="st_stay_signed_in">ছাইন ইন থাকক</string>
     <string name="st_log_out_now">এতিয়াই লগ আউট কৰক</string>
+    <string name="dv_choose_pdf">PDF বাছক (ই-আধাৰ, ই-ভিছা, ডিজিলকাৰ)</string>
+    <string name="dv_pdf_not_opened">এই PDF খুলিব পৰা নগ\'ল — ই পাছৱৰ্ড-সুৰক্ষিত হ\'ব পাৰে। সলনি ইয়াৰ ফটো লওক।</string>
+    <string name="dv_electronic_document">ইলেক্ট্ৰনিক নথিপত্ৰ</string>
 </resources>

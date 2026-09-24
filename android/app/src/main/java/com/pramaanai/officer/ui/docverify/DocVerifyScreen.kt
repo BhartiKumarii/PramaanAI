@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import com.pramaanai.officer.ui.theme.ForegroundLight
 import androidx.compose.runtime.key
 import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.ui.text.font.FontFamily
@@ -401,6 +402,15 @@ private fun CaptureStep(pending: Int, onImage: (Bitmap) -> Unit) {
         uri ?: return@rememberLauncherForActivityResult
         context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }?.let(onImage)
     }
+    // e-Aadhaar, e-Visa / ETA and DigiLocker documents usually arrive as PDFs:
+    // the first page is rendered on the phone and verified like a photo.
+    var pdfProblem by remember { mutableStateOf(false) }
+    val pdfPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val page = renderPdfFirstPage(context, uri)
+        pdfProblem = page == null
+        page?.let(onImage)
+    }
     val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
     LaunchedEffect(Unit) { if (!granted) permission.launch(Manifest.permission.CAMERA) }
 
@@ -458,8 +468,31 @@ private fun CaptureStep(pending: Int, onImage: (Bitmap) -> Unit) {
                 modifier = Modifier.weight(1f).height(56.dp), shape = RoundedCornerShape(10.dp),
             ) { Icon(Icons.Filled.PhotoLibrary, null); Spacer(Modifier.width(8.dp)); Text(L.s(R.string.dv_gallery)) }
         }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = { pdfPicker.launch(arrayOf("application/pdf")) },
+            modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(10.dp),
+        ) { Icon(Icons.Filled.PictureAsPdf, null); Spacer(Modifier.width(8.dp)); Text(L.s(R.string.dv_choose_pdf)) }
+        if (pdfProblem) Text(L.s(R.string.dv_pdf_not_opened), color = WarningAmber, style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 4.dp))
     }
 }
+
+/** First page of a PDF as a white-background bitmap (~2000 px on its long side). Null if it can't be opened. */
+private fun renderPdfFirstPage(context: android.content.Context, uri: android.net.Uri): Bitmap? = runCatching {
+    context.contentResolver.openFileDescriptor(uri, "r")?.use { fd ->
+        android.graphics.pdf.PdfRenderer(fd).use { renderer ->
+            if (renderer.pageCount == 0) return@use null
+            renderer.openPage(0).use { page ->
+                val scale = 2000f / maxOf(page.width, page.height)
+                val bmp = Bitmap.createBitmap((page.width * scale).toInt(), (page.height * scale).toInt(), Bitmap.Config.ARGB_8888)
+                bmp.eraseColor(android.graphics.Color.WHITE)
+                page.render(bmp, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                bmp
+            }
+        }
+    }
+}.getOrNull()
 
 // ---------------------------------------------------------------- review
 
@@ -783,7 +816,7 @@ private fun CheckRow(c: CheckDetail, onClick: (() -> Unit)? = null) {
 }
 
 private val CHECK_TITLES = mapOf(
-    "ocr" to L.s(R.string.dv_text_extraction), "ocr_devanagari" to L.s(R.string.dv_devanagari_text), "ocr_confidence" to L.s(R.string.dv_reading_confidence), "mrz_structure" to L.s(R.string.dv_mrz_format),
+    "ocr" to L.s(R.string.dv_text_extraction), "electronic_document" to L.s(R.string.dv_electronic_document), "ocr_devanagari" to L.s(R.string.dv_devanagari_text), "ocr_confidence" to L.s(R.string.dv_reading_confidence), "mrz_structure" to L.s(R.string.dv_mrz_format),
     "mrz_check_digits" to L.s(R.string.dv_mrz_check_digits), "mrz_consistency" to L.s(R.string.dv_mrz_matches_printed_details),
     "document_validity" to L.s(R.string.dv_validity_dates), "date_logic" to L.s(R.string.dv_date_order), "field_format" to L.s(R.string.dv_number_format),
     "registry" to L.s(R.string.dv_registry_lookup), "registry_consistency" to L.s(R.string.dv_registry_details), "photo" to L.s(R.string.dv_document_photo),

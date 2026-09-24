@@ -173,6 +173,9 @@ class DocumentAnalysis(BaseModel):
     # Extra lines read by the Devanagari (Nepali/Hindi) recogniser; the Latin
     # reading stays in ocr_lines. Empty when the stage did not run.
     native_lines: list[OcrLine] = Field(default_factory=list)
+    # Electronic form (e-Visa, e-Aadhaar, DigiLocker DL, online permit) with
+    # the official service that confirms it; None for a physical document.
+    electronic: dict[str, Any] | None = None
     fields: dict[str, FieldValue] = Field(default_factory=dict)
     mrz: dict[str, Any] | None = None
     codes: list[MachineReadableCode] = Field(default_factory=list)

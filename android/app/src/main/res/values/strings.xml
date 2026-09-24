@@ -1033,4 +1033,7 @@
     <string name="st_signing_out_in">Signing out in %1$ds</string>
     <string name="st_stay_signed_in">Stay signed in</string>
     <string name="st_log_out_now">Log out now</string>
+    <string name="dv_choose_pdf">Choose PDF (e-Aadhaar, e-Visa, DigiLocker)</string>
+    <string name="dv_pdf_not_opened">This PDF could not be opened — it may be password-protected. Take a photo of it instead.</string>
+    <string name="dv_electronic_document">Electronic document</string>
 </resources>

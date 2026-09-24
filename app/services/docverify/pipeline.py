@@ -270,10 +270,13 @@ def analyze_image(image_bytes: bytes, index: int, *, on: date, expected_type: Do
     if native and dtr.document_type == DocumentType.DOCUMENT_TYPE_UNCERTAIN:
         dtr = _classify_devanagari(native) or dtr
 
+    from app.services.docverify import electronic
+    e_form = electronic.detect(text + "\n" + "\n".join(l.text for l in native), dtr.document_type)
+
     doc = DocumentAnalysis(
         document_index=index, image_sha256=hashlib.sha256(image_bytes).hexdigest(),
         image_size=[bgr.shape[1], bgr.shape[0]], document_type=dtr, regions=regions, ocr_lines=lines,
-        ocr_confidence=mean_confidence(lines), native_lines=native, fields=fields, mrz=mrz_info, codes=codes, stamps=stamps,
+        ocr_confidence=mean_confidence(lines), native_lines=native, electronic=e_form, fields=fields, mrz=mrz_info, codes=codes, stamps=stamps,
         quality=quality_override or _quality(gray),
     )
     if rotation:
@@ -770,6 +773,11 @@ def _document_checks(ctx: Ctx, doc: DocumentAnalysis, image_based: bool) -> dict
                 f"{len(doc.native_lines)} Devanagari (Nepali/Hindi) text lines read"
                 + (f"; details: {', '.join(k.replace('_', ' ') for k in native)}" if native else ""), i,
                 blocking=False, advisory=True)
+    if doc.electronic:
+        e = doc.electronic
+        ctx.add("electronic_document", S.OFFICIAL_VERIFICATION_REQUIRED,
+                f"{e['label']} — {e['official_check']}", i, blocking=False,
+                form=e["form"], markers=e["markers"])
     # --- OCR / key fields (MRZ can supply them)
     mrz = doc.mrz if doc.mrz and "format_error" not in doc.mrz else None
     mrz_fill = {"name": (mrz or {}).get("full_name"), "document_number": (mrz or {}).get("document_number"),
@@ -1115,6 +1123,9 @@ def _finish(ctx: Ctx, docs: list[DocumentAnalysis], registry_results: dict[int, 
                                          (post_checkpoint or {}).get("checkpoint_type"), route_source)}
     if len(docs) > 1:
         facts["Documents"] = str(len(docs))
+    e_docs = [d.electronic for d in docs if d.electronic]
+    if e_docs:
+        facts["Form"] = "Electronic — " + e_docs[0]["label"]
     summary, explanation = decision.officer_summary(status, facts, ctx.checks, ctx.offline)
 
     worst: dict[str, CheckStatus] = {}

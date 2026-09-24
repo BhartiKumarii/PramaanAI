@@ -1017,4 +1017,7 @@
     <string name="st_signing_out_in">%1$d सेकेन्डमा साइन आउट</string>
     <string name="st_stay_signed_in">साइन इन रहनुहोस्</string>
     <string name="st_log_out_now">अहिले लग आउट गर्नुहोस्</string>
+    <string name="dv_choose_pdf">PDF छान्नुहोस् (ई-आधार, ई-भिसा, डिजिलकर)</string>
+    <string name="dv_pdf_not_opened">यो PDF खुल्न सकेन — पासवर्ड सुरक्षित हुन सक्छ। सट्टामा यसको फोटो खिच्नुहोस्।</string>
+    <string name="dv_electronic_document">इलेक्ट्रोनिक कागजात</string>
 </resources>
