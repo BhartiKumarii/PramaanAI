@@ -6,8 +6,14 @@ import {
   ScanSearch,
   ShieldAlert,
   UserCheck,
-  WifiOff,
   Eye,
+  Landmark,
+  LayoutDashboard,
+  FileCheck,
+  Network,
+  KeyRound,
+  Lock,
+  ScrollText,
   Users,
   ChevronDown,
 } from 'lucide-react'
@@ -20,7 +26,7 @@ const CAPABILITIES = [
   { icon: ScanSearch, title: 'Reads every border document', desc: 'Passports, visas, permits, licences, Aadhaar and stamps, in English, Hindi and Nepali.' },
   { icon: ShieldAlert, title: 'Spots inconsistencies', desc: 'MRZ digits, dates, stamps, QR signatures and altered regions, checked in seconds.' },
   { icon: UserCheck, title: 'Confirms the person', desc: 'Face match with a live photo, plus blink and head-turn liveness.' },
-  { icon: WifiOff, title: 'Works offline', desc: 'Encrypted on the phone and verified automatically when the network returns.' },
+  { icon: Landmark, title: 'Border-aware rules', desc: 'India–Nepal and India–Bhutan crossing rules applied to every result.' },
   { icon: Eye, title: 'Explains every flag', desc: 'Named reasons, marked on the document itself. Never a mystery score.' },
   { icon: Users, title: 'The officer decides', desc: 'Clear, or send to an admin, who answers with evidence in view.' },
 ]
@@ -32,10 +38,23 @@ const STEPS = [
   { step: '04', title: 'Decide', desc: 'Clear, or send to an admin for review.' },
 ]
 
+const PILLARS = [
+  { icon: LayoutDashboard, title: 'Command oversight', desc: 'Admins review every case sent from the field — document, live photo, findings and a suggested action — and every decision is logged.' },
+  { icon: FileCheck, title: 'Evidence you can defend', desc: 'Each result names the check, marks the exact spot on the document and is sealed in a tamper-evident record.' },
+  { icon: Network, title: 'Ready to integrate', desc: 'Every check is a separate service, ready to connect to authorised government systems without changing the app.' },
+]
+
+const TRUST = [
+  { icon: KeyRound, title: 'Role-based access', desc: 'Enforced on the server' },
+  { icon: Lock, title: 'Encrypted', desc: 'In transit and on the device' },
+  { icon: ScrollText, title: 'Tamper-evident audit', desc: 'Every action recorded' },
+  { icon: ShieldCheck, title: 'Privacy by design', desc: 'Only needed regions leave the phone' },
+]
+
 const FACTS = [
   { value: '2', label: 'open borders: Nepal and Bhutan' },
+  { value: '10+', label: 'document types' },
   { value: '7', label: 'app languages' },
-  { value: 'Offline', label: 'first, sync later' },
   { value: 'Every', label: 'flag explained' },
 ]
 
@@ -66,7 +85,7 @@ export function LandingPage() {
               className={`inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-4 py-1.5 font-mono text-xs uppercase tracking-wider text-accent transition-all duration-700 ${heroVisible ? 'opacity-100' : 'translate-y-2 opacity-0'}`}
             >
               <ShieldCheck className="h-3.5 w-3.5" />
-              Secure &middot; Explainable &middot; Works offline
+              Secure &middot; Explainable &middot; Officer-led
             </div>
             <h1
               className={`mt-8 text-4xl font-semibold leading-[1.1] tracking-tight transition-all delay-100 duration-700 sm:text-5xl lg:text-6xl ${heroVisible ? 'opacity-100' : 'translate-y-4 opacity-0'}`}
@@ -163,6 +182,49 @@ export function LandingPage() {
                   <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{desc}</p>
                 </div>
               </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Built for SSB operations */}
+      <section className="px-6 py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <RevealSection className="text-center">
+            <p className="font-mono text-xs uppercase tracking-widest text-accent">Built for SSB operations</p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">From the post to command</h2>
+          </RevealSection>
+          <div className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {PILLARS.map(({ icon: Icon, title, desc }) => (
+              <RevealSection key={title}>
+                <div className="h-full rounded-xl border border-border bg-card p-7">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-accent/30 bg-accent/10">
+                    <Icon className="h-5 w-5 text-accent" strokeWidth={1.75} />
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-foreground">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust and security */}
+      <section className="bg-secondary/30 px-6 py-16 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <RevealSection className="text-center">
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Trust and security, built in</h2>
+          </RevealSection>
+          <div className="mt-10 grid grid-cols-2 gap-5 lg:grid-cols-4">
+            {TRUST.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="flex items-start gap-3 rounded-xl border border-border bg-card p-5">
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" strokeWidth={1.75} />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{title}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
