@@ -367,12 +367,67 @@ def build() -> None:
                                   "PKI) sits behind an interface with a labelled mock, ready for an authorised API."],
                   ["Cost", "Open-source stack; one central server scales horizontally (stateless API, bounded "
                            "concurrency, 503 + retry when saturated)."],
-                  ["Security and privacy", "TLS, JWT + Argon2, server-enforced roles, encrypted on-device store, "
-                                           "signed records, tamper-evident audit chain, data minimisation."],
+                  ["Security and privacy", "See section 9."],
               ], [34, 136])]
 
+    # ---------------------------------------------------------------- 9 security
+    story += [PageBreak(), Paragraph("9. Security", H1),
+              p("Security is applied at every layer: the officer's phone, the network, the server and the stored "
+                "records. Every item below is implemented in this build."),
+              table([
+                  ["Layer", "Measure", "How"],
+                  ["Access", "Sign-in", "JWT access tokens (30 min) and refresh tokens (24 h); passwords hashed with "
+                                        "Argon2; login limited to 5 attempts per minute per address."],
+                  ["Access", "Roles", "Enforced on the server, not only in the UI: officers verify and send; only "
+                                      "admins (Reviewer) decide cases, manage users and devices, or remove data."],
+                  ["Access", "Session", "Auto-lock after inactivity with a warning; tokens kept in encrypted storage "
+                                        "on the phone; lost devices can be disabled or revoked by the admin."],
+                  ["Transport", "Encryption in transit", "HTTPS (TLS) between the phone, the web console and the "
+                                                         "server."],
+                  ["Phone", "Encryption at rest", "Captures and the offline queue are encrypted with AES-GCM using a "
+                                                  "key held in the Android Keystore; images are deleted "
+                                                  "automatically after the retention period."],
+                  ["Data", "Minimisation", "Only detected regions and phone-read text are sent for verification — "
+                                           "never the full frame; the verify endpoints process images in memory "
+                                           "and keep only SHA-256 hashes; raw OCR text is not stored; Aadhaar is "
+                                           "masked (XXXX XXXX 1234); evidence images are attached only when a case "
+                                           "is opened for review."],
+                  ["Data", "Input limits", "Uploads ≤ 10 MB and ≤ 40 MP, 1–4 images; region crops covering > 90% "
+                                           "of the frame are rejected; every request is schema-validated."],
+                  ["Integrity", "Tamper-evident records", "Each verification is hashed (SHA-256), linked to the "
+                                                          "previous record and signed with HMAC-SHA256; the whole "
+                                                          "chain can be re-verified at any time."],
+                  ["Integrity", "Audit trail", "Created, viewed, sent, decided and removed events are logged with "
+                                               "the actor; removed test data stays in the chain, marked withdrawn."],
+                  ["Integrity", "Document signatures", "Signed QR data is checked against a configured trust store "
+                                                       "(Ed25519); altered data fails the check."],
+                  ["Identity", "Anti-impersonation", "Face match with the live photo, blink / head-turn liveness "
+                                                     "prompts and an on-device anti-spoof score."],
+                  ["Server", "Hardening", "Secrets only in environment variables; personal data redacted from "
+                                          "server logs; bounded concurrency (503 + retry when busy)."],
+                  ["Ethics", "Fairness", "No emotion, skin temperature, nationality, religion or ethnicity used as a "
+                                         "signal; wording never accuses; mock data labelled everywhere."],
+              ], [22, 36, 112]),
+              Paragraph("Security workflow — one verification, end to end", H2),
+              table([
+                  ["Step", "What protects it"],
+                  ["1  Sign in", "Argon2-checked password, rate-limited login, short-lived JWT; role attached to "
+                                 "the token."],
+                  ["2  Capture", "Image stays on the phone, encrypted (AES-GCM, Keystore key)."],
+                  ["3  Minimise", "Phone finds the regions; only crops and text are prepared — never the full frame."],
+                  ["4  Send", "TLS; bearer token checked; offline requests wait encrypted and are retried safely "
+                              "(same request id = same record, never a duplicate)."],
+                  ["5  Check", "Server validates size and schema, processes images in memory, stores only hashes and "
+                               "a minimised result."],
+                  ["6  Record", "Result hashed, linked to the previous record, HMAC-signed; audit event written."],
+                  ["7  Decide", "Officer clears or sends to admin; only an admin (server-checked role) can decide "
+                                "the case; every decision is audit-logged."],
+                  ["8  Retain", "Phone images auto-deleted after the retention period; session auto-locks; the "
+                                "chain can be re-verified at any time."],
+              ], [30, 140])]
+
     # ---------------------------------------------------------------- 9 challenges
-    story += [PageBreak(), Paragraph("9. Challenges and the strategy used to solve them", H1),
+    story += [PageBreak(), Paragraph("10. Challenges and the strategy used to solve them", H1),
               table([
                   ["Challenge", "Strategy"],
                   ["Weak or no connectivity", "Phone-side detection and MRZ; one small request of crops; live "
@@ -401,7 +456,7 @@ def build() -> None:
               ], [48, 122])]
 
     # ---------------------------------------------------------------- 10 impact
-    story += [Paragraph("10. Impact and benefits", H1)]
+    story += [Paragraph("11. Impact and benefits", H1)]
     story += bullets([
         "<b>Faster, more consistent checks:</b> MRZ digits, dates, stamps and face comparison in one flow instead of "
         "by eye — the officer spends time on the cases that need it.",
@@ -416,7 +471,7 @@ def build() -> None:
     ])
 
     # ---------------------------------------------------------------- 11 screenshots
-    story += [PageBreak(), Paragraph("11. Screens (synthetic data)", H1),
+    story += [PageBreak(), Paragraph("12. Screens (synthetic data)", H1),
               shot("03-verification-desk.png", 170, "Verification Desk — cases from the app with their verification "
                                                     "result; earlier-flow and demo cases behind a toggle."),
               shot("04-case-review.png", 120, "Case review — document with problem areas, face match, identity "
@@ -430,7 +485,7 @@ def build() -> None:
               shot("11-analytics.png", 170, "Analytics & Intelligence.")]
 
     # ---------------------------------------------------------------- 12 future
-    story += [PageBreak(), Paragraph("12. Future work", H1),
+    story += [PageBreak(), Paragraph("13. Future work", H1),
               table([
                   ["Idea", "Implementation and methodology"],
                   ["Officer assistant chatbot", "A chat panel in the app and console that answers procedure "
@@ -463,6 +518,24 @@ def build() -> None:
                   ["Calibration", "Field pilot to calibrate the anti-spoof threshold and forensic flags on real "
                                   "captures before any check is made blocking."],
               ], [40, 130]),
+              Paragraph("Planned security", H2),
+              table([
+                  ["Addition", "Purpose"],
+                  ["Certificate pinning + mutual TLS", "The app talks only to the genuine server; only registered "
+                                                       "devices can connect."],
+                  ["Device attestation (Play Integrity)", "Refuse rooted, emulated or tampered phones."],
+                  ["Multi-factor sign-in for admins", "Hardware key or OTP for the web console."],
+                  ["Keys in a KMS / HSM with rotation", "Signing and encryption keys never leave secure hardware."],
+                  ["Encryption of stored records", "Field-level encryption of personal data in the database."],
+                  ["External anchoring of the audit chain", "Periodic signed timestamps of the chain head from a "
+                                                            "trusted time-stamping authority."],
+                  ["Post-scoped access", "Officers see only their own post's data; supervisors their area."],
+                  ["Security monitoring", "Alerts on unusual sign-ins, bulk exports or repeated failed checks."],
+                  ["Shared rate limiting", "Login and API limits enforced across all server instances."],
+                  ["DPDP Act 2023 compliance", "Retention schedules, purpose limitation and data-subject "
+                                               "procedures agreed with MHA / SSB."],
+                  ["Independent security audit", "VAPT by a CERT-In empanelled auditor before field deployment."],
+              ], [58, 112]),
               Spacer(1, 10),
               Paragraph("Data notice: registry lookups in this build use fictional mock data only; no real government "
                         "database is accessed. Real document photographs used for evaluation are kept locally and "

@@ -315,7 +315,7 @@ Captured on a server holding synthetic data only (no real person's data).
 
 ## Future Scope
 
-Full implementation notes are in the [project report](Documentation/PramaanAI-Report.pdf), §12.
+Full implementation notes are in the [project report](Documentation/PramaanAI-Report.pdf), §13 (with planned security). Security measures and the security workflow are in §9.
 
 - **Officer assistant chatbot**: answers procedure questions in the officer's language (e.g. visa rules at a crossing), using retrieval over the project's own border-rule and checkpoint data, with citations and an offline FAQ fallback. It explains; it never decides.
 - **Geo-fencing**: checkpoint polygons and GNSS/NavIC location fill in the post automatically and tag each verification, with an advisory outside designated crossings.
