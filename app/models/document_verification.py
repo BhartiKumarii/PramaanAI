@@ -53,6 +53,10 @@ class DocumentVerificationRecord(Base):
     case_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     screening_verification_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     identity_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Withdrawn records (e.g. synthetic test data) stay in the chain but are
+    # hidden from lists; not part of record_hash (migration 0022).
+    withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    withdrawn_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     prev_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     record_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     signature: Mapped[str] = mapped_column(String(64), nullable=False)

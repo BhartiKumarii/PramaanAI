@@ -127,7 +127,8 @@ def get(db: Session, verification_id: uuid.UUID) -> DocumentVerificationRecord |
 
 
 def list_recent(db: Session, limit: int = 50, created_by: str | None = None) -> list[DocumentVerificationRecord]:
-    q = select(DocumentVerificationRecord).order_by(DocumentVerificationRecord.sequence.desc()).limit(limit)
+    q = (select(DocumentVerificationRecord).where(DocumentVerificationRecord.withdrawn_at.is_(None))
+         .order_by(DocumentVerificationRecord.sequence.desc()).limit(limit))
     if created_by:
         q = q.where(DocumentVerificationRecord.created_by == created_by)
     return list(db.execute(q).scalars())

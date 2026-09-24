@@ -2,6 +2,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,9 @@ from app.schemas.admin import (
     UserUpdateRequest,
 )
 
+# Every route that creates, changes or deletes data (and the account list) is
+# admin-only (REVIEWER). The officer roster and checkpoint list are read-only
+# and open to any signed-in user.
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -51,7 +55,7 @@ def _device_response(db: Session, device) -> DeviceResponse:
 
 @router.get("/users", response_model=list[UserResponse], summary="List all system accounts")
 def list_users_route(
-    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+    _user: User = Depends(require_role(UserRole.REVIEWER)), db: Session = Depends(get_db)
 ) -> list[UserResponse]:
     return [_user_response(db, u) for u in list_users(db)]
 
@@ -59,7 +63,7 @@ def list_users_route(
 @router.post("/users", response_model=UserResponse, summary="Create a new account")
 def create_user_route(
     payload: UserCreateRequest,
-    _user: User = Depends(require_role()),
+    _user: User = Depends(require_role(UserRole.REVIEWER)),
     db: Session = Depends(get_db),
 ) -> UserResponse:
     checkpoint_id = uuid.UUID(payload.checkpoint_id) if payload.checkpoint_id else None
@@ -75,7 +79,7 @@ def create_user_route(
 def update_user_route(
     user_id: uuid.UUID,
     payload: UserUpdateRequest,
-    _user: User = Depends(require_role()),
+    _user: User = Depends(require_role(UserRole.REVIEWER)),
     db: Session = Depends(get_db),
 ) -> UserResponse:
     user = get_user(db, user_id)
@@ -97,7 +101,7 @@ def list_officers_route(
 
 @router.get("/devices", response_model=list[DeviceResponse], summary="List all registered field devices")
 def list_devices_route(
-    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+    _user: User = Depends(require_role(UserRole.REVIEWER)), db: Session = Depends(get_db)
 ) -> list[DeviceResponse]:
     return [_device_response(db, d) for d in list_devices(db)]
 
@@ -106,7 +110,7 @@ def list_devices_route(
 def update_device_route(
     device_id: uuid.UUID,
     payload: DeviceUpdateRequest,
-    _user: User = Depends(require_role()),
+    _user: User = Depends(require_role(UserRole.REVIEWER)),
     db: Session = Depends(get_db),
 ) -> DeviceResponse:
     device = get_device_row(db, device_id)
@@ -124,7 +128,7 @@ def update_device_route(
 def revoke_device_route(
     device_id: uuid.UUID,
     payload: DeviceRevokeRequest,
-    user: User = Depends(require_role()),
+    user: User = Depends(require_role(UserRole.REVIEWER)),
     db: Session = Depends(get_db),
 ) -> DeviceResponse:
     device = get_device_row(db, device_id)
@@ -142,7 +146,7 @@ def revoke_device_route(
 )
 def reactivate_device_route(
     device_id: uuid.UUID,
-    user: User = Depends(require_role()),
+    user: User = Depends(require_role(UserRole.REVIEWER)),
     db: Session = Depends(get_db),
 ) -> DeviceResponse:
     device = get_device_row(db, device_id)
@@ -155,7 +159,7 @@ def reactivate_device_route(
 
 @router.delete("/reset-screening", summary="Delete all screening cases, verifications, and audit data")
 def reset_screening_data(
-    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+    _user: User = Depends(require_role(UserRole.REVIEWER)), db: Session = Depends(get_db)
 ) -> dict:
     tables = ["case_notes", "officer_decisions", "audit_events", "stored_images",
                "blockchain_blocks", "cases", "verifications", "sync_queue_items"]
@@ -178,7 +182,7 @@ def reset_screening_data(
 
 @router.delete("/purge-demo-cases", summary="Delete only the seeded demo cases (BSA-20260916-*) and their verification records")
 def purge_demo_cases(
-    _user: User = Depends(require_role()), db: Session = Depends(get_db)
+    _user: User = Depends(require_role(UserRole.REVIEWER)), db: Session = Depends(get_db)
 ) -> dict:
     from app.models.case import Case
     from app.models.verification import VerificationRecord
@@ -213,3 +217,60 @@ def list_checkpoints_route(
         CheckpointResponse(id=str(c.id), code=c.code, name=c.name, location=c.location, is_active=c.is_active)
         for c in checkpoints
     ]
+
+class _TestCases(BaseModel):
+    case_numbers: list[str] = Field(min_length=1, max_length=100)
+
+
+@router.delete("/test-cases", summary="Remove synthetic test cases (e.g. from end-to-end checks)")
+def remove_test_cases(body: _TestCases, user: User = Depends(require_role(UserRole.REVIEWER)),
+                      db: Session = Depends(get_db)) -> dict:
+    """Delete the named cases and everything linked to them, only if every one
+    is synthetic test data (traveller name contains SYNTHETIC). The document
+    verification behind each case stays in the tamper-evident chain, marked
+    withdrawn and hidden from lists. The removal itself is audit-logged."""
+    from datetime import datetime, timezone
+    from app.models.case import Case
+    from app.models.document_verification import DocumentVerificationRecord
+    cases = db.query(Case).filter(Case.case_number.in_(body.case_numbers)).all()
+    found = {c.case_number for c in cases}
+    missing = sorted(set(body.case_numbers) - found)
+    not_test = sorted(c.case_number for c in cases if "SYNTHETIC" not in (c.traveler_name or "").upper())
+    if missing or not_test:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail={"missing": missing, "not_synthetic": not_test,
+                                    "message": "only existing synthetic test cases can be removed"})
+    now = datetime.now(timezone.utc)
+    removed, withdrawn = [], 0
+    for c in cases:
+        cid = str(c.id)
+        params = {"cid": cid}
+        for sql in ("DELETE FROM case_notes WHERE case_id = :cid",
+                    "DELETE FROM officer_decisions WHERE case_id = :cid",
+                    "DELETE FROM sync_queue_items WHERE case_id = :cid",
+                    "DELETE FROM network_relationships WHERE evidence_case_id = :cid",
+                    "DELETE FROM travel_events WHERE case_id = :cid",
+                    "DELETE FROM identity_embeddings WHERE case_id = :cid",
+                    "DELETE FROM audit_events WHERE case_id = :cid"):
+            db.execute(text(sql), _uuid_params(db, params))
+        if c.verification_id:
+            db.execute(text("DELETE FROM stored_images WHERE verification_id = :vid"),
+                       _uuid_params(db, {"vid": str(c.verification_id)}))
+        for rec in db.query(DocumentVerificationRecord).filter(DocumentVerificationRecord.case_id == cid):
+            rec.case_id = None
+            rec.withdrawn_at = now
+            rec.withdrawn_reason = f"synthetic test data (case {c.case_number}) removed by {user.username}"
+            withdrawn += 1
+        db.delete(c)
+        removed.append(c.case_number)
+    db.flush()
+    log_event(db, None, "TEST_DATA_REMOVED", user.id, reason="Removed synthetic test cases: " + ", ".join(removed))
+    db.commit()
+    return {"removed_cases": removed, "withdrawn_verifications": withdrawn}
+
+
+def _uuid_params(db: Session, params: dict) -> dict:
+    """UUID columns: native uuid on PostgreSQL, 32-char hex on SQLite."""
+    if db.get_bind().dialect.name == "postgresql":
+        return params
+    return {k: uuid.UUID(v).hex for k, v in params.items()}
