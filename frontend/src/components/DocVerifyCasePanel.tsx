@@ -42,6 +42,27 @@ const FIELD_LABEL: Record<string, string> = {
   sex_native: 'Sex (Devanagari)',
 }
 
+// Extracted fields grouped so the list reads like the document, not a dump.
+const FIELD_GROUPS: { title: string; keys: string[] }[] = [
+  { title: 'Person', keys: ['name', 'surname', 'given_names', 'name_native', 'relation_name', 'sex', 'sex_native',
+                            'date_of_birth', 'date_of_birth_bs', 'place_of_birth', 'nationality'] },
+  { title: 'Document', keys: ['document_number', 'passport_number', 'aadhaar_number', 'national_id_number',
+                              'citizenship_number', 'visa_number', 'permit_number', 'personal_number', 'visa_type',
+                              'visa_category', 'entries', 'duration', 'vehicle_classes', 'purpose', 'issuing_authority',
+                              'place_of_issue'] },
+  { title: 'Validity', keys: ['date_of_issue', 'valid_from', 'date_of_expiry'] },
+]
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+function prettyValue(key: string, value: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (m && key.startsWith('date') || m && key === 'valid_from') {
+    return `${Number(m![3])} ${MONTHS[Number(m![2]) - 1] ?? m![2]} ${m![1]}`
+  }
+  if (key === 'sex' || key === 'sex_native') return value === 'M' ? 'Male' : value === 'F' ? 'Female' : value
+  return value
+}
+
 const human = (s: string) => s.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
 
 function useAuthImage(path: string | null) {
@@ -235,24 +256,35 @@ export function DocVerifyCasePanel({ caseId, onLoaded }: { caseId: string; onLoa
         </Section>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Section title={`Extracted details — ${human(doc?.document_type.document_type ?? 'document')}`}>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Section title={`Extracted details — ${human(doc?.document_type.document_type ?? 'document')}`}
+          right={<span className="text-[10px] text-muted-foreground">Read by the server unless marked</span>}>
           {orderedFields.length === 0 ? <p className="text-sm text-muted-foreground">No printed details could be read.</p> : (
-            <dl className="divide-y divide-border/50">
-              {orderedFields.map((k) => {
-                const f = fields[k]
-                const src = SOURCE[f.source] ?? SOURCE.ocr
-                return (
-                  <div key={k} className="flex items-center justify-between gap-3 py-1.5">
-                    <dt className="text-xs text-muted-foreground">{FIELD_LABEL[k] ?? human(k)}</dt>
-                    <dd className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      {f.value}
-                      <span className={`rounded border px-1.5 py-0.5 text-[10px] ${src.cls}`}>{src.label}</span>
-                    </dd>
+            <div className="space-y-4">
+              {[...FIELD_GROUPS, { title: 'Other', keys: orderedFields.filter((k) => !FIELD_GROUPS.some((g) => g.keys.includes(k))) }]
+                .map((g) => ({ ...g, keys: g.keys.filter((k) => k in fields) }))
+                .filter((g) => g.keys.length > 0)
+                .map((g) => (
+                  <div key={g.title}>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-accent">{g.title}</p>
+                    <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                      {g.keys.map((k) => {
+                        const f = fields[k]
+                        const src = f.source !== 'ocr' ? SOURCE[f.source] : null
+                        return (
+                          <div key={k} className="min-w-0">
+                            <dt className="text-[11px] text-muted-foreground">{FIELD_LABEL[k] ?? human(k)}</dt>
+                            <dd className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-foreground break-words">
+                              {prettyValue(k, f.value)}
+                              {src && <span className={`rounded border px-1 py-px text-[9px] ${src.cls}`}>{src.label}</span>}
+                            </dd>
+                          </div>
+                        )
+                      })}
+                    </dl>
                   </div>
-                )
-              })}
-            </dl>
+                ))}
+            </div>
           )}
         </Section>
         <div className="space-y-4">

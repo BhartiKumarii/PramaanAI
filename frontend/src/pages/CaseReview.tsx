@@ -876,8 +876,8 @@ export function CaseReview() {
                 <Card><p className="text-sm text-muted-foreground">No document or photo captured for this case.</p></Card>
               )}
 
-              {/* OCR extracted fields as a clean grid */}
-              {Object.keys(ocr).length > 0 && (
+              {/* OCR extracted fields (earlier screening flow; Verify-document cases show them in the panel) */}
+              {!hasDocVerify && Object.keys(ocr).length > 0 && (
                 <Card title="Extracted Document Fields">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
                     {Object.entries(ocr).map(([key, value]) => {
