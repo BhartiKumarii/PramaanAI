@@ -129,7 +129,9 @@ class DocVerifyRepository(private val context: Context) {
                 // later sync is idempotent) instead of making the officer retake it.
                 EncryptedDocVerifyQueue.get(context).enqueue(request, analysis.localChecks)
                 DocVerifySyncWorker.enqueue(context)
-                Submission.Queued(analysis.localChecks, com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_server_busy))
+                Submission.Queued(analysis.localChecks, com.pramaanai.officer.ui.i18n.L.s(
+                    if (e.code() == 503) com.pramaanai.officer.R.string.rp_server_busy
+                    else com.pramaanai.officer.R.string.rp_server_error))
             } else {
                 Submission.Failed(if (e.code() == 422) com.pramaanai.officer.ui.i18n.L.f(com.pramaanai.officer.R.string.rp_regions_rejected, e.response()?.errorBody()?.string()?.take(200) ?: "")
                                   else com.pramaanai.officer.ui.i18n.L.f(com.pramaanai.officer.R.string.rp_request_rejected, e.code()))
