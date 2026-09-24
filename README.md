@@ -21,7 +21,9 @@
 > | Use | Username | Password |
 > |-----|----------|----------|
 > | Web console — admin (answers cases sent from the app) | `it_admin` | `BorderShield123` |
-> | Android app — field officer (post: Raxaul, India–Nepal) | `raxaul_officer` | `BorderShield123` |
+> | Android app — field officer, Raxaul (India–Nepal) | `raxaul_officer` | `BorderShield123` |
+> | Android app — field officer, Sunauli (India–Nepal) | `sunauli_officer` | `BorderShield123` |
+> | Android app — field officer, Jaigaon (India–Bhutan) | `jaigaon_officer` | `BorderShield123` |
 >
 > **Live Dashboard:** [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com)
 > **API Docs:** [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs)
@@ -148,7 +150,7 @@ A three-component system:
 - **Identity Network** — Visual graph of identity clusters and relationships
 - **Person Search** — Search across all screened individuals
 - **Document Intelligence** — Document type analytics, country distribution, classification insights
-- **Checkpoint Management** — Border checkpoint monitoring and status
+- **Checkpoint Management** — Border checkpoint monitoring and status. The demo posts are SSB Border Out Posts: **Raxaul** (Bihar) and **Sunauli** (Uttar Pradesh) on the India–Nepal border, and **Jaigaon** (West Bengal) on the India–Bhutan border. Each matches the official checkpoint reference, so an officer's post fills in the border type automatically.
 - **Registry Management** — View and manage mock central registry entries
 - **Audit Logs** — Complete audit trail with filtering
 - **Analytics & Reports** — Risk trends, screening volume, officer activity
@@ -340,7 +342,8 @@ Full implementation notes are in the [project report](Documentation/PramaanAI-Re
 # Docker (recommended)
 docker compose up --build
 docker compose exec app alembic upgrade head
-# demo accounts (raxaul_officer, it_admin, …) are seeded on start by docker-entrypoint.sh
+# demo posts (Raxaul, Sunauli, Jaigaon) and accounts (raxaul_officer, sunauli_officer, jaigaon_officer, it_admin)
+# are seeded on start by docker-entrypoint.sh
 
 # Without Docker
 python -m venv .venv && source .venv/bin/activate
