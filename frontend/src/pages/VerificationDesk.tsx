@@ -32,6 +32,21 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   voter_id: 'Voter ID',
 }
 
+function docTypeLabel(dt: string | null | undefined): string {
+  if (!dt) return '—'
+  return DOC_TYPE_LABELS[dt.toLowerCase()] ?? dt.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, ch => ch.toUpperCase())
+}
+
+// Result of the Verify-document checks (icon + label, never colour alone).
+const VERIFY_RESULT: Record<string, { label: string; cls: string; icon: string }> = {
+  PASS: { label: 'Verified', cls: 'text-status-clear', icon: '✓' },
+  REVIEW_REQUIRED: { label: 'Review required', cls: 'text-status-review', icon: '!' },
+  NOT_VERIFIED: { label: 'Not verified', cls: 'text-status-review', icon: '?' },
+  FAIL: { label: 'Check failed', cls: 'text-status-high', icon: '✕' },
+  OFFICIAL_VERIFICATION_REQUIRED: { label: 'Official check needed', cls: 'text-status-review', icon: '?' },
+  REGISTRY_NOT_AVAILABLE: { label: 'Registry not available', cls: 'text-muted-foreground', icon: '–' },
+}
+
 const STATUS_FILTER_OPTIONS: { label: string; value: CaseStatus | '' }[] = [
   { label: 'All Statuses', value: '' },
   { label: 'Awaiting Review', value: 'SENT' },
@@ -146,27 +161,35 @@ export function VerificationDesk() {
   const [docTypeFilter, setDocTypeFilter] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('priority')
   const [quickFilter, setQuickFilter] = useState<string | null>(null)
+  // Cases from the earlier screening flow and seeded demo data carry no
+  // document-verification record; they stay available but are hidden by default.
+  const [showEarlier, setShowEarlier] = useState(false)
+  const earlierCount = useMemo(() => (allCases.data ?? []).filter(c => c.source !== 'verify_document').length, [allCases.data])
+  const baseCases = useMemo(
+    () => (allCases.data ?? []).filter(c => showEarlier || c.source === 'verify_document'),
+    [allCases.data, showEarlier],
+  )
 
   // Computed stats
   const stats = useMemo(() => {
-    const cases = allCases.data ?? []
+    const cases = baseCases
     const awaitingReview = cases.filter(c => c.status === 'SENT' || c.status === 'REVIEW_REQUIRED').length
     const highPriority = cases.filter(c => c.priority === 'HIGH').length
     const recapture = cases.filter(c => c.status === 'SECONDARY_REVIEW').length
     const manualReview = cases.filter(c => c.status === 'HOLD_REFER').length
     const overdue = cases.filter(isOverdue).length
     return { awaitingReview, highPriority, recapture, manualReview, overdue }
-  }, [allCases.data])
+  }, [baseCases])
 
   // Unique document types for filter
   const docTypes = useMemo(() => {
-    const types = new Set((allCases.data ?? []).map(c => c.document_type).filter(Boolean))
+    const types = new Set(baseCases.map(c => c.document_type).filter(Boolean))
     return Array.from(types).sort()
-  }, [allCases.data])
+  }, [baseCases])
 
   // Filtered + sorted cases
   const visible = useMemo(() => {
-    let items = allCases.data ?? []
+    let items = baseCases
 
     // Quick filter from stat cards
     if (quickFilter === 'awaiting') items = items.filter(c => c.status === 'SENT' || c.status === 'REVIEW_REQUIRED')
@@ -211,7 +234,7 @@ export function VerificationDesk() {
     })
 
     return items
-  }, [allCases.data, search, statusFilter, priorityFilter, checkpointFilter, docTypeFilter, sortMode, quickFilter])
+  }, [baseCases, search, statusFilter, priorityFilter, checkpointFilter, docTypeFilter, sortMode, quickFilter])
 
   function toggleQuickFilter(key: string) {
     setQuickFilter(prev => prev === key ? null : key)
@@ -228,8 +251,16 @@ export function VerificationDesk() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">Verification Desk</h1>
         <p className="text-sm text-muted-foreground">
-          All cases requiring review, decision, or action — your operational workspace.
+          Cases sent from the app's Verify-document flow, with their verification result — your operational workspace.
         </p>
+        {earlierCount > 0 && (
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={showEarlier} onChange={e => setShowEarlier(e.target.checked)}
+              className="h-3.5 w-3.5 accent-[hsl(var(--accent))]" />
+            Include {earlierCount} case{earlierCount !== 1 ? 's' : ''} from the earlier screening flow and demo data
+            (no document-verification record)
+          </label>
+        )}
       </div>
 
       {/* Stat cards */}
@@ -458,7 +489,7 @@ export function VerificationDesk() {
           <p className="mt-3 text-sm font-medium text-foreground">
             {search || statusFilter || priorityFilter || checkpointFilter || docTypeFilter || quickFilter
               ? 'No cases match these filters.'
-              : 'No cases yet.'}
+              : showEarlier || earlierCount === 0 ? 'No cases yet.' : 'No Verify-document cases yet.'}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {search || quickFilter ? 'Try adjusting your search or filters.' : 'Cases will appear here when officers submit screenings from the field.'}
@@ -505,7 +536,7 @@ export function VerificationDesk() {
                       {/* Person */}
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-foreground truncate max-w-[160px]">
-                          {c.traveler_name || '—'}
+                          {c.traveler_name || <span className="italic text-muted-foreground">Name not read</span>}
                         </p>
                         {c.nationality && (
                           <p className="text-[11px] text-muted-foreground">{c.nationality}</p>
@@ -515,8 +546,12 @@ export function VerificationDesk() {
                       {/* Document */}
                       <td className="whitespace-nowrap px-4 py-3">
                         <span className="text-xs text-foreground">
-                          {DOC_TYPE_LABELS[c.document_type?.toLowerCase() ?? ''] ?? c.document_type ?? '—'}
+                          {docTypeLabel(c.document_type)}
                         </span>
+                        {c.country && <p className="text-[11px] text-muted-foreground">{docTypeLabel(c.country)}</p>}
+                        {c.source !== 'verify_document' && (
+                          <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground/70">Earlier flow</p>
+                        )}
                       </td>
 
                       {/* Checkpoint */}
@@ -534,11 +569,17 @@ export function VerificationDesk() {
                       {/* Status / Risk */}
                       <td className="px-4 py-3">
                         <StatusBadge status={c.status} />
+                        {c.verification_status && VERIFY_RESULT[c.verification_status] && (
+                          <p className={`mt-1 text-[11px] font-semibold ${VERIFY_RESULT[c.verification_status].cls}`}>
+                            <span aria-hidden className="mr-1">{VERIFY_RESULT[c.verification_status].icon}</span>
+                            {VERIFY_RESULT[c.verification_status].label}
+                          </p>
+                        )}
                         {c.risk_level && (
                           <p className={`mt-1 text-[11px] font-medium ${riskLevelColor(c.risk_level)}`}>
                             {humanizeRiskLevel(c.risk_level)}
                             {c.risk_score != null && (
-                              <span className="ml-1 opacity-60">({Math.round(c.risk_score)}%)</span>
+                              <span className="ml-1 opacity-60">({Math.round(c.risk_score)}/100)</span>
                             )}
                           </p>
                         )}
@@ -581,7 +622,7 @@ export function VerificationDesk() {
           {/* Table footer */}
           <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground flex items-center justify-between">
             <span>
-              Showing {visible.length} of {(allCases.data ?? []).length} cases
+              Showing {visible.length} of {baseCases.length} cases{!showEarlier && earlierCount > 0 ? ` (${earlierCount} earlier hidden)` : ''}
             </span>
             <button
               onClick={() => allCases.refetch()}

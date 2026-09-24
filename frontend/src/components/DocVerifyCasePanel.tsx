@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { baseURL } from '../api/client'
-import { getVerificationByCase, type CheckResult, type VerificationEnvelope } from '../api/docverify'
+import { getVerificationByCase, type CheckResult, type VerificationEnvelope, type VerificationOutcome } from '../api/docverify'
 
 /* Document verification behind a screening case, for the reviewing admin:
  * what the field officer's phone captured (document image + live photo,
@@ -70,7 +70,7 @@ function Section({ title, children, right }: { title: string; children: React.Re
   )
 }
 
-export function DocVerifyCasePanel({ caseId, onLoaded }: { caseId: string; onLoaded?: (found: boolean) => void }) {
+export function DocVerifyCasePanel({ caseId, onLoaded }: { caseId: string; onLoaded?: (result: VerificationOutcome | null) => void }) {
   const [env, setEnv] = useState<VerificationEnvelope | null | undefined>(undefined)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
@@ -79,8 +79,8 @@ export function DocVerifyCasePanel({ caseId, onLoaded }: { caseId: string; onLoa
 
   useEffect(() => {
     getVerificationByCase(caseId)
-      .then((e) => { setEnv(e); onLoaded?.(e != null) })
-      .catch(() => { setError('Could not load the document verification for this case.'); onLoaded?.(false) })
+      .then((e) => { setEnv(e); onLoaded?.(e?.result ?? null) })
+      .catch(() => { setError('Could not load the document verification for this case.'); onLoaded?.(null) })
   }, [caseId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const r = env?.result

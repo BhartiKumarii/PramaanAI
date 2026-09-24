@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { DocVerifyCasePanel } from '../components/DocVerifyCasePanel'
+import { suggestAction, type ActionSuggestion } from '../lib/suggestAction'
+import type { VerificationOutcome } from '../api/docverify'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   addCaseNote,
@@ -470,12 +472,50 @@ const RECAPTURE_REASONS = [
   'Other',
 ]
 
-function AdminDecisionPanel({ caseId, onDecisionRecorded }: { caseId: string; onDecisionRecorded: () => void }) {
+/** Suggestion for cases from the earlier screening flow (no document-verification
+ * record): from the stored risk result only, worded as next steps. */
+function suggestFromRisk(v: VerificationRecordResponse | null | undefined): ActionSuggestion | null {
+  const risk = v?.risk
+  if (!risk) return null
+  const top = risk.top_reason ? humanizeReason(risk.top_reason) : ''
+  if (risk.level === 'LOW_RISK') return {
+    action: 'CLEAR', title: 'Clear suggested', why: ['Low risk indicator', ...(top ? [top] : [])],
+    reason: 'Reviewed: no inconsistency found in the recorded checks.', recapture: [],
+  }
+  return {
+    action: 'HOLD_REFER', title: 'Manual review suggested',
+    why: [risk.level === 'HIGH_RISK' ? 'High risk indicator' : 'Medium risk indicator', ...(top ? [top] : [])],
+    reason: `Referred for manual verification${top ? `: ${top}` : ''}. Compare the document and the traveller in person before deciding.`,
+    recapture: [],
+  }
+}
+
+const SUGGESTION_BUTTON: Record<string, string> = {
+  CLEAR: 'Use suggestion — Clear',
+  SECONDARY_REVIEW: 'Use suggestion — Re-capture',
+  HOLD_REFER: 'Use suggestion — Manual review',
+}
+
+function AdminDecisionPanel({ caseId, onDecisionRecorded, suggestion }: {
+  caseId: string; onDecisionRecorded: () => void; suggestion?: ActionSuggestion | null
+}) {
   const [action, setAction] = useState<AdminAction>(null)
   const [reason, setReason] = useState('')
   const [selectedReasons, setSelectedReasons] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  function applySuggestion(sg: ActionSuggestion) {
+    setError(null)
+    setAction(sg.action)
+    if (sg.action === 'SECONDARY_REVIEW') {
+      const picks = sg.recapture.filter((r) => RECAPTURE_REASONS.includes(r))
+      setSelectedReasons(picks)
+      setReason(picks.length ? '' : sg.reason)
+    } else {
+      setReason(sg.reason)
+    }
+  }
 
   async function submit(decision: DecisionValue, finalReason: string) {
     if (decision !== 'CLEAR' && !finalReason.trim()) { setError('Please provide a reason.'); return }
@@ -567,6 +607,24 @@ function AdminDecisionPanel({ caseId, onDecisionRecorded }: { caseId: string; on
   )
 
   return (
+    <div className="space-y-3">
+    {suggestion && (
+      <div className={`rounded-md border p-3 ${suggestion.action === 'CLEAR' ? 'border-status-clear/40 bg-status-clear-bg'
+        : suggestion.action === 'SECONDARY_REVIEW' ? 'border-status-review/40 bg-status-review-bg' : 'border-status-high/40 bg-status-high-bg'}`}>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Automatic suggestion</p>
+        <p className="mt-0.5 text-sm font-semibold text-foreground">{suggestion.title}</p>
+        <ul className="mt-1.5 space-y-1">
+          {suggestion.why.slice(0, 5).map((w, i) => (
+            <li key={i} className="flex gap-1.5 text-[11px] text-foreground/90"><span aria-hidden>•</span><span>{w}</span></li>
+          ))}
+        </ul>
+        <button onClick={() => applySuggestion(suggestion)}
+          className="mt-2 w-full rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent/90">
+          {SUGGESTION_BUTTON[suggestion.action]}
+        </button>
+        <p className="mt-1.5 text-[10px] text-muted-foreground">Generated from the checks. Nothing is recorded until you confirm; edit the reason as needed.</p>
+      </div>
+    )}
     <div className="grid grid-cols-2 gap-2">
       <button onClick={() => { setAction('CLEAR'); setReason(''); setError(null) }}
         className="flex items-center justify-center gap-1.5 rounded-md border border-status-clear/40 bg-status-clear-bg px-2 py-2 text-xs font-medium text-status-clear hover:bg-status-clear/10">
@@ -584,6 +642,7 @@ function AdminDecisionPanel({ caseId, onDecisionRecorded }: { caseId: string; on
         className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-2 text-xs font-medium text-foreground hover:bg-secondary/80">
         <span>↑</span> Escalate
       </button>
+    </div>
     </div>
   )
 }
@@ -623,7 +682,8 @@ export function CaseReview() {
   const [showDiagnostics, setShowDiagnostics] = useState(false)
   // Cases from Verify document carry a full document verification; the older
   // screening summary blocks below would only repeat it less precisely.
-  const [hasDocVerify, setHasDocVerify] = useState(false)
+  const [docVerify, setDocVerify] = useState<VerificationOutcome | null>(null)
+  const hasDocVerify = docVerify != null
 
   const caseQuery = useAsync(() => getCase(caseId!), [caseId])
   const identityHistory = useAsync(() => getCaseIdentityHistory(caseId!), [caseId])
@@ -780,7 +840,7 @@ export function CaseReview() {
           {/* ── OVERVIEW TAB ── */}
           {tab === 'overview' && (
             <div className="space-y-4">
-              <DocVerifyCasePanel caseId={c.id} onLoaded={setHasDocVerify} />
+              <DocVerifyCasePanel caseId={c.id} onLoaded={setDocVerify} />
               {/* Identity summary */}
               <Card>
                 <div className="flex items-start gap-4">
@@ -1255,7 +1315,8 @@ export function CaseReview() {
               <p className="text-[10px] text-muted-foreground mb-3">
                 Review all evidence before recording your decision. Every action is permanently logged.
               </p>
-              <AdminDecisionPanel caseId={c.id} onDecisionRecorded={() => caseQuery.refetch()} />
+              <AdminDecisionPanel caseId={c.id} onDecisionRecorded={() => caseQuery.refetch()}
+                suggestion={docVerify ? suggestAction(docVerify) : suggestFromRisk(v)} />
             </div>
           )}
 
@@ -1298,9 +1359,9 @@ export function CaseReview() {
                   let reason = humanizeReason(risk?.top_reason ?? '')
                   if (reason.length > 120) reason = reason.slice(0, 120) + '…'
                   const actionMap: Record<string, string> = {
-                    HIGH_RISK: 'Entry not recommended without supervisor approval. Refer to senior officer immediately.',
-                    MEDIUM_RISK: 'Secondary review recommended before permitting entry.',
-                    LOW_RISK: 'No issues detected. Document appears valid.',
+                    HIGH_RISK: 'Possible inconsistency detected — refer for manual verification and compare the traveller in person.',
+                    MEDIUM_RISK: 'Review required — confirm the flagged details against the document before deciding.',
+                    LOW_RISK: 'No inconsistency found in the recorded checks.',
                   }
                   const actionText = actionMap[risk?.level ?? ''] ?? 'Further review recommended.'
                   setNoteText(`Document reviewed at ${checkpoint}. ${riskLevel} — ${docType}${nat ? ` (${nat})` : ''}. ${reason ? reason + '. ' : ''}${actionText}`)

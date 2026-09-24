@@ -202,6 +202,10 @@ export interface CaseListItem {
   sent_at: string | null
   risk_level: string | null
   risk_score: number | null
+  /** verify_document: opened by the app's Verify-document flow; earlier_screening: earlier flow or seeded demo data */
+  source?: 'verify_document' | 'earlier_screening'
+  verification_status?: string | null
+  country?: string | null
 }
 
 export interface CaseDecisionSummary {

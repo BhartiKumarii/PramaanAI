@@ -100,6 +100,10 @@ def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse
         if v:
             verifications[str(v.id)] = v
 
+    from app.models.document_verification import DocumentVerificationRecord
+    docverify = {r.case_id: r for r in db.query(DocumentVerificationRecord)
+                 .filter(DocumentVerificationRecord.case_id.in_([str(c.id) for c in cases]))}
+
     def _risk(c: Case, attr: str):
         if not c.verification_id:
             return None
@@ -122,8 +126,11 @@ def _serialize_list(db: Session, cases: list[Case]) -> list[CaseListItemResponse
             traveler_name=c.traveler_name,
             created_at=c.created_at.isoformat(),
             sent_at=c.sent_at.isoformat() if c.sent_at else None,
-            risk_level=_risk(c, "level"),
-            risk_score=_risk(c, "score"),
+            risk_level=(f"{dv.risk_level}_RISK" if (dv := docverify.get(str(c.id))) else _risk(c, "level")),
+            risk_score=dv.risk_score if dv else _risk(c, "score"),
+            source="verify_document" if dv else "earlier_screening",
+            verification_status=dv.overall_status if dv else None,
+            country=dv.country if dv else None,
         )
         for c in cases
     ]

@@ -22,6 +22,12 @@ class CaseListItemResponse(BaseModel):
     sent_at: str | None = None
     risk_level: str | None = None
     risk_score: int | None = None
+    # "verify_document": opened by the Verify-document flow (region crops,
+    # full explainable result). "earlier_screening": the earlier screening
+    # flow or seeded demo data — no document-verification record behind it.
+    source: str = "earlier_screening"
+    verification_status: str | None = None  # PASS / REVIEW_REQUIRED / NOT_VERIFIED / …
+    country: str | None = None
 
 
 class CaseDecisionSummary(BaseModel):
