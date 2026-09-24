@@ -47,4 +47,4 @@ yolo11n.pt
 
 # Local model weights (face models ~270 MB, YOLO training weights). The Android
 # app ships its own on-device YOLO model in android/app/src/main/assets/.
-models/
+/models/

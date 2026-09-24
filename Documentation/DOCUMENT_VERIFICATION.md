@@ -117,7 +117,7 @@ Response (abridged):
   threads (default 0 = half the cores, max 4). RapidOCR's own default of every
   core oversubscribed the CPU and was ~2x slower with identical output.
 * **Horizontal scaling.** No per-request state is kept in memory and the
-  verify endpoints do not store images, so more `uvicorn` workers (`WEB_CONCURRENCY` in
+  verify endpoints do not store images, so more `uvicorn` workers (`PRAMAAN_WORKERS` in
   `docker-entrypoint.sh`, ~1–1.5 GB RAM each) or more instances behind a load
   balancer scale it out. `GET /api/v1/status` reports per-instance load.
 * **Idempotency.** `client_request_id` (the offline queue item id) makes
