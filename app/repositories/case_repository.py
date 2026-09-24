@@ -16,10 +16,13 @@ from app.models.user import User, UserRole
 def _generate_case_number(db: Session) -> str:
     today = date.today().strftime("%Y%m%d")
     prefix = f"BSA-{today}-"
-    count_today = db.execute(
-        select(func.count()).select_from(Case).where(Case.case_number.like(f"{prefix}%"))
+    # Highest number used today + 1, not a count: after a case is removed the
+    # count falls behind the numbers in use and would reissue one that exists.
+    last = db.execute(
+        select(func.max(Case.case_number)).where(Case.case_number.like(f"{prefix}%"))
     ).scalar_one()
-    return f"{prefix}{count_today + 1:04d}"
+    n = int(last.rsplit("-", 1)[1]) + 1 if last and last.rsplit("-", 1)[1].isdigit() else 1
+    return f"{prefix}{n:04d}"
 
 
 def _to_uuid(value) -> uuid.UUID:

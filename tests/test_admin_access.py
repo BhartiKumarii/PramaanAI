@@ -34,3 +34,21 @@ def test_test_case_removal_refuses_unknown_or_real_cases(client, db_session):
     h = {"Authorization": f"Bearer {_token(client, 'acc_admin')}"}
     r = client.request("DELETE", "/admin/test-cases", headers=h, json={"case_numbers": ["BSA-00000000-0000"]})
     assert r.status_code == 400 and r.json()["detail"]["missing"] == ["BSA-00000000-0000"]
+
+
+def test_case_number_skips_numbers_in_use_after_a_removal(db_session):
+    """Removing a case must not make the next case reuse an existing number."""
+    from datetime import date
+    from app.models.case import Case, CaseStatus, CasePriority
+    from app.repositories.case_repository import _generate_case_number
+    import uuid
+    from app.models.user import UserRole
+    cp = _checkpoint(db_session)
+    u = _make_user(db_session, "num_officer", UserRole.OFFICER, cp)
+    prefix = f"BSA-{date.today():%Y%m%d}-"
+    for n in (2, 5):  # gap: 0001, 0003 and 0004 removed
+        db_session.add(Case(case_number=f"{prefix}{n:04d}", status=CaseStatus.PENDING, priority=CasePriority.LOW,
+                            checkpoint_id=uuid.UUID(str(cp.id)), field_officer_id=uuid.UUID(str(u.id)),
+                            document_type="passport", nationality="X"))
+    db_session.commit()
+    assert _generate_case_number(db_session) == f"{prefix}0006"
