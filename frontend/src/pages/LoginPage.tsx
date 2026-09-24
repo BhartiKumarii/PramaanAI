@@ -93,9 +93,9 @@ export function LoginPage() {
           <button
             type="button"
             className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
-            onClick={() => { setUsername('officer1'); setPassword('BorderShield123'); }}
+            onClick={() => { setUsername('admin_reviewer'); setPassword('BorderShield123'); }}
           >
-            Admin Officer
+            Admin (reviewer)
           </button>
         </div>
       </div>
