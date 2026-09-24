@@ -1024,5 +1024,5 @@
     <string name="db_good_afternoon">শুভ আবেলি, %1$s</string>
     <string name="db_good_evening">শুভ সন্ধিয়া, %1$s</string>
     <string name="dv_field_relation_name">পুত্ৰ / কন্যা / পত্নী</string>
-    <string name="rp_server_error">চাৰ্ভাৰত সমস্যা হ'ল — সংৰক্ষিত, স্বয়ংক্ৰিয়ভাৱে সত্যাপিত হ'ব</string>
+    <string name="rp_server_error">চাৰ্ভাৰত সমস্যা হ\'ল — সংৰক্ষিত, স্বয়ংক্ৰিয়ভাৱে সত্যাপিত হ'ব</string>
 </resources>
