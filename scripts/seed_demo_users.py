@@ -31,6 +31,7 @@ DEMO_ACCOUNTS: list[tuple[str, str | None, UserRole]] = [
     ("raxaul_officer", "RAX", UserRole.OFFICER),
     ("officer1", None, UserRole.OFFICER),  # backward compatibility
     ("admin_reviewer", None, UserRole.REVIEWER),  # web admin / verifier
+    ("it_admin", None, UserRole.REVIEWER),  # web console login (REVIEWER = full web admin)
 ]
 
 

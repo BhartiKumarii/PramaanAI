@@ -33,15 +33,12 @@ import androidx.navigation.navArgument
 import com.pramaanai.officer.data.ScreeningRepository
 import com.pramaanai.officer.data.remote.AuthSession
 import com.pramaanai.officer.data.remote.SessionEvents
-import com.pramaanai.officer.ui.alerts.AlertsScreen
 import com.pramaanai.officer.ui.analytics.AnalyticsScreen
 import com.pramaanai.officer.ui.audit.AuditLogScreen
 import com.pramaanai.officer.ui.auth.LoginScreen
 import com.pramaanai.officer.ui.dashboard.DashboardScreen
-import com.pramaanai.officer.ui.history.HistoryScreen
 import com.pramaanai.officer.ui.more.MoreScreen
 import com.pramaanai.officer.ui.profile.OfficerProfileScreen
-import com.pramaanai.officer.ui.queue.QueueScreen
 import com.pramaanai.officer.ui.review.ReviewScreen
 import com.pramaanai.officer.ui.settings.SettingsScreen
 import com.pramaanai.officer.ui.shell.AppShell

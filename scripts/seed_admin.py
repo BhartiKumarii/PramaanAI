@@ -1,4 +1,4 @@
-"""Dev-only seed script: creates an initial ADMIN user for local testing.
+"""Dev-only seed script: creates a web-admin (REVIEWER) user for local testing.
 There is no public /auth/register endpoint by design — users are
 provisioned out-of-band.
 
@@ -19,10 +19,10 @@ def seed_admin(username: str, password: str) -> None:
         if existing:
             print(f"User '{username}' already exists (role={existing.role.value}); skipping.")
             return
-        user = User(username=username, hashed_password=hash_password(password), role=UserRole.IT_ADMIN)
+        user = User(username=username, hashed_password=hash_password(password), role=UserRole.REVIEWER)
         db.add(user)
         db.commit()
-        print(f"Created ADMIN user '{username}'.")
+        print(f"Created REVIEWER (web admin) user '{username}'.")
     finally:
         db.close()
 
