@@ -60,6 +60,9 @@ _LABELS: dict[str, list[str]] = {
     "given_names": ["given names", "given name"],
     "name": ["name of holder", "name of bearer", "name of the bearer", "name of the holder", "bearer's name",
              "full name", "holder's name", "name"],
+    "relation_name": ["son/daughter/wife of", "son / daughter / wife of", "s/d/w of", "s/o", "d/o", "w/o",
+                      "father's name", "fathers name", "father name", "husband's name", "husband name",
+                      "son of", "daughter of", "wife of"],
     "nationality": ["nationality"],
     "sex": ["sex", "gender"],
     "date_of_birth": ["date of birth", "d.o.b", "dob", "birth date"],
@@ -89,11 +92,11 @@ _LABELS: dict[str, list[str]] = {
 _AADHAAR_NOT_NAME = re.compile(r"GOVERNMENT|AADHAAR|UNIQUE|AUTHORITY|SPECIMEN|OFINDIA|"
                                r"\b(?:MALE|FEMALE|DOB|INDIA|BIRTH|YEAR)\b")
 _AADHAAR_RE = re.compile(r"\b([2-9]\d{3})\s?(\d{4})\s?(\d{4})\b")
-_DL_RE = re.compile(r"\b([A-Z]{2})[ -]?(\d{2})[ -]?((?:19|20)\d{2})[ -]?(\d{7})\b")
+_DL_RE = re.compile(r"\b([A-Z]{2})[ -]?(\d{2,3})[ -]?((?:19|20)\d{2})[ -]?(\d{7})\b")
 _PASSPORT_RE = re.compile(r"\b([A-Z][0-9]{7})\b")
 
 _DATE_FIELDS = {"date_of_birth", "date_of_issue", "date_of_expiry", "valid_from"}
-_TEXT_FIELDS = {"name", "surname", "given_names", "nationality", "place_of_issue", "place_of_birth",
+_TEXT_FIELDS = {"name", "relation_name", "surname", "given_names", "nationality", "place_of_issue", "place_of_birth",
                 "issuing_authority", "visa_type", "visa_category", "purpose"}
 _NUMBER_FIELDS = {"document_number", "passport_number", "visa_number", "permit_number", "personal_number"}
 
@@ -196,6 +199,17 @@ def extract_fields(lines: list[OcrLine], document_type: DocumentType) -> dict[st
                 aligned = sorted(below_row, key=lambda b: abs(b.bbox[0] - box.bbox[0]))
                 if aligned and abs(aligned[0].bbox[0] - box.bbox[0]) < 3 * height + 40:
                     candidates.append((aligned[0].text, aligned[0]))
+            # Some cards print the value a little ABOVE its label, to the right
+            # (Indian licences: "DEEP CHAND ..." sits above "Name:"). Last
+            # resort, text fields only, and only the nearest box on the row
+            # immediately above that starts right of the label.
+            if field in _TEXT_FIELDS and r_idx > 0:
+                above = [b for b in rows[r_idx - 1]
+                         if b.bbox[0] >= box.bbox[2] - 8 and b.bbox[0] - box.bbox[2] <= 12 * height
+                         and box.bbox[1] - b.bbox[3] <= 0.9 * height]
+                if above:
+                    near = min(above, key=lambda b: b.bbox[0])
+                    candidates.append((near.text, near))
             for value, src in candidates:
                 if _valid_value(field, value):
                     fields[field] = FieldValue(value=value.strip(" :;,"), confidence=src.confidence, source="ocr",
@@ -251,7 +265,7 @@ def extract_fields(lines: list[OcrLine], document_type: DocumentType) -> dict[st
         # above the DOB line. Only a Latin-letter, 2-4 word line qualifies.
         rows_text = group_rows(lines)
         for r_idx, row in enumerate(rows_text):
-            if any(re.search(r"\bDOB\b|YEAR OF BIRTH|जन्म", b.text, re.IGNORECASE) for b in row) and r_idx > 0:
+            if any(re.search(r"\bD[O0]B\b|YEAR OF BIRTH|जन्म", b.text, re.IGNORECASE) for b in row) and r_idx > 0:
                 # 1-4 words: PP-OCR sometimes drops the spaces of a printed
                 # name ("MEERASYNTHETICRAO"); it is kept exactly as read,
                 # never re-split by guesswork. Header/label words never count.

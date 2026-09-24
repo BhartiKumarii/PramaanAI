@@ -346,11 +346,11 @@ def build() -> None:
                 "57 labelled photographs of real documents (kept local, never published)."),
               table([
                   ["Measure", "Result"],
-                  ["Overall status matches expectation (46 synthetic cases)", "0.891"],
-                  ["Expected check-level outcomes (synthetic)", "53 / 56"],
-                  ["Needs-attention detection, F1 (synthetic)", "0.925 (precision 0.939, recall 0.912)"],
+                  ["Overall status matches expectation (46 synthetic cases)", "0.913"],
+                  ["Expected check-level outcomes (synthetic)", "54 / 56"],
+                  ["Needs-attention detection, F1 (synthetic)", "0.939 (precision 0.969, recall 0.912)"],
                   ["OCR key fields (synthetic)", "18 / 18"],
-                  ["Document type, real photographs", "0.877 (57 documents)"],
+                  ["Document type, real photographs", "0.982 (54 labelled documents; was 0.86)"],
                   ["Phone path vs server path (39 real captures replayed)", "status 38/39, type 39/39"],
                   ["Devanagari text on Nepal ID / citizenship / permit / Aadhaar", "0 characters before; now read "
                                                                                    "(conf. 0.76–0.93), +0.07 s/doc"],

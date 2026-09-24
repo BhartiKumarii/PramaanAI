@@ -842,11 +842,12 @@ internal fun caseStatusLabel(status: String?): String = when (status) {
     else -> humanize(status)
 }
 
-private val FIELD_ORDER = listOf("name", "surname", "given_names", "document_number", "aadhaar_number", "visa_number",
+private val FIELD_ORDER = listOf("name", "relation_name", "surname", "given_names", "document_number", "aadhaar_number", "visa_number",
     "permit_number", "nationality", "sex", "date_of_birth", "place_of_birth", "date_of_issue", "valid_from", "date_of_expiry",
     "issuing_authority", "vehicle_classes", "visa_type", "entries", "duration")
 
 private fun fieldLabel(key: String) = when (key) {
+    "relation_name" -> L.s(R.string.dv_field_relation_name)
     "name_native" -> L.s(R.string.dv_field_name_native)
     "date_of_birth_bs" -> L.s(R.string.dv_field_dob_bs)
     "national_id_number" -> L.s(R.string.dv_field_national_id)

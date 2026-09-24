@@ -1023,4 +1023,5 @@
     <string name="db_good_morning">सुप्रभात, %1$s</string>
     <string name="db_good_afternoon">नमस्कार, %1$s</string>
     <string name="db_good_evening">शुभ संध्या, %1$s</string>
+    <string name="dv_field_relation_name">पुत्र / पुत्री / पत्नी</string>
 </resources>

@@ -18,10 +18,13 @@ UNCERTAIN_THRESHOLD = 0.55
 # (pattern, family, weight). Families are resolved to a DocumentType together
 # with the country below.
 _KEYWORDS: list[tuple[str, str, float]] = [
-    (r"\bPASSPORT\b|पासपोर्ट|राहदानी", "passport", 8),
+    (r"\bPASSPORT\b(?!\s*PAGE)|पासपोर्ट|राहदानी", "passport", 8),  # "passport page" = visa/stamp page header
     (r"\bP\s?<\s?[A-Z]{3}", "passport", 12),
     (r"DRIV\w*\s*LICEN[CS]E|DRIVING\s*LICENSE|LICEN[CS]E\s*NO|\bDL\s*NO", "driving_licence", 14),
     (r"MOTOR\s*DRIVING|MOTOR\s*VEHICLE|\bCOV\b|\bLMV\b|\bMCWG\b|LICEN[CS]ING\s*AUTHORITY|\bRTO\b", "driving_licence", 5),
+    (r"INTERNATIONAL\s*DRIVING\s*PERMIT|INTERNATIONAL\s*MOTOR\s*TRAFFIC|CONVENTION\s*ON\s*ROAD\s*TRAFFIC", "driving_licence", 16),
+    # Bhutan (RSTA) licences carry an offences / endorsements table and blood group
+    (r"OFFENCES|ENDORSEMENTS?|ROAD\s*SAFETY|\bRSTA\b|BLOOD\s*GROUP", "driving_licence", 6),
     (r"AADHAAR|\bUIDAI\b|UNIQUE\s*IDENTIFICATION|आधार", "aadhaar", 16),
     (r"TOURIST\s*VISA|ENTRY\s*VISA|VISA\s*NO|VISA\s*TYPE|VISA\s*PLAN|TYPE\s*OF\s*VISA|VISA\s*ON\s*ARRIVAL", "visa", 14),
     (r"\bVISA\b", "visa", 7),
@@ -99,10 +102,15 @@ def classify(text: str, mrz: dict | None, regions: list[Region], identified_stam
         if fam:
             family_scores[fam] = family_scores.get(fam, 0) + 25
             basis.append(f"MRZ document code {mrz.get('document_code')!r} ({mrz.get('format')}) issued by {mrz.get('issuing_country')}")
+        printed_strong = max(countries.values(), default=0) >= 6  # e.g. "REPUBLIC OF INDIA" printed
         if mrz_country:
             countries[mrz_country] = countries.get(mrz_country, 0) + 20
-        elif mrz.get("issuing_country"):
+        elif mrz.get("issuing_country") and not printed_strong:
             countries[mrz["issuing_country"]] = countries.get(mrz["issuing_country"], 0) + 20
+        elif mrz.get("issuing_country"):
+            # An unfamiliar MRZ country against a clearly printed one is
+            # usually an OCR misread of the MRZ ("NDP" for IND): weigh it less.
+            countries[mrz["issuing_country"]] = countries.get(mrz["issuing_country"], 0) + 4
 
     labels = {r.label for r in regions}
     if RegionLabel.MRZ in labels:
@@ -127,7 +135,8 @@ def classify(text: str, mrz: dict | None, regions: list[Region], identified_stam
         top_family, top_score = ranked[1]
 
     country = max(countries.items(), key=lambda kv: kv[1])[0] if countries else None
-    if top_family == "passport" and mrz_country is None and mrz and mrz.get("issuing_country"):
+    if top_family == "passport" and mrz_country is None and mrz and mrz.get("issuing_country") and \
+            countries.get(country or "", 0) < 6:
         country = mrz["issuing_country"]
     doc_type, resolved_country = _resolve("evisa" if top_family == "visa" and evisa else top_family, country)
 

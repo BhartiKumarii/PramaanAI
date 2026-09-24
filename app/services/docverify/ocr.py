@@ -114,6 +114,61 @@ def ocr_image(rgb: np.ndarray, offset: tuple[int, int] = (0, 0), scale: float = 
     return lines
 
 
+_GLUED_WORDS = re.compile(r"[A-Za-z]{11,}|[a-z]{3,}[A-Z][a-z]{2,}")
+_GLUED_DATES = re.compile(r"\d{4}\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}")
+_DATE_IN = re.compile(r"\d{1,2}[-/.]\d{1,2}[-/.](?:\d{4}|\d{2})")
+
+
+def respace_lines(rgb: np.ndarray, lines: list[OcrLine]) -> list[OcrLine]:
+    """Fix lines where PP-OCR ran words or dates together.
+
+    Bold capitals and tightly set dates are often read without their spaces
+    ("DEEPCHANDCHANWARIA", "06-05-202505-05-2030"). Re-reading just that line
+    (recognition only, padded, original size) usually restores them. A new
+    reading is accepted only if it has exactly the same letters and digits,
+    so this can only add spaces, never change what was read. Two or more
+    dates on one line are split into separate boxes (x estimated from the
+    character position) so each can sit under its own label."""
+    out: list[OcrLine] = []
+    h, w = rgb.shape[:2]
+    for line in lines:
+        text = line.text
+        if "<" in text or not (_GLUED_WORDS.search(text) or _GLUED_DATES.search(text)):
+            out.append(line)
+            continue
+        x0, y0, x1, y1 = line.bbox
+        crop = rgb[max(0, y0 - 4):min(h, y1 + 4), max(0, x0 - 4):min(w, x1 + 4)]
+        if crop.size == 0:
+            out.append(line)
+            continue
+        key = re.sub(r"[^A-Za-z0-9]", "", text).upper()
+        new = text
+        for scale in (1, 2):  # the two sizes restore different gaps; keep the best
+            c = crop if scale == 1 else cv2.resize(crop, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+            c = cv2.copyMakeBorder(c, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+            try:
+                with _OCR.borrow() as engine:
+                    res, _ = engine(c, use_det=False, use_cls=False)
+            except Exception:
+                res = None
+            cand = str(res[0][0]).strip() if res else ""
+            if re.sub(r"[^A-Za-z0-9]", "", cand).upper() == key and cand.count(" ") > new.count(" "):
+                new = cand
+        if new == text:
+            out.append(line)
+            continue
+        dates = list(_DATE_IN.finditer(new))
+        if len(dates) >= 2:
+            span = max(1, len(new))
+            for m in dates:
+                a, b = m.start() / span, m.end() / span
+                out.append(OcrLine(text=m.group(0), confidence=line.confidence,
+                                   bbox=[x0 + int((x1 - x0) * a), y0, x0 + int((x1 - x0) * b), y1]))
+        else:
+            out.append(line.model_copy(update={"text": new}))
+    return out
+
+
 def ocr_region(rgb: np.ndarray, bbox: list[int], upscale_to: int = 900) -> list[OcrLine]:
     """Crop a region and OCR it — small regions (stamps) are upscaled first,
     since PP-OCR's detector misses small, rotated ink text at native size."""

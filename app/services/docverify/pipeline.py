@@ -33,7 +33,7 @@ from app.services.docverify.fields import extract_fields, extract_native_fields,
 from app.services.docverify.machine_readable import detect_and_decode, parse_payload
 from app.services.docverify.mrz import describe_failed_check, locate_mrz, parse_mrz
 from app.services.docverify.ocr import (
-    DEVANAGARI_ENGINE, ENGINE_NAME, devanagari_available, devanagari_lines, mean_confidence, ocr_image,
+    DEVANAGARI_ENGINE, ENGINE_NAME, devanagari_available, devanagari_lines, mean_confidence, ocr_image, respace_lines,
 )
 from app.services.docverify.photo import assess_photo, crop, verify_faces
 from app.services.docverify.stamps import analyze_stamp, compare_visual_reference, identify_stamp
@@ -193,6 +193,7 @@ def analyze_image(image_bytes: bytes, index: int, *, on: date, expected_type: Do
             rgb = np.ascontiguousarray(cv2.rotate(rgb, code))
             bgr = np.ascontiguousarray(cv2.rotate(bgr, code))
             low = []  # boxes of the unrotated pass no longer apply
+    lines = respace_lines(rgb, lines)
     gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
     code_regions, codes = detect_and_decode(bgr, id_prefix=f"d{index}-code", raw_out=raw_codes)
 
@@ -903,8 +904,8 @@ def _document_checks(ctx: Ctx, doc: DocumentAnalysis, image_based: bool) -> dict
         # and older document versions carry no QR at all.
         good_image = (doc.quality or {}).get("level") == "GOOD"
         ctx.add("machine_readable_code", S.REVIEW_REQUIRED if good_image else S.NOT_VERIFIED,
-                "No QR code found where this document's template expects one — check whether the document "
-                "version carries one" + ("" if good_image else " (image quality may be the cause)"), i, blocking=False,
+                "No QR code found where this document's template expects one — check whether this version "
+                "carries one (on many licences and cards it is printed on the back)" + ("" if good_image else " (image quality may be the cause)"), i, blocking=False,
                 evidence=[ctx.ev("machine_readable_code", "expected QR region",
                                  i, bbox=_abs((tmpl or {}).get("layout_anchors", {}).get("QR_CODE"), (doc.image_size[1], doc.image_size[0])) if doc.image_size else None)],
                 flags=["qr_missing"])

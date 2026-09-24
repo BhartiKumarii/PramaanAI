@@ -1039,4 +1039,5 @@
     <string name="db_good_morning">Good morning, %1$s</string>
     <string name="db_good_afternoon">Good afternoon, %1$s</string>
     <string name="db_good_evening">Good evening, %1$s</string>
+    <string name="dv_field_relation_name">Son / Daughter / Wife of</string>
 </resources>

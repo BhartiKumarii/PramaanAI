@@ -185,7 +185,8 @@ The hash chain is a **local** tamper-evident log, not a blockchain.
 * When the Latin classifier is uncertain, Devanagari wording classifies
   Nepal citizenship certificates (नागरिकता / ना.प्र / जिल्ला प्रशासन कार्यालय
   with a Nepal marker) and permits (अनुमति-पत्र). Real-dataset
-  document-type accuracy went from 0.86 to 0.877; synthetic results were
+  document-type accuracy went from 0.86 to 0.877 (0.982 after the licence-layout and
+  classifier fixes of 24 Sep); synthetic results were
   unchanged.
 * Not covered: Bengali, Gurmukhi and Dzongkha (Tibetan script) document text.
   PaddleOCR has no Dzongkha model.

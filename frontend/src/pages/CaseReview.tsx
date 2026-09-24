@@ -17,7 +17,6 @@ import { Card } from '../components/StatTile'
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge'
 import { CaseNetworkPanel } from '../components/CaseNetworkPanel'
 import { EvidenceImages } from '../components/EvidenceImages'
-import { baseURL } from '../api/client'
 import type { DecisionValue, VerificationRecordResponse } from '../api/types'
 
 type Tab = 'overview' | 'evidence' | 'risk' | 'timeline' | 'history'
@@ -429,35 +428,6 @@ const TIMELINE_LABELS: Record<string, string> = {
   NOTE_ADDED:                  'Note added',
 }
 
-// ── Compact thumbnail for overview ──────────────────────────────────────
-
-function SmallEvidenceThumb({ verificationId, type, label }: { verificationId: string; type: string; label: string }) {
-  const [src, setSrc] = useState<string | null>(null)
-  const [err, setErr] = useState(false)
-  const url = `${baseURL}/images/${verificationId}/${type}`
-  useState(() => {
-    const token = localStorage.getItem('bsa_access_token') ?? ''
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => { if (!r.ok) throw new Error(); return r.blob() })
-      .then((b) => setSrc(URL.createObjectURL(b)))
-      .catch(() => setErr(true))
-  })
-  if (err) return (
-    <div className="h-20 w-24 rounded-md border border-border bg-secondary flex items-center justify-center">
-      <span className="text-[10px] text-muted-foreground">{label}</span>
-    </div>
-  )
-  if (!src) return (
-    <div className="h-20 w-24 rounded-md border border-border bg-secondary animate-pulse" />
-  )
-  return (
-    <div className="h-20 w-24 rounded-md border border-border bg-secondary overflow-hidden relative group">
-      <img src={src} alt={label} className="h-full w-full object-cover" />
-      <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-[9px] text-white text-center py-0.5">{label}</span>
-    </div>
-  )
-}
-
 // ── Admin decision panel ─────────────────────────────────────────────────────
 
 type AdminAction = 'CLEAR' | 'SECONDARY_REVIEW' | 'HOLD_REFER' | 'ESCALATE' | null
@@ -841,47 +811,6 @@ export function CaseReview() {
           {tab === 'overview' && (
             <div className="space-y-4">
               <DocVerifyCasePanel caseId={c.id} onLoaded={setDocVerify} />
-              {/* Identity summary */}
-              <Card>
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Identity</p>
-                      <h2 className="text-xl font-bold text-foreground mt-0.5">{displayName ?? 'Name not extracted'}</h2>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Document</p>
-                        <p className="font-medium text-foreground">{displayDocType}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Nationality</p>
-                        <p className="font-medium text-foreground">{c.nationality || ocr.nationality || '—'}</p>
-                      </div>
-                      {ocr.date_of_birth && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Date of Birth</p>
-                          <p className="font-medium text-foreground">{ocr.date_of_birth}</p>
-                        </div>
-                      )}
-                      {docNumber && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Document No.</p>
-                          <p className="font-medium text-foreground font-mono">{maskDocNumber(docNumber)}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* Small evidence thumbnails */}
-                  {v && (
-                    <div className="hidden sm:flex gap-2 shrink-0">
-                      <SmallEvidenceThumb verificationId={v.id} type="document" label="Document" />
-                      <SmallEvidenceThumb verificationId={v.id} type="selfie" label="Live Photo" />
-                    </div>
-                  )}
-                </div>
-              </Card>
-
               {/* Risk summary banner */}
               {v && !hasDocVerify && (
                 <div className={`rounded-lg border px-4 py-3 ${

@@ -29,11 +29,12 @@ const SOURCE: Record<string, { label: string; cls: string }> = {
   ocr_devanagari: { label: 'Devanagari', cls: 'border-emerald-500/50 text-emerald-400' },
 }
 
-const FIELD_ORDER = ['name', 'surname', 'given_names', 'document_number', 'aadhaar_number', 'visa_number', 'permit_number',
+const FIELD_ORDER = ['name', 'relation_name', 'surname', 'given_names', 'document_number', 'aadhaar_number', 'visa_number', 'permit_number',
   'nationality', 'sex', 'date_of_birth', 'place_of_birth', 'date_of_issue', 'valid_from', 'date_of_expiry',
   'issuing_authority', 'vehicle_classes', 'visa_type', 'entries', 'duration']
 
 const FIELD_LABEL: Record<string, string> = {
+  relation_name: 'Son / Daughter / Wife of',
   name_native: 'Name (Devanagari)',
   date_of_birth_bs: 'Date of birth (Bikram Sambat)',
   national_id_number: 'National ID number',

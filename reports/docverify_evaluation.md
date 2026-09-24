@@ -1,12 +1,12 @@
 # Document-verification evaluation
 
-Generated 2026-09-24T08:41:01+00:00. **Synthetic results are measured on documents this project generated itself, with layouts matching its own templates — they are optimistic and are not evidence of real-world accuracy.**
+Generated 2026-09-24T15:49:47+00:00. **Synthetic results are measured on documents this project generated itself, with layouts matching its own templates — they are optimistic and are not evidence of real-world accuracy.**
 
 ## Synthetic suite
 
 | Module | n | Accuracy | Precision | Recall | F1 | FPR | FNR |
 |---|---|---|---|---|---|---|---|
-| Complete pipeline (attention required) | 46 | 0.891 | 0.939 | 0.912 | 0.925 | 0.167 | 0.088 |
+| Complete pipeline (attention required) | 46 | 0.913 | 0.969 | 0.912 | 0.939 | 0.083 | 0.088 |
 | Validation | 25 | 1.0 | 1.0 | 1.0 | 1.0 | 0.0 | 0.0 |
 | Tampering | 46 | 0.935 | 0.5 | 0.333 | 0.4 | 0.023 | 0.667 |
 | Face (end-to-end cases) | 3 | 1.0 | 1.0 | 1.0 | 1.0 | 0.0 | 0.0 |
@@ -14,8 +14,8 @@ Generated 2026-09-24T08:41:01+00:00. **Synthetic results are measured on documen
 
 - OCR field accuracy (synthetic): 18/18 = 1.0
 - Document-type accuracy (synthetic): 0.963
-- Overall status matches expectation: 0.891
-- Expected check-level outcomes: 53/56
+- Overall status matches expectation: 0.913
+- Expected check-level outcomes: 54/56
 
 | Case | Expected | Got | Risk | OK |
 |---|---|---|---|---|
@@ -30,7 +30,7 @@ Generated 2026-09-24T08:41:01+00:00. **Synthetic results are measured on documen
 | TST-004 Expired document | REVIEW_REQUIRED/FAIL | REVIEW_REQUIRED | 35 | yes |
 | TST-005 QR/OCR mismatch: unsigned QR DOB differs from printed DOB | REVIEW_REQUIRED | REVIEW_REQUIRED | 25 | yes |
 | TST-006 Missing QR on a template version that carries one | REVIEW_REQUIRED | PASS | 5 | NO |
-| TST-007 Stamp detection: Nepal immigration arrival stamp, Kakarbhitta | PASS | NOT_VERIFIED | 6 | NO |
+| TST-007 Stamp detection: Nepal immigration arrival stamp, Kakarbhitta | PASS | PASS | 0 | yes |
 | TST-008 Unknown stamp: impression with no identifiable authority, checkpoint o | REVIEW_REQUIRED/NOT_VERIFIED | REVIEW_REQUIRED | 18 | yes |
 | TST-009 Land-border checkpoint match: Birgunj (India–Nepal) arrival stamp | PASS | PASS | 0 | yes |
 | TST-010 Checkpoint mismatch: stamp says NEPAL immigration but names an Indian  | REVIEW_REQUIRED | REVIEW_REQUIRED | 20 | yes |
@@ -39,14 +39,14 @@ Generated 2026-09-24T08:41:01+00:00. **Synthetic results are measured on documen
 | TST-013 Registry unavailable: genuine licence, DL registry disabled | REGISTRY_NOT_AVAILABLE | REGISTRY_NOT_AVAILABLE | 5 | yes |
 | TST-014 Poor-quality image: blurred, dark, low resolution | NOT_VERIFIED | NOT_VERIFIED | 24 | yes |
 | TST-015 Offline verification: genuine passport verified with no connectivity | REGISTRY_NOT_AVAILABLE | REGISTRY_NOT_AVAILABLE | 0 | yes |
-| TST-016 Name mismatch: printed surname differs from MRZ | REVIEW_REQUIRED | REVIEW_REQUIRED | 20 | yes |
+| TST-016 Name mismatch: printed surname differs from MRZ | REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
 | TST-017 Expiry mismatch: printed expiry differs from MRZ | REVIEW_REQUIRED | REVIEW_REQUIRED | 20 | yes |
 | TST-018 MRZ mismatch: DOB check digit does not validate | REVIEW_REQUIRED/FAIL | REVIEW_REQUIRED | 12 | yes |
 | TST-019 Photo-position anomaly: portrait printed where the template expects te | REVIEW_REQUIRED | REVIEW_REQUIRED | 17 | yes |
 | TST-020 Face mismatch: presented person differs from the passport photo | REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
 | TST-021 Face match control: presented person is the passport holder (different | PASS | PASS | 0 | yes |
-| TST-022 Stamp-reference mismatch: Kakarbhitta arrival stamp with geometry unli | REVIEW_REQUIRED | REVIEW_REQUIRED | 18 | yes |
-| TST-023 Stamp image-forensics anomaly: stamp pasted as a re-compressed patch a | REVIEW_REQUIRED | REVIEW_REQUIRED | 24 | yes |
+| TST-022 Stamp-reference mismatch: Kakarbhitta arrival stamp with geometry unli | REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
+| TST-023 Stamp image-forensics anomaly: stamp pasted as a re-compressed patch a | REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
 | TST-024 Digital-signature failure: signed QR data altered after signing | REVIEW_REQUIRED/FAIL | REVIEW_REQUIRED | 60 | yes |
 | TST-025 Unregistered document: well-formed licence with no record in the mock  | NOT_VERIFIED | NOT_VERIFIED | 11 | yes |
 | TST-026 Multiple simultaneous inconsistencies: expired + MRZ check digit + DOB | FAIL/REVIEW_REQUIRED | REVIEW_REQUIRED | 87 | yes |
@@ -68,45 +68,45 @@ Generated 2026-09-24T08:41:01+00:00. **Synthetic results are measured on documen
 
 ## Robustness (synthetic documents under different capture conditions)
 
-Document type correct in 100% of variants; processing time mean 3.71s, max 11.5s (server CPU).
+Document type correct in 100% of variants; processing time mean 3.29s, max 11.55s (server CPU).
 
 | Subject | Condition | Status | Type ok | Det. conf | OCR conf | Face | Stamps id | Quality | Rot. | s |
 |---|---|---|---|---|---|---|---|---|---|---|
-| passport | clear | REGISTRY_NOT_AVAILABLE | yes | 0.982 | 0.9758 | yes | 0 | PASS |  | 4.42 |
-| passport | low_resolution | REVIEW_REQUIRED | yes | 0.98 | 0.9072 | yes | 0 | PASS |  | 4.41 |
-| passport | blur | REVIEW_REQUIRED | yes | 0.966 | 0.9647 | yes | 0 | REVIEW_REQUIRED |  | 3.08 |
-| passport | rotation_5deg | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.9668 | yes | 0 | PASS |  | 3.81 |
-| passport | rotation_90deg | REVIEW_REQUIRED | yes | 0.982 | 0.9739 | yes | 0 | PASS | 90 | 11.5 |
-| passport | rotation_180deg | REVIEW_REQUIRED | yes | 0.752 | 0.9748 | no | 0 | PASS |  | 4.03 |
-| passport | dark | REVIEW_REQUIRED | yes | 0.978 | 0.9658 | yes | 0 | PASS |  | 3.34 |
-| passport | bright | REGISTRY_NOT_AVAILABLE | yes | 0.954 | 0.9814 | yes | 0 | REVIEW_REQUIRED |  | 3.79 |
-| passport | shadow | REVIEW_REQUIRED | yes | 0.984 | 0.9723 | yes | 0 | PASS |  | 3.95 |
-| passport | glare | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.978 | yes | 0 | PASS |  | 4.09 |
-| passport | low_quality_camera | REVIEW_REQUIRED | yes | 0.859 | 0.9725 | yes | 0 | PASS |  | 3.53 |
-| driving_licence | clear | PASS | yes | 0.962 | 0.9486 | yes | 0 | REVIEW_REQUIRED |  | 1.97 |
-| driving_licence | low_resolution | NOT_VERIFIED | yes | 0.968 | 0.8958 | yes | 0 | REVIEW_REQUIRED |  | 2.59 |
-| driving_licence | blur | NOT_VERIFIED | yes | 0.961 | 0.9831 | yes | 0 | NOT_VERIFIED |  | 2.29 |
-| driving_licence | rotation_5deg | PASS | yes | 0.967 | 0.9455 | yes | 0 | REVIEW_REQUIRED |  | 2.21 |
-| driving_licence | rotation_90deg | REVIEW_REQUIRED | yes | 0.508 | 0.9543 | yes | 0 | REVIEW_REQUIRED |  | 5.84 |
-| driving_licence | rotation_180deg | REVIEW_REQUIRED | yes | 0.852 | 0.9453 | yes | 0 | REVIEW_REQUIRED |  | 1.87 |
-| driving_licence | dark | PASS | yes | 0.957 | 0.9492 | yes | 0 | PASS |  | 1.91 |
-| driving_licence | bright | PASS | yes | 0.964 | 0.9606 | yes | 0 | REVIEW_REQUIRED |  | 1.92 |
-| driving_licence | shadow | PASS | yes | 0.954 | 0.9509 | yes | 0 | PASS |  | 2.07 |
-| driving_licence | glare | PASS | yes | 0.964 | 0.9463 | yes | 0 | REVIEW_REQUIRED |  | 2.03 |
-| driving_licence | low_quality_camera | PASS | yes | 0.917 | 0.9554 | yes | 0 | PASS |  | 2.11 |
-| stamp_page | clear | NOT_VERIFIED | yes | 0.918 | 0.9912 | no | 1 | PASS |  | 3.4 |
-| stamp_page | low_resolution | NOT_VERIFIED | yes | 0.944 | 0.9903 | no | 1 | PASS |  | 3.58 |
-| stamp_page | blur | NOT_VERIFIED | yes | 0.878 | 0.9932 | no | 1 | NOT_VERIFIED | 180 | 6.1 |
-| stamp_page | rotation_5deg | PASS | yes | 0.946 | 0.9683 | no | 1 | PASS |  | 3.21 |
-| stamp_page | rotation_90deg | NOT_VERIFIED | yes | 0.92 | 0.9911 | no | 1 | PASS | 90 | 7.93 |
-| stamp_page | rotation_180deg | NOT_VERIFIED | yes | 0.777 | 0.9913 | no | 1 | PASS |  | 3.97 |
-| stamp_page | dark | PASS | yes | 0.964 | 0.9708 | no | 1 | PASS |  | 3.39 |
-| stamp_page | bright | REVIEW_REQUIRED | yes | 0.94 | 0.9907 | no | 1 | REVIEW_REQUIRED |  | 4.67 |
-| stamp_page | shadow | PASS | yes | 0.94 | 0.974 | no | 1 | PASS |  | 3.44 |
-| stamp_page | glare | REVIEW_REQUIRED | yes | 0.944 | 0.9914 | no | 1 | PASS |  | 4.52 |
-| stamp_page | low_quality_camera | PASS | yes | 0.948 | 0.9834 | yes | 1 | PASS |  | 4.05 |
-| stamp_page | faded_stamp | REVIEW_REQUIRED | yes | 0.939 | 0.9736 | no | 1 | PASS |  | 2.69 |
-| stamp_page | overlapping_rotated_stamps | PASS | yes | 0.792 | 0.9717 | no | 1 | PASS |  | 2.29 |
+| passport | clear | REGISTRY_NOT_AVAILABLE | yes | 0.982 | 0.9758 | yes | 0 | PASS |  | 3.28 |
+| passport | low_resolution | REVIEW_REQUIRED | yes | 0.98 | 0.9072 | yes | 0 | PASS |  | 3.23 |
+| passport | blur | REVIEW_REQUIRED | yes | 0.966 | 0.9647 | yes | 0 | REVIEW_REQUIRED |  | 3.07 |
+| passport | rotation_5deg | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.9668 | yes | 0 | PASS |  | 4.18 |
+| passport | rotation_90deg | REVIEW_REQUIRED | yes | 0.982 | 0.9739 | yes | 0 | PASS | 90 | 11.55 |
+| passport | rotation_180deg | REVIEW_REQUIRED | yes | 0.752 | 0.9748 | no | 0 | PASS |  | 4.15 |
+| passport | dark | REVIEW_REQUIRED | yes | 0.978 | 0.9658 | yes | 0 | PASS |  | 3.42 |
+| passport | bright | REGISTRY_NOT_AVAILABLE | yes | 0.954 | 0.9814 | yes | 0 | REVIEW_REQUIRED |  | 3.84 |
+| passport | shadow | REVIEW_REQUIRED | yes | 0.984 | 0.9723 | yes | 0 | PASS |  | 4.46 |
+| passport | glare | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.978 | yes | 0 | PASS |  | 4.37 |
+| passport | low_quality_camera | REVIEW_REQUIRED | yes | 0.859 | 0.9725 | yes | 0 | PASS |  | 3.93 |
+| driving_licence | clear | PASS | yes | 0.962 | 0.9486 | yes | 0 | REVIEW_REQUIRED |  | 2.15 |
+| driving_licence | low_resolution | NOT_VERIFIED | yes | 0.968 | 0.8958 | yes | 0 | REVIEW_REQUIRED |  | 2.92 |
+| driving_licence | blur | NOT_VERIFIED | yes | 0.961 | 0.9831 | yes | 0 | NOT_VERIFIED |  | 2.08 |
+| driving_licence | rotation_5deg | PASS | yes | 0.967 | 0.9455 | yes | 0 | REVIEW_REQUIRED |  | 2.07 |
+| driving_licence | rotation_90deg | REVIEW_REQUIRED | yes | 0.508 | 0.9543 | yes | 0 | REVIEW_REQUIRED |  | 5.33 |
+| driving_licence | rotation_180deg | REVIEW_REQUIRED | yes | 0.852 | 0.9453 | yes | 0 | REVIEW_REQUIRED |  | 1.76 |
+| driving_licence | dark | PASS | yes | 0.957 | 0.9492 | yes | 0 | PASS |  | 1.8 |
+| driving_licence | bright | PASS | yes | 0.964 | 0.9606 | yes | 0 | REVIEW_REQUIRED |  | 1.89 |
+| driving_licence | shadow | PASS | yes | 0.954 | 0.9509 | yes | 0 | PASS |  | 1.83 |
+| driving_licence | glare | PASS | yes | 0.964 | 0.9463 | yes | 0 | REVIEW_REQUIRED |  | 1.75 |
+| driving_licence | low_quality_camera | PASS | yes | 0.917 | 0.9554 | yes | 0 | PASS |  | 1.85 |
+| stamp_page | clear | PASS | yes | 0.918 | 0.9912 | no | 1 | PASS |  | 2.48 |
+| stamp_page | low_resolution | NOT_VERIFIED | yes | 0.944 | 0.9903 | no | 1 | PASS |  | 3.44 |
+| stamp_page | blur | NOT_VERIFIED | yes | 0.878 | 0.9932 | no | 1 | NOT_VERIFIED | 180 | 5.67 |
+| stamp_page | rotation_5deg | PASS | yes | 0.946 | 0.9683 | no | 1 | PASS |  | 2.71 |
+| stamp_page | rotation_90deg | PASS | yes | 0.92 | 0.9911 | no | 1 | PASS | 90 | 5.48 |
+| stamp_page | rotation_180deg | NOT_VERIFIED | yes | 0.777 | 0.9913 | no | 1 | PASS |  | 3.33 |
+| stamp_page | dark | PASS | yes | 0.964 | 0.9708 | no | 1 | PASS |  | 2.42 |
+| stamp_page | bright | REVIEW_REQUIRED | yes | 0.94 | 0.9907 | no | 1 | REVIEW_REQUIRED |  | 2.36 |
+| stamp_page | shadow | PASS | yes | 0.94 | 0.974 | no | 1 | PASS |  | 2.45 |
+| stamp_page | glare | REVIEW_REQUIRED | yes | 0.944 | 0.9914 | no | 1 | PASS |  | 2.38 |
+| stamp_page | low_quality_camera | PASS | yes | 0.948 | 0.9834 | yes | 1 | PASS |  | 2.46 |
+| stamp_page | faded_stamp | REVIEW_REQUIRED | yes | 0.939 | 0.9736 | no | 1 | PASS |  | 2.39 |
+| stamp_page | overlapping_rotated_stamps | PASS | yes | 0.792 | 0.9717 | no | 1 | PASS |  | 2.79 |
 
 ## Region detection on 21 held-out REAL images (IoU >= 0.5)
 
@@ -125,30 +125,24 @@ Document type correct in 100% of variants; processing time mean 3.71s, max 11.5s
 
 Labels: Claude (visual inspection of thumbnails) — PENDING USER CONFIRMATION. n = 57 (screenshots and duplicates excluded).
 
-- Document-type accuracy: **0.877**
+- Document-type accuracy: **0.982**
 - Passport OCR vs the document's own validated MRZ: 12/18 = 0.667
-- Overall status distribution: {'NOT_VERIFIED': 28, 'PASS': 6, 'REGISTRY_NOT_AVAILABLE': 1, 'REVIEW_REQUIRED': 22}
+- Overall status distribution: {'NOT_VERIFIED': 27, 'PASS': 6, 'REGISTRY_NOT_AVAILABLE': 1, 'REVIEW_REQUIRED': 23}
 
 | Expected type | n | correct |
 |---|---|---|
 | AADHAAR | 1 | 1 |
 | BHUTAN_ENTRY_PERMIT | 3 | 3 |
 | DOCUMENT_TYPE_UNCERTAIN | 2 | 2 |
-| DRIVING_LICENCE | 16 | 11 |
+| DRIVING_LICENCE | 16 | 16 |
 | FOREIGN_PASSPORT | 6 | 6 |
 | IDENTITY_DOCUMENT | 6 | 6 |
 | IMMIGRATION_STAMP | 1 | 1 |
-| INDIAN_PASSPORT | 5 | 3 |
+| INDIAN_PASSPORT | 5 | 4 |
 | INDIAN_VISA | 2 | 2 |
 | NEPAL_VISA | 10 | 10 |
 | OTHER_TRAVEL_DOCUMENT | 5 | 5 |
 
 Misclassified:
 
-- IMG_20260922_115655.jpg: expected INDIAN_PASSPORT, got FOREIGN_PASSPORT
-- IMG_20260922_202625.jpg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
-- IMG_20260922_202748.jpg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
-- IMG_20260922_202808.jpg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
-- IMG_20260922_203247.jpg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
-- bhutan_passport.jpeg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
 - passport_text_legibility_enhanced.jpg: expected INDIAN_PASSPORT, got DOCUMENT_TYPE_UNCERTAIN
