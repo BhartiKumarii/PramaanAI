@@ -33,7 +33,8 @@ class DocVerifyRepository(private val context: Context) {
 
     /** Live selfie → a tight face crop only (the full selfie never leaves the phone). */
     sealed class Selfie {
-        data class Face(val crop: Bitmap) : Selfie()
+        /** [passiveScore]: MiniFASNet "real person" probability on the full frame (null if unavailable). */
+        data class Face(val crop: Bitmap, val passiveScore: Float? = null) : Selfie()
         data class Problem(val message: String) : Selfie()
     }
 
@@ -76,13 +77,16 @@ class DocVerifyRepository(private val context: Context) {
                 val t = (b.y - m).coerceAtLeast(0)
                 val r = (b.x + b.width + m).coerceAtMost(bitmap.width)
                 val btm = (b.y + b.height + m).coerceAtMost(bitmap.height)
-                Selfie.Face(Bitmap.createBitmap(bitmap, l, t, r - l, btm - t))
+                val passive = com.pramaanai.officer.data.vision.PassiveAntiSpoof.get(context)
+                    ?.score(bitmap, android.graphics.Rect(b.x, b.y, b.x + b.width, b.y + b.height))
+                Selfie.Face(Bitmap.createBitmap(bitmap, l, t, r - l, btm - t), passive)
             }
         }
     }
 
     suspend fun submit(analysis: Analysis, borderRoute: String?, direction: String?, liveFace: Bitmap?,
-                       expectedDocumentType: String? = null, openCase: Boolean = true): Submission {
+                       expectedDocumentType: String? = null, openCase: Boolean = true,
+                       liveness: com.pramaanai.officer.data.vision.LivenessReport? = null): Submission {
         if (!analysis.detectorAvailable) {
             return Submission.Failed("The on-device region detector could not be loaded, so regions cannot be located. " +
                 "The full image is never uploaded instead.")
@@ -103,6 +107,7 @@ class DocVerifyRepository(private val context: Context) {
             expectedDocumentType = expectedDocumentType,
             deviceText = analysis.text.lines.take(400),
             openCase = openCase,
+            liveness = if (liveFace != null) liveness else null,
         )
         request.clientRequestId?.let { CaptureStore.get(context).save(it, analysis.bitmap, liveFace) }
         val state = connectivity.check()

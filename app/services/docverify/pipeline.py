@@ -82,6 +82,8 @@ class Ctx:
     # returned in the response or stored (biometric data minimisation).
     doc_face_embeddings: dict[int, Any] = field(default_factory=dict)
     registry_face_embeddings: dict[int, Any] = field(default_factory=dict)
+    # Liveness of the live photo as measured on the phone (see LivenessReport).
+    liveness: dict[str, Any] | None = None
 
     def ev(self, check: str, description: str, doc: int | None, bbox: list[int] | None = None,
            region_id: str | None = None, **values: Any) -> str:
@@ -468,6 +470,9 @@ def _image_checks(ctx: Ctx, doc: DocumentAnalysis, bgr: np.ndarray, rgb: np.ndar
                 face_detected=fv.get("face_detected"), face_match=fv.get("face_match"),
                 similarity_score=fv.get("similarity_score"), image_quality=fv.get("image_quality"))
 
+    if live_face:
+        _liveness_check(ctx, i)
+
     # --- region-scoped forensics
     maps = forensics.ForensicMaps(rgb)
     targets: list[tuple[str, str, list[int]]] = []
@@ -588,6 +593,35 @@ def _secondary_portrait(ctx: Ctx, doc: DocumentAnalysis, bgr: np.ndarray, ph: di
     else:
         ctx.add("secondary_portrait", S.NOT_VERIFIED, "Second portrait present (normal for this layout); "
                 "not clear enough to compare with the main photo", i, blocking=False, evidence=eids)
+
+
+# Anti-spoof "real" probability below which the live photo is flagged for the
+# officer. MiniFASNet-V2 is uncalibrated on field captures; the check is
+# advisory until it is (Documentation/DOCUMENT_VERIFICATION.md, Liveness).
+PASSIVE_LIVENESS_REVIEW_BELOW = 0.5
+
+
+def _liveness_check(ctx: Ctx, i: int) -> None:
+    lv = ctx.liveness
+    if lv is None:
+        ctx.add("liveness", S.NOT_VERIFIED, "Liveness not checked for this live photo", i, blocking=False)
+        return
+    if lv.get("source") == "gallery":
+        ctx.add("liveness", S.NOT_VERIFIED, "Live photo chosen from the gallery — liveness not checked; "
+                "compare the traveller in person", i, blocking=False, **lv)
+        return
+    score = lv.get("passive_score")
+    passive_low = score is not None and score < PASSIVE_LIVENESS_REVIEW_BELOW
+    score_txt = f" (anti-spoof score {score:.2f})" if score is not None else ""
+    if lv.get("active") == "PASSED" and not passive_low:
+        ctx.add("liveness", S.PASS, "Live person on camera: blink and head-turn prompts completed" + score_txt, i,
+                blocking=False, **lv)
+    elif passive_low:
+        ctx.add("liveness", S.REVIEW_REQUIRED, "Possible photo or screen shown to the camera" + score_txt
+                + " — confirm the traveller is present in person", i, blocking=False, **lv)
+    else:
+        ctx.add("liveness", S.REVIEW_REQUIRED, "Liveness prompts (blink, head turn) not completed" + score_txt
+                + " — confirm the traveller is present in person", i, blocking=False, **lv)
 
 
 def _live_capture_checks(ctx: Ctx, i: int, live: bytes) -> bool:
@@ -1180,10 +1214,11 @@ def verify_images(images: list[bytes], *, db: Any = None, border_route: str | No
                   quality_overrides: dict[int, dict[str, Any]] | None = None,
                   mode: str = "server_image_analysis",
                   device_lines: dict[int, list[OcrLine]] | None = None,
-                  post_checkpoint: dict[str, Any] | None = None) -> VerificationOutcome:
+                  post_checkpoint: dict[str, Any] | None = None,
+                  liveness: dict[str, Any] | None = None) -> VerificationOutcome:
     t0 = time.time()
     ctx = Ctx(on=travel_date or date.today(), db=db, offline=offline, dl_registry=dl_registry,
-              travel_registry=travel_registry)
+              travel_registry=travel_registry, liveness=liveness)
     docs: list[DocumentAnalysis] = []
     registry_results: dict[int, dict] = {}
     for idx, img in enumerate(images):
@@ -1394,5 +1429,5 @@ def verify_region_crops(payload: dict[str, Any], *, db: Any = None) -> tuple[Ver
                             travel_date=date.fromisoformat(str(td)) if td else None, live_face=live,
                             expected_type=expected, prelocated=prelocated, quality_overrides=qualities,
                             mode="device_region_crops", device_lines=device_lines or None,
-                            post_checkpoint=payload.get("post_checkpoint"))
+                            post_checkpoint=payload.get("post_checkpoint"), liveness=payload.get("liveness"))
     return outcome, hashes

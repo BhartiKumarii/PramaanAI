@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import com.pramaanai.officer.ui.theme.ForegroundLight
 import androidx.compose.runtime.key
 import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.TextButton
@@ -80,6 +81,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -208,10 +210,11 @@ fun DocVerifyScreen(padding: PaddingValues) {
     var pending by remember { mutableIntStateOf(0) }
     LaunchedEffect(step) { pending = repo.pendingCount() }
 
-    fun submit(analysis: DocVerifyRepository.Analysis, face: Bitmap?) {
+    fun submit(analysis: DocVerifyRepository.Analysis, face: Bitmap?,
+               liveness: com.pramaanai.officer.data.vision.LivenessReport? = null) {
         step = Step.Working(L.s(R.string.dv_sending_the_detected_regions_for))
         scope.launch {
-            step = when (val r = repo.submit(analysis, route, direction, liveFace = face)) {
+            step = when (val r = repo.submit(analysis, route, direction, liveFace = face, liveness = liveness)) {
                 is DocVerifyRepository.Submission.Verified -> Step.Verified(analysis, r.outcome, face)
                 is DocVerifyRepository.Submission.Queued -> Step.Queued(analysis, r.localChecks, r.reason)
                 is DocVerifyRepository.Submission.Failed -> Step.Failed(r.message)
@@ -262,7 +265,7 @@ fun DocVerifyScreen(padding: PaddingValues) {
                 else submit(s.analysis, null)
             }
             is Step.Face -> FaceStep(repo, onBack = { step = Step.Review(s.analysis) },
-                onSkip = { submit(s.analysis, null) }) { crop -> submit(s.analysis, crop) }
+                onSkip = { submit(s.analysis, null) }) { crop, liveness -> submit(s.analysis, crop, liveness) }
             is Step.Verified -> DocVerifyResultView(s.outcome, s.analysis.bitmap, repo, onNew = { step = Step.Capture }, liveFace = s.face)
             is Step.Queued -> QueuedStep(s, onNew = { step = Step.Capture })
             is Step.Failed -> Column(Modifier.padding(16.dp)) {
@@ -544,21 +547,41 @@ private fun ReviewStep(
 // ---------------------------------------------------------------- live photo
 
 @Composable
-private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -> Unit, onFace: (Bitmap) -> Unit) {
+private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -> Unit,
+                     onFace: (Bitmap, com.pramaanai.officer.data.vision.LivenessReport) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     var face by remember { mutableStateOf<Bitmap?>(null) }
+    var liveness by remember { mutableStateOf<com.pramaanai.officer.data.vision.LivenessReport?>(null) }
     var problem by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var useFront by remember { mutableStateOf(true) }
     val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
-    fun useImage(bmp: Bitmap) {
+    // Active liveness: random blink / head-turn prompts, checked per frame.
+    val tracker = remember { com.pramaanai.officer.data.vision.ActiveLivenessTracker() }
+    var hint by remember { mutableStateOf(com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.NO_FACE) }
+    var promptIndex by remember { mutableIntStateOf(0) }
+    val analysis = remember {
+        LivenessFrames.analysis { faces ->
+            hint = tracker.onFaces(faces)
+            promptIndex = tracker.index
+        }
+    }
+    DisposableEffect(Unit) { onDispose { LivenessFrames.close() } }
+    fun useImage(bmp: Bitmap, fromGallery: Boolean) {
         busy = true
         scope.launch {
             when (val r = repo.selfieFace(bmp)) {
-                is DocVerifyRepository.Selfie.Face -> { face = r.crop; problem = null }
+                is DocVerifyRepository.Selfie.Face -> {
+                    face = r.crop; problem = null
+                    liveness = if (fromGallery) com.pramaanai.officer.data.vision.LivenessReport(
+                        active = "NOT_PERFORMED", challenges = emptyList(), passiveScore = r.passiveScore,
+                        passiveModel = r.passiveScore?.let { com.pramaanai.officer.data.vision.PassiveAntiSpoof.NAME },
+                        source = "gallery", durationMs = null)
+                    else tracker.report(r.passiveScore)
+                }
                 is DocVerifyRepository.Selfie.Problem -> problem = r.message
             }
             busy = false
@@ -566,7 +589,7 @@ private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -
     }
     val facePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri ?: return@rememberLauncherForActivityResult
-        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }?.let(::useImage)
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }?.let { useImage(it, true) }
     }
 
     val current = face
@@ -576,10 +599,14 @@ private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -
             Text(L.s(R.string.dv_live_photo_ready), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Image(current.asImageBitmap(), contentDescription = L.s(R.string.dv_face_crop_that_will_be), contentScale = ContentScale.Crop,
                 modifier = Modifier.size(220.dp).background(Color.Black, RoundedCornerShape(16.dp)))
+            liveness?.let { LivenessSummary(it) }
             Text(L.s(R.string.dv_only_this_face_crop_is),
                 color = MutedForeground, style = MaterialTheme.typography.bodySmall)
-            PrimaryButton(L.s(R.string.dv_verify_document_and_face), Icons.Filled.DocumentScanner) { onFace(current) }
-            OutlinedButton(onClick = { face = null }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(10.dp)) {
+            PrimaryButton(L.s(R.string.dv_verify_document_and_face), Icons.Filled.DocumentScanner) {
+                onFace(current, liveness ?: tracker.report(null))
+            }
+            OutlinedButton(onClick = { face = null; liveness = null; tracker.reset(); promptIndex = 0 },
+                modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(10.dp)) {
                 Text(L.s(R.string.dv_retake_live_photo))
             }
         }
@@ -605,12 +632,13 @@ private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -
                                 provider.unbindAll()
                                 provider.bindToLifecycle(lifecycleOwner,
                                     if (useFront) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA,
-                                    preview, imageCapture)
+                                    preview, imageCapture, analysis)
                             }, ContextCompat.getMainExecutor(ctx))
                         }
                     }, modifier = Modifier.fillMaxSize())
                 }
-                IconButton(onClick = { useFront = !useFront },
+                LivenessPrompt(tracker, hint, promptIndex, Modifier.align(Alignment.BottomCenter).padding(12.dp))
+                IconButton(onClick = { useFront = !useFront; tracker.reset(); promptIndex = 0 },
                     modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).background(BackgroundDark.copy(alpha = 0.6f), CircleShape)) {
                     Icon(Icons.Filled.Cameraswitch, contentDescription = if (useFront) L.s(R.string.dv_switch_to_back_camera) else L.s(R.string.dv_switch_to_front_camera),
                         tint = AccentGreen)
@@ -638,7 +666,7 @@ private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -
                     image.close()
                     val mirror = useFront
                     useImage(Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height,
-                        Matrix().apply { postRotate(rotation.toFloat()); if (mirror) postScale(-1f, 1f) }, true))
+                        Matrix().apply { postRotate(rotation.toFloat()); if (mirror) postScale(-1f, 1f) }, true), false)
                 }
                 override fun onError(exception: ImageCaptureException) { problem = L.s(R.string.dv_the_camera_could_not_take) }
             })
@@ -648,10 +676,91 @@ private fun FaceStep(repo: DocVerifyRepository, onBack: () -> Unit, onSkip: () -
             modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(10.dp)) {
             Icon(Icons.Filled.PhotoLibrary, null); Spacer(Modifier.width(8.dp)); Text(L.s(R.string.dv_choose_from_gallery_testing_not))
         }
+        if (granted && hint != com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.PASSED) {
+            Text(L.s(R.string.lv_not_done_note), color = MutedForeground, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 6.dp))
+        }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(10.dp)) { Text(L.s(R.string.dv_back)) }
             OutlinedButton(onClick = onSkip, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(10.dp)) { Text(L.s(R.string.dv_skip_face_check)) }
+        }
+    }
+}
+
+/** ML Kit face frames for the active liveness prompts (landmarks, eye
+ * classification and tracking; fast mode, latest frame only). */
+private object LivenessFrames {
+    private var detector: com.google.mlkit.vision.face.FaceDetector? = null
+    private val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+    fun analysis(onFaces: (List<com.google.mlkit.vision.face.Face>) -> Unit): androidx.camera.core.ImageAnalysis {
+        val det = com.google.mlkit.vision.face.FaceDetection.getClient(
+            com.google.mlkit.vision.face.FaceDetectorOptions.Builder()
+                .setPerformanceMode(com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setClassificationMode(com.google.mlkit.vision.face.FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .enableTracking()
+                .build())
+        detector = det
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        return androidx.camera.core.ImageAnalysis.Builder()
+            .setBackpressureStrategy(androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build().also { a ->
+                a.setAnalyzer(executor) { proxy ->
+                    val media = proxy.image
+                    if (media == null) { proxy.close(); return@setAnalyzer }
+                    det.process(com.google.mlkit.vision.common.InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees))
+                        .addOnSuccessListener { faces -> main.post { onFaces(faces) } }
+                        .addOnCompleteListener { proxy.close() }
+                }
+            }
+    }
+
+    fun close() { detector?.close(); detector = null }
+}
+
+@Composable
+private fun LivenessPrompt(tracker: com.pramaanai.officer.data.vision.ActiveLivenessTracker,
+                           hint: com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint, index: Int, modifier: Modifier) {
+    val passed = hint == com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.PASSED
+    val text = when (hint) {
+        com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.PASSED -> L.s(R.string.lv_passed)
+        com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.NO_FACE -> L.s(R.string.lv_no_face)
+        com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.MULTIPLE_FACES -> L.s(R.string.lv_multiple)
+        com.pramaanai.officer.data.vision.ActiveLivenessTracker.Hint.FOLLOW_PROMPT -> when (tracker.challenges.getOrNull(index)) {
+            com.pramaanai.officer.data.vision.LivenessChallenge.BLINK -> L.s(R.string.lv_prompt_blink)
+            else -> L.s(R.string.lv_prompt_turn)
+        }
+    }
+    Column(modifier.fillMaxWidth().background(BackgroundDark.copy(alpha = 0.75f), RoundedCornerShape(10.dp)).padding(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(if (passed) Icons.Filled.CheckCircle else Icons.Filled.Face, contentDescription = null,
+                tint = if (passed) SuccessGreen else AccentGreen, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(if (passed) L.s(R.string.lv_title) else L.f(R.string.lv_step, (index + 1).coerceAtMost(tracker.challenges.size), tracker.challenges.size),
+                color = ForegroundLight, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        }
+        Text(text, color = if (passed) SuccessGreen else ForegroundLight, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun LivenessSummary(lv: com.pramaanai.officer.data.vision.LivenessReport) {
+    val (text, color, icon) = when {
+        lv.source == "gallery" -> Triple(L.s(R.string.lv_ready_gallery), MutedForeground, Icons.Filled.Info)
+        lv.active == "PASSED" && (lv.passiveScore ?: 1f) >= 0.5f -> Triple(L.s(R.string.lv_ready_passed), SuccessGreen, Icons.Filled.CheckCircle)
+        lv.active == "PASSED" -> Triple(L.s(R.string.lv_ready_low_score), WarningAmber, Icons.Filled.Warning)
+        else -> Triple(L.s(R.string.lv_ready_not_done), WarningAmber, Icons.Filled.Warning)
+    }
+    Row(Modifier.fillMaxWidth().background(color.copy(alpha = 0.12f), RoundedCornerShape(10.dp)).padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(text, color = color, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+            lv.passiveScore?.let { Text(L.f(R.string.lv_anti_spoof, "%.2f".format(it)), color = MutedForeground,
+                style = MaterialTheme.typography.bodySmall) }
         }
     }
 }
@@ -678,7 +787,7 @@ private val CHECK_TITLES = mapOf(
     "mrz_check_digits" to L.s(R.string.dv_mrz_check_digits), "mrz_consistency" to L.s(R.string.dv_mrz_matches_printed_details),
     "document_validity" to L.s(R.string.dv_validity_dates), "date_logic" to L.s(R.string.dv_date_order), "field_format" to L.s(R.string.dv_number_format),
     "registry" to L.s(R.string.dv_registry_lookup), "registry_consistency" to L.s(R.string.dv_registry_details), "photo" to L.s(R.string.dv_document_photo),
-    "face_verification" to L.s(R.string.dv_face_match_live_photo), "secondary_portrait" to L.s(R.string.dv_second_portrait),
+    "face_verification" to L.s(R.string.dv_face_match_live_photo), "liveness" to L.s(R.string.lv_check_title), "secondary_portrait" to L.s(R.string.dv_second_portrait),
     "document_face_quality" to L.s(R.string.dv_photo_quality), "tampering_analysis" to L.s(R.string.dv_image_forensics),
     "stamp_detection" to L.s(R.string.dv_stamps_found), "stamp_identification" to L.s(R.string.dv_stamp_reading), "stamp_consistency" to L.s(R.string.dv_stamp_consistency),
     "stamp_forensics" to L.s(R.string.dv_stamp_forensics), "qr_consistency" to L.s(R.string.dv_qr_matches_printed_details), "machine_readable_code" to L.s(R.string.dv_qr_barcode),

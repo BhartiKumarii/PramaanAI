@@ -14,6 +14,7 @@ android {
         targetSdk = 37
         versionCode = 3
         versionName = "1.2.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Backend URL. Default: the Render deployment. For a local test build
         // pass -Ppramaan.apiUrl=http://127.0.0.1:8000/ (with `adb reverse
         // tcp:8000 tcp:8000`) or the laptop's LAN address.
@@ -59,6 +60,8 @@ dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2026.02.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
 
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")

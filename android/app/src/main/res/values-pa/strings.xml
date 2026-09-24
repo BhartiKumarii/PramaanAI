@@ -979,4 +979,18 @@
     <string name="dv_offline_verification">ਔਫਲਾਈਨ ਤਸਦੀਕ</string>
     <string name="dv_offline_saved_full">%1$s। ਬਾਹਰੀ ਰਜਿਸਟਰੀ ਤਸਦੀਕ ਉਪਲਬਧ ਨਹੀਂ। ਖੇਤਰ ਇਸ ਫ਼ੋਨ \'ਤੇ ਇਨਕ੍ਰਿਪਟ ਕਰਕੇ ਸੰਭਾਲੇ ਗਏ ਹਨ ਅਤੇ ਕਨੈਕਸ਼ਨ ਵਾਪਸ ਆਉਣ \'ਤੇ ਸਰਵਰ ਦੁਆਰਾ ਆਪਣੇ-ਆਪ ਤਸਦੀਕ ਕੀਤੇ ਜਾਣਗੇ।</string>
     <string name="pr_data_on_phone_notice">ਦਸਤਾਵੇਜ਼ ਦੀਆਂ ਤਸਵੀਰਾਂ ਅਤੇ ਲਾਈਵ ਫੋਟੋਆਂ ਇਸ ਫ਼ੋਨ \'ਤੇ %1$s ਦਿਨਾਂ ਲਈ ਇਨਕ੍ਰਿਪਟ ਕਰਕੇ (Android Keystore) ਰੱਖੀਆਂ ਜਾਂਦੀਆਂ ਹਨ ਤਾਂ ਜੋ ਤੁਸੀਂ ਪਿਛਲੀਆਂ ਤਸਦੀਕਾਂ ਦੇਖ ਸਕੋ, ਫਿਰ ਆਪਣੇ-ਆਪ ਹਟਾ ਦਿੱਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ। ਹਰ ਕੇਸ ਨਾਲ ਇਸਦੀ ਇੱਕ ਕਾਪੀ ਸਬੂਤ ਰਿਕਾਰਡ ਵਜੋਂ ਜੋੜੀ ਜਾਂਦੀ ਹੈ।</string>
+    <string name="lv_title">ਜੀਵੰਤਤਾ ਜਾਂਚ</string>
+    <string name="lv_step">ਜੀਵੰਤਤਾ ਜਾਂਚ %1$d / %2$d</string>
+    <string name="lv_prompt_blink">ਯਾਤਰੀ ਨੂੰ ਹੌਲੀ ਅੱਖ ਝਪਕਣ ਲਈ ਕਹੋ</string>
+    <string name="lv_prompt_turn">ਯਾਤਰੀ ਨੂੰ ਸਿਰ ਇੱਕ ਪਾਸੇ ਘੁਮਾ ਕੇ ਵਾਪਸ ਸਾਹਮਣੇ ਲਿਆਉਣ ਲਈ ਕਹੋ</string>
+    <string name="lv_no_face">ਅੰਡਾਕਾਰ ਦੇ ਅੰਦਰ ਇੱਕ ਚਿਹਰਾ ਰੱਖੋ</string>
+    <string name="lv_multiple">ਫਰੇਮ ਵਿੱਚ ਸਿਰਫ਼ ਯਾਤਰੀ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
+    <string name="lv_passed">ਜੀਵਿਤ ਵਿਅਕਤੀ ਦੀ ਪੁਸ਼ਟੀ — ਫੋਟੋ ਲਓ</string>
+    <string name="lv_not_done_note">ਜੀਵੰਤਤਾ ਸੰਕੇਤ ਪੂਰੇ ਨਹੀਂ ਹੋਏ — ਤੁਸੀਂ ਫਿਰ ਵੀ ਫੋਟੋ ਲੈ ਸਕਦੇ ਹੋ; ਨਤੀਜੇ ਵਿੱਚ ਇਹ ਲਿਖਿਆ ਹੋਵੇਗਾ।</string>
+    <string name="lv_ready_passed">ਜੀਵੰਤਤਾ: ਅੱਖ ਝਪਕਣਾ ਅਤੇ ਸਿਰ ਘੁਮਾਉਣਾ ਪੂਰਾ</string>
+    <string name="lv_ready_not_done">ਜੀਵੰਤਤਾ: ਸੰਕੇਤ ਪੂਰੇ ਨਹੀਂ — ਸਾਹਮਣੇ ਪੁਸ਼ਟੀ ਕਰੋ</string>
+    <string name="lv_ready_low_score">ਜੀਵੰਤਤਾ: ਸੰਭਵ ਫੋਟੋ ਜਾਂ ਸਕ੍ਰੀਨ — ਸਾਹਮਣੇ ਪੁਸ਼ਟੀ ਕਰੋ</string>
+    <string name="lv_ready_gallery">ਜੀਵੰਤਤਾ: ਜਾਂਚ ਨਹੀਂ ਹੋਈ (ਗੈਲਰੀ ਫੋਟੋ)</string>
+    <string name="lv_anti_spoof">ਐਂਟੀ-ਸਪੂਫ ਸਕੋਰ %1$s (ਸਲਾਹ)</string>
+    <string name="lv_check_title">ਜੀਵੰਤਤਾ (ਲਾਈਵ ਫੋਟੋ)</string>
 </resources>

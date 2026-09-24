@@ -979,4 +979,18 @@
     <string name="dv_offline_verification">অফলাইন যাচাই</string>
     <string name="dv_offline_saved_full">%1$s। বাইরের রেজিস্ট্রি যাচাই উপলব্ধ নয়। অংশগুলো এই ফোনে এনক্রিপ্ট করে সংরক্ষিত এবং সংযোগ ফিরলে সার্ভার স্বয়ংক্রিয়ভাবে যাচাই করবে।</string>
     <string name="pr_data_on_phone_notice">নথির ছবি ও লাইভ ছবি এই ফোনে %1$s দিন এনক্রিপ্ট করে (Android Keystore) রাখা হয় যাতে আপনি আগের যাচাই দেখতে পারেন, তারপর স্বয়ংক্রিয়ভাবে মুছে ফেলা হয়। প্রতিটি কেসের সঙ্গে এর একটি কপি প্রমাণ রেকর্ড হিসেবে যুক্ত থাকে।</string>
+    <string name="lv_title">সজীবতা যাচাই</string>
+    <string name="lv_step">সজীবতা যাচাই %1$d / %2$d</string>
+    <string name="lv_prompt_blink">যাত্রীকে ধীরে চোখের পলক ফেলতে বলুন</string>
+    <string name="lv_prompt_turn">যাত্রীকে মাথা এক পাশে ঘুরিয়ে আবার সামনে ফেরাতে বলুন</string>
+    <string name="lv_no_face">ডিম্বাকৃতির ভিতরে একটি মুখ রাখুন</string>
+    <string name="lv_multiple">ফ্রেমে শুধু যাত্রী থাকবেন</string>
+    <string name="lv_passed">জীবিত ব্যক্তি নিশ্চিত — ছবি তুলুন</string>
+    <string name="lv_not_done_note">সজীবতার নির্দেশ শেষ হয়নি — তবুও ছবি তুলতে পারেন; ফলাফলে তা লেখা থাকবে।</string>
+    <string name="lv_ready_passed">সজীবতা: পলক ও মাথা ঘোরানো সম্পন্ন</string>
+    <string name="lv_ready_not_done">সজীবতা: নির্দেশ সম্পন্ন হয়নি — সরাসরি নিশ্চিত করুন</string>
+    <string name="lv_ready_low_score">সজীবতা: সম্ভবত ছবি বা স্ক্রিন — সরাসরি নিশ্চিত করুন</string>
+    <string name="lv_ready_gallery">সজীবতা: যাচাই হয়নি (গ্যালারির ছবি)</string>
+    <string name="lv_anti_spoof">অ্যান্টি-স্পুফ স্কোর %1$s (পরামর্শ)</string>
+    <string name="lv_check_title">সজীবতা (লাইভ ছবি)</string>
 </resources>

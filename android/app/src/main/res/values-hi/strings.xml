@@ -986,4 +986,18 @@
     <string name="dv_field_citizenship_no">नागरिकता प्रमाणपत्र संख्या</string>
     <string name="dv_field_sex_native">लिंग (देवनागरी)</string>
     <string name="dv_devanagari_text">नेपाली/हिंदी पाठ (देवनागरी)</string>
+    <string name="lv_title">जीवंतता जाँच</string>
+    <string name="lv_step">जीवंतता जाँच %1$d / %2$d</string>
+    <string name="lv_prompt_blink">यात्री से धीरे से पलक झपकाने को कहें</string>
+    <string name="lv_prompt_turn">यात्री से सिर एक ओर घुमाकर वापस सामने लाने को कहें</string>
+    <string name="lv_no_face">अंडाकार के अंदर एक चेहरा रखें</string>
+    <string name="lv_multiple">फ्रेम में केवल यात्री होना चाहिए</string>
+    <string name="lv_passed">जीवित व्यक्ति की पुष्टि — फोटो लें</string>
+    <string name="lv_not_done_note">जीवंतता संकेत पूरे नहीं हुए — आप फिर भी फोटो ले सकते हैं; परिणाम में यह लिखा होगा।</string>
+    <string name="lv_ready_passed">जीवंतता: पलक और सिर घुमाना पूरा</string>
+    <string name="lv_ready_not_done">जीवंतता: संकेत पूरे नहीं — व्यक्तिगत रूप से पुष्टि करें</string>
+    <string name="lv_ready_low_score">जीवंतता: संभवतः फोटो या स्क्रीन — व्यक्तिगत रूप से पुष्टि करें</string>
+    <string name="lv_ready_gallery">जीवंतता: जाँच नहीं हुई (गैलरी फोटो)</string>
+    <string name="lv_anti_spoof">एंटी-स्पूफ स्कोर %1$s (सलाह)</string>
+    <string name="lv_check_title">जीवंतता (लाइव फोटो)</string>
 </resources>

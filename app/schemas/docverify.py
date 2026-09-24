@@ -51,12 +51,27 @@ class DeviceTextLine(BaseModel):
     confidence: float = Field(default=0.8, ge=0, le=1)
 
 
+class LivenessReport(BaseModel):
+    """Liveness of the live photo, measured on the phone before capture.
+
+    active: the random blink / head-turn prompts (ML Kit face landmarks);
+    passive_score: MiniFASNet-V2 anti-spoof "real" probability on the
+    captured frame. Advisory evidence for the officer, never a verdict."""
+    active: Literal["PASSED", "NOT_COMPLETED", "NOT_PERFORMED"]
+    challenges: list[Literal["BLINK", "TURN_HEAD"]] = Field(default_factory=list, max_length=4)
+    passive_score: float | None = Field(default=None, ge=0, le=1)
+    passive_model: str | None = Field(default=None, max_length=80)
+    source: Literal["camera", "gallery"] = "camera"
+    duration_ms: int | None = Field(default=None, ge=0, le=600_000)
+
+
 class RegionVerificationRequest(BaseModel):
     """ONE request carries every crop of every document (1-4 documents), so
     the device makes a single HTTPS round trip per verification."""
     documents: list[RegionDocument] = Field(min_length=1, max_length=4)
     client_request_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9._:-]+$")
     live_face_b64: str | None = Field(default=None, max_length=MAX_B64_CHARS)
+    liveness: LivenessReport | None = None
     border_route: BorderRoute | None = None
     direction: Direction | None = None
     declared_nationality: str | None = Field(default=None, max_length=40)

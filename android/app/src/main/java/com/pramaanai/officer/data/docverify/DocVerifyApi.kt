@@ -80,6 +80,7 @@ data class RegionVerificationRequest(
     // Nullable: items queued by an older app version were stored without it.
     val deviceText: List<DeviceTextLine>? = null,
     val openCase: Boolean = false,
+    val liveness: com.pramaanai.officer.data.vision.LivenessReport? = null,
 )
 
 data class OfficerActionRequest(val action: String, val reason: String?)

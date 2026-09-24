@@ -1002,4 +1002,18 @@
     <string name="dv_field_citizenship_no">Citizenship certificate number</string>
     <string name="dv_field_sex_native">Sex (Devanagari)</string>
     <string name="dv_devanagari_text">Nepali/Hindi text (Devanagari)</string>
+    <string name="lv_title">Liveness check</string>
+    <string name="lv_step">Liveness check %1$d of %2$d</string>
+    <string name="lv_prompt_blink">Ask the traveller to blink slowly</string>
+    <string name="lv_prompt_turn">Ask the traveller to turn their head to one side, then back</string>
+    <string name="lv_no_face">Keep one face inside the oval</string>
+    <string name="lv_multiple">Only the traveller should be in frame</string>
+    <string name="lv_passed">Live person confirmed — take the photo</string>
+    <string name="lv_not_done_note">Liveness prompts not finished — you can still take the photo; the result will say so.</string>
+    <string name="lv_ready_passed">Liveness: blink and head-turn completed</string>
+    <string name="lv_ready_not_done">Liveness: prompts not completed — confirm in person</string>
+    <string name="lv_ready_low_score">Liveness: possible photo or screen — confirm in person</string>
+    <string name="lv_ready_gallery">Liveness: not checked (gallery photo)</string>
+    <string name="lv_anti_spoof">Anti-spoof score %1$s (advisory)</string>
+    <string name="lv_check_title">Liveness (live photo)</string>
 </resources>

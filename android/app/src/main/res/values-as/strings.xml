@@ -979,4 +979,18 @@
     <string name="dv_offline_verification">অফলাইন সত্যাপন</string>
     <string name="dv_offline_saved_full">%1$s। বাহিৰৰ পঞ্জীয়ন সত্যাপন উপলব্ধ নহয়। অংশবোৰ এই ফোনত এনক্ৰিপ্ট কৰি সংৰক্ষিত আৰু সংযোগ ঘূৰি আহিলে চাৰ্ভাৰে স্বয়ংক্ৰিয়ভাৱে সত্যাপন কৰিব।</string>
     <string name="pr_data_on_phone_notice">নথিপত্ৰৰ ছবি আৰু লাইভ ফটো এই ফোনত %1$s দিনলৈ এনক্ৰিপ্ট কৰি (Android Keystore) ৰখা হয় যাতে আপুনি আগৰ সত্যাপন চাব পাৰে, তাৰ পিছত স্বয়ংক্ৰিয়ভাৱে আঁতৰোৱা হয়। প্ৰতিটো গোচৰৰ সৈতে ইয়াৰ এটা প্ৰতিলিপি প্ৰমাণ ৰেকৰ্ড হিচাপে সংলগ্ন থাকে।</string>
+    <string name="lv_title">সজীৱতা পৰীক্ষা</string>
+    <string name="lv_step">সজীৱতা পৰীক্ষা %1$d / %2$d</string>
+    <string name="lv_prompt_blink">যাত্ৰীক লাহে লাহে চকু পিরিকিয়াবলৈ কওক</string>
+    <string name="lv_prompt_turn">যাত্ৰীক মূৰটো এফালে ঘূৰাই পুনৰ সন্মুখলৈ আনিবলৈ কওক</string>
+    <string name="lv_no_face">ডিম্বাকাৰৰ ভিতৰত এখন মুখ ৰাখক</string>
+    <string name="lv_multiple">ফ্ৰেমত কেৱল যাত্ৰী থাকিব লাগে</string>
+    <string name="lv_passed">জীৱিত ব্যক্তি নিশ্চিত — ফটো লওক</string>
+    <string name="lv_not_done_note">সজীৱতাৰ নিৰ্দেশ সম্পূৰ্ণ হোৱা নাই — তথাপি ফটো ল\'ব পাৰে; ফলাফলত সেয়া উল্লেখ থাকিব।</string>
+    <string name="lv_ready_passed">সজীৱতা: চকু পিৰিকিওৱা আৰু মূৰ ঘূৰোৱা সম্পূৰ্ণ</string>
+    <string name="lv_ready_not_done">সজীৱতা: নিৰ্দেশ সম্পূৰ্ণ নহয় — প্ৰত্যক্ষভাৱে নিশ্চিত কৰক</string>
+    <string name="lv_ready_low_score">সজীৱতা: সম্ভৱতঃ ফটো বা স্ক্ৰীণ — প্ৰত্যক্ষভাৱে নিশ্চিত কৰক</string>
+    <string name="lv_ready_gallery">সজীৱতা: পৰীক্ষা হোৱা নাই (গেলেৰী ফটো)</string>
+    <string name="lv_anti_spoof">এণ্টি-স্পুফ স্ক\'ৰ %1$s (পৰামৰ্শ)</string>
+    <string name="lv_check_title">সজীৱতা (লাইভ ফটো)</string>
 </resources>

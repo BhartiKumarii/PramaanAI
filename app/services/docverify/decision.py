@@ -46,6 +46,7 @@ PLAIN: dict[str, tuple[str, str, str]] = {
     "cross_document": ("consistency", "Documents agree with each other", "Documents do not agree with each other"),
     "registry": ("registry", "Matches the reference registry (mock)", "Reference registry check needs attention"),
     "photo": ("photo", "Photo location consistent", "Photo needs review"),
+    "liveness": ("face", "Live person confirmed on camera", "Liveness of the live photo needs confirmation"),
     "face_verification": ("face", "Face matches", "Face comparison needs review"),
     "layout": ("layout", "Layout matches the document template", "Layout differs from the document template"),
     "security_features": ("security", "Visual security features observed", "Visual security features need review"),
