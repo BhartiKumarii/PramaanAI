@@ -14,7 +14,7 @@ import {
 import { PublicNavbar } from '../components/PublicNavbar'
 import { Footer } from '../components/Footer'
 import { AsciiWave } from '../components/decor/AsciiWave'
-import logoIcon from '../assets/logo-icon.png'
+import { ParticleLock } from '../components/decor/ParticleLock'
 
 const CAPABILITIES = [
   { icon: ScanSearch, title: 'Reads every border document', desc: 'Passports, visas, permits, licences, Aadhaar and stamps, in English, Hindi and Nepali.' },
@@ -103,18 +103,11 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Right — rotating logo */}
+          {/* Right — particle padlock (canvas, blends into the background) */}
           <div
-            className={`flex items-center justify-center transition-all delay-400 duration-700 ${heroVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+            className={`flex items-center justify-center transition-opacity delay-300 duration-1000 ${heroVisible ? 'opacity-100' : 'opacity-0'}`}
           >
-            <div className="relative">
-              <div className="absolute -inset-8 rounded-full bg-accent/5 blur-2xl" />
-              <img
-                src={logoIcon}
-                alt="PramaanAI"
-                className="relative h-40 w-40 animate-spiral drop-shadow-[0_0_30px_rgba(16,185,129,0.15)] sm:h-52 sm:w-52 lg:h-64 lg:w-64"
-              />
-            </div>
+            <ParticleLock className="h-72 w-72 sm:h-96 sm:w-96 lg:h-[26rem] lg:w-[26rem]" />
           </div>
         </div>
       </section>
