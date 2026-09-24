@@ -162,11 +162,11 @@ A three-component system:
 | 2. On-device processing | OCR, MRZ parsing, quality checks, face detection, tampering analysis | Structured fields + evidence |
 | 3. Local cache check | Check for previously verified record | Cache hit / miss |
 | 4. Connectivity check | Live health check — online, weak, or offline | Routing decision |
-| 5a. Online | Send encoded data (never raw images) securely | Verification request |
+| 5a. Online | Send region crops + on-device text securely (never the full frame for verification); the document image and live face are then attached to the case as evidence | Verification request + case |
 | 5b. Offline | Encrypt and queue case locally | Pending case |
 | 6. Server verification | Registry match, identity graph, face comparison, risk scoring | Structured result |
 | 7. Explainable result | Verified / Review Required / Flagged with reasons | Officer evidence |
-| 8. Officer decision | Human reviews evidence and takes authorized action | Case decision |
+| 8. Officer decision | Clear, or Send to admin with an auto-written, editable reason; the admin answers from the web console | Case decision |
 | 9. Synchronization | Pending cases sync when connectivity returns | Centralized record |
 
 The system assists decisions — it never blocks entry, declares guilt, or overrides the officer.

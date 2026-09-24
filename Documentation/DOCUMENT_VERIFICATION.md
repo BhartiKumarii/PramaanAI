@@ -58,8 +58,10 @@ Web dashboard (Document Verification page)    │ stamps → checkpoint referenc
 ## API
 
 All endpoints require a JWT (`OFFICER` or `REVIEWER`). Uploads: JPEG/PNG/WEBP,
-≤10 MB, ≤40 MP, 1–4 images. Images and crops are processed in memory and never
-stored (only SHA-256 hashes).
+≤10 MB, ≤40 MP, 1–4 images. Images and crops sent for verification are
+processed in memory and not stored by the verify endpoints (only SHA-256
+hashes). Evidence images are stored separately, and only when the app uploads
+them to an opened case (see *Cases, evidence and admin review* below).
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -72,7 +74,8 @@ stored (only SHA-256 hashes).
 | GET | `/api/v1/reference/rules/{INDIA_NEPAL\|INDIA_BHUTAN}` | Border-rule configuration |
 | GET | `/api/v1/verification?limit=&mine=` | Recent verifications (summary only) |
 | GET | `/api/v1/verification/{id}` | Stored result + integrity (`hash_valid`, `signature_valid`) |
-| POST | `/api/v1/verification/{id}/officer-action` | `CLEARED` · `REFERRED_FOR_SECONDARY_INSPECTION` · `RECAPTURE_REQUESTED` · `OFFICIAL_VERIFICATION_REQUESTED` (reason required unless CLEARED) |
+| POST | `/api/v1/verification/{id}/officer-action` | `CLEARED` · `SEND_TO_OFFICER` (shown as "Send to admin") · `REFERRED_FOR_SECONDARY_INSPECTION` · `RECAPTURE_REQUESTED` · `OFFICIAL_VERIFICATION_REQUESTED` (reason required unless CLEARED) |
+| GET | `/api/v1/verification/by-case/{case_id}` | The verification linked to a case (used by the web case review) |
 | GET | `/api/v1/verification/chain/verify` | Walk the local tamper-evident hash chain |
 | GET | `/api/v1/status` | Instance load (running / waiting / limits), active region detector, reference-data version |
 
@@ -113,8 +116,8 @@ Response (abridged):
   serialised. Each PP-OCR engine uses `PRAMAAN_OCR_THREADS` ONNX Runtime
   threads (default 0 = half the cores, max 4). RapidOCR's own default of every
   core oversubscribed the CPU and was ~2x slower with identical output.
-* **Horizontal scaling.** No per-request state is kept in memory and images are
-  never stored, so more `uvicorn` workers (`WEB_CONCURRENCY` in
+* **Horizontal scaling.** No per-request state is kept in memory and the
+  verify endpoints do not store images, so more `uvicorn` workers (`WEB_CONCURRENCY` in
   `docker-entrypoint.sh`, ~1–1.5 GB RAM each) or more instances behind a load
   balancer scale it out. `GET /api/v1/status` reports per-instance load.
 * **Idempotency.** `client_request_id` (the offline queue item id) makes
@@ -133,6 +136,31 @@ Response (abridged):
 * Audit: `audit_events` rows `DOCVERIFY_CREATED` / `DOCVERIFY_VIEWED` / `DOCVERIFY_OFFICER_ACTION`.
 
 The hash chain is a **local** tamper-evident log, not a blockchain.
+
+## Cases, evidence and admin review (migrations `0019`–`0021`)
+
+* `POST /verify/regions` with `open_case: true` (the app's default) also opens
+  a case: a `cases` row, a `CREATED` audit event, and the identity links
+  (face-embedding cluster, same document number seen under another name).
+  `document_verifications` gains `case_id`, `screening_verification_id` and
+  `identity_json` (migration `0020`).
+* The result carries `suggested_reasons` (`clear` / `send`) that are written
+  from the checks. The officer can edit them before deciding.
+* **Clear** → `record_decision CLEAR`. **Send to admin** (`SEND_TO_OFFICER`)
+  → a note, the case set to `SENT`, and a `SENT` audit event. The admin answers
+  from the web console, and the answer shows in the app under Review and
+  Notifications. A second decision on a closed case returns `409`.
+* **Evidence images.** After verifying, the app uploads the document image
+  and the live face crop to `POST /images/{screening_verification_id}/upload`
+  (`document_front`, `selfie`). This lets the admin and the officer's
+  Review/History see the original document with the problem boxes and the live
+  photo. The region crops used for verification are still not stored.
+* `post_checkpoint`: the officer's assigned post fills the border route when
+  no stamp gives one. The facts show where the value came from ("from stamp" /
+  "your post" / "Not determined — choose the crossing").
+* SQLite-only fixes: `0019` makes `audit_events.verification_id` nullable
+  (the `0009` alter was a no-op on SQLite). `0021` gives `stored_images` a
+  working `now()` default.
 
 ## Reference data (`reference_data/`)
 
