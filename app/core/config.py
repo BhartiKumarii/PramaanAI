@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     # ONNX Runtime threads per PP-OCR engine; 0 = auto (half the cores, max 4).
     # Using every core oversubscribes the CPU and measured ~2x slower.
     pramaan_ocr_threads: int = 0
+    # PP-OCR Devanagari recognition model (inference.onnx + keys.txt) used to
+    # read Nepali/Hindi text. Missing directory = the stage is skipped and
+    # reported as unavailable.
+    pramaan_devanagari_rec_dir: str = "models/ocr/devanagari_v5"
     pramaan_max_queued_verifications: int = 16
 
     @field_validator("cors_origins", mode="before")

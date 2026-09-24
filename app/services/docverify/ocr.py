@@ -7,6 +7,8 @@ loaded once per process. Every line keeps its confidence and bounding box.
 from __future__ import annotations
 
 import logging
+import os
+import re
 import threading
 
 import cv2
@@ -44,11 +46,21 @@ logger = logging.getLogger("pramaan.docverify.ocr")
 ENGINE_NAME = "PP-OCR (PaddleOCR det+rec weights, ONNX runtime via RapidOCR)"
 
 
-def ocr_image(rgb: np.ndarray, offset: tuple[int, int] = (0, 0), scale: float = 1.0) -> list[OcrLine]:
+TEXT_SCORE = 0.5  # RapidOCR's own default line-score cut-off
+
+
+def ocr_image(rgb: np.ndarray, offset: tuple[int, int] = (0, 0), scale: float = 1.0,
+              low_out: list[OcrLine] | None = None) -> list[OcrLine]:
     """OCR an RGB array. `offset`/`scale` map crop coordinates back into the
-    source image so every bbox is in original-image pixels."""
+    source image so every bbox is in original-image pixels.
+
+    Lines scoring under TEXT_SCORE are dropped exactly as RapidOCR would; when
+    `low_out` is given they are collected there instead (Devanagari text is
+    detected but scores low with the Latin recogniser)."""
     try:
-        result = _get_ocr()(rgb)
+        # text_score is passed on every call: RapidOCR keeps call kwargs on
+        # the engine, and the filtering is done here.
+        result = _get_ocr()(rgb, text_score=0.0, box_thresh=0.5, unclip_ratio=1.6)
     except Exception as exc:  # engine failure is reported, never hidden
         logger.warning("PP-OCR failed: %s", exc)
         return []
@@ -56,16 +68,18 @@ def ocr_image(rgb: np.ndarray, offset: tuple[int, int] = (0, 0), scale: float = 
     lines: list[OcrLine] = []
     for item in data or []:
         box, text, score = item[0], str(item[1]).strip(), float(item[2])
-        if not text:
-            continue
         xs = [p[0] for p in box]
         ys = [p[1] for p in box]
-        lines.append(OcrLine(
+        line = OcrLine(
             text=text,
             confidence=round(score, 4),
             bbox=[int(min(xs) / scale) + offset[0], int(min(ys) / scale) + offset[1],
                   int(max(xs) / scale) + offset[0], int(max(ys) / scale) + offset[1]],
-        ))
+        )
+        if text and score >= TEXT_SCORE:
+            lines.append(line)
+        elif low_out is not None:
+            low_out.append(line)
     return lines
 
 
@@ -89,6 +103,67 @@ def ocr_region(rgb: np.ndarray, bbox: list[int], upscale_to: int = 900) -> list[
         norm = cv2.equalizeHist(gray)
         lines = ocr_image(cv2.cvtColor(norm, cv2.COLOR_GRAY2RGB), offset=(x0, y0), scale=scale)
     return lines
+
+
+_DEVANAGARI = re.compile(r"[\u0900-\u097F]")
+DEVANAGARI_ENGINE = "PP-OCRv5 Devanagari recognition (PaddleOCR weights, ONNX runtime)"
+
+
+def _devanagari_paths() -> tuple[str, str] | None:
+    from app.core.config import get_settings
+    d = get_settings().pramaan_devanagari_rec_dir
+    model, keys = os.path.join(d, "inference.onnx"), os.path.join(d, "keys.txt")
+    return (model, keys) if os.path.isfile(model) and os.path.isfile(keys) else None
+
+
+def devanagari_available() -> bool:
+    return _devanagari_paths() is not None
+
+
+def _get_devanagari():
+    engine = getattr(_local, "deva", None)
+    if engine is None:
+        paths = _devanagari_paths()
+        if paths is None:
+            return None
+        from rapidocr_onnxruntime import RapidOCR
+        n = ocr_threads()
+        engine = _local.deva = RapidOCR(rec_model_path=paths[0], rec_keys_path=paths[1],
+                                        intra_op_num_threads=n, inter_op_num_threads=1)
+    return engine
+
+
+def devanagari_lines(rgb: np.ndarray, lines: list[OcrLine], low: list[OcrLine],
+                     min_confidence: float = 0.6) -> list[OcrLine]:
+    """Re-read text boxes with the Devanagari recogniser (Nepali/Hindi).
+
+    The main PP-OCR model reads Latin script only: Devanagari lines come back
+    as low-scoring junk (dropped) or short uncertain readings. Those boxes —
+    from the same detection pass, so no second detection — are re-read with
+    recognition only. Only readings that contain Devanagari are returned, as
+    extra lines; the Latin reading is never replaced."""
+    engine = _get_devanagari()
+    if engine is None:
+        return []
+    h, w = rgb.shape[:2]
+    out: list[OcrLine] = []
+    for line in low + [l for l in lines if l.confidence < 0.9]:
+        x0, y0, x1, y1 = line.bbox
+        pad = max(2, (y1 - y0) // 8)
+        x0, y0, x1, y1 = max(0, x0 - pad), max(0, y0 - pad), min(w, x1 + pad), min(h, y1 + pad)
+        if x1 - x0 < 8 or y1 - y0 < 8:
+            continue
+        try:
+            res, _ = engine(np.ascontiguousarray(rgb[y0:y1, x0:x1]), use_det=False, use_cls=False)
+        except Exception as exc:  # reported by the caller as "not read"
+            logger.warning("Devanagari OCR failed: %s", exc)
+            return out
+        if not res:
+            continue
+        text, score = str(res[0][0]).strip(), float(res[0][1])
+        if score >= min_confidence and len(_DEVANAGARI.findall(text)) >= 2:
+            out.append(OcrLine(text=text, confidence=round(score, 4), bbox=list(line.bbox)))
+    return out
 
 
 def group_rows(lines: list[OcrLine]) -> list[list[OcrLine]]:

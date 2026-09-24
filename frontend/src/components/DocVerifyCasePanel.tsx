@@ -26,11 +26,20 @@ const SOURCE: Record<string, { label: string; cls: string }> = {
   barcode: { label: 'Barcode', cls: 'border-violet-500/50 text-violet-400' },
   device: { label: 'Read on phone', cls: 'border-amber-500/50 text-amber-400' },
   ocr: { label: 'Read by server', cls: 'border-emerald-500/50 text-emerald-400' },
+  ocr_devanagari: { label: 'Devanagari', cls: 'border-emerald-500/50 text-emerald-400' },
 }
 
 const FIELD_ORDER = ['name', 'surname', 'given_names', 'document_number', 'aadhaar_number', 'visa_number', 'permit_number',
   'nationality', 'sex', 'date_of_birth', 'place_of_birth', 'date_of_issue', 'valid_from', 'date_of_expiry',
   'issuing_authority', 'vehicle_classes', 'visa_type', 'entries', 'duration']
+
+const FIELD_LABEL: Record<string, string> = {
+  name_native: 'Name (Devanagari)',
+  date_of_birth_bs: 'Date of birth (Bikram Sambat)',
+  national_id_number: 'National ID number',
+  citizenship_number: 'Citizenship certificate number',
+  sex_native: 'Sex (Devanagari)',
+}
 
 const human = (s: string) => s.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
 
@@ -234,7 +243,7 @@ export function DocVerifyCasePanel({ caseId, onLoaded }: { caseId: string; onLoa
                 const src = SOURCE[f.source] ?? SOURCE.ocr
                 return (
                   <div key={k} className="flex items-center justify-between gap-3 py-1.5">
-                    <dt className="text-xs text-muted-foreground">{human(k)}</dt>
+                    <dt className="text-xs text-muted-foreground">{FIELD_LABEL[k] ?? human(k)}</dt>
                     <dd className="flex items-center gap-2 text-sm font-medium text-foreground">
                       {f.value}
                       <span className={`rounded border px-1.5 py-0.5 text-[10px] ${src.cls}`}>{src.label}</span>

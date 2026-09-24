@@ -170,6 +170,9 @@ class DocumentAnalysis(BaseModel):
     regions: list[Region] = Field(default_factory=list)
     ocr_lines: list[OcrLine] = Field(default_factory=list)
     ocr_confidence: float = 0.0
+    # Extra lines read by the Devanagari (Nepali/Hindi) recogniser; the Latin
+    # reading stays in ocr_lines. Empty when the stage did not run.
+    native_lines: list[OcrLine] = Field(default_factory=list)
     fields: dict[str, FieldValue] = Field(default_factory=dict)
     mrz: dict[str, Any] | None = None
     codes: list[MachineReadableCode] = Field(default_factory=list)

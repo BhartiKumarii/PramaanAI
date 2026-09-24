@@ -18,6 +18,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# PP-OCRv5 Devanagari recognition model (~8 MB, Apache-2.0, PaddlePaddle) for
+# reading Nepali/Hindi text. Weights are not kept in git; if this download
+# fails the server still starts and reports the stage as "not installed".
+RUN python -c "import urllib.request, yaml, os; \
+d='models/ocr/devanagari_v5'; os.makedirs(d, exist_ok=True); \
+b='https://huggingface.co/PaddlePaddle/devanagari_PP-OCRv5_mobile_rec_onnx/resolve/main/'; \
+[urllib.request.urlretrieve(b + f, os.path.join(d, f)) for f in ('inference.onnx', 'inference.yml')]; \
+ch = yaml.safe_load(open(os.path.join(d, 'inference.yml')))['PostProcess']['character_dict']; \
+open(os.path.join(d, 'keys.txt'), 'w').write(chr(10).join(ch) + chr(10))" \
+    || echo "Devanagari OCR model download failed; Nepali/Hindi text will not be read"
+
 EXPOSE 8000
 
 # Render sets $PORT at runtime; docker-compose leaves it unset and the

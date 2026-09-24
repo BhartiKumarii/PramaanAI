@@ -29,10 +29,12 @@ import numpy as np
 from app.services.docverify import (border_rules, consistency, decision, doc_type, forensics, reference,
                                     registries, security_features, signatures, vlm)
 from app.services.docverify.detection import decode_image, get_region_detector
-from app.services.docverify.fields import extract_fields, find_dates
+from app.services.docverify.fields import extract_fields, extract_native_fields, find_dates
 from app.services.docverify.machine_readable import detect_and_decode, parse_payload
 from app.services.docverify.mrz import describe_failed_check, locate_mrz, parse_mrz
-from app.services.docverify.ocr import ENGINE_NAME, mean_confidence, ocr_image
+from app.services.docverify.ocr import (
+    DEVANAGARI_ENGINE, ENGINE_NAME, devanagari_available, devanagari_lines, mean_confidence, ocr_image,
+)
 from app.services.docverify.photo import assess_photo, crop, verify_faces
 from app.services.docverify.stamps import analyze_stamp, compare_visual_reference, identify_stamp
 from app.services.docverify.types import (
@@ -155,11 +157,29 @@ def _best_orientation(rgb: np.ndarray, lines: list[OcrLine]) -> tuple[int, list[
     return best_rot, best_lines
 
 
+_NEPAL_MARKERS = ("नेपाल", "अञ्चल", "गाउँपालिका", "नगरपालिका")
+
+
+def _classify_devanagari(native: list[OcrLine]) -> DocumentTypeResult | None:
+    """Fallback for documents printed only in Devanagari, which the Latin
+    classifier cannot read. Used only when that classifier is uncertain."""
+    text = " ".join(l.text for l in native)
+    nepal = any(m in text for m in _NEPAL_MARKERS)
+    if nepal and ("नागरिकता" in text or "ना.प्र" in text or "जिल्ला प्रशासन कार्यालय" in text):
+        return DocumentTypeResult(document_type=DocumentType.IDENTITY_DOCUMENT, country="NEPAL", confidence=0.6,
+                                  basis=["Devanagari text: Nepal citizenship certificate wording"])
+    if "अनुमति" in text:
+        return DocumentTypeResult(document_type=DocumentType.OTHER_TRAVEL_DOCUMENT, country="NEPAL" if nepal else None,
+                                  confidence=0.55, basis=["Devanagari text: permit (अनुमति-पत्र) wording"])
+    return None
+
+
 def analyze_image(image_bytes: bytes, index: int, *, on: date, expected_type: DocumentType | None = None,
                   raw_codes: dict[str, str] | None = None, prelocated: list[Region] | None = None,
                   quality_override: dict[str, Any] | None = None) -> tuple[DocumentAnalysis, np.ndarray, np.ndarray]:
     bgr, rgb = decode_image(image_bytes, max_side=4000 if prelocated is not None else 1800)
-    lines = ocr_image(rgb)
+    low: list[OcrLine] = []
+    lines = ocr_image(rgb, low_out=low)
     rotation = 0
     # Sideways/upside-down capture: most text boxes are taller than wide, or
     # very little text reads at all.
@@ -170,6 +190,7 @@ def analyze_image(image_bytes: bytes, index: int, *, on: date, expected_type: Do
             code = {90: cv2.ROTATE_90_CLOCKWISE, 180: cv2.ROTATE_180, 270: cv2.ROTATE_90_COUNTERCLOCKWISE}[rotation]
             rgb = np.ascontiguousarray(cv2.rotate(rgb, code))
             bgr = np.ascontiguousarray(cv2.rotate(bgr, code))
+            low = []  # boxes of the unrotated pass no longer apply
     gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
     code_regions, codes = detect_and_decode(bgr, id_prefix=f"d{index}-code", raw_out=raw_codes)
 
@@ -239,11 +260,18 @@ def analyze_image(image_bytes: bytes, index: int, *, on: date, expected_type: Do
     if dtr.document_type == DocumentType.DOCUMENT_TYPE_UNCERTAIN and prelim.document_type != DocumentType.DOCUMENT_TYPE_UNCERTAIN:
         dtr = prelim
     fields = extract_fields(lines, dtr.document_type)
+    # Nepali/Hindi text: a separate Devanagari pass. Skipped when a valid MRZ
+    # was read (passport/visa data then comes from the MRZ and Latin text).
+    native = devanagari_lines(rgb, lines, low) if not (mrz_info and "format_error" not in mrz_info) else []
+    for key, value in extract_native_fields(native).items():
+        fields.setdefault(key, value)
+    if native and dtr.document_type == DocumentType.DOCUMENT_TYPE_UNCERTAIN:
+        dtr = _classify_devanagari(native) or dtr
 
     doc = DocumentAnalysis(
         document_index=index, image_sha256=hashlib.sha256(image_bytes).hexdigest(),
         image_size=[bgr.shape[1], bgr.shape[0]], document_type=dtr, regions=regions, ocr_lines=lines,
-        ocr_confidence=mean_confidence(lines), fields=fields, mrz=mrz_info, codes=codes, stamps=stamps,
+        ocr_confidence=mean_confidence(lines), native_lines=native, fields=fields, mrz=mrz_info, codes=codes, stamps=stamps,
         quality=quality_override or _quality(gray),
     )
     if rotation:
@@ -427,7 +455,7 @@ def _image_checks(ctx: Ctx, doc: DocumentAnalysis, bgr: np.ndarray, rgb: np.ndar
         fv = verify_faces(doc_face, live_face, reference_face)
         doc.photo["face_verification"] = {k: v for k, v in fv.items() if k != "pairs"} | {
             "pairs": [{k: p[k] for k in ("pair", "outcome", "similarity_score", "image_quality", "reason")} for p in fv["pairs"]]}
-        status = {"MATCH": S.PASS, "NO_MATCH": S.REVIEW_REQUIRED, "POSSIBLE_MATCH": S.NOT_VERIFIED,
+        status = {"MATCH": S.PASS, "NO_MATCH": S.REVIEW_REQUIRED, "POSSIBLE_MATCH": S.REVIEW_REQUIRED,
                   "LOW_QUALITY": S.NOT_VERIFIED}.get(fv["overall"], S.NOT_VERIFIED)
         summary = {"MATCH": "Face on the document matches the person presented",
                    "NO_MATCH": "Face on the document does not match the person presented — compare in person",
@@ -696,6 +724,13 @@ def _document_checks(ctx: Ctx, doc: DocumentAnalysis, image_based: bool) -> dict
         ctx.add("document_type", S.PASS, f"Identified as {dt.value.replace('_', ' ').title()}"
                 + (f" ({dtr.country.title()})" if dtr.country else ""), i, confidence=dtr.confidence, basis=dtr.basis[:4])
 
+    if doc.native_lines:
+        native = [k for k in ("name_native", "date_of_birth_bs", "national_id_number", "citizenship_number")
+                  if k in doc.fields]
+        ctx.add("ocr_devanagari", S.PASS,
+                f"{len(doc.native_lines)} Devanagari (Nepali/Hindi) text lines read"
+                + (f"; details: {', '.join(k.replace('_', ' ') for k in native)}" if native else ""), i,
+                blocking=False, advisory=True)
     # --- OCR / key fields (MRZ can supply them)
     mrz = doc.mrz if doc.mrz and "format_error" not in doc.mrz else None
     mrz_fill = {"name": (mrz or {}).get("full_name"), "document_number": (mrz or {}).get("document_number"),
@@ -1080,6 +1115,8 @@ def _pipeline_info(image_based: bool) -> dict[str, Any]:
         "mode": "server_image_analysis" if image_based else "device_extracted_data",
         "region_detector": get_region_detector().name if image_based else "on-device (reported by app)",
         "ocr": ENGINE_NAME if image_based else "on-device ML Kit (reported by app)",
+        "ocr_devanagari": (DEVANAGARI_ENGINE if devanagari_available() else "not installed — Nepali/Hindi text not read")
+        if image_based else "not run",
         "face": "InsightFace buffalo_sc (SCRFD detector + ArcFace-family embedding)",
         "machine_readable": "OpenCV QRCodeDetector + barcode.BarcodeDetector",
         "mrz": "ICAO 9303 parser (TD1/TD2/TD3/MRV-A/MRV-B) with recomputed check digits",

@@ -1,6 +1,6 @@
 # Document-verification evaluation
 
-Generated 2026-09-23T18:56:37+00:00. **Synthetic results are measured on documents this project generated itself, with layouts matching its own templates — they are optimistic and are not evidence of real-world accuracy.**
+Generated 2026-09-24T03:04:23+00:00. **Synthetic results are measured on documents this project generated itself, with layouts matching its own templates — they are optimistic and are not evidence of real-world accuracy.**
 
 ## Synthetic suite
 
@@ -23,7 +23,7 @@ Generated 2026-09-23T18:56:37+00:00. **Synthetic results are measured on documen
 | GEN-002 Genuine synthetic Nepal visa with passport and Kakarbhitta arrival sta | PASS | PASS | 5 | yes |
 | GEN-003 Genuine synthetic Indian driving licence (signed QR, yellow/gold visua | PASS | PASS | 5 | yes |
 | GEN-004 Genuine synthetic Bhutan entry permit (signed QR, mock registry ISSUED | PASS | PASS | 10 | yes |
-| GEN-005 Synthetic Aadhaar-like card: must route to official verification, neve | OFFICIAL_VERIFICATION_REQUIRED/REVIEW_REQUIRED | REVIEW_REQUIRED | 23 | yes |
+| GEN-005 Synthetic Aadhaar-like card: must route to official verification, neve | OFFICIAL_VERIFICATION_REQUIRED/REVIEW_REQUIRED | REVIEW_REQUIRED | 17 | yes |
 | TST-001 OCR/MRZ mismatch: printed passport number differs from MRZ | REVIEW_REQUIRED/FAIL | REVIEW_REQUIRED | 20 | yes |
 | TST-002 Passport/visa mismatch: visa quotes a different passport number | REVIEW_REQUIRED | REVIEW_REQUIRED | 25 | yes |
 | TST-003 DOB mismatch: printed DOB differs from the (mock) registry record | REVIEW_REQUIRED | REVIEW_REQUIRED | 25 | yes |
@@ -43,7 +43,7 @@ Generated 2026-09-23T18:56:37+00:00. **Synthetic results are measured on documen
 | TST-017 Expiry mismatch: printed expiry differs from MRZ | REVIEW_REQUIRED | REVIEW_REQUIRED | 20 | yes |
 | TST-018 MRZ mismatch: DOB check digit does not validate | REVIEW_REQUIRED/FAIL | REVIEW_REQUIRED | 12 | yes |
 | TST-019 Photo-position anomaly: portrait printed where the template expects te | REVIEW_REQUIRED | REVIEW_REQUIRED | 17 | yes |
-| TST-020 Face mismatch: presented person differs from the passport photo | REVIEW_REQUIRED | REVIEW_REQUIRED | 20 | yes |
+| TST-020 Face mismatch: presented person differs from the passport photo | REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
 | TST-021 Face match control: presented person is the passport holder (different | PASS | PASS | 0 | yes |
 | TST-022 Stamp-reference mismatch: Kakarbhitta arrival stamp with geometry unli | REVIEW_REQUIRED | REVIEW_REQUIRED | 18 | yes |
 | TST-023 Stamp image-forensics anomaly: stamp pasted as a re-compressed patch a | REVIEW_REQUIRED | REVIEW_REQUIRED | 24 | yes |
@@ -62,51 +62,51 @@ Generated 2026-09-23T18:56:37+00:00. **Synthetic results are measured on documen
 | TST-036 Unexpected checkpoint: foreigner stamped at a post not designated for  | REVIEW_REQUIRED | REVIEW_REQUIRED | 17 | yes |
 | TST-037 Indian immigration marking (Raxaul) identified from text + checkpoint  | PASS | NOT_VERIFIED | 6 | NO |
 | TST-038 Bhutan immigration marking (Phuentsholing) identified from text + chec | PASS | PASS | 0 | yes |
-| TST-039 Live face matches the document, but the authorised reference photo sho | REVIEW_REQUIRED | REVIEW_REQUIRED | 20 | yes |
+| TST-039 Live face matches the document, but the authorised reference photo sho | REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
 | TST-040 Cropped document: right side and part of the MRZ outside the frame | NOT_VERIFIED/REVIEW_REQUIRED | REVIEW_REQUIRED | 12 | yes |
 | TST-041 Visual signature only: an image of a signature is not treated as a dig | PASS | PASS | 0 | yes |
 
 ## Robustness (synthetic documents under different capture conditions)
 
-Document type correct in 100% of variants; processing time mean 5.74s, max 18.5s (server CPU).
+Document type correct in 100% of variants; processing time mean 4.69s, max 12.1s (server CPU).
 
 | Subject | Condition | Status | Type ok | Det. conf | OCR conf | Face | Stamps id | Quality | Rot. | s |
 |---|---|---|---|---|---|---|---|---|---|---|
-| passport | clear | REGISTRY_NOT_AVAILABLE | yes | 0.982 | 0.9758 | yes | 0 | PASS |  | 8.05 |
-| passport | low_resolution | REVIEW_REQUIRED | yes | 0.98 | 0.9072 | yes | 0 | PASS |  | 7.63 |
-| passport | blur | REVIEW_REQUIRED | yes | 0.966 | 0.9647 | yes | 0 | REVIEW_REQUIRED |  | 6.07 |
-| passport | rotation_5deg | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.9668 | yes | 0 | PASS |  | 6.99 |
-| passport | rotation_90deg | REVIEW_REQUIRED | yes | 0.982 | 0.9739 | yes | 0 | PASS | 90 | 18.5 |
-| passport | rotation_180deg | REVIEW_REQUIRED | yes | 0.752 | 0.9748 | no | 0 | PASS |  | 5.0 |
-| passport | dark | REVIEW_REQUIRED | yes | 0.978 | 0.9658 | yes | 0 | PASS |  | 4.84 |
-| passport | bright | REGISTRY_NOT_AVAILABLE | yes | 0.954 | 0.9814 | yes | 0 | REVIEW_REQUIRED |  | 5.71 |
-| passport | shadow | REVIEW_REQUIRED | yes | 0.984 | 0.9723 | yes | 0 | PASS |  | 5.98 |
-| passport | glare | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.978 | yes | 0 | PASS |  | 5.5 |
-| passport | low_quality_camera | REVIEW_REQUIRED | yes | 0.859 | 0.9725 | yes | 0 | PASS |  | 5.35 |
-| driving_licence | clear | PASS | yes | 0.962 | 0.9486 | yes | 0 | REVIEW_REQUIRED |  | 2.93 |
-| driving_licence | low_resolution | NOT_VERIFIED | yes | 0.968 | 0.8958 | yes | 0 | REVIEW_REQUIRED |  | 3.75 |
-| driving_licence | blur | NOT_VERIFIED | yes | 0.961 | 0.9831 | yes | 0 | NOT_VERIFIED |  | 3.15 |
-| driving_licence | rotation_5deg | PASS | yes | 0.967 | 0.9455 | yes | 0 | REVIEW_REQUIRED |  | 3.39 |
-| driving_licence | rotation_90deg | REVIEW_REQUIRED | yes | 0.508 | 0.9543 | yes | 0 | REVIEW_REQUIRED |  | 10.78 |
-| driving_licence | rotation_180deg | REVIEW_REQUIRED | yes | 0.852 | 0.9453 | yes | 0 | REVIEW_REQUIRED |  | 3.52 |
-| driving_licence | dark | PASS | yes | 0.957 | 0.9492 | yes | 0 | PASS |  | 2.94 |
-| driving_licence | bright | PASS | yes | 0.964 | 0.9606 | yes | 0 | REVIEW_REQUIRED |  | 3.0 |
-| driving_licence | shadow | PASS | yes | 0.954 | 0.9509 | yes | 0 | PASS |  | 3.13 |
-| driving_licence | glare | PASS | yes | 0.964 | 0.9463 | yes | 0 | REVIEW_REQUIRED |  | 2.91 |
-| driving_licence | low_quality_camera | PASS | yes | 0.917 | 0.9554 | yes | 0 | PASS |  | 3.37 |
-| stamp_page | clear | NOT_VERIFIED | yes | 0.918 | 0.9912 | no | 1 | PASS |  | 6.18 |
-| stamp_page | low_resolution | NOT_VERIFIED | yes | 0.944 | 0.9903 | no | 1 | PASS |  | 6.74 |
-| stamp_page | blur | NOT_VERIFIED | yes | 0.878 | 0.9932 | no | 1 | NOT_VERIFIED | 180 | 10.83 |
-| stamp_page | rotation_5deg | PASS | yes | 0.946 | 0.9683 | no | 1 | PASS |  | 4.23 |
-| stamp_page | rotation_90deg | NOT_VERIFIED | yes | 0.92 | 0.9911 | no | 1 | PASS | 90 | 11.14 |
-| stamp_page | rotation_180deg | NOT_VERIFIED | yes | 0.777 | 0.9913 | no | 1 | PASS |  | 5.72 |
-| stamp_page | dark | PASS | yes | 0.964 | 0.9708 | no | 1 | PASS |  | 4.22 |
-| stamp_page | bright | REVIEW_REQUIRED | yes | 0.94 | 0.9907 | no | 1 | REVIEW_REQUIRED |  | 5.48 |
-| stamp_page | shadow | PASS | yes | 0.94 | 0.974 | no | 1 | PASS |  | 4.17 |
-| stamp_page | glare | REVIEW_REQUIRED | yes | 0.944 | 0.9914 | no | 1 | PASS |  | 6.47 |
-| stamp_page | low_quality_camera | PASS | yes | 0.948 | 0.9834 | yes | 1 | PASS |  | 4.8 |
-| stamp_page | faded_stamp | REVIEW_REQUIRED | yes | 0.939 | 0.9736 | no | 1 | PASS |  | 3.86 |
-| stamp_page | overlapping_rotated_stamps | PASS | yes | 0.792 | 0.9717 | no | 1 | PASS |  | 4.74 |
+| passport | clear | REGISTRY_NOT_AVAILABLE | yes | 0.982 | 0.9758 | yes | 0 | PASS |  | 6.56 |
+| passport | low_resolution | REVIEW_REQUIRED | yes | 0.98 | 0.9072 | yes | 0 | PASS |  | 5.9 |
+| passport | blur | REVIEW_REQUIRED | yes | 0.966 | 0.9647 | yes | 0 | REVIEW_REQUIRED |  | 3.79 |
+| passport | rotation_5deg | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.9668 | yes | 0 | PASS |  | 8.04 |
+| passport | rotation_90deg | REVIEW_REQUIRED | yes | 0.982 | 0.9739 | yes | 0 | PASS | 90 | 12.1 |
+| passport | rotation_180deg | REVIEW_REQUIRED | yes | 0.752 | 0.9748 | no | 0 | PASS |  | 3.55 |
+| passport | dark | REVIEW_REQUIRED | yes | 0.978 | 0.9658 | yes | 0 | PASS |  | 3.25 |
+| passport | bright | REGISTRY_NOT_AVAILABLE | yes | 0.954 | 0.9814 | yes | 0 | REVIEW_REQUIRED |  | 3.69 |
+| passport | shadow | REVIEW_REQUIRED | yes | 0.984 | 0.9723 | yes | 0 | PASS |  | 3.73 |
+| passport | glare | REGISTRY_NOT_AVAILABLE | yes | 0.98 | 0.978 | yes | 0 | PASS |  | 4.38 |
+| passport | low_quality_camera | REVIEW_REQUIRED | yes | 0.859 | 0.9725 | yes | 0 | PASS |  | 4.61 |
+| driving_licence | clear | PASS | yes | 0.962 | 0.9486 | yes | 0 | REVIEW_REQUIRED |  | 2.56 |
+| driving_licence | low_resolution | NOT_VERIFIED | yes | 0.968 | 0.8958 | yes | 0 | REVIEW_REQUIRED |  | 3.48 |
+| driving_licence | blur | NOT_VERIFIED | yes | 0.961 | 0.9831 | yes | 0 | NOT_VERIFIED |  | 2.91 |
+| driving_licence | rotation_5deg | PASS | yes | 0.967 | 0.9455 | yes | 0 | REVIEW_REQUIRED |  | 2.9 |
+| driving_licence | rotation_90deg | REVIEW_REQUIRED | yes | 0.508 | 0.9543 | yes | 0 | REVIEW_REQUIRED |  | 8.51 |
+| driving_licence | rotation_180deg | REVIEW_REQUIRED | yes | 0.852 | 0.9453 | yes | 0 | REVIEW_REQUIRED |  | 2.14 |
+| driving_licence | dark | PASS | yes | 0.957 | 0.9492 | yes | 0 | PASS |  | 1.95 |
+| driving_licence | bright | PASS | yes | 0.964 | 0.9606 | yes | 0 | REVIEW_REQUIRED |  | 1.86 |
+| driving_licence | shadow | PASS | yes | 0.954 | 0.9509 | yes | 0 | PASS |  | 1.87 |
+| driving_licence | glare | PASS | yes | 0.964 | 0.9463 | yes | 0 | REVIEW_REQUIRED |  | 2.12 |
+| driving_licence | low_quality_camera | PASS | yes | 0.917 | 0.9554 | yes | 0 | PASS |  | 2.21 |
+| stamp_page | clear | NOT_VERIFIED | yes | 0.918 | 0.9912 | no | 1 | PASS |  | 4.69 |
+| stamp_page | low_resolution | NOT_VERIFIED | yes | 0.944 | 0.9903 | no | 1 | PASS |  | 6.42 |
+| stamp_page | blur | NOT_VERIFIED | yes | 0.878 | 0.9932 | no | 1 | NOT_VERIFIED | 180 | 9.49 |
+| stamp_page | rotation_5deg | PASS | yes | 0.946 | 0.9683 | no | 1 | PASS |  | 6.26 |
+| stamp_page | rotation_90deg | NOT_VERIFIED | yes | 0.92 | 0.9911 | no | 1 | PASS | 90 | 8.5 |
+| stamp_page | rotation_180deg | NOT_VERIFIED | yes | 0.777 | 0.9913 | no | 1 | PASS |  | 7.88 |
+| stamp_page | dark | PASS | yes | 0.964 | 0.9708 | no | 1 | PASS |  | 3.4 |
+| stamp_page | bright | REVIEW_REQUIRED | yes | 0.94 | 0.9907 | no | 1 | REVIEW_REQUIRED |  | 4.65 |
+| stamp_page | shadow | PASS | yes | 0.94 | 0.974 | no | 1 | PASS |  | 3.46 |
+| stamp_page | glare | REVIEW_REQUIRED | yes | 0.944 | 0.9914 | no | 1 | PASS |  | 5.61 |
+| stamp_page | low_quality_camera | PASS | yes | 0.948 | 0.9834 | yes | 1 | PASS |  | 5.23 |
+| stamp_page | faded_stamp | REVIEW_REQUIRED | yes | 0.939 | 0.9736 | no | 1 | PASS |  | 3.36 |
+| stamp_page | overlapping_rotated_stamps | PASS | yes | 0.792 | 0.9717 | no | 1 | PASS |  | 2.97 |
 
 ## Region detection on 21 held-out REAL images (IoU >= 0.5)
 
@@ -125,9 +125,9 @@ Document type correct in 100% of variants; processing time mean 5.74s, max 18.5s
 
 Labels: Claude (visual inspection of thumbnails) — PENDING USER CONFIRMATION. n = 57 (screenshots and duplicates excluded).
 
-- Document-type accuracy: **0.86**
+- Document-type accuracy: **0.877**
 - Passport OCR vs the document's own validated MRZ: 12/18 = 0.667
-- Overall status distribution: {'NOT_VERIFIED': 25, 'PASS': 6, 'REGISTRY_NOT_AVAILABLE': 1, 'REVIEW_REQUIRED': 25}
+- Overall status distribution: {'NOT_VERIFIED': 28, 'PASS': 6, 'REGISTRY_NOT_AVAILABLE': 1, 'REVIEW_REQUIRED': 22}
 
 | Expected type | n | correct |
 |---|---|---|
@@ -136,7 +136,7 @@ Labels: Claude (visual inspection of thumbnails) — PENDING USER CONFIRMATION. 
 | DOCUMENT_TYPE_UNCERTAIN | 2 | 2 |
 | DRIVING_LICENCE | 16 | 11 |
 | FOREIGN_PASSPORT | 6 | 6 |
-| IDENTITY_DOCUMENT | 6 | 5 |
+| IDENTITY_DOCUMENT | 6 | 6 |
 | IMMIGRATION_STAMP | 1 | 1 |
 | INDIAN_PASSPORT | 5 | 3 |
 | INDIAN_VISA | 2 | 2 |
@@ -151,5 +151,4 @@ Misclassified:
 - IMG_20260922_202808.jpg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
 - IMG_20260922_203247.jpg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
 - bhutan_passport.jpeg: expected DRIVING_LICENCE, got DOCUMENT_TYPE_UNCERTAIN
-- images (4).jpeg: expected IDENTITY_DOCUMENT, got DOCUMENT_TYPE_UNCERTAIN
 - passport_text_legibility_enhanced.jpg: expected INDIAN_PASSPORT, got DOCUMENT_TYPE_UNCERTAIN

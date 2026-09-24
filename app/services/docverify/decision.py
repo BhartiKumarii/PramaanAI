@@ -31,6 +31,7 @@ PLAIN: dict[str, tuple[str, str, str]] = {
     "image_quality": ("image", "Image is clear enough to read", "Image quality is too low — recapture recommended"),
     "document_type": ("classifier", "Document type identified", "Document type could not be identified with confidence"),
     "ocr": ("ocr", "Text extracted", "Key printed details could not be read"),
+    "ocr_devanagari": ("ocr", "Nepali/Hindi (Devanagari) text read", "Nepali/Hindi (Devanagari) text could not be read"),
     "field_format": ("format", "Document number format is valid", "Document number format does not match this document type"),
     "document_validity": ("dates", "Document is within its validity period", "Document validity needs attention"),
     "date_logic": ("dates", "Dates are in a sensible order", "Dates on the document are not in a sensible order"),

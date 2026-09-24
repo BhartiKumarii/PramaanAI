@@ -674,7 +674,7 @@ private fun CheckRow(c: CheckDetail, onClick: (() -> Unit)? = null) {
 }
 
 private val CHECK_TITLES = mapOf(
-    "ocr" to L.s(R.string.dv_text_extraction), "ocr_confidence" to L.s(R.string.dv_reading_confidence), "mrz_structure" to L.s(R.string.dv_mrz_format),
+    "ocr" to L.s(R.string.dv_text_extraction), "ocr_devanagari" to L.s(R.string.dv_devanagari_text), "ocr_confidence" to L.s(R.string.dv_reading_confidence), "mrz_structure" to L.s(R.string.dv_mrz_format),
     "mrz_check_digits" to L.s(R.string.dv_mrz_check_digits), "mrz_consistency" to L.s(R.string.dv_mrz_matches_printed_details),
     "document_validity" to L.s(R.string.dv_validity_dates), "date_logic" to L.s(R.string.dv_date_order), "field_format" to L.s(R.string.dv_number_format),
     "registry" to L.s(R.string.dv_registry_lookup), "registry_consistency" to L.s(R.string.dv_registry_details), "photo" to L.s(R.string.dv_document_photo),
@@ -704,10 +704,20 @@ private val FIELD_ORDER = listOf("name", "surname", "given_names", "document_num
     "permit_number", "nationality", "sex", "date_of_birth", "place_of_birth", "date_of_issue", "valid_from", "date_of_expiry",
     "issuing_authority", "vehicle_classes", "visa_type", "entries", "duration")
 
+private fun fieldLabel(key: String) = when (key) {
+    "name_native" -> L.s(R.string.dv_field_name_native)
+    "date_of_birth_bs" -> L.s(R.string.dv_field_dob_bs)
+    "national_id_number" -> L.s(R.string.dv_field_national_id)
+    "citizenship_number" -> L.s(R.string.dv_field_citizenship_no)
+    "sex_native" -> L.s(R.string.dv_field_sex_native)
+    else -> humanize(key)
+}
+
 private fun sourceLabel(source: String) = when (source) {
     "mrz" -> "MRZ" to ChartBlue
     "qr", "barcode" -> "QR" to ChartPurple
     "device" -> L.s(R.string.dv_read_on_phone) to WarningAmber
+    "ocr_devanagari" -> L.s(R.string.dv_read_devanagari) to SuccessGreen
     "declared" -> L.s(R.string.dv_declared) to MutedForeground
     else -> L.s(R.string.dv_read_by_server) to SuccessGreen
 }
@@ -839,7 +849,7 @@ fun DocVerifyResultView(initial: VerificationOutcome, bitmap: Bitmap?, repo: Doc
                 }
                 if (fields.isEmpty()) Text(L.s(R.string.dv_no_printed_details_could_be), color = MutedForeground)
                 val ordered = FIELD_ORDER.filter { it in fields } + fields.keys.filter { it !in FIELD_ORDER }.sorted()
-                ordered.forEach { k -> fields[k]?.let { f -> FieldRow(humanize(k), f.value, f.source) } }
+                ordered.forEach { k -> fields[k]?.let { f -> FieldRow(fieldLabel(k), f.value, f.source) } }
                 (doc.stamps ?: emptyList()).forEachIndexed { i, st ->
                     Spacer(Modifier.height(8.dp))
                     Text(L.f(R.string.dv_stamp, i + 1), fontWeight = FontWeight.SemiBold)

@@ -299,3 +299,80 @@ def age_on(dob_iso: str | None, on: date) -> int | None:
     except ValueError:
         return None
     return on.year - dob.year - ((on.month, on.day) < (dob.month, dob.day))
+
+
+# --- Devanagari (Nepali / Hindi) -------------------------------------------
+# Read from the separate Devanagari OCR pass. These go into their own field
+# keys and are never compared with the (Latin-script) registry: a Devanagari
+# name would always "differ" from a Latin one, and Nepali documents give
+# dates in Bikram Sambat (BS 2044 ≈ AD 1987), which must not be read as a
+# Gregorian date.
+_DEVA_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+_DEVA_LABELS: list[tuple[str, re.Pattern]] = [
+    # OCR often misspells conjuncts (नामधर for नामथर, राषट्टिय for राष्ट्रिय),
+    # so labels are matched loosely.
+    ("national_id_number", re.compile(r"^रा\S*\s*परिचय\s*(?:पत्र\s*)?(?:न\S*|नं\.?)?\s*(?:NIN)?\s*[:ः/]?\s*")),
+    ("citizenship_number", re.compile(r"^(?:ना\.?\s*प्र\.?\s*न[ं]?\.?|नागरिकता\s*(?:प्रमाणपत्र\s*)?(?:नं\.?|नम्बर))\s*[:ः/]?\s*")),
+    ("date_of_birth_bs", re.compile(r"^(?:जन्म\s*मिति|जन्ममिति)\s*[:ः/]?\s*")),
+    ("name_native", re.compile(r"^(?:नाम\s*[,/]?\s*[थधश]र|नाम[थधश]र|नाम)\s*[:ः/]?\s*")),
+]
+_DEVA_LABEL_WORDS = re.compile(r"जन्म|जन्स|स्थान|ठेगाना|जिल्ला|सरकार|परिचय|नागरिकता|मिति|नाम|लिङ्ग|बाबु|आमा|पति")
+_DEVA_SEX = {"पुरुष": "M", "महिला": "F", "पुरूष": "M", "स्त्री": "F"}
+_BS_DATE = re.compile(r"(\d{4})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{1,2})")
+
+
+def _value_near(label: OcrLine, lines: list[OcrLine]) -> OcrLine | None:
+    """The value printed next to a label that stands alone: to its right on
+    the same row, else directly below it (within about two line heights)."""
+    lh = max(1, label.bbox[3] - label.bbox[1])
+    cy = (label.bbox[1] + label.bbox[3]) / 2
+    right = [l for l in lines if l is not label and l.bbox[0] > label.bbox[2] - lh
+             and abs((l.bbox[1] + l.bbox[3]) / 2 - cy) < 0.6 * lh and l.bbox[0] - label.bbox[2] < 12 * lh]
+    if right:
+        return min(right, key=lambda l: l.bbox[0])
+    below = [l for l in lines if l is not label and 0 < l.bbox[1] - label.bbox[1] <= 2.2 * lh
+             and abs(l.bbox[0] - label.bbox[0]) < 1.5 * lh]
+    return min(below, key=lambda l: l.bbox[1]) if below else None
+
+
+def extract_native_fields(lines: list[OcrLine]) -> dict[str, FieldValue]:
+    """Fields read from Devanagari text: label on the line, value after it
+    (or next to / under the label when it stands alone)."""
+    out: dict[str, FieldValue] = {}
+    for line in lines:
+        text = line.text.strip()
+        for word, code in _DEVA_SEX.items():
+            if "sex_native" not in out and re.search(rf"(?:^|[\s/:ः]){word}(?:$|[\s/])", text):
+                out["sex_native"] = FieldValue(value=code, confidence=round(line.confidence * 0.9, 4),
+                                               source="ocr_devanagari", bbox=line.bbox)
+        for field, label in _DEVA_LABELS:
+            m = label.match(text)
+            if not m:
+                continue
+            if field in out:
+                break
+            value, src = text[m.end():].strip(" :ः-|"), line
+            if field == "national_id_number" or field == "citizenship_number":
+                value = re.sub(r"[^0-9\-/]", "", value.translate(_DEVA_DIGITS)).strip("-/")
+            if not value or (field == "name_native" and len(re.findall(r"[\u0900-\u097F]", value)) < 3):
+                near = _value_near(line, lines)
+                if near is None or near.text.strip().endswith((":", "ः")):  # another label
+                    break
+                src, value = near, near.text.strip(" :ः-|")
+            if field == "date_of_birth_bs":
+                d = _BS_DATE.search(value.translate(_DEVA_DIGITS))
+                if not d or not (1 <= int(d.group(2)) <= 12 and 1 <= int(d.group(3)) <= 32):
+                    break
+                value = f"{d.group(1)}-{int(d.group(2)):02d}-{int(d.group(3)):02d} BS"
+            elif field in ("national_id_number", "citizenship_number"):
+                value = re.sub(r"[^0-9\-/]", "", value.translate(_DEVA_DIGITS)).strip("-/")
+                if len(re.sub(r"\D", "", value)) < 5:
+                    break
+            elif len(re.findall(r"[\u0900-\u097F]", value)) < 3 or _DEVA_LABEL_WORDS.search(value) \
+                    or re.search(r"\d", value.translate(_DEVA_DIGITS)):
+                break
+            out[field] = FieldValue(value=value, confidence=round(src.confidence * 0.9, 4),
+                                    source="ocr_devanagari", bbox=src.bbox)
+            break  # one label per line
+    return out
+

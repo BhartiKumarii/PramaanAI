@@ -995,4 +995,11 @@
     <string name="dv_offline_verification">Offline verification</string>
     <string name="dv_offline_saved_full">%1$s. External registry verification unavailable. The regions are saved encrypted on this phone and will be verified by the server automatically when the connection returns.</string>
     <string name="pr_data_on_phone_notice">Document images and live photos are kept encrypted on this phone (Android Keystore) for %1$s days so you can review past verifications, then deleted automatically. A copy is attached to each case as its evidence record.</string>
+    <string name="dv_read_devanagari">Devanagari</string>
+    <string name="dv_field_name_native">Name (Devanagari)</string>
+    <string name="dv_field_dob_bs">Date of birth (Bikram Sambat)</string>
+    <string name="dv_field_national_id">National ID number</string>
+    <string name="dv_field_citizenship_no">Citizenship certificate number</string>
+    <string name="dv_field_sex_native">Sex (Devanagari)</string>
+    <string name="dv_devanagari_text">Nepali/Hindi text (Devanagari)</string>
 </resources>

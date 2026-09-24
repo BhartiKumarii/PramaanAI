@@ -162,6 +162,51 @@ The hash chain is a **local** tamper-evident log, not a blockchain.
   (the `0009` alter was a no-op on SQLite). `0021` gives `stored_images` a
   working `now()` default.
 
+## Nepali / Hindi text (Devanagari)
+
+* The main PP-OCR model reads Latin script only. Devanagari lines come back as
+  low-scoring junk and are dropped (it read 0 Devanagari characters on the
+  Nepal ID/citizenship/permit and Aadhaar samples).
+* A second recogniser, **PP-OCRv5 Devanagari** (PaddlePaddle, Apache-2.0,
+  ~8 MB ONNX, downloaded in the Docker build to `models/ocr/devanagari_v5`),
+  re-reads the boxes of the same detection pass: the low-score boxes the
+  Latin pass drops, plus its uncertain lines. It does not run detection
+  again, which costs about 0.07 s per document. It is skipped when a valid MRZ
+  was read. If the model is missing, `pipeline.ocr_devanagari` reports
+  "not installed" and nothing else changes.
+* Output: `native_lines` (not stored, same as `ocr_lines`); an advisory
+  `ocr_devanagari` check; fields in **separate keys** that are never compared
+  with the registry: `name_native`, `sex_native`, `national_id_number`,
+  `citizenship_number`, and `date_of_birth_bs`. Nepali dates are Bikram
+  Sambat (BS 2044 ≈ AD 1987), so they are kept as "YYYY-MM-DD BS" and never
+  read as Gregorian dates. Labels are matched loosely because OCR misspells
+  conjuncts (नामधर / नाम शर for नाम थर; राषट्टिय for राष्ट्रिय). A standalone
+  label takes only the value directly to its right or directly beneath it.
+* When the Latin classifier is uncertain, Devanagari wording classifies
+  Nepal citizenship certificates (नागरिकता / ना.प्र / जिल्ला प्रशासन कार्यालय
+  with a Nepal marker) and permits (अनुमति-पत्र). Real-dataset
+  document-type accuracy went from 0.86 to 0.877; synthetic results were
+  unchanged.
+* Not covered: Bengali, Gurmukhi and Dzongkha (Tibetan script) document text.
+  PaddleOCR has no Dzongkha model.
+
+## Handwritten entries — measured, not shipped
+
+Visa stamps are often filled in by hand. On 7 hand-labelled handwritten
+values from the dataset (dates, a place, numbers):
+
+| Approach | Exact | Mean CER |
+|---|---|---|
+| PP-OCR detection + recognition (current) | 0/7 | 0.96 — the detector does not box handwriting |
+| PP-OCR recognition only, on a hand-placed tight crop | 1/7 | 0.47 |
+| Same, with automatic crops (label line, or ink colour) | — | unusable: overlapping stamps and security print |
+| TrOCR-small-handwritten (transformers 5.17) | 0/7 | 1.56 — unrelated words; likely a loading incompatibility, not a fair score, and ~250 MB extra RAM |
+
+The server does not claim to read handwriting. Handwritten values stay for
+the officer to read on the document image (shown in Review/History). A real
+solution needs labelled handwritten-field boxes (a YOLO class) and a
+recogniser fine-tuned on these forms.
+
 ## Reference data (`reference_data/`)
 
 ```

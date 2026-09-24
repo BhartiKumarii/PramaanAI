@@ -979,4 +979,11 @@
     <string name="dv_offline_verification">अफलाइन प्रमाणीकरण</string>
     <string name="dv_offline_saved_full">%1$s। बाह्य रजिस्ट्री प्रमाणीकरण उपलब्ध छैन। क्षेत्रहरू यो फोनमा इन्क्रिप्ट गरी सुरक्षित छन् र जडान फर्किएपछि सर्भरले आफैँ प्रमाणित गर्नेछ।</string>
     <string name="pr_data_on_phone_notice">कागजातका छवि र लाइभ फोटोहरू यो फोनमा %1$s दिनसम्म इन्क्रिप्ट गरी (Android Keystore) राखिन्छन् ताकि तपाईं पुराना प्रमाणीकरण हेर्न सक्नुहोस्, अनि आफैँ हटाइन्छन्। हरेक मुद्दासँग त्यसको प्रति प्रमाण रेकर्डका रूपमा जोडिन्छ।</string>
+    <string name="dv_read_devanagari">देवनागरी</string>
+    <string name="dv_field_name_native">नाम (देवनागरी)</string>
+    <string name="dv_field_dob_bs">जन्म मिति (वि.सं.)</string>
+    <string name="dv_field_national_id">राष्ट्रिय परिचय नम्बर</string>
+    <string name="dv_field_citizenship_no">नागरिकता प्रमाणपत्र नम्बर</string>
+    <string name="dv_field_sex_native">लिङ्ग (देवनागरी)</string>
+    <string name="dv_devanagari_text">नेपाली/हिन्दी पाठ (देवनागरी)</string>
 </resources>

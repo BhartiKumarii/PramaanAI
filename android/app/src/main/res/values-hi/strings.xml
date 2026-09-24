@@ -979,4 +979,11 @@
     <string name="dv_offline_verification">ऑफ़लाइन सत्यापन</string>
     <string name="dv_offline_saved_full">%1$s। बाहरी रजिस्ट्री सत्यापन उपलब्ध नहीं। क्षेत्र इस फ़ोन पर एन्क्रिप्ट करके सहेजे गए हैं और कनेक्शन लौटने पर सर्वर द्वारा अपने आप सत्यापित होंगे।</string>
     <string name="pr_data_on_phone_notice">दस्तावेज़ की छवियाँ और लाइव फ़ोटो इस फ़ोन पर %1$s दिनों तक एन्क्रिप्ट करके (Android Keystore) रखी जाती हैं ताकि आप पिछले सत्यापन देख सकें, फिर अपने आप हटा दी जाती हैं। हर मामले के साथ उसकी एक प्रति साक्ष्य रिकॉर्ड के रूप में जोड़ी जाती है।</string>
+    <string name="dv_read_devanagari">देवनागरी</string>
+    <string name="dv_field_name_native">नाम (देवनागरी)</string>
+    <string name="dv_field_dob_bs">जन्मतिथि (विक्रम संवत)</string>
+    <string name="dv_field_national_id">राष्ट्रीय पहचान संख्या</string>
+    <string name="dv_field_citizenship_no">नागरिकता प्रमाणपत्र संख्या</string>
+    <string name="dv_field_sex_native">लिंग (देवनागरी)</string>
+    <string name="dv_devanagari_text">नेपाली/हिंदी पाठ (देवनागरी)</string>
 </resources>

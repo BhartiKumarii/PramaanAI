@@ -48,6 +48,8 @@ def stored_result(outcome: VerificationOutcome) -> dict[str, Any]:
     for doc in data.get("documents", []):
         doc["ocr_line_count"] = len(doc.get("ocr_lines", []))
         doc["ocr_lines"] = []
+        doc["native_line_count"] = len(doc.get("native_lines", []))
+        doc["native_lines"] = []
         for fs in doc.get("security_features", []):
             for item in fs.get("items", []) if isinstance(fs, dict) else []:
                 item.pop("signed_fields", None)
