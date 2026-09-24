@@ -57,6 +57,18 @@ async def run_heavy(fn: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     finally:
         with _waiting_lock:
             _waiting -= 1
+        _release_memory()
+
+
+def _release_memory() -> None:
+    """Give freed heap back to the OS after a verification (large image
+    buffers otherwise stay in glibc's arenas and count against a small
+    instance's memory limit). No-op off glibc."""
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
 
 
 def load() -> dict[str, int]:

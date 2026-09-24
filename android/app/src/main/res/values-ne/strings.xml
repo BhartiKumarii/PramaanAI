@@ -1000,4 +1000,21 @@
     <string name="lv_ready_gallery">जीवितता: जाँच भएन (ग्यालरी फोटो)</string>
     <string name="lv_anti_spoof">एन्टि-स्पुफ स्कोर %1$s (सल्लाह)</string>
     <string name="lv_check_title">जीवितता (लाइभ फोटो)</string>
+    <string name="rp_face_detection_unavailable">यो फोनमा अनुहार पहिचान उपलब्ध छैन</string>
+    <string name="rp_no_face">अनुहार भेटिएन — फोन आँखाको उचाइमा राख्नुहोस्, क्यामेरातिर हेर्नुहोस्, राम्रो उज्यालोमा</string>
+    <string name="rp_many_faces">फोटोमा %1$d अनुहार — फ्रेममा यात्री मात्र हुनुपर्छ</string>
+    <string name="rp_face_cut_off">अनुहार किनारमा काटिएको छ — अलि पछि सरेर फेरि खिच्नुहोस्</string>
+    <string name="rp_detector_unavailable">फोनको क्षेत्र डिटेक्टर लोड हुन सकेन, त्यसैले क्षेत्र भेटिँदैन। सट्टामा पूरा फोटो कहिल्यै अपलोड गरिँदैन।</string>
+    <string name="rp_no_regions">कागजातको कुनै क्षेत्र भेटिएन। पूरा कागजात देखिने गरी फेरि फोटो खिच्नुहोस्।</string>
+    <string name="rp_no_connection">जडान छैन</string>
+    <string name="rp_server_unreachable">सर्भरमा पुग्न सकिएन (कमजोर जडान)</string>
+    <string name="rp_server_busy">सर्भर व्यस्त — सुरक्षित गरियो, आफैँ प्रमाणित हुनेछ</string>
+    <string name="rp_regions_rejected">सर्भरले यी क्षेत्र प्रयोग गर्न सकेन: %1$s</string>
+    <string name="rp_request_rejected">अनुरोध अस्वीकृत (%1$d)। क्याप्चर फेरि पठाउन सकिन्छ।</string>
+    <string name="rp_connection_dropped">अपलोड गर्दा जडान टुट्यो</string>
+    <string name="st_session_expiring">सत्र सकिँदैछ</string>
+    <string name="st_session_inactive">तपाईं निष्क्रिय रहनुभयो। सुरक्षाका लागि यो सत्र आफैँ सकिनेछ।</string>
+    <string name="st_signing_out_in">%1$d सेकेन्डमा साइन आउट</string>
+    <string name="st_stay_signed_in">साइन इन रहनुहोस्</string>
+    <string name="st_log_out_now">अहिले लग आउट गर्नुहोस्</string>
 </resources>

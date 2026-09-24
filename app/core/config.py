@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     # read Nepali/Hindi text. Missing directory = the stage is skipped and
     # reported as unavailable.
     pramaan_devanagari_rec_dir: str = "models/ocr/devanagari_v5"
+    # MediaPipe (BlazeFace document faces, face-landmark quality, the server
+    # face-manipulation heuristic). Off keeps it out of memory entirely
+    # (~200 MB on small instances): InsightFace SCRFD detects faces, and
+    # liveness is measured on the phone.
+    pramaan_mediapipe: bool = True
     pramaan_max_queued_verifications: int = 16
 
     @field_validator("cors_origins", mode="before")

@@ -80,22 +80,31 @@ def _encode_png(bgr: np.ndarray) -> bytes:
 _BLAZEFACE_LOCK = threading.Lock()
 
 
+def _blazeface_available() -> bool:
+    from app.core.config import get_settings
+    if not get_settings().pramaan_mediapipe:
+        return False
+    return (Path(__file__).resolve().parents[3] / "models" / "blaze_face_short_range.tflite").is_file()
+
+
 def detect_faces(bgr: np.ndarray) -> list[tuple[list[int], float, str]]:
     """Faces as (bbox, confidence, method). BlazeFace first (fast); falls
     back to InsightFace's SCRFD detector, which handles the small, printed
     faces on ID cards that BlazeFace's short-range model misses."""
-    from app.services.face.blazeface_detector import BlazeFaceDetector
-
     faces: list[tuple[list[int], float, str]] = []
-    try:
-        with _BLAZEFACE_LOCK:  # the shared MediaPipe detector is not re-entrant
-            result = BlazeFaceDetector().detect(_encode_png(bgr))
-        for f in result.faces:
-            loc = f.location
-            faces.append(([loc["x"], loc["y"], loc["x"] + loc["width"], loc["y"] + loc["height"]],
-                          float(f.confidence), "blazeface"))
-    except Exception as exc:
-        logger.debug("BlazeFace failed: %s", exc)
+    # BlazeFace only when its model file is present: importing MediaPipe
+    # costs ~150 MB of RAM, and without the model it can only fail.
+    if _blazeface_available():
+        try:
+            from app.services.face.blazeface_detector import BlazeFaceDetector
+            with _BLAZEFACE_LOCK:  # the shared MediaPipe detector is not re-entrant
+                result = BlazeFaceDetector().detect(_encode_png(bgr))
+            for f in result.faces:
+                loc = f.location
+                faces.append(([loc["x"], loc["y"], loc["x"] + loc["width"], loc["y"] + loc["height"]],
+                              float(f.confidence), "blazeface"))
+        except Exception as exc:
+            logger.debug("BlazeFace failed: %s", exc)
     if faces:
         return faces
     try:

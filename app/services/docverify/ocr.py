@@ -10,25 +10,55 @@ import logging
 import os
 import re
 import threading
+from contextlib import contextmanager
 
 import cv2
 import numpy as np
 
 from app.services.docverify.types import OcrLine
 
-_local = threading.local()
+
+
+class _EnginePool:
+    """Shared engines, at most one per concurrently running verification.
+
+    Engines are not shared between two threads at the same time (RapidOCR's
+    pre/post-processing is not guaranteed thread-safe), but they are reused
+    across threads: worker threads come and go, and a copy per thread cost
+    ~70 MB of RAM each time a new one appeared."""
+
+    def __init__(self, factory):
+        self._factory = factory
+        self._idle: list = []
+        self._lock = threading.Lock()
+
+    @contextmanager
+    def borrow(self):
+        with self._lock:
+            engine = self._idle.pop() if self._idle else None
+        if engine is None:
+            engine = self._factory()
+        try:
+            yield engine
+        finally:
+            if engine is not None:
+                with self._lock:
+                    self._idle.append(engine)
+
+
+def _new_ocr():
+    from rapidocr_onnxruntime import RapidOCR
+    n = ocr_threads()
+    return RapidOCR(intra_op_num_threads=n, inter_op_num_threads=1)
+
+
+_OCR = _EnginePool(_new_ocr)
 
 
 def _get_ocr():
-    """One PP-OCR engine per worker thread: concurrent verifications never
-    share a RapidOCR instance (its pre/post-processing is not guaranteed
-    thread-safe). Threads are bounded by the concurrency limiter."""
-    engine = getattr(_local, "engine", None)
-    if engine is None:
-        from rapidocr_onnxruntime import RapidOCR
-        n = ocr_threads()
-        engine = _local.engine = RapidOCR(intra_op_num_threads=n, inter_op_num_threads=1)
-    return engine
+    """An engine for a one-off check outside a verification (e.g. warm-up)."""
+    with _OCR.borrow() as engine:
+        return engine
 
 
 def ocr_threads() -> int:
@@ -60,7 +90,8 @@ def ocr_image(rgb: np.ndarray, offset: tuple[int, int] = (0, 0), scale: float = 
     try:
         # text_score is passed on every call: RapidOCR keeps call kwargs on
         # the engine, and the filtering is done here.
-        result = _get_ocr()(rgb, text_score=0.0, box_thresh=0.5, unclip_ratio=1.6)
+        with _OCR.borrow() as engine:
+            result = engine(rgb, text_score=0.0, box_thresh=0.5, unclip_ratio=1.6)
     except Exception as exc:  # engine failure is reported, never hidden
         logger.warning("PP-OCR failed: %s", exc)
         return []
@@ -120,17 +151,21 @@ def devanagari_available() -> bool:
     return _devanagari_paths() is not None
 
 
+def _new_devanagari():
+    paths = _devanagari_paths()
+    if paths is None:
+        return None
+    from rapidocr_onnxruntime import RapidOCR
+    n = ocr_threads()
+    return RapidOCR(rec_model_path=paths[0], rec_keys_path=paths[1], intra_op_num_threads=n, inter_op_num_threads=1)
+
+
+_DEVANAGARI_POOL = _EnginePool(_new_devanagari)
+
+
 def _get_devanagari():
-    engine = getattr(_local, "deva", None)
-    if engine is None:
-        paths = _devanagari_paths()
-        if paths is None:
-            return None
-        from rapidocr_onnxruntime import RapidOCR
-        n = ocr_threads()
-        engine = _local.deva = RapidOCR(rec_model_path=paths[0], rec_keys_path=paths[1],
-                                        intra_op_num_threads=n, inter_op_num_threads=1)
-    return engine
+    with _DEVANAGARI_POOL.borrow() as engine:
+        return engine
 
 
 def devanagari_lines(rgb: np.ndarray, lines: list[OcrLine], low: list[OcrLine],
@@ -142,9 +177,14 @@ def devanagari_lines(rgb: np.ndarray, lines: list[OcrLine], low: list[OcrLine],
     from the same detection pass, so no second detection — are re-read with
     recognition only. Only readings that contain Devanagari are returned, as
     extra lines; the Latin reading is never replaced."""
-    engine = _get_devanagari()
-    if engine is None:
+    if not devanagari_available():
         return []
+    with _DEVANAGARI_POOL.borrow() as engine:
+        return _read_devanagari(engine, rgb, lines, low, min_confidence)
+
+
+def _read_devanagari(engine, rgb: np.ndarray, lines: list[OcrLine], low: list[OcrLine],
+                     min_confidence: float) -> list[OcrLine]:
     h, w = rgb.shape[:2]
     out: list[OcrLine] = []
     for line in low + [l for l in lines if l.confidence < 0.9]:

@@ -639,6 +639,11 @@ def _live_capture_checks(ctx: Ctx, i: int, live: bytes) -> bool:
                  else "No face found in the live capture — retake facing the camera"), i,
                 live_faces=len(faces), flags=["retake_live_capture"])
         return False
+    from app.core.config import get_settings
+    if not get_settings().pramaan_mediapipe:
+        # Liveness (blink/turn prompts + on-device anti-spoof) is reported by
+        # the phone; the MediaPipe heuristic is not loaded on this instance.
+        return True
     try:
         df = AdvancedDeepfakeProvider().analyze(live)
     except Exception:

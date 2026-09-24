@@ -93,12 +93,12 @@ fun SessionTimeoutMonitor(
                 lastActivityAt = System.currentTimeMillis()
                 showWarning = false
             },
-            title = { Text("Session expiring") },
+            title = { Text(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.st_session_expiring)) },
             text = {
                 Column {
-                    Text("You've been inactive. For security, this session will end automatically.")
+                    Text(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.st_session_inactive))
                     Spacer(Modifier.height(8.dp))
-                    Text("Signing out in ${secondsRemaining}s", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                    Text(com.pramaanai.officer.ui.i18n.L.f(com.pramaanai.officer.R.string.st_signing_out_in, secondsRemaining), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 }
             },
             confirmButton = {
@@ -109,13 +109,13 @@ fun SessionTimeoutMonitor(
                         onStaySignedIn()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AccentGreen, contentColor = BackgroundDark),
-                ) { Text("Stay signed in") }
+                ) { Text(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.st_stay_signed_in)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showWarning = false
                     onSessionExpired()
-                }) { Text("Log out now") }
+                }) { Text(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.st_log_out_now)) }
             },
         )
     }

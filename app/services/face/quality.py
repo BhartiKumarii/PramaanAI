@@ -112,7 +112,10 @@ def assess_quality(
         issues.append(f"low contrast: std {contrast:.1f} (minimum 15.0)")
 
     landmark_count = 0
+    from app.core.config import get_settings
     try:
+        if not get_settings().pramaan_mediapipe:
+            raise RuntimeError("MediaPipe disabled on this instance")
         from app.services.deepfake.advanced_provider import _get_landmarker
         import mediapipe as mp
         landmarker = _get_landmarker()

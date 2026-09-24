@@ -41,7 +41,7 @@ import java.util.Locale
 fun AuditLogScreen(repository: ScreeningRepository, onBack: () -> Unit) {
     val entries by repository.observeAuditLog().collectAsStateWithLifecycle(initialValue = emptyList())
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Audit Log") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.title_audit_log)) }) }) { padding ->
         if (entries.isEmpty()) {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 EmptyState("No audit entries yet", "Officer logins, screenings, and decisions will be recorded here.")

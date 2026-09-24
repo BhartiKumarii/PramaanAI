@@ -31,6 +31,18 @@ open(os.path.join(d, 'keys.txt'), 'w').write(chr(10).join(ch) + chr(10))" \
 
 EXPOSE 8000
 
+# Memory profile for small instances (Render free: 512 MB). Measured with
+# 3 verifications + 2 in parallel: 685 MB peak before, ~420 MB after.
+#  - MediaPipe off: InsightFace detects faces, liveness is measured on the phone
+#  - one verification at a time; one ONNX thread per OCR engine
+#  - two glibc arenas instead of one per thread
+# Override any of these with environment variables on a larger instance.
+ENV PRAMAAN_MEDIAPIPE=false \
+    PRAMAAN_MAX_CONCURRENT_VERIFICATIONS=1 \
+    PRAMAAN_OCR_THREADS=1 \
+    OMP_NUM_THREADS=1 \
+    MALLOC_ARENA_MAX=2
+
 # Render sets $PORT at runtime; docker-compose leaves it unset and the
 # entrypoint falls back to 8000. Migrations + demo-user seeding run here
 # (not baked into the image) so they apply on every container start,

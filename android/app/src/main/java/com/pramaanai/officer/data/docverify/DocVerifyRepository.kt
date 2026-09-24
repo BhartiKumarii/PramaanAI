@@ -65,11 +65,11 @@ class DocVerifyRepository(private val context: Context) {
     suspend fun selfieFace(source: Bitmap): Selfie = withContext(Dispatchers.Default) {
         val bitmap = downscale(source, 1280)
         val faces = runCatching { com.pramaanai.officer.data.vision.FaceDetectionAnalyzer.detect(bitmap).faces }
-            .getOrElse { return@withContext Selfie.Problem("Face detection is not available on this phone") }
+            .getOrElse { return@withContext Selfie.Problem(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_face_detection_unavailable)) }
         when {
-            faces.isEmpty() -> Selfie.Problem("No face found — hold the phone at eye level, face the camera, good light")
-            faces.size > 1 -> Selfie.Problem("${faces.size} faces in the photo — only the traveller should be in frame")
-            faces[0].touchesEdge -> Selfie.Problem("The face is cut off at the edge — step back and retake")
+            faces.isEmpty() -> Selfie.Problem(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_no_face))
+            faces.size > 1 -> Selfie.Problem(com.pramaanai.officer.ui.i18n.L.f(com.pramaanai.officer.R.string.rp_many_faces, faces.size))
+            faces[0].touchesEdge -> Selfie.Problem(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_face_cut_off))
             else -> {
                 val b = faces[0].location
                 val m = (0.25f * maxOf(b.width, b.height)).toInt()
@@ -88,12 +88,11 @@ class DocVerifyRepository(private val context: Context) {
                        expectedDocumentType: String? = null, openCase: Boolean = true,
                        liveness: com.pramaanai.officer.data.vision.LivenessReport? = null): Submission {
         if (!analysis.detectorAvailable) {
-            return Submission.Failed("The on-device region detector could not be loaded, so regions cannot be located. " +
-                "The full image is never uploaded instead.")
+            return Submission.Failed(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_detector_unavailable))
         }
         val prepared = withContext(Dispatchers.Default) { RegionCropper.prepare(analysis.bitmap, analysis.detections, analysis.text) }
         if (prepared.crops.isEmpty()) {
-            return Submission.Failed("No document regions were located. Retake the photo with the whole document in view.")
+            return Submission.Failed(com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_no_regions))
         }
         val request = RegionVerificationRequest(
             documents = listOf(RegionDocument(listOf(analysis.bitmap.width, analysis.bitmap.height), prepared.crops,
@@ -115,7 +114,7 @@ class DocVerifyRepository(private val context: Context) {
             EncryptedDocVerifyQueue.get(context).enqueue(request, analysis.localChecks)
             DocVerifySyncWorker.enqueue(context)
             return Submission.Queued(analysis.localChecks,
-                if (state == ConnectivityState.OFFLINE) "No connection" else "Server not reachable (weak connection)")
+                if (state == ConnectivityState.OFFLINE) com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_no_connection) else com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_server_unreachable))
         }
         return try {
             val outcome = RetrofitClient.docVerifyApi.verifyRegions(AuthSession.bearerHeader(), request)
@@ -130,15 +129,15 @@ class DocVerifyRepository(private val context: Context) {
                 // later sync is idempotent) instead of making the officer retake it.
                 EncryptedDocVerifyQueue.get(context).enqueue(request, analysis.localChecks)
                 DocVerifySyncWorker.enqueue(context)
-                Submission.Queued(analysis.localChecks, "Server busy — saved and will be verified automatically")
+                Submission.Queued(analysis.localChecks, com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_server_busy))
             } else {
-                Submission.Failed(if (e.code() == 422) "The server could not use these regions: ${e.response()?.errorBody()?.string()?.take(200)}"
-                                  else "Request rejected (${e.code()}). The capture can be retried.")
+                Submission.Failed(if (e.code() == 422) com.pramaanai.officer.ui.i18n.L.f(com.pramaanai.officer.R.string.rp_regions_rejected, e.response()?.errorBody()?.string()?.take(200) ?: "")
+                                  else com.pramaanai.officer.ui.i18n.L.f(com.pramaanai.officer.R.string.rp_request_rejected, e.code()))
             }
         } catch (e: Exception) {
             EncryptedDocVerifyQueue.get(context).enqueue(request, analysis.localChecks)
             DocVerifySyncWorker.enqueue(context)
-            Submission.Queued(analysis.localChecks, "Connection dropped during upload")
+            Submission.Queued(analysis.localChecks, com.pramaanai.officer.ui.i18n.L.s(com.pramaanai.officer.R.string.rp_connection_dropped))
         }
     }
 

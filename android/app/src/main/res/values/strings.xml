@@ -1016,4 +1016,21 @@
     <string name="lv_ready_gallery">Liveness: not checked (gallery photo)</string>
     <string name="lv_anti_spoof">Anti-spoof score %1$s (advisory)</string>
     <string name="lv_check_title">Liveness (live photo)</string>
+    <string name="rp_face_detection_unavailable">Face detection is not available on this phone</string>
+    <string name="rp_no_face">No face found — hold the phone at eye level, face the camera, good light</string>
+    <string name="rp_many_faces">%1$d faces in the photo — only the traveller should be in frame</string>
+    <string name="rp_face_cut_off">The face is cut off at the edge — step back and retake</string>
+    <string name="rp_detector_unavailable">The on-device region detector could not be loaded, so regions cannot be located. The full image is never uploaded instead.</string>
+    <string name="rp_no_regions">No document regions were located. Retake the photo with the whole document in view.</string>
+    <string name="rp_no_connection">No connection</string>
+    <string name="rp_server_unreachable">Server not reachable (weak connection)</string>
+    <string name="rp_server_busy">Server busy — saved and will be verified automatically</string>
+    <string name="rp_regions_rejected">The server could not use these regions: %1$s</string>
+    <string name="rp_request_rejected">Request rejected (%1$d). The capture can be retried.</string>
+    <string name="rp_connection_dropped">Connection dropped during upload</string>
+    <string name="st_session_expiring">Session expiring</string>
+    <string name="st_session_inactive">You\'ve been inactive. For security, this session will end automatically.</string>
+    <string name="st_signing_out_in">Signing out in %1$ds</string>
+    <string name="st_stay_signed_in">Stay signed in</string>
+    <string name="st_log_out_now">Log out now</string>
 </resources>

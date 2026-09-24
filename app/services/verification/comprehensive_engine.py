@@ -55,11 +55,9 @@ import re
 
 from sqlalchemy.orm import Session
 from app.services.face.mobilefacenet_provider import MobileFaceNetProvider
-from app.services.face.blazeface_detector import BlazeFaceDetector
 from app.services.liveness.advanced_provider import AdvancedLivenessProvider
 from app.services.liveness.heuristic_provider import HeuristicLivenessProvider
 from app.services.tampering.forensics_provider import ComprehensiveForensicsProvider
-from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
 
 
 @dataclass
@@ -115,10 +113,13 @@ class ComprehensiveVerificationEngine:
         self.db = db_session
 
         self.face_provider = MobileFaceNetProvider()
+        # Imported here: MediaPipe costs ~150 MB of RAM at server start.
+        from app.services.face.blazeface_detector import BlazeFaceDetector
         self.face_detector = BlazeFaceDetector()
         self.liveness_provider = AdvancedLivenessProvider()
         self.liveness_fallback = HeuristicLivenessProvider()
         self.tampering_provider = ComprehensiveForensicsProvider()
+        from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
         self.deepfake_provider = AdvancedDeepfakeProvider()
 
         # Verification thresholds (aligned with face providers)

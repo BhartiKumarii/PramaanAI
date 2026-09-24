@@ -7,9 +7,7 @@ from app.db.session import get_db
 from app.services.blockchain.base import BlockchainService
 from app.services.blockchain.local_hash_chain import LocalHashChainBlockchainService
 from app.services.deepfake.base import DeepfakeProvider
-from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
 from app.services.face.base import FaceDetector, FaceProvider
-from app.services.face.blazeface_detector import BlazeFaceDetector
 from app.services.face.mobilefacenet_provider import MobileFaceNetProvider
 from app.services.liveness.base import LivenessProvider
 from app.services.liveness.advanced_provider import AdvancedLivenessProvider
@@ -45,6 +43,9 @@ def get_face_provider() -> FaceProvider:
 
 @lru_cache
 def get_face_detector() -> FaceDetector:
+    # Imported here: MediaPipe (+ matplotlib) costs ~150 MB of RAM and is only
+    # needed by the earlier screening endpoints, not at server start.
+    from app.services.face.blazeface_detector import BlazeFaceDetector
     return BlazeFaceDetector()
 
 
@@ -55,6 +56,7 @@ def get_risk_engine() -> RiskEngine:
 
 @lru_cache
 def get_deepfake_provider() -> DeepfakeProvider:
+    from app.services.deepfake.advanced_provider import AdvancedDeepfakeProvider
     return AdvancedDeepfakeProvider()
 
 
