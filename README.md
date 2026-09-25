@@ -154,7 +154,7 @@ A three-component system:
 - **Registry Management** — View and manage mock central registry entries
 - **Audit Logs** — Complete audit trail with filtering
 - **Analytics & Reports** — Risk trends, screening volume, officer activity
-- **RBAC** — Server-enforced roles: Officer (app) and Reviewer (web admin, decides cases)
+  
 
 ---
 
@@ -172,7 +172,7 @@ A three-component system:
 |   admin            |        | - Registry (mock)    |       | - Identity graph |
 | - Review/History/  |        | - Crossing rules     |       | - Alerts, audit  |
 |   Notifications    |        | - Decision engine    |       | - Analytics      |
-| - Encrypted offline|        | - Hash-chained audit |       | - RBAC           |
+| - Encrypted offline|        | - Hash-chained audit |       |                  |
 |   queue + sync     |        | - PostgreSQL         |       |                  |
 +--------------------+        +----------------------+       +------------------+
 ```
