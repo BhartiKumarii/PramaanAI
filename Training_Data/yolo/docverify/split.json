@@ -1,0 +1,237 @@
+{
+ "counts": {
+  "train_real": 36,
+  "val_real": 21,
+  "train_synthetic": 300
+ },
+ "real": {
+  "real_000": {
+   "file": "01.jpg",
+   "split": "val"
+  },
+  "real_001": {
+   "file": "01_Nepal_Visa_On_Arrival.png",
+   "split": "train"
+  },
+  "real_002": {
+   "file": "02_Nepal_Entry_Visa.png",
+   "split": "train"
+  },
+  "real_003": {
+   "file": "IMG_20260921_113553.jpg",
+   "split": "train"
+  },
+  "real_004": {
+   "file": "IMG_20260921_184707.jpg",
+   "split": "val"
+  },
+  "real_005": {
+   "file": "IMG_20260922_112041.png",
+   "split": "val"
+  },
+  "real_006": {
+   "file": "IMG_20260922_115655.jpg",
+   "split": "train"
+  },
+  "real_007": {
+   "file": "IMG_20260922_141824.jpg",
+   "split": "train"
+  },
+  "real_008": {
+   "file": "IMG_20260922_202359.jpg",
+   "split": "train"
+  },
+  "real_009": {
+   "file": "IMG_20260922_202438.jpg",
+   "split": "train"
+  },
+  "real_010": {
+   "file": "IMG_20260922_202501.jpg",
+   "split": "train"
+  },
+  "real_011": {
+   "file": "IMG_20260922_202511.jpg",
+   "split": "train"
+  },
+  "real_012": {
+   "file": "IMG_20260922_202524.jpg",
+   "split": "train"
+  },
+  "real_013": {
+   "file": "IMG_20260922_202536.jpg",
+   "split": "train"
+  },
+  "real_014": {
+   "file": "IMG_20260922_202606.jpg",
+   "split": "train"
+  },
+  "real_015": {
+   "file": "IMG_20260922_202625.jpg",
+   "split": "train"
+  },
+  "real_016": {
+   "file": "IMG_20260922_202637.jpg",
+   "split": "train"
+  },
+  "real_017": {
+   "file": "IMG_20260922_202649.jpg",
+   "split": "val"
+  },
+  "real_018": {
+   "file": "IMG_20260922_202748.jpg",
+   "split": "train"
+  },
+  "real_019": {
+   "file": "IMG_20260922_202808.jpg",
+   "split": "train"
+  },
+  "real_020": {
+   "file": "IMG_20260922_202821.jpg",
+   "split": "val"
+  },
+  "real_021": {
+   "file": "IMG_20260922_202832.jpg",
+   "split": "val"
+  },
+  "real_022": {
+   "file": "IMG_20260922_202924.jpg",
+   "split": "train"
+  },
+  "real_023": {
+   "file": "IMG_20260922_202940.jpg",
+   "split": "val"
+  },
+  "real_024": {
+   "file": "IMG_20260922_202952.jpg",
+   "split": "val"
+  },
+  "real_025": {
+   "file": "IMG_20260922_203006.jpg",
+   "split": "train"
+  },
+  "real_026": {
+   "file": "IMG_20260922_203022.jpg",
+   "split": "train"
+  },
+  "real_027": {
+   "file": "IMG_20260922_203037.jpg",
+   "split": "train"
+  },
+  "real_028": {
+   "file": "IMG_20260922_203050.jpg",
+   "split": "train"
+  },
+  "real_029": {
+   "file": "IMG_20260922_203109.jpg",
+   "split": "val"
+  },
+  "real_030": {
+   "file": "IMG_20260922_203123.jpg",
+   "split": "val"
+  },
+  "real_031": {
+   "file": "IMG_20260922_203136.jpg",
+   "split": "val"
+  },
+  "real_032": {
+   "file": "IMG_20260922_203150.jpg",
+   "split": "val"
+  },
+  "real_033": {
+   "file": "IMG_20260922_203207.jpg",
+   "split": "train"
+  },
+  "real_034": {
+   "file": "IMG_20260922_203247.jpg",
+   "split": "train"
+  },
+  "real_035": {
+   "file": "IMG_20260923_011319.jpg",
+   "split": "train"
+  },
+  "real_036": {
+   "file": "IMG_20260923_155802.jpg",
+   "split": "train"
+  },
+  "real_037": {
+   "file": "Nepal-visa.jpg",
+   "split": "train"
+  },
+  "real_038": {
+   "file": "bhutan_passport.jpeg",
+   "split": "train"
+  },
+  "real_039": {
+   "file": "concept-design-for-an-updated-indian-passport-v0-zb81kta3ffwg1.png",
+   "split": "val"
+  },
+  "real_040": {
+   "file": "dl_1.jpeg",
+   "split": "train"
+  },
+  "real_041": {
+   "file": "dl_10.jpg",
+   "split": "train"
+  },
+  "real_042": {
+   "file": "dl_13.jpg",
+   "split": "val"
+  },
+  "real_043": {
+   "file": "dl_14.jpg",
+   "split": "val"
+  },
+  "real_044": {
+   "file": "dl_18.jpg",
+   "split": "val"
+  },
+  "real_045": {
+   "file": "file_0000000059248211b82a7ab67156eee1.png",
+   "split": "train"
+  },
+  "real_046": {
+   "file": "images (1) (1).jpeg",
+   "split": "train"
+  },
+  "real_047": {
+   "file": "images (1).jpeg",
+   "split": "train"
+  },
+  "real_048": {
+   "file": "images (2) (1).jpeg",
+   "split": "train"
+  },
+  "real_049": {
+   "file": "images (2) (2).jpeg",
+   "split": "train"
+  },
+  "real_050": {
+   "file": "images (2).jpeg",
+   "split": "train"
+  },
+  "real_051": {
+   "file": "images (3) (1).jpeg",
+   "split": "val"
+  },
+  "real_052": {
+   "file": "images (4).jpeg",
+   "split": "val"
+  },
+  "real_053": {
+   "file": "images.jpeg",
+   "split": "val"
+  },
+  "real_054": {
+   "file": "passport_quality_enhanced.jpg",
+   "split": "val"
+  },
+  "real_055": {
+   "file": "passport_text_legibility_enhanced.jpg",
+   "split": "train"
+  },
+  "real_056": {
+   "file": "visa-requirement.jpeg",
+   "split": "val"
+  }
+ }
+}
