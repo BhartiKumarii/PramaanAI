@@ -18,8 +18,15 @@ services:
     buildFilter:
       ignoredPaths:
         - android/**
+        - frontend/**
+        - Screenshots/**
+        - Documentation/**
+        - reports/**
+        - data/**
+        - ID_DOCUMENT_DATASET/**
         - README.md
         - .idea/**
+        - .github/**
         - .gitignore
     envVars:
       - key: ENV

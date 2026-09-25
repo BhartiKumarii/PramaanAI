@@ -7,3 +7,17 @@ __pycache__/
 .env
 *.db
 *.sqlite3
+# Not needed by the API server: keeps the image small and deploys fast.
+android/
+frontend/
+data/
+ID_DOCUMENT_DATASET/
+Screenshots/
+Documentation/
+reports/
+tests/
+images/
+models/
+.idea/
+.github/
+*.apk

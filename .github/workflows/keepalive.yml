@@ -1,0 +1,14 @@
+# Keeps the Render free instance awake: it sleeps after 15 minutes without
+# traffic and the next request then waits 30-60 s for a cold start.
+name: keep-api-awake
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping /health
+        run: curl -fsS -m 120 https://bordershield-pramaan-api.onrender.com/health || true
