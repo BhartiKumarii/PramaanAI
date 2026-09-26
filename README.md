@@ -9,8 +9,8 @@
 <p align="center">
   <a href="https://pramaanai-703j.onrender.com">Live Website</a> &bull;
   <a href="https://github.com/BhartiKumarii/PramaanAI/releases/latest">Download APK</a> &bull;
-  <a href="https://github.com/BhartiKumarii/PramaanAI/releases/latest/download/PramaanAI_Demo.mp4">Demo Video</a> &bull;
-  <a href="https://github.com/BhartiKumarii/PramaanAI/releases/latest/download/PramaanAI_Report.pdf">Project Report</a> &bull;
+  <a href="https://github.com/BhartiKumarii/PramaanAI/raw/main/Documentation/PramaamAI.mp4">Demo Video</a> &bull;
+  <a href="https://github.com/BhartiKumarii/PramaanAI/raw/main/Documentation/PramaanAI-Report.pdf">Project Report</a> &bull;
   <a href="#screenshots">Screenshots</a>
 </p>
 
@@ -46,8 +46,8 @@
 | Live Website | [pramaanai-703j.onrender.com](https://pramaanai-703j.onrender.com) |
 | GitHub Repository | [github.com/BhartiKumarii/PramaanAI](https://github.com/BhartiKumarii/PramaanAI) |
 | Demo APK | [Download from Releases](https://github.com/BhartiKumarii/PramaanAI/releases/latest) |
-| Prototype Video | [PramaanAI_Demo.mp4](https://github.com/BhartiKumarii/PramaanAI/releases/latest/download/PramaanAI_Demo.mp4) (1 min 50 s) |
-| Project Report (PDF) | [PramaanAI_Report.pdf](https://github.com/BhartiKumarii/PramaanAI/releases/latest/download/PramaanAI_Report.pdf) (also in [Documentation/](Documentation/PramaanAI-Report.pdf)) |
+| Prototype Video | [Demo video](https://github.com/BhartiKumarii/PramaanAI/raw/main/Documentation/PramaamAI.mp4) (1 min 50 s) |
+| Project Report (PDF) | [Project report](https://github.com/BhartiKumarii/PramaanAI/raw/main/Documentation/PramaanAI-Report.pdf) |
 | API Documentation | [bordershield-pramaan-api.onrender.com/docs](https://bordershield-pramaan-api.onrender.com/docs) |
 
 ---
