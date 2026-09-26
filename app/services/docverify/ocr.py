@@ -46,10 +46,33 @@ class _EnginePool:
                     self._idle.append(engine)
 
 
+DET_MAX_SIDE = 1280
+
+
+def _cap_detector(engine):
+    """Run text DETECTION at most DET_MAX_SIDE px on the long side.
+
+    RapidOCR detects at up to 2000 px, which on an 1800 px photo cost ~350 MB
+    of transient RAM — over a 512 MB instance's limit. Recognition still reads
+    each line from the full-resolution image, so only box finding is coarser
+    (960 px misread two real documents in the evaluation; 1280 did not).
+    RapidOCR's own "max" limit type rounds back up to 2000, hence replacing
+    get_preprocess."""
+    from rapidocr_onnxruntime.ch_ppocr_det.utils import DetPreProcess
+    det = engine.text_det
+    det.get_preprocess = lambda max_wh: (DetPreProcess(DET_MAX_SIDE, "max", det.mean, det.std)
+                                         if max_wh > DET_MAX_SIDE
+                                         else DetPreProcess(det.limit_side_len, det.limit_type, det.mean, det.std))
+    return engine
+
+
 def _new_ocr():
     from rapidocr_onnxruntime import RapidOCR
     n = ocr_threads()
-    return RapidOCR(intra_op_num_threads=n, inter_op_num_threads=1)
+    # rec_batch_num=2 (default 6): a batch is padded to its widest line, and
+    # one long line made a batch of 6 cost ~120 MB; 2 costs ~15 MB. 1 was
+    # leaner still but misread a real Nepal visa in the evaluation.
+    return _cap_detector(RapidOCR(intra_op_num_threads=n, inter_op_num_threads=1, rec_batch_num=2))
 
 
 _OCR = _EnginePool(_new_ocr)
@@ -212,7 +235,12 @@ def _new_devanagari():
         return None
     from rapidocr_onnxruntime import RapidOCR
     n = ocr_threads()
-    return RapidOCR(rec_model_path=paths[0], rec_keys_path=paths[1], intra_op_num_threads=n, inter_op_num_threads=1)
+    engine = RapidOCR(rec_model_path=paths[0], rec_keys_path=paths[1], intra_op_num_threads=n, inter_op_num_threads=1,
+                      rec_batch_num=1)
+    # Only recognition is used (use_det=False, use_cls=False below): release
+    # the detector and classifier RapidOCR always loads (~20 MB).
+    engine.text_det = engine.text_cls = None
+    return engine
 
 
 _DEVANAGARI_POOL = _EnginePool(_new_devanagari)

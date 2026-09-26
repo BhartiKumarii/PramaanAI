@@ -18,7 +18,9 @@ UNCERTAIN_THRESHOLD = 0.55
 # (pattern, family, weight). Families are resolved to a DocumentType together
 # with the country below.
 _KEYWORDS: list[tuple[str, str, float]] = [
-    (r"\bPASSPORT\b(?!\s*PAGE)|पासपोर्ट|राहदानी", "passport", 8),  # "passport page" = visa/stamp page header
+    # "passport page" = visa/stamp page header; "Passport No"/"Number" is a
+    # field on visas and permits too (a real passport also has its title/MRZ)
+    (r"\bPASSPORT\b(?!\s*(?:PAGE|NO\b|NO\.|NO:|NUMBER))|पासपोर्ट|राहदानी", "passport", 8),
     (r"\bP\s?<\s?[A-Z]{3}", "passport", 12),
     (r"DRIV\w*\s*LICEN[CS]E|DRIVING\s*LICENSE|LICEN[CS]E\s*NO|\bDL\s*NO", "driving_licence", 14),
     (r"MOTOR\s*DRIVING|MOTOR\s*VEHICLE|\bCOV\b|\bLMV\b|\bMCWG\b|LICEN[CS]ING\s*AUTHORITY|\bRTO\b", "driving_licence", 5),
