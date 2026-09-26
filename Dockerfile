@@ -14,7 +14,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# The image runs with PRAMAAN_MEDIAPIPE=false (below), so MediaPipe and the
+# opencv-contrib build it drags in (plus matplotlib) are not installed:
+# ~350 MB less image, a second full copy of OpenCV avoided. InsightFace and
+# RapidOCR still pull in plain opencv-python. Every MediaPipe import in app/
+# is guarded and falls back when it is missing. Local dev keeps the full
+# requirements.txt.
+RUN grep -vE '^(mediapipe|opencv-contrib-python)' requirements.txt > /tmp/requirements-server.txt \
+    && pip install --no-cache-dir -r /tmp/requirements-server.txt
 
 COPY . .
 
