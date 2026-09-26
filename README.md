@@ -347,12 +347,6 @@ Full implementation notes are in the [project report](Documentation/PramaanAI-Re
 
 ---
 
-## Team AlphaX
-
-[ADD TEAM MEMBER DETAILS]
-
----
-
 ## Running Locally
 
 ### Backend
