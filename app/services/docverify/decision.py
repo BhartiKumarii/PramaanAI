@@ -106,7 +106,11 @@ def risk(checks: list[CheckResult]) -> tuple[int, str, list[dict[str, Any]]]:
     for c in checks:
         if c.status in (CheckStatus.PASS, CheckStatus.NOT_APPLICABLE):
             continue
-        if not c.blocking:
+        if "unregistered_document" in (c.details.get("flags") or []):
+            # No registry record: the identity could not be confirmed at all,
+            # so the case is treated as high risk until an officer checks it.
+            weight = 60
+        elif not c.blocking:
             weight = 5 if c.status in (CheckStatus.REVIEW_REQUIRED, CheckStatus.FAIL) else 0
         else:
             weight = _WEIGHTS.get((c.status, c.strong_evidence), _WEIGHTS.get((c.status, True), 0))

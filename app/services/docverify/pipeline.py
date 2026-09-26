@@ -979,8 +979,8 @@ def _document_checks(ctx: Ctx, doc: DocumentAnalysis, image_based: bool) -> dict
         elif st == "REGISTRY_NOT_AVAILABLE":
             ctx.add("registry", S.REGISTRY_NOT_AVAILABLE, reg["reason"].capitalize(), i)
         elif st == "NO_RECORD" or (reg.get("record_found") is False):
-            ctx.add("registry", S.NOT_VERIFIED, "No record in the reference registry (mock) — cannot confirm; "
-                    "this is not evidence against the document", i, flags=["unregistered_document"])
+            ctx.add("registry", S.REVIEW_REQUIRED, "Not found in the reference registry (mock) — identity could not "
+                    "be confirmed; verify with the traveller before clearing", i, flags=["unregistered_document"])
         elif st in ("MISMATCH",):
             ctx.add("registry", S.REVIEW_REQUIRED, f"Registry record differs: {reg.get('reason')}", i, strong=True,
                     flags=["registry_mismatch"])

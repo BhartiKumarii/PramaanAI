@@ -59,9 +59,9 @@ const STATUS_FILTER_OPTIONS: { label: string; value: CaseStatus | '' }[] = [
 type SortMode = 'priority' | 'waiting' | 'newest'
 
 const SORT_OPTIONS: { label: string; value: SortMode }[] = [
+  { label: 'Newest First', value: 'newest' },
   { label: 'Priority', value: 'priority' },
   { label: 'Longest Waiting', value: 'waiting' },
-  { label: 'Newest First', value: 'newest' },
 ]
 
 function formatWaitingTime(dateStr: string | null): string {
@@ -159,7 +159,7 @@ export function VerificationDesk() {
   const [priorityFilter, setPriorityFilter] = useState<CasePriority | ''>('')
   const [checkpointFilter, setCheckpointFilter] = useState('')
   const [docTypeFilter, setDocTypeFilter] = useState('')
-  const [sortMode, setSortMode] = useState<SortMode>('priority')
+  const [sortMode, setSortMode] = useState<SortMode>('newest')
   const [quickFilter, setQuickFilter] = useState<string | null>(null)
   // Cases from the earlier screening flow and seeded demo data carry no
   // document-verification record; they stay available but are hidden by default.
