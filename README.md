@@ -377,6 +377,28 @@ npm run dev
 
 Open `android/` in Android Studio. Build and run on a device with camera access. The app uses the Render server by default. To point it at a local server, build with `./gradlew assembleDebug -Ppramaan.apiUrl=http://<your-ip>:8000/`.
 
+### Testing on a phone over USB
+
+Run everything on your laptop and connect a real phone with a USB cable — no Wi-Fi or Render deployment needed. Full step-by-step guide with troubleshooting: **[Documentation/USB_TESTING.md](Documentation/USB_TESTING.md)**.
+
+```bash
+# 1. On the phone: Settings → About phone → tap "Build number" 7×,
+#    then Developer options → turn on USB debugging. Plug in and accept the prompt.
+adb devices                                   # phone should show as "device"
+
+# 2. Start the backend (seeds the demo accounts)
+docker compose up --build
+
+# 3. Forward the phone's port 8000 to the laptop (repeat after every replug)
+adb reverse tcp:8000 tcp:8000
+
+# 4. Build and install the app pointed at the laptop
+cd android
+./gradlew installDebug -Ppramaan.apiUrl=http://127.0.0.1:8000/
+```
+
+Log in on the phone as `raxaul_officer` / `BorderShield123`; the app's Settings screen should show `127.0.0.1:8000` as the server. Optionally run the dashboard (`cd frontend && npm run dev`, open `http://localhost:5173`, log in as `it_admin`) to answer cases sent from the phone against the same local backend.
+
 ---
 
 ## License
