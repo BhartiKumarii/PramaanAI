@@ -18,9 +18,6 @@
 
 ## Quick Start — Try It Now
 
-> [!WARNING]
-> **The hosted demo on Render is currently offline** (Render free tier), so the live dashboard, API docs and released APK cannot reach a server right now. To try PramaanAI, run it locally — see [Running Locally](#running-locally) and the [USB testing guide](Documentation/USB_TESTING.md) for a real phone. The demo credentials below work on a local setup.
-
 > **Demo Credentials (works on both website and Android app)**
 >
 > | Use | Username | Password |
